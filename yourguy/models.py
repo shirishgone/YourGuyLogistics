@@ -41,11 +41,23 @@ class YGUser(models.Model):
     class Meta:
         abstract = True
 
+class Area(models.Model):
+
+    # Mandatory Fields
+    area_code = models.CharField(max_length = 10)
+    area_name = models.CharField(max_length = 50)
+
+    # Optional Fields
+
+    def __unicode__(self):
+        return u"%s" % self.id
+
 class Address(models.Model):
 
     # Mandatory Fields
     flat_number = models.CharField(max_length = 50)
-    area_name = models.CharField(max_length = 50)
+    # area_name = models.CharField(max_length = 50)
+    area = models.ForeignKey(Area, related_name='area', default=0)
 
     # Optional Fields
     floor_number = models.CharField(max_length = 50, blank = True)
@@ -61,8 +73,9 @@ class Address(models.Model):
 
 class DeliveryGuy(YGUser):
     # Mandatory Fields
-    assigned_locality_code = models.CharField(max_length = 10)
-
+    # assigned_locality_code = models.CharField(max_length = 10)
+    assigned_area = models.ForeignKey(Area, related_name='assigned_area', blank = True, default=0)
+    
     AVAILABLE = 'AV'
     BUSY = 'BS'
     STATUS_CHOICES = (
@@ -75,6 +88,8 @@ class DeliveryGuy(YGUser):
     address  = models.ForeignKey(Address, related_name='dg_home_address', blank = True)
     latitude = models.CharField(max_length = 10, blank = True)
     longitude = models.CharField(max_length = 10, blank = True)
+    alternate_phone_number = models.CharField(max_length = 15, blank = True)
+    escalation_phone_number = models.CharField(max_length = 15, blank = True)
 
     def __unicode__(self):
         return unicode(self.assigned_locality_code)
@@ -118,6 +133,7 @@ class Consumer(YGUser):
     facebook_id = models.CharField(max_length = 50, blank = True)
     address = models.ForeignKey(Address, related_name='consumer_address', blank = True, on_delete = models.CASCADE)
     associated_vendor = models.ManyToManyField(Vendor, blank = True)
+    is_verified = models.BooleanField(blank = True, default = False)
 
     def __unicode__(self):
         return unicode(self.facebook_id)

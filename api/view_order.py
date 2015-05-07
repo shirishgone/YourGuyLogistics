@@ -21,6 +21,12 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     serializer_class = OrderSerializer
 
+    def get_order(self, pk):
+        try:
+            return Order.objects.get(pk=pk)
+        except:
+            raise Http404
+
     def get_vendor(self, pk):
         try:
             return Vendor.objects.get(pk=pk)
@@ -76,6 +82,22 @@ class OrderViewSet(viewsets.ModelViewSet):
 
         return queryset
     
+    @detail_route(methods=['post'])
+    def assign_order(self, request, pk=None):
+        dg_id = request.POST['dg_id']
+        order_id = request.POST['order_id']
+
+        order = self.get_order(order_id)
+        dg = self.get_deliveryguy(dg_id)
+        
+        dg.availability = 'BS'
+        dg.save()
+
+        order.assigned_to = dg.user
+        order.save()
+        
+        content = {'description': 'Order assigned'}
+        return Response(content, status = status.HTTP_201_CREATED)
 
     @list_route()
     def undelivered_orders():
