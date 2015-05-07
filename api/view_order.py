@@ -1,4 +1,4 @@
-from yourguy.models import Order, Consumer, Vendor, DeliveryGuy
+from yourguy.models import Order, Consumer, Vendor, DeliveryGuy, Area
 
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status, authentication
@@ -45,6 +45,12 @@ class OrderViewSet(viewsets.ModelViewSet):
         except:
             raise Http404
 
+    def get_area(self, area_code):
+        try:
+            return Area.objects.get(area_code=area_code)
+        except:
+            raise Http404
+
     def get_queryset(self):
         """
         Optionally restricts the returned purchases to a given user,
@@ -79,6 +85,12 @@ class OrderViewSet(viewsets.ModelViewSet):
             day_end = datetime.combine(next_day, time())
 
             queryset = queryset.filter(delivery_datetime__lte=day_end, delivery_datetime__gte=day_start)
+
+        # Filtering through area_code
+        area_code = self.request.QUERY_PARAMS.get('area_code', None)
+        if area_code is not None:
+            area = self.get_area(area_code)
+            queryset = queryset.filter(delivery_address__area=area)
 
         return queryset
     
