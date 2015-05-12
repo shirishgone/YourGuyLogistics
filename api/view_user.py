@@ -15,7 +15,7 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
 
     @detail_route(methods=['post'])
-    def sign_in(self, request, pk=None):
+    def sign_in(self, request):
     	username = request.POST['username']
     	password = request.POST['password']
     	user = authenticate(username = username, password = password)

@@ -10,7 +10,7 @@ from api.view_order import OrderViewSet
 
 from api.view_deliveryguy import DGViewSet
 from api.view_vendor import VendorViewSet
-from api.view_user import UserViewSet
+# from api.view_user import UserViewSet
 
 from api.view_group import GroupViewSet
 from api.view_usergroup import UserGroupViewSet
@@ -22,11 +22,12 @@ from rest_framework.routers import DefaultRouter
 urlpatterns = patterns(
     'api.views',
     url(r'^docs/', include('rest_framework_swagger.urls')),
+    url(r'^auth/', include('djoser.urls')),
 )
 
 
 router = DefaultRouter()
-router.register(r'user', UserViewSet)
+# router.register(r'user', UserViewSet)
 router.register(r'vendor', VendorViewSet)
 router.register(r'deliveryguy', DGViewSet)
 router.register(r'consumer', ConsumerViewSet, base_name ='consumer')

@@ -42,6 +42,7 @@ INSTALLED_APPS = (
     'api',
     'rest_framework.authtoken',
     'rest_framework_swagger',
+    'djoser',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -79,6 +80,15 @@ REST_FRAMEWORK = {
     )
     # 'DEFAULT_PERMISSION_CLASSES': ('rest_framework.permissions.IsAdminUser'),
     # 'PAGE_SIZE': 10
+}
+
+DJOSER = {
+    'DOMAIN': 'yourguy.in',
+    'SITE_NAME': 'YourGuy Vendor Portal',
+    'PASSWORD_RESET_CONFIRM_URL': '#/password/reset/confirm/{uid}/{token}',
+    'ACTIVATION_URL': '#/activate/{uid}/{token}',
+    'LOGIN_AFTER_ACTIVATION': True,
+    'SEND_ACTIVATION_EMAIL': True,
 }
 
 ROOT_URLCONF = 'server.urls'
