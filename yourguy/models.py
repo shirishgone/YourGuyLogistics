@@ -61,8 +61,8 @@ class Address(models.Model):
 
 class DeliveryGuy(YGUser):
     # Mandatory Fields
-    # assigned_locality_code = models.CharField(max_length = 10)
-    assigned_area = models.ForeignKey(Area, related_name='assigned_area', blank = True, default=0)
+
+    # Optional Fields
     
     AVAILABLE = 'AV'
     BUSY = 'BS'
@@ -71,16 +71,16 @@ class DeliveryGuy(YGUser):
         (BUSY, 'Busy'),
     )
     availability = models.CharField(max_length = 2, choices = STATUS_CHOICES, default = AVAILABLE)
-
-    # Optional Fields
-    address  = models.ForeignKey(Address, related_name='dg_home_address', blank = True)
+    
+    assigned_area = models.ForeignKey(Area, related_name='assigned_area', blank = True, default=0, null = True)
+    address  = models.ForeignKey(Address, related_name='dg_home_address', blank = True, null = True)
     latitude = models.CharField(max_length = 10, blank = True)
     longitude = models.CharField(max_length = 10, blank = True)
     alternate_phone_number = models.CharField(max_length = 15, blank = True)
     escalation_phone_number = models.CharField(max_length = 15, blank = True)
 
     def __unicode__(self):
-        return unicode(self.assigned_locality_code)
+        return unicode(self.user.username)
 
 
 class Vendor(YGUser):
@@ -112,7 +112,7 @@ class Employee(YGUser):
     department = models.CharField(max_length = 2, choices = DEPARTMENT_CHOICES, default = CALLCENTER)
 
     def __unicode__(self):
-        return unicode(self.employee_code)
+        return unicode(self.user.username)
 
 
 class Consumer(YGUser):
@@ -124,7 +124,7 @@ class Consumer(YGUser):
     is_verified = models.BooleanField(blank = True, default = False)
 
     def __unicode__(self):
-        return unicode(self.facebook_id)
+        return unicode(self.user.username)
 
 
 class PushDetail(models.Model):
@@ -158,11 +158,11 @@ class DGAttendance(models.Model):
     status = models.CharField(max_length = 2, choices = STATUS_CHOICES, default = UNKNOWN)
 
     # Optional Fields
-    login_time = models.DateTimeField(blank = True)
-    logout_time = models.DateTimeField(blank = True)
+    login_time = models.DateTimeField(blank = True, null = True)
+    logout_time = models.DateTimeField(blank = True, null = True)
 
     def __unicode__(self):
-        return u"%s" % self.dg.id
+        return u"%s %s" % (self.dg.user.username, self.status)
 
 
 class Group(models.Model):
@@ -189,12 +189,14 @@ class UserGroup(models.Model):
 
 class Order(models.Model):
 
-    # Mandatory Fields
+    # Auto Generated Fields =====
+    created_date_time = models.DateTimeField(auto_now_add = True)
+    created_by_user = models.ForeignKey(User, related_name='order_created_by')
+
+    # Mandatory Fields =====
     pickup_datetime = models.DateTimeField()
     delivery_datetime = models.DateTimeField()
-    created_date_time = models.DateTimeField(auto_now_add = True)
-
-    created_by_user = models.ForeignKey(User, related_name='order_created_by')
+    
     pickup_address = models.ForeignKey(Address, related_name='pickup_address', on_delete = models.CASCADE)
     delivery_address = models.ForeignKey(Address, related_name='delivery_address', on_delete = models.CASCADE)
 
@@ -210,22 +212,28 @@ class Order(models.Model):
 
     # Optional Fields =====
     vendor = models.ForeignKey(Vendor, blank = True, null = True)
-    is_COD = models.BooleanField(blank = True, default = False)
-    assigned_to = models.ForeignKey(User, blank = True, related_name = 'assinged_dg', null = True)
+    consumer = models.ForeignKey(Consumer, blank = True, null = True)
 
     completed_datetime = models.DateTimeField(blank = True, null = True)
-    modified_by_user = models.ForeignKey(User, blank = True, related_name='order_modified_by', null = True)
-    modified_date_time = models.DateTimeField(blank = True, null = True)
     quantity = models.FloatField(blank = True, null = True)
-
-    cancel_request_by_user = models.ForeignKey(User, blank = True, related_name='cancelled_by_user', null = True)
-    cancel_request_time = models.DateTimeField(blank = True, null = True)
-
     amount = models.CharField(max_length = 50, blank = True)
     notes = models.CharField(max_length = 500, blank = True)
     vendor_order_id = models.CharField(max_length = 10, blank = True)
 
+    is_COD = models.BooleanField(blank = True, default = False)
+    assigned_deliveryGuy = models.ForeignKey(User, blank = True, related_name = 'assinged_dg', null = True)
+
+    # Order Modified =====
+    modified_by_user = models.ForeignKey(User, blank = True, related_name='order_modified_by', null = True)
+    modified_date_time = models.DateTimeField(blank = True, null = True)
+    
+    # Cancel Request =====
+    cancel_request_by_user = models.ForeignKey(User, blank = True, related_name='cancelled_by_user', null = True)
+    cancel_request_time = models.DateTimeField(blank = True, null = True)
+
+
     def __unicode__(self):
+        # return u"%s %s" % (self.vendor.user.username, self.cusumer.user.username, self.order_status)
         return u"%s" % self.id
 
 
