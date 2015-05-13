@@ -38,7 +38,7 @@ class Area(models.Model):
     # Optional Fields
 
     def __unicode__(self):
-        return u"%s" % self.id
+        return u"%s" % self.area_name
 
 class Address(models.Model):
 
@@ -209,17 +209,17 @@ class Order(models.Model):
     order_status = models.CharField(max_length = 2, choices = ORDER_CHOICES, default = UNASSIGNED)
 
     # Optional Fields =====
-    vendor = models.ForeignKey(Vendor, blank = True)
+    vendor = models.ForeignKey(Vendor, blank = True, null = True)
     is_COD = models.BooleanField(blank = True, default = False)
-    assigned_to = models.ForeignKey(User, blank = True, related_name = 'assinged_dg')
+    assigned_to = models.ForeignKey(User, blank = True, related_name = 'assinged_dg', null = True)
 
-    completed_datetime = models.DateTimeField(blank = True)
-    modified_by_user = models.ForeignKey(User, blank = True, related_name='order_modified_by')
-    modified_date_time = models.DateTimeField(blank = True)
-    quantity = models.FloatField(blank = True)
+    completed_datetime = models.DateTimeField(blank = True, null = True)
+    modified_by_user = models.ForeignKey(User, blank = True, related_name='order_modified_by', null = True)
+    modified_date_time = models.DateTimeField(blank = True, null = True)
+    quantity = models.FloatField(blank = True, null = True)
 
-    cancel_request_by_user = models.ForeignKey(User, blank = True, related_name='cancelled_by_user')
-    cancel_request_time = models.DateTimeField(blank = True)
+    cancel_request_by_user = models.ForeignKey(User, blank = True, related_name='cancelled_by_user', null = True)
+    cancel_request_time = models.DateTimeField(blank = True, null = True)
 
     amount = models.CharField(max_length = 50, blank = True)
     notes = models.CharField(max_length = 500, blank = True)
