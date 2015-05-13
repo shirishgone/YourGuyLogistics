@@ -22,18 +22,6 @@ class YGUser(models.Model):
     # Mandatory Fields
     phone_number = models.CharField(max_length = 100, unique = True)
 
-    DELIVERGUY = 'DG'
-    VENDOR = 'VN'
-    CONSUMER = 'CN'
-    EMPLOYEE = 'EM'
-    USER_CHOICES = (
-        (DELIVERGUY, 'DeliveryGuy'),
-        (VENDOR, 'Vendor'),
-        (CONSUMER, 'Consumer'),
-        (EMPLOYEE, 'Employee'),
-    )
-    user_type = models.CharField(max_length = 2, choices = USER_CHOICES, default = EMPLOYEE)
-
     # Optional Fields
     picture_link = models.CharField(max_length = 50, blank = True)
     email = models.EmailField(max_length = 254, blank = True)
@@ -100,7 +88,7 @@ class Vendor(YGUser):
     store_name = models.CharField(max_length = 200)
 
     # Optional
-    address = models.ForeignKey(Address, related_name='vendor_address', blank = True)
+    address = models.ForeignKey(Address, related_name='vendor_address', blank = True, null = True)
     website_url = models.CharField(max_length = 100, blank = True)
 
     def __unicode__(self):
