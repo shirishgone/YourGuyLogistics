@@ -142,8 +142,8 @@ USE_TZ = True
 
 
 XS_SHARING_ALLOWED_ORIGINS = "*"
-
 XS_SHARING_ALLOWED_METHODS = ['POST','GET','OPTIONS', 'PUT', 'DELETE']
+XS_SHARING_ALLOWED_HEADERS = ['authorization']
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
