@@ -11,6 +11,8 @@ except AttributeError:
     XS_SHARING_ALLOWED_METHODS = ['POST', 'GET', 'OPTIONS', 'PUT', 'DELETE']
     XS_SHARING_ALLOWED_HEADERS = '*'
     XS_SHARING_ALLOWED_CREDENTIALS = 'true'
+
+
  
  
 class XsSharing(object):

@@ -47,15 +47,15 @@ INSTALLED_APPS = (
 
 MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
+    'django.middleware.common.CommonMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.security.SecurityMiddleware',    
     #Middleware class for cross origin requests =====
-    'middleware.crossdomainxhr.XsSharing', 
+    # 'middleware.crossdomainxhr.XsSharing', 
 )
 
 REST_FRAMEWORK = {
@@ -141,10 +141,6 @@ USE_L10N = True
 USE_TZ = True
 
 
-XS_SHARING_ALLOWED_ORIGINS = "*"
-XS_SHARING_ALLOWED_METHODS = ['POST','GET','OPTIONS', 'PUT', 'DELETE']
-# XS_SHARING_ALLOWED_HEADERS = ['authorization']
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
 
@@ -160,6 +156,7 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # Allow all host headers
 ALLOWED_HOSTS = ['*']
+CSRF_COOKIE_DOMAIN = ['*']
 
 # Static asset configuration
 import os
@@ -170,3 +167,8 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = (
     os.path.join(BASE_DIR, 'static'),
 )
+
+# XS_SHARING_ALLOWED_ORIGINS = "*"
+# XS_SHARING_ALLOWED_METHODS = ['POST','GET','OPTIONS', 'PUT', 'DELETE']
+# XS_SHARING_ALLOWED_HEADERS = ['x-requested-with', 'content-type', 'accept', 'origin', 'authorization', 'x-csrftoken','accept-encoding','accept-language']
+
