@@ -43,8 +43,8 @@ class Area(models.Model):
 class Address(models.Model):
 
     # Mandatory Fields
-    mini_address = models.CharField(max_length = 250, default = 'NA') 
-    area_code = models.CharField(max_length = 10 , default = 'NA')
+    mini_address = models.CharField(max_length = 250) 
+    area_code = models.CharField(max_length = 10)
 
     # Optional Fields
     landmark = models.CharField(max_length = 50, blank = True)
