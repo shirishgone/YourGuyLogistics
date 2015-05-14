@@ -119,7 +119,7 @@ class Consumer(YGUser):
 
     # Optional Fields
     facebook_id = models.CharField(max_length = 50, blank = True)
-    address = models.ForeignKey(Address, related_name='consumer_address', blank = True, on_delete = models.CASCADE)
+    address = models.ForeignKey(Address, related_name='consumer_address', null = True, blank = True, on_delete = models.CASCADE)
     associated_vendor = models.ManyToManyField(Vendor, blank = True)
     is_verified = models.BooleanField(blank = True, default = False)
 
