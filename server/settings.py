@@ -55,7 +55,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.security.SecurityMiddleware',    
     #Middleware class for cross origin requests =====
-    # 'middleware.crossdomainxhr.XsSharing', 
+    'middleware.crossdomainxhr.XsSharing', 
 )
 
 REST_FRAMEWORK = {
@@ -94,8 +94,6 @@ DJOSER = {
 }
 
 ROOT_URLCONF = 'server.urls'
-
-# AUTH_USER_MODEL = 'yourguy.YGUser'
 
 TEMPLATES = [
     {
@@ -156,7 +154,6 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # Allow all host headers
 ALLOWED_HOSTS = ['*']
-CSRF_COOKIE_DOMAIN = ['*']
 
 # Static asset configuration
 import os
@@ -168,7 +165,7 @@ STATICFILES_DIRS = (
     os.path.join(BASE_DIR, 'static'),
 )
 
-# XS_SHARING_ALLOWED_ORIGINS = "*"
-# XS_SHARING_ALLOWED_METHODS = ['POST','GET','OPTIONS', 'PUT', 'DELETE']
-# XS_SHARING_ALLOWED_HEADERS = ['x-requested-with', 'content-type', 'accept', 'origin', 'authorization', 'x-csrftoken','accept-encoding','accept-language']
-
+XS_SHARING_ALLOWED_ORIGINS = "*"
+XS_SHARING_ALLOWED_METHODS = ['POST','GET','OPTIONS', 'PUT', 'DELETE']
+XS_SHARING_ALLOWED_HEADERS = ['x-requested-with', 'content-type', 'accept', 'origin', 'authorization', 'x-csrftoken','accept-encoding','accept-language']
+XS_SHARING_ALLOWED_CREDENTIALS = 'true'
