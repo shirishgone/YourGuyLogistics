@@ -43,20 +43,15 @@ class Area(models.Model):
 class Address(models.Model):
 
     # Mandatory Fields
-    flat_number = models.CharField(max_length = 50)
-    # area_name = models.CharField(max_length = 50)
-    area = models.ForeignKey(Area, related_name='area', default=0)
+    mini_address = models.CharField(max_length = 250, default = 'NA') 
+    area_code = models.CharField(max_length = 10 , default = 'NA')
 
     # Optional Fields
-    floor_number = models.CharField(max_length = 50, blank = True)
-    building_name = models.CharField(max_length = 50, blank = True)
-    wing = models.CharField(max_length = 50, blank = True)
-    road = models.CharField(max_length = 50, blank = True)
     landmark = models.CharField(max_length = 50, blank = True)
     pin_code = models.CharField(max_length = 10, blank = True)
     country_code = models.CharField(max_length = 10, default='IN')
-    def __unicode__(self):        
-        return u"%s" % self.id
+    def __unicode__(self):
+        return u"%s %s" % (self.mini_address, self.area_code)                
 
 
 class DeliveryGuy(YGUser):
