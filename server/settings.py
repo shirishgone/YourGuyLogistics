@@ -55,7 +55,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.security.SecurityMiddleware',    
     #Middleware class for cross origin requests =====
-    '.middleware.crossdomainxhr.XsSharing', 
+    'middleware.crossdomainxhr.XsSharing', 
 )
 
 REST_FRAMEWORK = {
