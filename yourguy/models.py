@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 
+from django.core.validators import RegexValidator
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models.signals import post_save
@@ -20,7 +21,7 @@ class YGUser(models.Model):
     user = models.OneToOneField(User)
 
     # Mandatory Fields
-    phone_number = models.CharField(max_length = 100, unique = True)
+    phone_number = models.CharField(max_length = 15, unique = True)
 
     # Optional Fields
     picture_link = models.CharField(max_length = 50, blank = True)
