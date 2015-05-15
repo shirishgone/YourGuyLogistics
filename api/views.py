@@ -40,6 +40,15 @@ def is_vendorexists(phone_number):
 		return True
 	return False
 
+
+import base64
+def create_token(user,user_role):
+	full_string = '{"username":%s,"user_role":%s}'% (user.username, user_role)	
+	token_string = base64.b64encode(full_string)
+	token = Token.objects.create(user = user, key= token_string)
+	return token
+
+
 @api_view(['POST'])
 def register_vendor(request):
 	"""
@@ -61,7 +70,8 @@ def register_vendor(request):
 
 		new_user = User.objects.create(username=username, password=password, email='')
 		new_vendor = Vendor.objects.create(user=new_user, store_name=store, phone_number = phone_number)
-		token = Token.objects.get(user=new_user)
+		token = create_token(new_user, 'vendor')
+
 		content = {'user_id': new_user.id, 'vendor_id': new_vendor.id, 'auth_token': token.key }
 		return Response(content, status = status.HTTP_201_CREATED)    			
 
