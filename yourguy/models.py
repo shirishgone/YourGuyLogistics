@@ -202,15 +202,15 @@ class Order(models.Model):
     pickup_address = models.ForeignKey(Address, related_name='pickup_address', on_delete = models.CASCADE)
     delivery_address = models.ForeignKey(Address, related_name='delivery_address', on_delete = models.CASCADE)
 
-    UNASSIGNED = 'UN'
-    ASSIGNED = 'AS'
-    COMPLETED = 'CD'
+    QUEUED = 'QUEUED'
+    INTRANSIT = 'INTRANSIT'
+    DELIVERED = 'DELIVERED'
     ORDER_CHOICES = (
-        (UNASSIGNED, 'UnAssigned'),
-        (ASSIGNED, 'Assigned'),
-        (COMPLETED, 'Completed'),
+        (QUEUED, 'Queued'),
+        (INTRANSIT, 'InTransit'),
+        (DELIVERED, 'Delivered'),
     )
-    order_status = models.CharField(max_length = 2, choices = ORDER_CHOICES, default = UNASSIGNED)
+    order_status = models.CharField(max_length = 15, choices = ORDER_CHOICES, default = QUEUED)
 
     # Optional Fields =====
     vendor = models.ForeignKey(Vendor, blank = True, null = True)
