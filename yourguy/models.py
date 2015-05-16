@@ -66,13 +66,13 @@ class DeliveryGuy(YGUser):
 
     # Optional Fields
     
-    AVAILABLE = 'AV'
-    BUSY = 'BS'
+    AVAILABLE = 'AVAILABLE'
+    BUSY = 'BUSY'
     STATUS_CHOICES = (
-        (AVAILABLE, 'Available'),
-        (BUSY, 'Busy'),
+        (AVAILABLE, 'AVAILABLE'),
+        (BUSY, 'BUSY'),
     )
-    availability = models.CharField(max_length = 2, choices = STATUS_CHOICES, default = AVAILABLE)
+    availability = models.CharField(max_length = 15, choices = STATUS_CHOICES, default = AVAILABLE)
     
     assigned_area = models.ForeignKey(Area, related_name='assigned_area', blank = True, default=0, null = True)
     address  = models.ForeignKey(Address, related_name='dg_home_address', blank = True, null = True)
@@ -101,17 +101,17 @@ class Employee(YGUser):
     # Mandatory Fields
     employee_code = models.CharField(max_length = 20)
 
-    SALES = 'SL'
-    OPS = 'OP'
-    CALLCENTER = 'CC'
-    MANAGER = 'MG'
+    SALES = 'SALES'
+    OPS = 'OPERATIONS'
+    CALLER = 'CALLER'
+    MANAGER = 'MANAGER'
     DEPARTMENT_CHOICES = (
-            (SALES, 'Sales'),
-            (OPS, 'Operations'),
-            (CALLCENTER, 'CallCenter'),
-            (MANAGER, 'Manager')
+            (SALES, 'SALES'),
+            (OPS, 'OPERATIONS'),
+            (CALLER, 'CALLER'),
+            (MANAGER, 'MANAGER')
             )
-    department = models.CharField(max_length = 2, choices = DEPARTMENT_CHOICES, default = CALLCENTER)
+    department = models.CharField(max_length = 15, choices = DEPARTMENT_CHOICES, default = CALLER)
 
     def __unicode__(self):
         return unicode(self.user.username)
@@ -149,15 +149,15 @@ class DGAttendance(models.Model):
     dg = models.ForeignKey(DeliveryGuy)
     date = models.DateField(default = datetime.date.today)
 
-    LEAVE = 'LE'
-    WORKING = 'WG'
-    UNKNOWN = 'UN'
+    LEAVE = 'LEAVE'
+    WORKING = 'WORKING'
+    UNKNOWN = 'UNKNOWN'
     STATUS_CHOICES = (
-            (LEAVE, 'Leave'),
-            (WORKING, 'Working'),
-            (UNKNOWN, 'UN'),
+            (LEAVE, 'LEAVE'),
+            (WORKING, 'WORKING'),
+            (UNKNOWN, 'UNKNOWN'),
             )
-    status = models.CharField(max_length = 2, choices = STATUS_CHOICES, default = UNKNOWN)
+    status = models.CharField(max_length = 15, choices = STATUS_CHOICES, default = UNKNOWN)
 
     # Optional Fields
     login_time = models.DateTimeField(blank = True, null = True)
@@ -206,9 +206,9 @@ class Order(models.Model):
     INTRANSIT = 'INTRANSIT'
     DELIVERED = 'DELIVERED'
     ORDER_CHOICES = (
-        (QUEUED, 'Queued'),
-        (INTRANSIT, 'InTransit'),
-        (DELIVERED, 'Delivered'),
+        (QUEUED, 'QUEUED'),
+        (INTRANSIT, 'INTRANSIT'),
+        (DELIVERED, 'DELIVERED'),
     )
     order_status = models.CharField(max_length = 15, choices = ORDER_CHOICES, default = QUEUED)
 

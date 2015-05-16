@@ -78,7 +78,6 @@ class OrderViewSet(viewsets.ModelViewSet):
         else:
             pass
 
-
         # filtering through vendor_id                
         if vendor_id is not None:
             vendor = self.get_vendor(vendor_id)
@@ -125,7 +124,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         order = self.get_order(order_id)
         dg = self.get_deliveryguy(dg_id)
         
-        dg.availability = 'BS'
+        dg.availability = 'BUSY'
         dg.save()
 
         order.assigned_to = dg.user
@@ -136,16 +135,16 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     @list_route()
     def undelivered_orders():
-        orders = Order.objects.filter(order_status='AS')
+        orders = Order.objects.filter(order_status='INTRANSIT')
         serializer = OrderSerializer(orders, many=True)
         return Response(serializer.data)        
 
     @list_route()
     def unassigned_orders():
-        orders = Order.objects.filter(order_status='UN')
+        orders = Order.objects.filter(assigned_deliveryGuy= None)
         serializer = OrderSerializer(orders, many=True)
         return Response(serializer.data)        
-
+    
     # @list_route()
     # def today_orders():    
     #     date = datetime.today
