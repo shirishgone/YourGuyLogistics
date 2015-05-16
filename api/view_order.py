@@ -146,13 +146,13 @@ class OrderViewSet(viewsets.ModelViewSet):
         serializer = OrderSerializer(orders, many=True)
         return Response(serializer.data)        
 
-    @list_route()
-    def today_orders():    
-        date = datetime.today
-        day_start = datetime.combine(date, time())
-        next_day = day_start + timedelta(1)
-        day_end = datetime.combine(next_day, time())
+    # @list_route()
+    # def today_orders():    
+    #     date = datetime.today
+    #     day_start = datetime.combine(date, time())
+    #     next_day = day_start + timedelta(1)
+    #     day_end = datetime.combine(next_day, time())
 
-        orders = Order.objects.filter(delivery_datetime__lte=day_end, delivery_datetime__gte=day_start)
-        serializer = OrderSerializer(orders, many=True)
-        return Response(serializer.data)        
+    #     orders = Order.objects.filter(delivery_datetime__lte=day_end, delivery_datetime__gte=day_start)
+    #     serializer = OrderSerializer(orders, many=True)
+    #     return Response(serializer.data)        

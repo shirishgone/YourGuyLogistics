@@ -109,7 +109,9 @@ def register_consumer(request):
 
 		username = request.data['username']
 		phone_number = request.data['phone_number']
-
+		password = request.data['password']
+		role = user_role(request.user)
+		
 		if is_userexists(username) is True:
 			content = {'error':'user already exists'}	
 			return Response(content, status = status.HTTP_404_NOT_FOUND)
@@ -118,20 +120,34 @@ def register_consumer(request):
 			content = {'error':'Customer with same phone number exists'}	
 			return Response(content, status = status.HTTP_404_NOT_FOUND)
 		
-		# Flat_number, Building Name, Street, Area Code
-		flat_number = request.data['flat_number']
-		building = request.data['building']
-		street = request.data['street']
-		area_code = request.data['area_code']
-
-		#create address
-		new_address = Address.objects.create(flat_number=flat_number, building=building, street=street, area_code= area_code)
-		# TODO: Fetch vendor with token id and add it to associated_vendor
-		
 		new_user = User.objects.create(username=username, password=password, email='')
-		new_consumer = Consumer.objects.create(user=new_user, phone_number = phone_number, address = new_address)
+		new_consumer = Consumer.objects.create(user=new_user, phone_number = phone_number)
 		token = create_token(new_user, constants.CONSUMER)
+		
+		# SAVING CONSUMER ADDRESS ======
+		try:
+			flat_number = request.data['flat_number']
+			building = request.data['building']
+			street = request.data['street']
+			area_code = request.data['area_code']
+			
+			new_address = Address.objects.create(flat_number=flat_number, building=building, street=street, area_code= area_code)
+			new_consumer.address = new_address
+			new_consumer.save()
 
+		except Exception, e:
+			pass
+
+		# SETTING ASSOCIATED VENDOR, IF VENDOR CREATES THE CUSTOMER	=======	
+		try:
+			if role == constants.VENDOR:
+				associated_vendor = Vendor.objects.get(user = request.user)
+				new_consumer.associated_vendor.add(associated_vendor)
+				new_consumer.save()
+
+		except Exception, e:
+			pass
+		
 		content = {'auth_token': token.key, 'consumer_id':new_consumer.id , 'user_id':new_user.id}
 		return Response(content, status = status.HTTP_201_CREATED)    			
 

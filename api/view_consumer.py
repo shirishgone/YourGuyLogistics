@@ -29,9 +29,16 @@ class ConsumerViewSet(viewsets.ModelViewSet):
         by filtering against a `consumer_id` or 'vendor_id' query parameter in the URL.
         """
         queryset = Consumer.objects.all()
-        
-        # filtering through Vendor id        
         vendor_id = self.request.QUERY_PARAMS.get('vendor_id', None)
+        
+        role = user_role(self.request.user)
+        if role == constants.VENDOR:
+            vendor = Vendor.objects.get(user = self.request.user)
+            vendor_id = vendor.id
+        else:
+            pass
+
+        # filtering through Vendor id        
         if vendor_id is not None:
             vendor = self.get_vendor(vendor_id)
             queryset = queryset.filter(vendor=vendor)
