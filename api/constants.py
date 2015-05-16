@@ -1,0 +1,3 @@
+VENDOR = 'vendor'
+CONSUMER = 'consumer'
+

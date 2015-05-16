@@ -22,6 +22,7 @@ urlpatterns = patterns(
     url(r'^docs/', include('rest_framework_swagger.urls')),
     url(r'^auth/', include('djoser.urls')),
     url(r'^register_vendor/', views.register_vendor,name='Vendor Registration'),
+    url(r'^register_consumer/', views.register_consumer,name='Consumer Registration'),
 )
 
 

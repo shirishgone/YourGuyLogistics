@@ -12,6 +12,10 @@ from api.serializers import OrderSerializer
 
 from django.utils.dateparse import parse_datetime
 
+from api.views import user_role
+
+import constants
+
 class OrderViewSet(viewsets.ModelViewSet):
     """
     Order viewset that provides the standard actions 
@@ -55,38 +59,57 @@ class OrderViewSet(viewsets.ModelViewSet):
         """
         Optionally restricts the returned purchases to a given user,
         by filtering against a `consumer_id` or 'vendor_id' query parameter in the URL.
-        """
+        """        
         queryset = Order.objects.all()
-        
-        # filtering through Vendor id        
         vendor_id = self.request.QUERY_PARAMS.get('vendor_id', None)
+        consumer_id = self.request.QUERY_PARAMS.get('consumer_id', None)
+        dg_id = self.request.QUERY_PARAMS.get('dg_id', None)
+        date_string = self.request.QUERY_PARAMS.get('date', None)
+
+        role = user_role(self.request.user)
+
+        if role == constants.VENDOR:
+            vendor = Vendor.objects.get(user = self.request.user)
+            vendor_id = vendor.id
+        elif role == constants.CONSUMER:
+            consumer = Consumer.objects.get(user = self.request.user)
+            consumer_id = consumer.id
+            vendor_id = None
+        else:
+            pass
+
+
+        # filtering through vendor_id                
         if vendor_id is not None:
             vendor = self.get_vendor(vendor_id)
             queryset = queryset.filter(vendor=vendor)
 
-        # Filtering through Consumer_id
-        consumer_id = self.request.QUERY_PARAMS.get('consumer_id', None)
+        # filtering through consumer_id
         if consumer_id is not None:
             consumer = self.get_consumer(consumer_id)
             queryset = queryset.filter(consumer=consumer)
 
-        # Filtering through Consumer_id
-        dg_id = self.request.QUERY_PARAMS.get('dg_id', None)
+        # filtering through dg_id
         if dg_id is not None:
             dg = self.get_deliveryguy(dg_id)
             queryset = queryset.filter(assigned_to=dg.user)
 
-        # Filtering by Date
-        date_string = self.request.QUERY_PARAMS.get('date', None)
+        # filtering by date
         if date_string is not None:
             date = parse_datetime(date_string)
             day_start = datetime.combine(date, time())
-            next_day = today + timedelta(1)
+            next_day = day_start + timedelta(1)
             day_end = datetime.combine(next_day, time())
-
+            queryset = queryset.filter(delivery_datetime__lte=day_end, delivery_datetime__gte=day_start)
+        else:
+            date = datetime.today()
+            day_start = datetime.combine(date, time())
+            next_day = day_start + timedelta(1)
+            day_end = datetime.combine(next_day, time())
             queryset = queryset.filter(delivery_datetime__lte=day_end, delivery_datetime__gte=day_start)
 
-        # Filtering through area_code
+
+        # filtering through area_code
         area_code = self.request.QUERY_PARAMS.get('area_code', None)
         if area_code is not None:
             area = self.get_area(area_code)
@@ -127,7 +150,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     def today_orders():    
         date = datetime.today
         day_start = datetime.combine(date, time())
-        next_day = today + timedelta(1)
+        next_day = day_start + timedelta(1)
         day_end = datetime.combine(next_day, time())
 
         orders = Order.objects.filter(delivery_datetime__lte=day_end, delivery_datetime__gte=day_start)

@@ -13,12 +13,14 @@ from rest_framework.reverse import reverse
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
-from yourguy.models import Vendor, Address
+from yourguy.models import Vendor, Address, Consumer
 from api.serializers import UserSerializer, OrderSerializer, AddressSerializer, ConsumerSerializer
 
 import datetime
 import random
 import string
+
+import constants
 
 def generate_random_number(size):
 	"""
@@ -40,15 +42,29 @@ def is_vendorexists(phone_number):
 		return True
 	return False
 
+def is_consumerexists(phone_number):
+	if Consumer.objects.filter(phone_number=phone_number).count():
+		return True
+	return False
+
 
 import base64
 def create_token(user,user_role):
-
-	# binascii.hexlify(os.urandom(20)).decode()
-	full_string = '{%s:%s}'% (user.username, user_role)	
+	full_string = '%s:%s'% (user.username, user_role)	
 	token_string = base64.b64encode(full_string)
 	token = Token.objects.create(user = user, key= token_string)
 	return token
+
+def user_role(user):	
+	token = Token.objects.get(user=user)
+	token_string = base64.b64decode(token.key)
+	role = token_string.split(':').pop()
+	if role == constants.VENDOR:
+		return constants.VENDOR
+	elif role == constants.CONSUMER:
+		return constants.CONSUMER	
+	else:
+		return None	
 
 
 @api_view(['POST'])
@@ -56,6 +72,7 @@ def register_vendor(request):
 	"""
 	Registration for Vendor
 	"""
+	print request.user
 	try:
 		store = request.data['store_name']
 		username = request.data['username']
@@ -72,7 +89,7 @@ def register_vendor(request):
 
 		new_user = User.objects.create(username=username, password=password, email='')
 		new_vendor = Vendor.objects.create(user=new_user, store_name=store, phone_number = phone_number)
-		token = create_token(new_user, 'vendor')
+		token = create_token(new_user, constants.VENDOR)
 
 		content = {'user_id': new_user.id, 'vendor_id': new_vendor.id, 'auth_token': token.key }
 		return Response(content, status = status.HTTP_201_CREATED)    			
@@ -81,32 +98,42 @@ def register_vendor(request):
 		raise e
 
 
-# @api_view(['POST'])
-# def register_consumer(request):
-# 	"""
-# 	Registration for Consumer
-# 	"""
-# 	try:
-# 		consumer_name = request.data['username']
-# 		phone_number = request.data['phone_number']
-# 		email = request.data['username']
-# 		address = request.data['address']
+@api_view(['POST'])
+def register_consumer(request):
+	"""
+	Registration for Consumer
+	"""
+	try:
+		print request.user
+		print request.META
+
+		username = request.data['username']
+		phone_number = request.data['phone_number']
+
+		if is_userexists(username) is True:
+			content = {'error':'user already exists'}	
+			return Response(content, status = status.HTTP_404_NOT_FOUND)
+
+		if is_consumerexists(phone_number) is True:
+			content = {'error':'Customer with same phone number exists'}	
+			return Response(content, status = status.HTTP_404_NOT_FOUND)
 		
+		# Flat_number, Building Name, Street, Area Code
+		flat_number = request.data['flat_number']
+		building = request.data['building']
+		street = request.data['street']
+		area_code = request.data['area_code']
 
-# 		if is_userexists(username) is True:
-# 			content = {'error':'user already exists'}	
-# 			return Response(content, status = status.HTTP_404_NOT_FOUND)
+		#create address
+		new_address = Address.objects.create(flat_number=flat_number, building=building, street=street, area_code= area_code)
+		# TODO: Fetch vendor with token id and add it to associated_vendor
+		
+		new_user = User.objects.create(username=username, password=password, email='')
+		new_consumer = Consumer.objects.create(user=new_user, phone_number = phone_number, address = new_address)
+		token = create_token(new_user, constants.CONSUMER)
 
-# 		if is_vendorexists(phone_number) is True:
-# 			content = {'error':'Vendor with same phone number exists'}	
-# 			return Response(content, status = status.HTTP_404_NOT_FOUND)
+		content = {'auth_token': token.key, 'consumer_id':new_consumer.id , 'user_id':new_user.id}
+		return Response(content, status = status.HTTP_201_CREATED)    			
 
-# 		new_user = User.objects.create(username=username, password=password, email='')
-# 		new_vendor = Vendor.objects.create(user=new_user, store_name=store, phone_number = phone_number)
-# 		token = create_token(new_user, 'vendor')
-
-# 		content = {'user_id': new_user.id, 'vendor_id': new_vendor.id, 'auth_token': token.key }
-# 		return Response(content, status = status.HTTP_201_CREATED)    			
-
-# 	except Exception, e:
-# 		raise e		
+	except Exception, e:
+		raise e		
