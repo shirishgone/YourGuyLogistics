@@ -12,21 +12,23 @@ class UserSerializer(serializers.ModelSerializer):
         model = get_user_model()
         fields = ('id', 'first_name', 'last_name', 'username', 'email')
 
-class OrderSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Order
-
 class AddressSerializer(serializers.ModelSerializer):
     class Meta:
         model = Address
 
 class ConsumerSerializer(serializers.ModelSerializer):
-    address = AddressSerializer('address')
+    user = UserSerializer(required=False)
+    address = AddressSerializer(required=False)
     class Meta:
         model = Consumer
 
+class OrderSerializer(serializers.ModelSerializer):
+    consumer = ConsumerSerializer(required=False)
+    class Meta:
+        model = Order
+
 class VendorSerializer(serializers.ModelSerializer):
-    address = AddressSerializer('address')
+    address = AddressSerializer(required=False)
     class Meta:
         model = Vendor
 
