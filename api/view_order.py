@@ -89,7 +89,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                 pass
             
             #2. FILTERING BY consumer_phone_number
-            if consumer_id is not None:
+            if consumer_phone_number is not None:
                 if is_consumerexists(consumer_phone_number):
                     user = User.objects.get(username = consumer_phone_number)
                     consumer = Consumer.objects.get(user = user)
@@ -102,8 +102,8 @@ class OrderViewSet(viewsets.ModelViewSet):
         # FILTERING BY ASSIGNED DELIVERY GUY ----
         if dg_phone_number is not None:
             if is_dgexists:
-                user = User.objects.get(username = consumer_phone_number)
-                queryset = queryset.filter(assigned_to=dg.user)
+                user = User.objects.get(username = dg_phone_number)
+                queryset = queryset.filter(assigned_deliveryGuy=user)
             else:
                 pass
         else:
