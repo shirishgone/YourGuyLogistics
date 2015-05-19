@@ -75,14 +75,7 @@ class RequestedVendor(models.Model):
     store_name = models.CharField(max_length = 100)
     address = models.ForeignKey(Address)
     email = models.EmailField(max_length = 50)
-
-    # Optional
-    website_url = models.CharField(max_length = 100, blank = True)
-    alternate_phone_number = models.CharField(max_length = 15, blank = True)
-    verified = models.BooleanField(blank = True, default = False)
-
-    pan_card = models.CharField(max_length = 15, blank = True)
-    notes = models.CharField(max_length = 500, blank = True)
+    phone_number = models.CharField(max_length = 15, blank = True)
 
     def __unicode__(self):
         return unicode(self.store_name)
@@ -117,7 +110,7 @@ class VendorAgent(YGUser):
     role = models.CharField(max_length = 15, choices = VENDOR_AGENT_CHOICES, default = EMPLOYEE)
 
     def __unicode__(self):
-        return unicode(self.vendor.store_name)
+        return u"%s - %s" % (self.vendor.store_name, self.user.first_name)
 
 class Employee(YGUser):
     

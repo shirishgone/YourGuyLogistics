@@ -13,7 +13,7 @@ from rest_framework.reverse import reverse
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
-from yourguy.models import Vendor, Address, Consumer, DeliveryGuy, VendorAgent
+from yourguy.models import Vendor, Address, Consumer, DeliveryGuy, VendorAgent, RequestedVendor
 from api.serializers import UserSerializer, OrderSerializer, AddressSerializer, ConsumerSerializer
 
 import datetime
@@ -37,8 +37,8 @@ def is_userexists(username):
 		return True
 	return False
 
-def is_vendorexists(phone_number):
-	if Vendor.objects.filter(username=phone_number).count():
+def is_vendorexists(vendor_id):
+	if Vendor.objects.filter(id=vendor_id).count():
 		return True
 	return False
 
@@ -109,7 +109,7 @@ def create_vendor_agent(request):
 	if is_userexists(phone_number) is True:
 		content = {'error':'User already exists with same phone number'}	
 		return Response(content, status = status.HTTP_400_BAD_REQUEST)		
-		
+
 	new_user = User.objects.create(username = phone_number, password = password)
 	new_vendor_agent = VendorAgent.objects.create(user = new_user, vendor = vendor)
 	if name is not None:
@@ -135,13 +135,11 @@ def request_vendor_account(request):
 		street = request.data['street']
 		area_code = request.data['area_code']
 	except:
-		content = {'error':'Incomplete params', 'description':'phone_number, name'}	
+		content = {'error':'Incomplete params', 'description':'phone_number, store_name, email, flat_number, building, street, area_code'}
 		return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
-	new_requested_vendor = RequestedVendor.objects.create(store_name = store, email = email, phone_number = phone_number)
 	new_address = Address.objects.create(flat_number=flat_number, building=building, street=street, area_code= area_code)
-	new_requested_vendor.address = new_address
-	new_requested_vendor.save()
+	new_requested_vendor = RequestedVendor.objects.create(store_name = store, address = new_address, email = email, phone_number = phone_number)
 
 	content = {'description':'Request submitted successfully'}
 	return Response(content, status = status.HTTP_201_CREATED)

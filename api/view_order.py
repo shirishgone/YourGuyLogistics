@@ -1,4 +1,4 @@
-from yourguy.models import Order, Consumer, Vendor, DeliveryGuy, Area
+from yourguy.models import Order, Consumer, Vendor, DeliveryGuy, Area, VendorAgent
 
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status, authentication
@@ -12,7 +12,7 @@ from api.serializers import OrderSerializer
 
 from django.utils.dateparse import parse_datetime
 
-from api.views import user_role
+from api.views import user_role, is_vendorexists, is_consumerexists, is_dgexists
 
 import constants
 
@@ -62,38 +62,57 @@ class OrderViewSet(viewsets.ModelViewSet):
         """        
         queryset = Order.objects.all()
         vendor_id = self.request.QUERY_PARAMS.get('vendor_id', None)
-        consumer_id = self.request.QUERY_PARAMS.get('consumer_id', None)
-        dg_id = self.request.QUERY_PARAMS.get('dg_id', None)
+        consumer_phone_number = self.request.QUERY_PARAMS.get('consumer_phone_number', None)
+        dg_phone_number = self.request.QUERY_PARAMS.get('dg_phone_number', None)
         date_string = self.request.QUERY_PARAMS.get('date', None)
 
         role = user_role(self.request.user)
 
+        import pdb
+        pdb.set_trace()
+
         if role == constants.VENDOR:
-            vendor = Vendor.objects.get(user = self.request.user)
-            vendor_id = vendor.id
+            vendor_agent = VendorAgent.objects.get(user = self.request.user)
+            queryset = queryset.filter(vendor=vendor_agent.vendor)
+
         elif role == constants.CONSUMER:
             consumer = Consumer.objects.get(user = self.request.user)
-            consumer_id = consumer.id
-            vendor_id = None
-        else:
-            pass
-
-        # filtering through vendor_id                
-        if vendor_id is not None:
-            vendor = self.get_vendor(vendor_id)
-            queryset = queryset.filter(vendor=vendor)
-
-        # filtering through consumer_id
-        if consumer_id is not None:
-            consumer = self.get_consumer(consumer_id)
             queryset = queryset.filter(consumer=consumer)
+        else:
+            # OPERATIONS FILTERING ----
+            
+            # 1. FILTERING BY vendor_id                
+            if vendor_id is not None:
+                if is_vendorexists(vendor_id):
+                    vendor = Vendor.objects.get(id = vendor_id)
+                    queryset = queryset.filter(vendor=vendor)
+                else:
+                    pass
+            else:
+                pass
+            
+            #2. FILTERING BY consumer_phone_number
+            if consumer_id is not None:
+                if is_consumerexists(consumer_phone_number):
+                    user = User.objects.get(username = consumer_phone_number)
+                    consumer = Consumer.objects.get(user = user)
+                    queryset = queryset.filter(consumer=consumer)
+                else:
+                    pass
+            else:
+                pass
+        
+        # FILTERING BY ASSIGNED DELIVERY GUY ----
+        if dg_phone_number is not None:
+            if is_dgexists:
+                user = User.objects.get(username = consumer_phone_number)
+                queryset = queryset.filter(assigned_to=dg.user)
+            else:
+                pass
+        else:
+            pass        
 
-        # filtering through dg_id
-        if dg_id is not None:
-            dg = self.get_deliveryguy(dg_id)
-            queryset = queryset.filter(assigned_to=dg.user)
-
-        # filtering by date
+        # FILTERING BY DATE -----
         if date_string is not None:
             date = parse_datetime(date_string)
             day_start = datetime.combine(date, time())
@@ -108,7 +127,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(delivery_datetime__lte=day_end, delivery_datetime__gte=day_start)
 
 
-        # filtering through area_code
+        # FILTERING BY  area_code ---
         area_code = self.request.QUERY_PARAMS.get('area_code', None)
         if area_code is not None:
             area = self.get_area(area_code)
