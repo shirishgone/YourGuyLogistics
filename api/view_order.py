@@ -68,9 +68,6 @@ class OrderViewSet(viewsets.ModelViewSet):
 
         role = user_role(self.request.user)
 
-        import pdb
-        pdb.set_trace()
-
         if role == constants.VENDOR:
             vendor_agent = VendorAgent.objects.get(user = self.request.user)
             queryset = queryset.filter(vendor=vendor_agent.vendor)
