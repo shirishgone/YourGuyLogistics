@@ -10,26 +10,6 @@ from rest_framework.authtoken.models import Token
 
 import datetime
 
-# @receiver(post_save, sender=settings.AUTH_USER_MODEL)
-# def create_auth_token(sender, instance = None, created = False, **kwargs):
-#     if created:
-#         Token.objects.create(user = instance)
-
-
-class YGUser(models.Model):
-
-    user = models.OneToOneField(User)
-
-    # Mandatory Fields
-    phone_number = models.CharField(max_length = 15, unique = True)
-
-    # Optional Fields
-    picture_link = models.CharField(max_length = 50, blank = True)
-    email = models.EmailField(max_length = 254, blank = True)
-
-    class Meta:
-        abstract = True
-
 class Area(models.Model):
 
     # Mandatory Fields
@@ -60,44 +40,87 @@ class Address(models.Model):
     def __unicode__(self):
         return u"%s %s %s %s" % (self.flat_number, self.building, self.street, self.area_code)                
 
+class YGUser(models.Model):
+
+    user = models.OneToOneField(User)
+    name = models.CharField(max_length = 50, blank = True, null = True)
+
+    # Optional Fields
+    email = models.EmailField(max_length = 50, blank = True)
+    picture_link = models.CharField(max_length = 50, blank = True)
+
+    class Meta:
+        abstract = True
 
 class DeliveryGuy(YGUser):
     # Mandatory Fields
-
-    # Optional Fields
-    
     AVAILABLE = 'AVAILABLE'
     BUSY = 'BUSY'
     STATUS_CHOICES = (
         (AVAILABLE, 'AVAILABLE'),
         (BUSY, 'BUSY'),
     )
-    availability = models.CharField(max_length = 15, choices = STATUS_CHOICES, default = AVAILABLE)
-    
-    assigned_area = models.ForeignKey(Area, related_name='assigned_area', blank = True, default=0, null = True)
-    address  = models.ForeignKey(Address, related_name='dg_home_address', blank = True, null = True)
+    status = models.CharField(max_length = 15, choices = STATUS_CHOICES, default = AVAILABLE)
+
+    # Optional Fields    
     latitude = models.CharField(max_length = 10, blank = True)
     longitude = models.CharField(max_length = 10, blank = True)
-    alternate_phone_number = models.CharField(max_length = 15, blank = True)
-    escalation_phone_number = models.CharField(max_length = 15, blank = True)
 
     def __unicode__(self):
         return unicode(self.user.username)
 
-
-class Vendor(YGUser):
+class RequestedVendor(models.Model):
+    
     # Mandatory Fields
-    store_name = models.CharField(max_length = 200)
+    store_name = models.CharField(max_length = 100)
+    address = models.ForeignKey(Address)
+    email = models.EmailField(max_length = 50)
 
     # Optional
-    address = models.ForeignKey(Address, related_name='vendor_address', blank = True, null = True)
     website_url = models.CharField(max_length = 100, blank = True)
+    alternate_phone_number = models.CharField(max_length = 15, blank = True)
+    verified = models.BooleanField(blank = True, default = False)
+
+    pan_card = models.CharField(max_length = 15, blank = True)
+    notes = models.CharField(max_length = 500, blank = True)
 
     def __unicode__(self):
         return unicode(self.store_name)
 
+class Vendor(models.Model):
+    # Mandatory Fields
+    store_name = models.CharField(max_length = 100)
+    address = models.ForeignKey(Address, related_name='vendor_address', blank = True, null = True)
+    email = models.EmailField(max_length = 50)
+
+    # Optional
+    website_url = models.CharField(max_length = 100, blank = True)
+    alternate_phone_number = models.CharField(max_length = 15, blank = True)
+    verified = models.BooleanField(blank = True, default = False)
+
+    pan_card = models.CharField(max_length = 15, blank = True)
+    notes = models.CharField(max_length = 500, blank = True)
+
+    def __unicode__(self):
+        return unicode(self.store_name)
+
+class VendorAgent(YGUser):
+    vendor = models.ForeignKey(Vendor, related_name='vendor')
+    branch = models.CharField(max_length = 50, blank = True)
+    
+    EMPLOYEE = 'EMPLOYEE'
+    MANAGER = 'MANAGER'
+    VENDOR_AGENT_CHOICES = (
+            (EMPLOYEE, 'EMPLOYEE'),
+            (MANAGER, 'MANAGER')
+            )
+    role = models.CharField(max_length = 15, choices = VENDOR_AGENT_CHOICES, default = EMPLOYEE)
+
+    def __unicode__(self):
+        return unicode(self.vendor.store_name)
 
 class Employee(YGUser):
+    
     # Mandatory Fields
     employee_code = models.CharField(max_length = 20)
 
@@ -118,12 +141,12 @@ class Employee(YGUser):
 
 
 class Consumer(YGUser):
-
+    
     # Optional Fields
     facebook_id = models.CharField(max_length = 50, blank = True)
-    address = models.ForeignKey(Address, related_name='consumer_address', null = True, blank = True, on_delete = models.CASCADE)
     associated_vendor = models.ManyToManyField(Vendor, blank = True)
-    is_verified = models.BooleanField(blank = True, default = False)
+    phone_verified = models.BooleanField(blank = True, default = False)
+    address  = models.ForeignKey(Address, blank = True, null = True)
 
     def __unicode__(self):
         return unicode(self.user.username)
@@ -168,6 +191,7 @@ class DGAttendance(models.Model):
 
 
 class Group(models.Model):
+    
     # Mandatory Fields
     name = models.CharField(max_length = 50)
     created_by = models.ForeignKey(User)
@@ -179,6 +203,7 @@ class Group(models.Model):
         return unicode(self.name)
 
 class UserGroup(models.Model):
+    
     # Mandatory Fields
     group = models.ForeignKey(Group)     
     user =  models.ForeignKey(User)

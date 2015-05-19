@@ -13,7 +13,7 @@ from rest_framework.reverse import reverse
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
-from yourguy.models import Vendor, Address, Consumer, DeliveryGuy
+from yourguy.models import Vendor, Address, Consumer, DeliveryGuy, VendorAgent
 from api.serializers import UserSerializer, OrderSerializer, AddressSerializer, ConsumerSerializer
 
 import datetime
@@ -38,14 +38,27 @@ def is_userexists(username):
 	return False
 
 def is_vendorexists(phone_number):
-	if Vendor.objects.filter(phone_number=phone_number).count():
+	if Vendor.objects.filter(username=phone_number).count():
 		return True
 	return False
 
+def is_dgexists(phone_number):
+	if is_userexists(phone_number):
+		user = User.objects.get(username = phone_number)
+		if DeliveryGuy.objects.filter(user=user).count():
+			return True
+		return False
+	else:
+		return False	
+
 def is_consumerexists(phone_number):
-	if Consumer.objects.filter(phone_number=phone_number).count():
-		return True
-	return False
+	if is_userexists(phone_number):
+		user = User.objects.get(username = phone_number)
+		if Consumer.objects.filter(user=user).count():
+			return True
+		return False
+	else:
+		return False	
 
 
 import base64
@@ -71,186 +84,172 @@ def verify_password(user, password):
 	if verified_user is not None:
 		return True
 	else:
-		return False    	
+		return False
 
 @api_view(['POST'])
-def register_vendor(request):
+def create_vendor_agent(request):
+	"""
+	Creating Vendor Agent for vendor
+	"""
+	try:
+		vendor_id = request.data['vendor_id']
+		phone_number = request.data['phone_number']
+		name = request.data.get('name')
+		password = request.data['password']	
+	except Exception, e:
+		content = {'error':'Incomplete params', 'description':'vendor_id, phone_number, name, password'}	
+		return Response(content, status = status.HTTP_400_BAD_REQUEST)
+	
+	try:
+		vendor = Vendor.objects.get(id = vendor_id)
+	except:
+		content = {'error':'Vendor with id doesnt exists'}
+		return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
+	if is_userexists(phone_number) is True:
+		content = {'error':'User already exists with same phone number'}	
+		return Response(content, status = status.HTTP_400_BAD_REQUEST)		
+		
+	new_user = User.objects.create(username = phone_number, password = password)
+	new_vendor_agent = VendorAgent.objects.create(user = new_user, vendor = vendor)
+	if name is not None:
+		new_user.first_name = name
+		new_user.save()
+
+	token = create_token(new_user, constants.VENDOR)
+	content = {'auth_token':token.key}
+	return Response(content, status = status.HTTP_201_CREATED)
+
+@api_view(['POST'])
+def request_vendor_account(request):
 	"""
 	Registration for Vendor
 	"""
-	print request.user
 	try:
 		store = request.data['store_name']
-		username = request.data['username']
-		password = request.data['password']
 		phone_number = request.data['phone_number']
+		email = request.data['email']
 
-		if is_userexists(username) is True:
-			content = {'error':'user already exists'}	
-			return Response(content, status = status.HTTP_404_NOT_FOUND)
-
-		if is_vendorexists(phone_number) is True:
-			content = {'error':'Vendor with same phone number exists'}	
-			return Response(content, status = status.HTTP_404_NOT_FOUND)
-
-		new_user = User.objects.create(username=username, password=password, email='')
-		new_vendor = Vendor.objects.create(user=new_user, store_name=store, phone_number = phone_number)
-		token = create_token(new_user, constants.VENDOR)
-
-		content = {'user_id': new_user.id, 'vendor_id': new_vendor.id, 'auth_token': token.key }
-		return Response(content, status = status.HTTP_201_CREATED)    			
-
-	except Exception, e:
-		raise e
-
-
-def create_consumer(username, phone_number, email_id, password, flat_number, building, street, area_code):
-	if is_userexists(username) is True:
-		content = {'error':'user already exists'}	
-		return Response(content, status = status.HTTP_404_NOT_FOUND)
-
-	if is_consumerexists(phone_number) is True:
-		existing_consumer = Consumer.objects.get(phone_number = phone_number)
-		content = {
-					'consumer_id': existing_consumer.id,
-					'error':'Customer with same phone number exists'
-					}	
-		return Response(content, status = status.HTTP_404_NOT_FOUND)
-			
-	# CREATING NEW CONSUMER ======
-	new_user = User.objects.create(username=username, password=password, email=email_id)
-	new_consumer = Consumer.objects.create(user=new_user, phone_number = phone_number)
-	token = create_token(new_user, constants.CONSUMER)
-
-	# SAVING CONSUMER ADDRESS ======
-	try:
 		flat_number = request.data['flat_number']
 		building = request.data['building']
 		street = request.data['street']
 		area_code = request.data['area_code']
-			
-		new_address = Address.objects.create(flat_number=flat_number, building=building, street=street, area_code= area_code)
-		new_consumer.address = new_address
-		new_consumer.save()
+	except:
+		content = {'error':'Incomplete params', 'description':'phone_number, name'}	
+		return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
-	except Exception, e:
-		pass
+	new_requested_vendor = RequestedVendor.objects.create(store_name = store, email = email, phone_number = phone_number)
+	new_address = Address.objects.create(flat_number=flat_number, building=building, street=street, area_code= area_code)
+	new_requested_vendor.address = new_address
+	new_requested_vendor.save()
 
-	return token.key
-	
+	content = {'description':'Request submitted successfully'}
+	return Response(content, status = status.HTTP_201_CREATED)
 
 @api_view(['POST'])
 def dg_signin(request):
 	phone_number = request.data['phone_number']
 	password = request.data['password']
-	try:
-		dg = DeliveryGuy.objects.get(phone_number = phone_number)
-		if verify_password(dg.user, password):
+	if is_dgexists(phone_number) is True:
+		user = User.objects.get(username = phone_number)
+		dg = DeliveryGuy.objects.get(user = user)
+		
+		if verify_password(user, password):
 			token = Token.objects.get(user=dg.user)
 			content = {'auth_token': token.key}
 			return Response(content, status = status.HTTP_201_CREATED)   
 		else:
 			content = {'error': 'Invalid Credentials'}
 			return Response(content, status = status.HTTP_201_CREATED)   
-	except Exception, e:
+	else:
 		content = {'error':'user with phone number doesnt exists'}	
 		return Response(content, status = status.HTTP_404_NOT_FOUND)
 
+def create_consumer(phone_number, password, name, email):
+	user = User.objects.create(username=phone_number, password=password)
+	token = create_token(user, constants.CONSUMER)
+	
+	if name is not None:
+		user.name = name
+		user.save()
+	if email is not None:
+		user.email = email
+		user.save()
+	return user
 
-# @api_view(['POST'])
-# def register_consumer(request):
-# 	"""
-# 	Registration for Consumer
-# 	"""
-# 	try:
-# 		username = request.data['username']
-# 		phone_number = request.data['phone_number']
-# 		password = request.data['password']
-# 		email = request.data.get('email')
-		
+@api_view(['POST'])
+def register_consumer(request):
+	"""
+	Registration for Consumer
+	"""
+	if request.user is not None:
+		role = user_role(request.user)
+		if role == constants.VENDOR:
+			# CREATING CONSUMER BY VENDOR
+			try:
+				phone_number = request.data['phone_number']
+				name = request.data['name']
 
-# 		if request.user is not None:
-# 			role = user_role(request.user)
-# 			if role == constants.VENDOR:
+			except Exception, e:
+				content = {
+					'error':'Incomplete params',
+					'description':'phone_number, name'
+				}	
+				return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
+			if is_consumerexists(phone_number) is True:
+				user = User.objects.get(username = phone_number)
+				consumer = Consumer.objects.get(user = user)
+			else:
+				consumer = create_consumer(phone_number, '', name, '')
+
+			## ADDING ADDRESS			
+			try:
+				flat_number = request.data['flat_number']
+				building = request.data['building']
+				street = request.data['street']
+				area_code = request.data['area_code']
 			
-# 		else:
-# 			create_consumer(username, phone_number, email, password, )
-# 			if is_userexists(username) is True:
-# 				content = {'error':'user already exists'}	
-# 				return Response(content, status = status.HTTP_404_NOT_FOUND)
+				new_address = Address.objects.create(flat_number=flat_number, building=building, street=street, area_code= area_code)
+				consumer.address = new_address
+				consumer.save()
 
-# 			if is_consumerexists(phone_number) is True:
-# 				existing_consumer = Consumer.objects.get(phone_number = phone_number)
-# 				content = {
-# 						'consumer_id': existing_consumer.id,
-# 						'error':'Customer with same phone number exists'
-# 					}	
-# 				return Response(content, status = status.HTTP_404_NOT_FOUND)
+			except Exception, e:
+				pass
+
+			# SETTING ASSOCIATED VENDOR
+			associated_vendor = Vendor.objects.get(user = request.user)
+			consumer.associated_vendor.add(associated_vendor)
+			consumer.save()
 			
-# 			# CREATING NEW CONSUMER ======
-# 			new_user = User.objects.create(username=username, password=password, email='')
-# 			new_consumer = Consumer.objects.create(user=new_user, phone_number = phone_number)
-# 			token = create_token(new_user, constants.CONSUMER)
+			# SUCCESS RESPONSE FOR CONSUMER CREATION BY VENDOR
+			content = {
+				'consumer_id':consumer.id
+			}	
+			return Response(content, status = status.HTTP_201_CREATED)
 
-# 			# SAVING CONSUMER ADDRESS ======
-# 			try:
-# 				flat_number = request.data['flat_number']
-# 				building = request.data['building']
-# 				street = request.data['street']
-# 				area_code = request.data['area_code']
-			
-# 				new_address = Address.objects.create(flat_number=flat_number, building=building, street=street, area_code= area_code)
-# 				new_consumer.address = new_address
-# 				new_consumer.save()
+		else:
+			content = {
+				'error':'No permissions to create consumer'
+			}	
+			return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
-# 			except Exception, e:
-# 				pass
-
-
-# 		if is_userexists(username) is True:
-# 			content = {'error':'user already exists'}	
-# 			return Response(content, status = status.HTTP_404_NOT_FOUND)
-
-# 		if is_consumerexists(phone_number) is True:
-# 			existing_consumer = Consumer.objects.get(phone_number = phone_number)
-# 			content = {
-# 						'consumer_id': existing_consumer.id,
-# 						'error':'Customer with same phone number exists'
-# 					}	
-# 			return Response(content, status = status.HTTP_404_NOT_FOUND)
+	else:
+		## CONSUMER DIRECT REGISTRATION
+		try:
+			phone_number = request.data['phone_number']
+			password = request.data['password']
+			name = request.data.get('name')
+			email = request.data.get('email')
 		
-# 		new_user = User.objects.create(username=username, password=password, email='')
-# 		new_consumer = Consumer.objects.create(user=new_user, phone_number = phone_number)
-# 		token = create_token(new_user, constants.CONSUMER)
-		
-# 		# SAVING CONSUMER ADDRESS ======
-# 		try:
-# 			flat_number = request.data['flat_number']
-# 			building = request.data['building']
-# 			street = request.data['street']
-# 			area_code = request.data['area_code']
-			
-# 			new_address = Address.objects.create(flat_number=flat_number, building=building, street=street, area_code= area_code)
-# 			new_consumer.address = new_address
-# 			new_consumer.save()
+		except Exception, e:
+			content = {
+				'error':'Incomplete params',
+				'description':'phone_number, password, email'
+			}	
+			return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
-# 		except Exception, e:
-# 			pass
-
-		
-# 		# SETTING ASSOCIATED VENDOR, IF VENDOR CREATES THE CUSTOMER	=======	
-# 		try:
-# 			if role == constants.VENDOR:
-# 				associated_vendor = Vendor.objects.get(user = request.user)
-# 				new_consumer.associated_vendor.add(associated_vendor)
-# 				new_consumer.save()
-
-# 		except Exception, e:
-# 			pass
-		
-# 		content = {'auth_token': token.key, 'consumer_id':new_consumer.id , 'user_id':new_user.id}
-# 		return Response(content, status = status.HTTP_201_CREATED)    			
-
-# 	except Exception, e:
-# 		raise e		
+		consumer = create_consumer(phone_number, password, name, email)
+		token = Token.objects.get(user = consumer.user)
+		content = {'auth_token': token.key}
+		return Response(content, status = status.HTTP_201_CREATED)    			

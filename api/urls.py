@@ -21,9 +21,10 @@ urlpatterns = patterns(
     'api.views',
     url(r'^docs/', include('rest_framework_swagger.urls')),
     url(r'^auth/', include('djoser.urls')),
-    url(r'^register_vendor/', views.register_vendor,name='Vendor Registration'),
-    # url(r'^register_consumer/', views.register_consumer,name='Consumer Registration'),
+    url(r'^request_vendor_account/', views.request_vendor_account,name='Request vendor account'),
+    url(r'^register_consumer/', views.register_consumer,name='Consumer Registration'),
     url(r'^dg_signin/', views.dg_signin,name='Deliveryguy SignIn'),
+    url(r'^create_vendor_agent/', views.create_vendor_agent,name='Create vendor agent'),
 )
 
 

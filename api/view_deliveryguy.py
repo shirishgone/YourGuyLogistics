@@ -18,8 +18,13 @@ class DGViewSet(viewsets.ModelViewSet):
 
     queryset = DeliveryGuy.objects.all()
     serializer_class = DGSerializer
+    
     @list_route()
     def available_dgs():
     	dg_list = DeliveryGuy.objects.filter(availability='AV')
     	serializer = DGSerializer(dg_list, many=True)
     	return Response(serializer.data)
+
+    @detail_route()
+    def update_location():
+        pass    
