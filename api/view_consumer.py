@@ -12,7 +12,7 @@ from api.serializers import ConsumerSerializer
 from api.views import user_role
 import constants
 
-from api.views import user_role, is_vendorexists, is_consumerexists, is_dgexists, create_consumer, create_token
+from api.views import user_role, is_userexists, is_vendorexists, is_consumerexists, is_dgexists
 
 class ConsumerViewSet(viewsets.ModelViewSet):
     """
@@ -92,13 +92,15 @@ class ConsumerViewSet(viewsets.ModelViewSet):
                     }   
                 return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
-            # import pdb
-            # pdb.set_trace()
-            if is_consumerexists(phone_number) is True:
+            if is_userexists(phone_number) is True:
                 user = User.objects.get(username = phone_number)
-                consumer = Consumer.objects.get(user = user)
+                if is_consumerexists(user) is True:
+                    consumer = Consumer.objects.get(user = user)
+                else:
+                    consumer = Consumer.objects.create(user = user)
             else:
-                consumer = create_consumer(phone_number, '', name, '')
+                user = User.objects.create(username=phone_number, password=password)
+                consumer = Consumer.objects.create(user = user)
 
             # SETTING ADDRESS TO CUSTOMER
             consumer.address = new_address
@@ -110,13 +112,9 @@ class ConsumerViewSet(viewsets.ModelViewSet):
             consumer.save()
             
             # SUCCESS RESPONSE FOR CONSUMER CREATION BY VENDOR
-            content = {
-                    'consumer_id':consumer.id
-                    }   
+            content = {'consumer_id':consumer.id}   
             return Response(content, status = status.HTTP_201_CREATED)
         else:
-            content = {
-                    'error':'No permissions to create consumer'
-                    }   
+            content = {'error':'No permissions to create consumer'}   
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
         

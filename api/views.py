@@ -36,34 +36,26 @@ def generate_random_number(size):
 def is_userexists(username):	
 	if User.objects.filter(username=username).count():
 		return True
-	return False
+	else:	
+		return False
+
+def is_consumerexists(user):
+	if Consumer.objects.filter(user=user).count():
+		return True
+	else:	
+		return False	
 
 def is_vendorexists(vendor_id):
 	if Vendor.objects.filter(id=vendor_id).count():
 		return True
-	return False
-
-def is_dgexists(phone_number):
-	if is_userexists(phone_number):
-		user = User.objects.get(username = phone_number)
-		if DeliveryGuy.objects.filter(user=user).count():
-			return True
+	else:
 		return False
-	else:
-		return False	
 
-def is_consumerexists(phone_number):
-	# import pdb
- #   	pdb.set_trace()
-
-	if is_userexists(phone_number):
-		user = User.objects.get(username = phone_number)
-		if Consumer.objects.filter(user=user).count():
-			return True
-		else:	
-			return False
+def is_dgexists(user):
+	if DeliveryGuy.objects.filter(user=user).count():
+		return True
 	else:
-		return False	
+		return False
 
 def create_token(user,user_role):
 	full_string = '%s:%s'% (user.username, user_role)	
@@ -79,6 +71,10 @@ def user_role(user):
 		return constants.VENDOR
 	elif role == constants.CONSUMER:
 		return constants.CONSUMER	
+	elif role == constants.OPERATIONS:
+		return constants.OPERATIONS	
+	elif role == constants.SALES:
+		return constants.SALES	
 	else:
 		return None	
 
@@ -88,15 +84,3 @@ def verify_password(user, password):
 		return True
 	else:
 		return False
-
-def create_consumer(phone_number, password, name, email):
-	user = User.objects.create(username=phone_number, password=password)
-	token = create_token(user, constants.CONSUMER)
-	consumer = Consumer.objects.create(user = user)
-	if name is not None:
-		user.first_name = name
-		user.save()
-	if email is not None:
-		user.email = email
-		user.save()
-	return consumer
