@@ -45,6 +45,12 @@ def is_consumerexists(user):
 	else:	
 		return False	
 
+def is_vendoragentexists(user):
+	if VendorAgent.objects.filter(user=user).count():
+		return True
+	else:	
+		return False	
+
 def is_vendorexists(vendor_id):
 	if Vendor.objects.filter(id=vendor_id).count():
 		return True

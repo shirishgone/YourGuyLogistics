@@ -7,7 +7,7 @@ from rest_framework import viewsets
 from rest_framework.response import Response
 
 from api.serializers import VendorAgentSerializer
-from api.views import user_role, is_userexists, create_token
+from api.views import user_role, is_userexists, create_token, is_vendoragentexists
 import constants
 
 class VendorAgentViewSet(viewsets.ModelViewSet):
@@ -31,28 +31,25 @@ class VendorAgentViewSet(viewsets.ModelViewSet):
     		except Exception, e:
     			content = {'error':'Incomplete params', 'description':'vendor_id, phone_number, name, password'}	
     			return Response(content, status = status.HTTP_400_BAD_REQUEST)
-
+    		
     		try:
     			vendor = Vendor.objects.get(id = vendor_id)
     		except:
     			content = {'error':'Vendor with id doesnt exists'}
     			return Response(content, status = status.HTTP_400_BAD_REQUEST)
-
+            
     		if is_userexists(phone_number) is True:
-    			content = {'error':'User already exists with same phone number'}	
-    			return Response(content, status = status.HTTP_400_BAD_REQUEST)		
+    			user = User.objects.get(username = phone_number)
+    			if is_vendoragentexists(user) is True:
+    				content = {'error':'Vendor Agent with same details exists'}
+    				return Response(content, status = status.HTTP_400_BAD_REQUEST)
+    			else:
+    				vendor_agent = VendorAgent.objects.create(user = user)
     		else:
-    			pass
-    		
-    		new_user = User.objects.create(username = phone_number, password = password)
-    		new_vendor_agent = VendorAgent.objects.create(user = new_user, vendor = vendor)
-    		if name is not None:
-    			new_user.first_name = name
-    			new_user.save()
-    		else:
-    			pass
-    		
-    		token = create_token(new_user, constants.VENDOR)
+    			user = User.objects.create(username=phone_number, password=password)
+    			new_vendor_agent = VendorAgent.objects.create(user = user, vendor = vendor)
+
+    		token = create_token(user, constants.VENDOR)
     		content = {'auth_token':token.key}
     		return Response(content, status = status.HTTP_201_CREATED)
 

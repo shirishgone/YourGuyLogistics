@@ -24,7 +24,7 @@ class Area(models.Model):
 class Address(models.Model):
 
     # Mandatory Fields
-    flat_number = models.CharField(max_length = 10) 
+    flat_number = models.CharField(max_length = 50) 
     building = models.CharField(max_length = 100)
     street = models.CharField(max_length = 100)
     area_code = models.CharField(max_length = 10)
@@ -85,12 +85,11 @@ class Vendor(models.Model):
     store_name = models.CharField(max_length = 100)
     address = models.ForeignKey(Address, related_name='vendor_address', blank = True, null = True)
     email = models.EmailField(max_length = 50)
-
+    phone_number = models.CharField(max_length = 15, blank = True, null = True)
+    
     # Optional
     website_url = models.CharField(max_length = 100, blank = True)
-    alternate_phone_number = models.CharField(max_length = 15, blank = True)
     verified = models.BooleanField(blank = True, default = False)
-
     pan_card = models.CharField(max_length = 15, blank = True)
     notes = models.CharField(max_length = 500, blank = True)
 

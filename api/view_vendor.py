@@ -51,7 +51,7 @@ class VendorViewSet(viewsets.ModelViewSet):
     			return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
     		new_address = Address.objects.create(flat_number=flat_number, building=building, street=street, area_code= area_code)
-    		vendor = Vendor.objects.create(store_name = store, address = new_address, email = email, alternate_phone_number = phone_number)
+    		vendor = Vendor.objects.create(store_name = store, address = new_address, email = email, phone_number = phone_number)
 
     		content = {'vendor_id':vendor.id}
     		return Response(content, status = status.HTTP_201_CREATED)
