@@ -1,4 +1,5 @@
-from yourguy.models import Consumer, Vendor, VendorAgent
+from django.contrib.auth.models import User
+from yourguy.models import Consumer, Vendor, VendorAgent, Address
 
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status, authentication
@@ -10,6 +11,8 @@ from rest_framework.response import Response
 from api.serializers import ConsumerSerializer
 from api.views import user_role
 import constants
+
+from api.views import user_role, is_vendorexists, is_consumerexists, is_dgexists, create_consumer, create_token
 
 class ConsumerViewSet(viewsets.ModelViewSet):
     """
@@ -46,7 +49,7 @@ class ConsumerViewSet(viewsets.ModelViewSet):
             pass
 
 	return queryset
-
+        
     @detail_route(methods=['post'])
     def add_vendor(self, request, pk=None):
         vendor_id = request.POST['vendor_id']
@@ -58,3 +61,62 @@ class ConsumerViewSet(viewsets.ModelViewSet):
         
         content = {'description': 'Vendor added to consumer'}
         return Response(content, status = status.HTTP_201_CREATED)
+
+    def create(self, request):
+        role = user_role(request.user)
+        if role == constants.VENDOR or role == constants.SALES:
+        # CREATING CONSUMER BY VENDOR or SALES
+            try:
+                phone_number = request.data['phone_number']
+                name = request.data['name']
+            except Exception, e:
+                content = {
+                        'error':'Incomplete params',
+                        'description':'Mandatory Fields: phone_number, name'
+                    }   
+                return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
+            ## ADDING ADDRESS           
+            try:
+                flat_number = request.data['flat_number']
+                building = request.data['building']
+                street = request.data['street']
+                area_code = request.data['area_code']
+            
+                new_address = Address.objects.create(flat_number=flat_number, building=building, street=street, area_code= area_code)
+
+            except:
+                content = {
+                        'error':'Address details missing',
+                        'description':'Mandatory Fields: flat_number, building, street, area_code'
+                    }   
+                return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
+            # import pdb
+            # pdb.set_trace()
+            if is_consumerexists(phone_number) is True:
+                user = User.objects.get(username = phone_number)
+                consumer = Consumer.objects.get(user = user)
+            else:
+                consumer = create_consumer(phone_number, '', name, '')
+
+            # SETTING ADDRESS TO CUSTOMER
+            consumer.address = new_address
+            consumer.save()
+
+            # SETTING ASSOCIATED VENDOR
+            vendor_agent = VendorAgent.objects.get(user = request.user)
+            consumer.associated_vendor.add(vendor_agent.vendor)
+            consumer.save()
+            
+            # SUCCESS RESPONSE FOR CONSUMER CREATION BY VENDOR
+            content = {
+                    'consumer_id':consumer.id
+                    }   
+            return Response(content, status = status.HTTP_201_CREATED)
+        else:
+            content = {
+                    'error':'No permissions to create consumer'
+                    }   
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+        

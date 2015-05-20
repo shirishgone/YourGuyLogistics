@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User, Group
 
-from yourguy.models import Order, Address, Consumer, Vendor, DeliveryGuy, Group, UserGroup
+from yourguy.models import Order, Area, Address, Consumer, Vendor, DeliveryGuy, Group, UserGroup, VendorAgent
 
 
 from django.contrib.auth import get_user_model
@@ -11,6 +11,10 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = get_user_model()
         fields = ('id', 'first_name', 'last_name', 'username', 'email')
+
+class AreaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Area
 
 class AddressSerializer(serializers.ModelSerializer):
     class Meta:
@@ -31,6 +35,10 @@ class VendorSerializer(serializers.ModelSerializer):
     address = AddressSerializer(required=False)
     class Meta:
         model = Vendor
+
+class VendorAgentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = VendorAgent
 
 class DGSerializer(serializers.ModelSerializer):
     class Meta:
