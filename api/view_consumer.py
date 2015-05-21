@@ -99,7 +99,7 @@ class ConsumerViewSet(viewsets.ModelViewSet):
                 else:
                     consumer = Consumer.objects.create(user = user)
             else:
-                user = User.objects.create(username=phone_number, password='')
+                user = User.objects.create(username=phone_number, first_name = name, password='')
                 consumer = Consumer.objects.create(user = user)
 
             # SETTING ADDRESS TO CUSTOMER
