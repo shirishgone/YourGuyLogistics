@@ -1,4 +1,4 @@
-from yourguy.models import Vendor, Address
+from yourguy.models import Vendor, Address, VendorAgent
 
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status, authentication
