@@ -69,17 +69,6 @@ class DeliveryGuy(YGUser):
     def __unicode__(self):
         return unicode(self.user.username)
 
-class RequestedVendor(models.Model):
-    
-    # Mandatory Fields
-    store_name = models.CharField(max_length = 100)
-    address = models.ForeignKey(Address)
-    email = models.EmailField(max_length = 50)
-    phone_number = models.CharField(max_length = 15, blank = True)
-
-    def __unicode__(self):
-        return unicode(self.store_name)
-
 class Vendor(models.Model):
     # Mandatory Fields
     store_name = models.CharField(max_length = 100)

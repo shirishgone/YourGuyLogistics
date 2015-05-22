@@ -13,7 +13,7 @@ from rest_framework.reverse import reverse
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
-from yourguy.models import Vendor, Address, Consumer, DeliveryGuy, VendorAgent, RequestedVendor
+from yourguy.models import Vendor, Address, Consumer, DeliveryGuy, VendorAgent
 from api.serializers import UserSerializer, OrderSerializer, AddressSerializer, ConsumerSerializer
 
 import datetime
