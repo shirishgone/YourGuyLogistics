@@ -16,7 +16,9 @@ class VendorViewSet(viewsets.ModelViewSet):
     """
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [IsAuthenticated]
-    
+    queryset = Vendor.objects.all()
+    serializer_class = VendorSerializer
+
     def list(self, request):
     	role = user_role(request.user)
     	if role == constants.SALES:

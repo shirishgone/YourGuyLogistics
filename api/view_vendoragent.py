@@ -19,7 +19,18 @@ class VendorAgentViewSet(viewsets.ModelViewSet):
 
     queryset = VendorAgent.objects.all()
     serializer_class = VendorAgentSerializer
-   	
+	
+    def list(self, request):
+    	role = user_role(request.user)
+    	if role == constants.VENDOR:
+    		vendor_agent = VendorAgent.objects.get(user = request.user)
+    		vendor_agents_of_vendor = VendorAgent.objects.filter(vendor = vendor_agent.vendor)
+    		serializer = VendorAgentSerializer(vendor_agents_of_vendor, many=True)
+    		return Response(serializer.data, status=status.HTTP_201_CREATED)
+    	else:
+    		content = {'error':'You dont have permissions to view all vendors'}
+    		return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
     def create(self, request):
     	role = user_role(request.user)
     	if (role == constants.VENDOR) or (role == constants.SALES):

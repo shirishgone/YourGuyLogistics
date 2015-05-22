@@ -139,6 +139,8 @@ class Consumer(YGUser):
     associated_vendor = models.ManyToManyField(Vendor, blank = True)
     phone_verified = models.BooleanField(blank = True, default = False)
     address  = models.ForeignKey(Address, blank = True, null = True)
+    #TODO: address  = models.ManyToManyField(Address, blank = True, null = True))
+
 
     def __unicode__(self):
         return unicode(self.user.username)

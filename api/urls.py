@@ -21,19 +21,17 @@ urlpatterns = patterns(
     url(r'^docs/', include('rest_framework_swagger.urls')),
     url(r'^auth/', include('djoser.urls')),
     url(r'^register_retail_consumer/', view_user.register_consumer,name='Consumer Registration'),
-    # url(r'^dg_signin/', view_user.dg_signin,name='Deliveryguy SignIn'),
-    # url(r'^request_vendor_account/', view_user.request_vendor_account,name='Request vendor account'),
 )
 
 
 router = DefaultRouter()
 router.register(r'area', AreaViewSet)
 router.register(r'address', AddressViewSet)
-router.register(r'vendor', VendorViewSet, base_name="Vendor")
+router.register(r'vendor', VendorViewSet)
 router.register(r'vendoragent', VendorAgentViewSet)
 router.register(r'deliveryguy', DGViewSet)
-router.register(r'consumer', ConsumerViewSet, base_name ='consumer')
-router.register(r'order', OrderViewSet, base_name ='order')
+router.register(r'consumer', ConsumerViewSet)
+router.register(r'order', OrderViewSet, base_name = 'orders')
 router.register(r'group', GroupViewSet)
 router.register(r'usergroup', UserGroupViewSet)
 router.register(r'requestvendoraccount',RequestedVendorViewSet)

@@ -21,41 +21,30 @@ class ConsumerViewSet(viewsets.ModelViewSet):
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
+    queryset = Consumer.objects.all()
     serializer_class = ConsumerSerializer
-    def get_vendor(self, pk):
-        try:
-            return Vendor.objects.get(pk=pk)
-        except:
-            raise Http404
-    
-    def get_queryset(self):
-        """
-        Optionally restricts the returned customers to a given vendor,
-        by filtering against a 'vendor' query parameter in the URL.
-        """
-        queryset = Consumer.objects.all()        
-        
-        # FILTERING THROUGH VENDOR
-        role = user_role(self.request.user)
-        if role == constants.VENDOR:
-            try:
-                vendor_agent = VendorAgent.objects.get(user = self.request.user)
-            except:
-                raise Http404
-            queryset = queryset.filter(associated_vendor=vendor_agent.vendor)
-        elif role == constants.CONSUMER:
-            raise Http404
-        else:
-            pass
 
-	return queryset
-        
+    def list(self, request):
+        role = user_role(request.user)
+        if role == constants.VENDOR:
+            vendor_agent = VendorAgent.objects.get(user = request.user)
+            consumers_of_vendor = Consumer.objects.filter(associated_vendor = vendor_agent.vendor)
+            
+            serializer = ConsumerSerializer(consumers_of_vendor, many=True)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        elif role == constants.OPERATIONS:
+            all_customers = Consumer.objects.all()
+            serializer = ConsumerSerializer(all_customers, many=True)
+        else:
+            content = {'error':'You dont have permissions to view all Consumers'}
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
     @detail_route(methods=['post'])
     def add_vendor(self, request, pk=None):
         vendor_id = request.POST['vendor_id']
         vendor = Vendor.objects.get(id = vendor_id)
         
-        current_consumer = Consumer.objects.get(user = self.request.user)
+        current_consumer = Consumer.objects.get(user = request.user)
         current_consumer.associated_vendor.add(vendor)
         current_consumer.save()
         
@@ -82,9 +71,6 @@ class ConsumerViewSet(viewsets.ModelViewSet):
                 building = request.data['building']
                 street = request.data['street']
                 area_code = request.data['area_code']
-            
-                new_address = Address.objects.create(flat_number=flat_number, building=building, street=street, area_code= area_code)
-
             except:
                 content = {
                         'error':'Address details missing',
@@ -96,14 +82,18 @@ class ConsumerViewSet(viewsets.ModelViewSet):
                 user = User.objects.get(username = phone_number)
                 if is_consumerexists(user) is True:
                     consumer = Consumer.objects.get(user = user)
+                    address = consumer.address
                 else:
                     consumer = Consumer.objects.create(user = user)
+                    address = Address.objects.create(flat_number=flat_number, building=building, street=street, area_code= area_code)
             else:
                 user = User.objects.create(username=phone_number, first_name = name, password='')
                 consumer = Consumer.objects.create(user = user)
+                address = Address.objects.create(flat_number=flat_number, building=building, street=street, area_code= area_code)
+
 
             # SETTING ADDRESS TO CUSTOMER
-            consumer.address = new_address
+            consumer.address = address
             consumer.save()
 
             # SETTING ASSOCIATED VENDOR

@@ -51,10 +51,10 @@ def register_consumer(request):
     content = {'auth_token': token.key}
     return Response(content, status = status.HTTP_201_CREATED)              
 
-@api_view(['POST'])
-def forgot_password(request):
-    # TODO: Send an email
-    return Response(status=status.HTTP_201_CREATED)      
+# @api_view(['POST'])
+# def forgot_password(request):
+#     # TODO: Send an email
+#     return Response(status=status.HTTP_201_CREATED)      
 
 # @api_view(['POST'])
 # def request_vendor_account(request):

@@ -13,8 +13,19 @@ class RequestedVendorViewSet(viewsets.ModelViewSet):
     # authentication_classes = [authentication.TokenAuthentication]
     # permission_classes = [IsAuthenticated]
 
-    queryset = RequestedVendor.objects.none()
+    queryset = RequestedVendor.objects.all()
     serializer_class = RequestedVendorSerializer
+
+    def list(self, request):
+        role = user_role(request.user)
+        if role == constants.SALES:
+            all_requested_vendors = RequestedVendor.objects.all()
+            serializer = RequestedVendorSerializer(all_requested_vendors, many=True)
+        else:
+            content = {'error':'You dont have permissions to view all Requested vendors'}
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
+
     def create(self, request):
     	try:
     		store = request.data['store_name']
