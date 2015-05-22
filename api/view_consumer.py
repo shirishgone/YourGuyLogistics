@@ -93,7 +93,7 @@ class ConsumerViewSet(viewsets.ModelViewSet):
 
 
             # SETTING ADDRESS TO CUSTOMER
-            consumer.address = address
+            consumer.address.add(address)
             consumer.save()
 
             # SETTING ASSOCIATED VENDOR
