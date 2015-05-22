@@ -11,6 +11,7 @@ admin.site.register(PushDetail)
 admin.site.register(Address)
 admin.site.register(Order)
 admin.site.register(Area)
+admin.site.register(Product)
 
 # admin.site.register(Employee)
 # admin.site.register(DGAttendance)
@@ -19,4 +20,4 @@ admin.site.register(Area)
 # admin.site.register(Suggestion)
 # admin.site.register(Message)
 # admin.site.register(Account)
-# admin.site.register(Product)
+

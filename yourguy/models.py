@@ -43,10 +43,8 @@ class Address(models.Model):
 class YGUser(models.Model):
 
     user = models.OneToOneField(User)
-    # name = models.CharField(max_length = 50, blank = True, null = True)
 
     # Optional Fields
-    # email = models.EmailField(max_length = 50, blank = True)
     picture_link = models.CharField(max_length = 50, blank = True)
 
     class Meta:
@@ -127,12 +125,10 @@ class Consumer(YGUser):
     facebook_id = models.CharField(max_length = 50, blank = True)
     associated_vendor = models.ManyToManyField(Vendor, blank = True)
     phone_verified = models.BooleanField(blank = True, default = False)
-    address  = models.ForeignKey(Address, blank = True, null = True)
-    #TODO: address  = models.ManyToManyField(Address, blank = True, null = True))
-
+    address  = models.ManyToManyField(Address)
 
     def __unicode__(self):
-        return unicode(self.user.username)
+        return unicode(self.user.first_name)
 
 
 class PushDetail(models.Model):
@@ -196,19 +192,35 @@ class UserGroup(models.Model):
     def __unicode__(self):
         return unicode(self.group.id)
                         
+class Product(models.Model):
+
+    # Mandatory Fields
+    name = models.CharField(max_length = 100)
+    description = models.CharField(max_length = 500, blank = True, null = True)
+    cost = models.FloatField(default = 0.0)
+
+    # Optional Fields
+    category = models.CharField(max_length = 50, blank = True, null = True)
+
+    def __unicode__(self):
+        return u"%s" % self.name
+
+class ProductCategory(models.Model):
+
+    # Mandatory Fields
+    category_name = models.CharField(max_length = 100)
+
+    # Optional Fields
+    details = models.CharField(max_length = 500, blank = True, null = True)
+
+    def __unicode__(self):
+        return u"%s" % self.id
 
 class Order(models.Model):
 
-    # Auto Generated Fields =====
-    created_date_time = models.DateTimeField(auto_now_add = True)
-    created_by_user = models.ForeignKey(User, related_name='order_created_by')
-
     # Mandatory Fields =====
-    pickup_datetime = models.DateTimeField()
-    delivery_datetime = models.DateTimeField()
-    
-    pickup_address = models.ForeignKey(Address, related_name='pickup_address', on_delete = models.CASCADE)
-    delivery_address = models.ForeignKey(Address, related_name='delivery_address', on_delete = models.CASCADE)
+    vendor = models.ForeignKey(Vendor)
+    consumer = models.ForeignKey(Consumer)
 
     QUEUED = 'QUEUED'
     INTRANSIT = 'INTRANSIT'
@@ -220,13 +232,24 @@ class Order(models.Model):
     )
     order_status = models.CharField(max_length = 15, choices = ORDER_CHOICES, default = QUEUED)
 
-    # Optional Fields =====
-    vendor = models.ForeignKey(Vendor, blank = True, null = True)
-    consumer = models.ForeignKey(Consumer, blank = True, null = True)
+    product = models.ManyToManyField(Product)
+    quantity = models.FloatField(default = 1.0)
+    total_cost = models.FloatField(default = 0.0)
 
+    pickup_datetime = models.DateTimeField()
+    delivery_datetime = models.DateTimeField()
+    
+    pickup_address = models.ForeignKey(Address, related_name='pickup_address', on_delete = models.CASCADE)
+    delivery_address = models.ForeignKey(Address, related_name='delivery_address', on_delete = models.CASCADE)
+
+    # Auto Generated Fields =====
+    created_date_time = models.DateTimeField(auto_now_add = True)
+    created_by_user = models.ForeignKey(User, related_name='order_created_by')
+
+    # Optional Fields =====
+    pickedup_datetime = models.DateTimeField(blank = True, null = True)
     completed_datetime = models.DateTimeField(blank = True, null = True)
-    quantity = models.FloatField(blank = True, null = True)
-    amount = models.CharField(max_length = 50, blank = True)
+
     notes = models.CharField(max_length = 500, blank = True)
     vendor_order_id = models.CharField(max_length = 10, blank = True)
 
@@ -243,8 +266,7 @@ class Order(models.Model):
 
 
     def __unicode__(self):
-        # return u"%s %s" % (self.vendor.user.username, self.cusumer.user.username, self.order_status)
-        return u"%s" % self.id
+        return u"%s - %s - %s" % (self.vendor.store_name, self.consumer.user.first_name, self.order_status)
 
 
 class Suggestion(models.Model):
@@ -278,27 +300,6 @@ class Account(models.Model):
     user = models.ForeignKey(User, on_delete = models.CASCADE)
     balance = models.FloatField(default = 0.0)
     last_update_date = models.DateTimeField(auto_now_add = True)
-
-    # Optional Fields
-
-    def __unicode__(self):
-        return u"%s" % self.id
-
-class Product(models.Model):
-
-    # Mandatory Fields
-    name = models.CharField(max_length = 100)
-    category = models.CharField(max_length = 50)
-
-    # Optional Fields
-
-    def __unicode__(self):
-        return u"%s" % self.id
-
-class ProductCategory(models.Model):
-
-    # Mandatory Fields
-    category_name = models.CharField(max_length = 100)
 
     # Optional Fields
 
