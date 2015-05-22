@@ -22,7 +22,7 @@ class AddressSerializer(serializers.ModelSerializer):
 
 class ConsumerSerializer(serializers.ModelSerializer):
     user = UserSerializer(required=False)
-    address = AddressSerializer(required=False)
+    address = AddressSerializer(required=False, many=True)
     class Meta:
         model = Consumer
 
