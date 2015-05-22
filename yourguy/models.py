@@ -198,6 +198,7 @@ class Product(models.Model):
     name = models.CharField(max_length = 100)
     description = models.CharField(max_length = 500, blank = True, null = True)
     cost = models.FloatField(default = 0.0)
+    vendor = models.ForeignKey(Vendor, blank = True, null = True)
 
     # Optional Fields
     category = models.CharField(max_length = 50, blank = True, null = True)
