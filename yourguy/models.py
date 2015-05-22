@@ -43,10 +43,10 @@ class Address(models.Model):
 class YGUser(models.Model):
 
     user = models.OneToOneField(User)
-    name = models.CharField(max_length = 50, blank = True, null = True)
+    # name = models.CharField(max_length = 50, blank = True, null = True)
 
     # Optional Fields
-    email = models.EmailField(max_length = 50, blank = True)
+    # email = models.EmailField(max_length = 50, blank = True)
     picture_link = models.CharField(max_length = 50, blank = True)
 
     class Meta:
