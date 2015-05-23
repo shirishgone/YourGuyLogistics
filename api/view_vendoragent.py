@@ -60,9 +60,9 @@ class VendorAgentViewSet(viewsets.ModelViewSet):
     			user = User.objects.create(username=phone_number, password=password)
     			new_vendor_agent = VendorAgent.objects.create(user = user, vendor = vendor)
 
-    		# ADDING USER TO THE GROUP
-    		# group = Group.objects.get(name=constants.VENDOR) 
-    		# group.user_set.add(user)
+    		# GROUP SETTING
+    		group = Group.objects.get(name=constants.VENDOR) 
+    		group.user_set.add(user)
 
     		token = create_token(user, constants.VENDOR)
     		content = {'auth_token':token.key}

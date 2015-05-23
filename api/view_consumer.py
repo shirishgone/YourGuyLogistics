@@ -1,5 +1,5 @@
-from django.contrib.auth.models import User
-from yourguy.models import Consumer, Vendor, VendorAgent, Address
+from django.contrib.auth.models import User, Group
+from yourguy.models import Consumer, Vendor, VendorAgent, Address, Area
 
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status, authentication
@@ -13,9 +13,6 @@ from api.views import user_role
 import constants
 
 from api.views import user_role, is_userexists, is_vendorexists, is_consumerexists, is_dgexists
-
-from django.contrib.auth.models import Group
-
 
 class ConsumerViewSet(viewsets.ModelViewSet):
     """
@@ -74,6 +71,7 @@ class ConsumerViewSet(viewsets.ModelViewSet):
                 building = request.data['building']
                 street = request.data['street']
                 area_code = request.data['area_code']
+                area = Area.objects.get(area_code= area_code)
             except:
                 content = {
                         'error':'Address details missing',
@@ -85,21 +83,21 @@ class ConsumerViewSet(viewsets.ModelViewSet):
                 user = User.objects.get(username = phone_number)
                 if is_consumerexists(user) is True:
                     consumer = Consumer.objects.get(user = user)
-                    address = consumer.address
                 else:
                     consumer = Consumer.objects.create(user = user)
-                    address = Address.objects.create(flat_number=flat_number, building=building, street=street, area_code= area_code)
+                    address = Address.objects.create(flat_number=flat_number, building=building, street=street, area= area)
+                    consumer.address.add(address)
+                    consumer.save()
             else:
                 user = User.objects.create(username=phone_number, first_name = name, password='')
                 consumer = Consumer.objects.create(user = user)
-                address = Address.objects.create(flat_number=flat_number, building=building, street=street, area_code= area_code)
+                address = Address.objects.create(flat_number=flat_number, building=building, street=street, area= area)
+                consumer.address.add(address)
+                consumer.save()
 
+            # SETTING USER GROUP
             group = Group.objects.get(name=constants.CONSUMER) 
             group.user_set.add(user)
-
-            # SETTING ADDRESS TO CUSTOMER
-            consumer.address.add(address)
-            consumer.save()
 
             # SETTING ASSOCIATED VENDOR
             vendor_agent = VendorAgent.objects.get(user = request.user)
