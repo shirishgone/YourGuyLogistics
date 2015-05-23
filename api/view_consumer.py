@@ -14,6 +14,9 @@ import constants
 
 from api.views import user_role, is_userexists, is_vendorexists, is_consumerexists, is_dgexists
 
+from django.contrib.auth.models import Group
+
+
 class ConsumerViewSet(viewsets.ModelViewSet):
     """
     Consumer viewset that provides the standard actions 
@@ -53,7 +56,7 @@ class ConsumerViewSet(viewsets.ModelViewSet):
 
     def create(self, request):
         role = user_role(request.user)
-        if role == constants.VENDOR or role == constants.SALES:
+        if (role == constants.VENDOR) or (role == constants.SALES):
         # CREATING CONSUMER BY VENDOR or SALES
             try:
                 phone_number = request.data['phone_number']
@@ -91,6 +94,8 @@ class ConsumerViewSet(viewsets.ModelViewSet):
                 consumer = Consumer.objects.create(user = user)
                 address = Address.objects.create(flat_number=flat_number, building=building, street=street, area_code= area_code)
 
+            group = Group.objects.get(name=constants.CONSUMER) 
+            group.user_set.add(user)
 
             # SETTING ADDRESS TO CUSTOMER
             consumer.address.add(address)

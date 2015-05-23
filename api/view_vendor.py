@@ -1,4 +1,4 @@
-from yourguy.models import Vendor, Address, VendorAgent
+from yourguy.models import Vendor, Address, VendorAgent, Area
 
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status, authentication
@@ -48,7 +48,8 @@ class VendorViewSet(viewsets.ModelViewSet):
     		content = {'error':'Incomplete params', 'description':'phone_number, store_name, email, flat_number, building, street, area_code'}
     		return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
-    	new_address = Address.objects.create(flat_number=flat_number, building=building, street=street, area_code= area_code)
+    	area = Area.objects.get(area_code = area_code)
+    	new_address = Address.objects.create(flat_number=flat_number, building=building, street=street, area = area)
     	vendor = Vendor.objects.create(store_name = store, address = new_address, email = email, phone_number = phone_number)
 
     	content = {'status':'Thank you! We have received your request. Our sales team will contact you soon.'}

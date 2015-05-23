@@ -27,7 +27,7 @@ class Address(models.Model):
     flat_number = models.CharField(max_length = 50) 
     building = models.CharField(max_length = 100)
     street = models.CharField(max_length = 100)
-    area_code = models.CharField(max_length = 10)
+    area = models.ForeignKey(Area, blank = True, null = True)
 
     # Optional Fields
     landmark = models.CharField(max_length = 50, blank = True)
@@ -38,7 +38,7 @@ class Address(models.Model):
     longitude = models.CharField(max_length = 20, blank = True)
 
     def __unicode__(self):
-        return u"%s %s %s %s" % (self.flat_number, self.building, self.street, self.area_code)                
+        return u"%s - %s - %s" % (self.flat_number, self.building, self.street)                
 
 class YGUser(models.Model):
 

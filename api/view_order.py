@@ -14,6 +14,8 @@ from django.utils.dateparse import parse_datetime
 
 from api.views import user_role, is_vendorexists, is_consumerexists, is_dgexists
 
+from django.contrib.auth.models import Group
+
 import constants
 
 class OrderViewSet(viewsets.ModelViewSet):
@@ -59,7 +61,12 @@ class OrderViewSet(viewsets.ModelViewSet):
         """
         Optionally restricts the returned purchases to a given user,
         by filtering against a `consumer_id` or 'vendor_id' query parameter in the URL.
-        """        
+        """     
+        # import pdb
+        # pdb.set_trace()
+        # print self.request.user.groups
+        #request.user.groups.values_list('name',flat=True)
+
         queryset = Order.objects.all()
         vendor_id = self.request.QUERY_PARAMS.get('vendor_id', None)
         consumer_phone_number = self.request.QUERY_PARAMS.get('consumer_phone_number', None)
