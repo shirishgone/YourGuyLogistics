@@ -17,6 +17,7 @@ class AreaSerializer(serializers.ModelSerializer):
         model = Area
 
 class AddressSerializer(serializers.ModelSerializer):
+    area = AreaSerializer(required=False)
     class Meta:
         model = Address
 
