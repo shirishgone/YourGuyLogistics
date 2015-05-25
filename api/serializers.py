@@ -23,7 +23,7 @@ class AddressSerializer(serializers.ModelSerializer):
 
 class ConsumerSerializer(serializers.ModelSerializer):
     user = UserSerializer(required=False)
-    address = AddressSerializer(required=False, many=True)
+    addresses = AddressSerializer(required=False, many=True)
     class Meta:
         model = Consumer
 
@@ -41,13 +41,13 @@ class OrderItemSerializer(serializers.ModelSerializer):
         model = OrderItem
 
 class OrderSerializer(serializers.ModelSerializer):
-    # consumer = ConsumerSerializer(required=False)
+    consumer = ConsumerSerializer(required=False)
     order_items = OrderItemSerializer(required=False, many = True)
     class Meta:
         model = Order
 
 class VendorSerializer(serializers.ModelSerializer):
-    address = AddressSerializer(required=False, many=True)
+    addresses = AddressSerializer(required=False, many=True)
     class Meta:
         model = Vendor
 
