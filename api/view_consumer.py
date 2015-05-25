@@ -1,18 +1,18 @@
 from django.contrib.auth.models import User, Group
-from yourguy.models import Consumer, Vendor, VendorAgent, Address, Area
+from django.shortcuts import get_object_or_404
 
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status, authentication
 from rest_framework import viewsets
-
 from rest_framework.decorators import detail_route, list_route
 from rest_framework.response import Response
 
+from yourguy.models import Consumer, Vendor, VendorAgent, Address, Area
 from api.serializers import ConsumerSerializer
 from api.views import user_role
+from api.views import user_role, is_userexists, is_vendorexists, is_consumerexists, is_dgexists
 import constants
 
-from api.views import user_role, is_userexists, is_vendorexists, is_consumerexists, is_dgexists
 
 class ConsumerViewSet(viewsets.ModelViewSet):
     """
@@ -27,7 +27,7 @@ class ConsumerViewSet(viewsets.ModelViewSet):
     def list(self, request):
         role = user_role(request.user)
         if role == constants.VENDOR:
-            vendor_agent = VendorAgent.objects.get(user = request.user)
+            vendor_agent = get_object_or_404(VendorAgent, user = request.user)
             consumers_of_vendor = Consumer.objects.filter(associated_vendor = vendor_agent.vendor)
             
             serializer = ConsumerSerializer(consumers_of_vendor, many=True)
@@ -42,9 +42,9 @@ class ConsumerViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['post'])
     def add_vendor(self, request, pk=None):
         vendor_id = request.POST['vendor_id']
-        vendor = Vendor.objects.get(id = vendor_id)
+        vendor = get_object_or_404(Vendor, id = vendor_id)
         
-        current_consumer = Consumer.objects.get(user = request.user)
+        current_consumer = get_object_or_404(Consumer, user = request.user)
         current_consumer.associated_vendor.add(vendor)
         current_consumer.save()
         
@@ -71,7 +71,7 @@ class ConsumerViewSet(viewsets.ModelViewSet):
                 building = request.data['building']
                 street = request.data['street']
                 area_code = request.data['area_code']
-                area = Area.objects.get(area_code= area_code)
+                area = get_object_or_404(Area, area_code= area_code)
             except:
                 content = {
                         'error':'Address details missing',
@@ -80,9 +80,9 @@ class ConsumerViewSet(viewsets.ModelViewSet):
                 return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
             if is_userexists(phone_number) is True:
-                user = User.objects.get(username = phone_number)
+                user = get_object_or_404(User, username = phone_number)
                 if is_consumerexists(user) is True:
-                    consumer = Consumer.objects.get(user = user)
+                    consumer = get_object_or_404(Consumer, user = user)
                 else:
                     consumer = Consumer.objects.create(user = user)
                     address = Address.objects.create(flat_number=flat_number, building=building, street=street, area= area)
@@ -96,7 +96,7 @@ class ConsumerViewSet(viewsets.ModelViewSet):
                 consumer.save()
 
             # SETTING USER GROUP
-            group = Group.objects.get(name=constants.CONSUMER) 
+            group = get_object_or_404(Group, name=constants.CONSUMER)
             group.user_set.add(user)
 
             # SETTING ASSOCIATED VENDOR

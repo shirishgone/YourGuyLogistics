@@ -1,21 +1,17 @@
-from yourguy.models import Order, Consumer, Vendor, DeliveryGuy, Area, VendorAgent
+from django.shortcuts import get_object_or_404
+from django.contrib.auth.models import Group
+from django.utils.dateparse import parse_datetime
 
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status, authentication
 from rest_framework import viewsets
-
 from rest_framework.decorators import detail_route, list_route
 from rest_framework.response import Response
 
+from yourguy.models import Order, Consumer, Vendor, DeliveryGuy, Area, VendorAgent
 from datetime import datetime, timedelta, time
 from api.serializers import OrderSerializer
-
-from django.utils.dateparse import parse_datetime
-
 from api.views import user_role, is_vendorexists, is_consumerexists, is_dgexists
-
-from django.contrib.auth.models import Group
-
 import constants
 
 class OrderViewSet(viewsets.ModelViewSet):
@@ -26,36 +22,6 @@ class OrderViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     serializer_class = OrderSerializer
-
-    def get_order(self, pk):
-        try:
-            return Order.objects.get(pk=pk)
-        except:
-            raise Http404
-
-    def get_vendor(self, pk):
-        try:
-            return Vendor.objects.get(pk=pk)
-        except:
-            raise Http404
-
-    def get_consumer(self, pk):
-        try:
-            return Consumer.objects.get(pk=pk)
-        except:
-            raise Http404
-
-    def get_deliveryguy(self, pk):
-        try:
-            return DeliveryGuy.objects.get(pk=pk)
-        except:
-            raise Http404
-
-    def get_area(self, area_code):
-        try:
-            return Area.objects.get(area_code=area_code)
-        except:
-            raise Http404
 
     def get_queryset(self):
         """
@@ -71,11 +37,11 @@ class OrderViewSet(viewsets.ModelViewSet):
         role = user_role(self.request.user)
 
         if role == constants.VENDOR:
-            vendor_agent = VendorAgent.objects.get(user = self.request.user)
+            vendor_agent = get_object_or_404(VendorAgent, user = self.request.user)
             queryset = queryset.filter(vendor=vendor_agent.vendor)
 
         elif role == constants.CONSUMER:
-            consumer = Consumer.objects.get(user = self.request.user)
+            consumer = get_object_or_404(Consumer, user = self.request.user)
             queryset = queryset.filter(consumer=consumer)
         else:
             # OPERATIONS FILTERING ----
@@ -83,7 +49,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             # 1. FILTERING BY vendor_id                
             if vendor_id is not None:
                 if is_vendorexists(vendor_id):
-                    vendor = Vendor.objects.get(id = vendor_id)
+                    vendor = get_object_or_404(Vendor, id = vendor_id)
                     queryset = queryset.filter(vendor=vendor)
                 else:
                     pass
@@ -93,8 +59,8 @@ class OrderViewSet(viewsets.ModelViewSet):
             #2. FILTERING BY consumer_phone_number
             if consumer_phone_number is not None:
                 if is_consumerexists(consumer_phone_number):
-                    user = User.objects.get(username = consumer_phone_number)
-                    consumer = Consumer.objects.get(user = user)
+                    user = get_object_or_404(User, username = consumer_phone_number)
+                    consumer = get_object_or_404(consumer, user = user)
                     queryset = queryset.filter(consumer=consumer)
                 else:
                     pass
@@ -104,7 +70,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         # FILTERING BY ASSIGNED DELIVERY GUY ----
         if dg_phone_number is not None:
             if is_dgexists:
-                user = User.objects.get(username = dg_phone_number)
+                user = get_object_or_404(User, username = dg_phone_number)
                 queryset = queryset.filter(assigned_deliveryGuy=user)
             else:
                 pass
@@ -129,19 +95,85 @@ class OrderViewSet(viewsets.ModelViewSet):
         # FILTERING BY  area_code ---
         area_code = self.request.QUERY_PARAMS.get('area_code', None)
         if area_code is not None:
-            area = self.get_area(area_code)
+            area = get_object_or_404(Area, area_code = area_code)
             queryset = queryset.filter(delivery_address__area=area)
 
         return queryset
     
+    # def create(self, request):
+        
+    #     try:
+    #         pickup_datetime = request.data['pickup_datetime']
+    #         delivery_datetime = request.data['delivery_datetime']
+            
+    #         pickup_address_id = request.data['pickup_address_id']
+    #         delivery_address_id = request.data['delivery_address_id']
+
+    #         vendor_id = request.data['vendor_id']
+    #         consumer_id = request.data['consumer_id']
+
+    #         product_id = request.data['product_id']
+    #         quantity = request.data['quantity']
+    #         total_cost = request.data['total_cost']
+    #     except:
+    #         content = {'error':'Incomplete params', 'description':'pickup_datetime, delivery_datetime, pickup_address, delivery_address, vendor, consumer, product, quantity, total_cost'}
+    #         return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
+    #     role = user_role(request.user)
+    #     if role == constants.VENDOR:
+    #         vendor = get_object_or_404(Vendor, pk = vendor_id)
+    #         consumer = get_object_or_404(Consumer, pk = consumer_id)
+
+    #         product = get_object_or_404(Product, pk = product_id)
+    #         pickup_address = get_object_or_404(User, pk = pickup_address_id)
+    #         delivery_address = get_object_or_404(User, pk = pickup_address_id)
+
+            
+
+    #         try:
+    #             vendor_id = request.data['vendor_id']
+    #             phone_number = request.data['phone_number']
+    #             name = request.data.get('name')
+    #             password = request.data['password'] 
+    #         except Exception, e:
+    #             content = {'error':'Incomplete params', 'description':'vendor_id, phone_number, name, password'}    
+    #             return Response(content, status = status.HTTP_400_BAD_REQUEST)
+            
+    #         try:
+    #             vendor = get_object_or_404(Vendor, id = vendor_id)
+    #         except:
+    #             content = {'error':'Vendor with id doesnt exists'}
+    #             return Response(content, status = status.HTTP_400_BAD_REQUEST)
+            
+    #         if is_userexists(phone_number) is True:
+    #             user = get_object_or_404(User, username = phone_number)
+    #             if is_vendoragentexists(user) is True:
+    #                 content = {'error':'Vendor Agent with same details exists'}
+    #                 return Response(content, status = status.HTTP_400_BAD_REQUEST)
+    #             else:
+    #                 vendor_agent = VendorAgent.objects.create(user = user)
+    #         else:
+    #             user = User.objects.create(username=phone_number, password=password)
+    #             new_vendor_agent = VendorAgent.objects.create(user = user, vendor = vendor)
+
+    #         # GROUP SETTING
+    #         group = get_object_or_404(Group, name=constants.VENDOR)
+    #         group.user_set.add(user)
+
+    #         token = create_token(user, constants.VENDOR)
+    #         content = {'auth_token':token.key}
+    #         return Response(content, status = status.HTTP_201_CREATED)
+
+    #     else:
+    #         content = {'error':'No permissions to create vendor agent'}   
+    #         return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
     @detail_route(methods=['post'])
     def assign_order(self, request, pk=None):
         dg_id = request.POST['dg_id']
         order_id = request.POST['order_id']
-
-        order = self.get_order(order_id)
-        dg = self.get_deliveryguy(dg_id)
-        
+        order = get_object_or_404(Order, id = order_id)
+        dg = get_object_or_404(DeliveryGuy, id = dg_id)
         dg.availability = 'BUSY'
         dg.save()
 
