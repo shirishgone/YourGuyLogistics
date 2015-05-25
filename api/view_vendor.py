@@ -50,7 +50,10 @@ class VendorViewSet(viewsets.ModelViewSet):
 
     	area = get_object_or_404(Area, area_code = area_code)
     	new_address = Address.objects.create(flat_number=flat_number, building=building, street=street, area = area)
-    	vendor = Vendor.objects.create(store_name = store, address = new_address, email = email, phone_number = phone_number)
+
+    	vendor = Vendor.objects.create(store_name = store, email = email, phone_number = phone_number)
+        vendor.addresses.add(new_address)
+        vendor.save()
 
     	content = {'status':'Thank you! We have received your request. Our sales team will contact you soon.'}
     	return Response(content, status = status.HTTP_201_CREATED)

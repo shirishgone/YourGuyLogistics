@@ -70,9 +70,9 @@ class DeliveryGuy(YGUser):
 class Vendor(models.Model):
     # Mandatory Fields
     store_name = models.CharField(max_length = 100)
-    address = models.ForeignKey(Address, related_name='vendor_address', blank = True, null = True)
     email = models.EmailField(max_length = 50)
     phone_number = models.CharField(max_length = 15, blank = True, null = True)
+    addresses = models.ManyToManyField(Address)
     
     # Optional
     website_url = models.CharField(max_length = 100, blank = True)
@@ -125,7 +125,7 @@ class Consumer(YGUser):
     facebook_id = models.CharField(max_length = 50, blank = True)
     associated_vendor = models.ManyToManyField(Vendor, blank = True)
     phone_verified = models.BooleanField(blank = True, default = False)
-    address  = models.ManyToManyField(Address)
+    addresses  = models.ManyToManyField(Address)
 
     def __unicode__(self):
         return unicode(self.user.first_name)
@@ -217,6 +217,13 @@ class ProductCategory(models.Model):
     def __unicode__(self):
         return u"%s" % self.id
 
+class OrderItem(models.Model):
+    product = models.ForeignKey(Product, blank = True, null = True)
+    quantity = models.FloatField(default = 1.0)
+    cost = models.FloatField(default = 0.0)
+    def __unicode__(self):
+        return u"%s" % self.id
+
 class Order(models.Model):
 
     # Mandatory Fields =====
@@ -233,9 +240,7 @@ class Order(models.Model):
     )
     order_status = models.CharField(max_length = 15, choices = ORDER_CHOICES, default = QUEUED)
 
-    # TODO: Allow Multiple products and quantities for the order
-    product = models.ManyToManyField(Product)
-    quantity = models.FloatField(default = 1.0)
+    order_items = models.ManyToManyField(OrderItem)
     total_cost = models.FloatField(default = 0.0)
 
     pickup_datetime = models.DateTimeField()

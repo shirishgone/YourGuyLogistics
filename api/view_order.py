@@ -114,19 +114,16 @@ class OrderViewSet(viewsets.ModelViewSet):
 
 
             # TODO:
-            products_array = request.data.getlist('products')
+            order_items = request.data.getlist('order_item')
             # product_id = request.data['product_id']
             # quantity = request.data['quantity']
             total_cost = request.data['total_cost']
 
         except:
-            content = {'error':'Incomplete params', 'description':'pickup_datetime, delivery_datetime, pickup_address_id, delivery_address_id , vendor_id, consumer_id, product_id, quantity, total_cost'}
+            content = {'error':'Incomplete params', 'description':'pickup_datetime, products, delivery_datetime, pickup_address_id, delivery_address_id , vendor_id, consumer_id, product_id, quantity, total_cost'}
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
         try:
-            import pdb
-            pdb.set_trace()
-
             vendor = get_object_or_404(Vendor, pk = vendor_id)
             consumer = get_object_or_404(Consumer, pk = consumer_id)
 
