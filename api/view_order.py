@@ -8,7 +8,7 @@ from rest_framework import viewsets
 from rest_framework.decorators import detail_route, list_route
 from rest_framework.response import Response
 
-from yourguy.models import Order, Consumer, Vendor, DeliveryGuy, Area, VendorAgent, Address, Product
+from yourguy.models import Order, Consumer, Vendor, DeliveryGuy, Area, VendorAgent, Address, Product, OrderItem
 from datetime import datetime, timedelta, time
 from api.serializers import OrderSerializer
 from api.views import user_role, is_vendorexists, is_consumerexists, is_dgexists
@@ -111,15 +111,12 @@ class OrderViewSet(viewsets.ModelViewSet):
 
             vendor_id = request.data['vendor_id']
             consumer_id = request.data['consumer_id']
-
-
-            # TODO:
-            order_items = request.data.getlist('order_item')
-            # product_id = request.data['product_id']
-            # quantity = request.data['quantity']
+           
+            order_items = request.data['order_items']
             total_cost = request.data['total_cost']
 
-        except:
+        except Exception, e:
+            print e
             content = {'error':'Incomplete params', 'description':'pickup_datetime, products, delivery_datetime, pickup_address_id, delivery_address_id , vendor_id, consumer_id, product_id, quantity, total_cost'}
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
@@ -129,8 +126,6 @@ class OrderViewSet(viewsets.ModelViewSet):
 
             pickup_address = get_object_or_404(Address, pk = pickup_address_id)
             delivery_address = get_object_or_404(Address, pk = delivery_address_id)
-
-            # TOOD: product = get_object_or_404(Product, pk = product_id)
             
             pickup_datetime = parse_datetime(pickup_datetime)
             delivery_datetime = parse_datetime(delivery_datetime)
@@ -142,8 +137,13 @@ class OrderViewSet(viewsets.ModelViewSet):
 
         try:
             new_order = Order.objects.create(created_by_user = request.user, vendor = vendor, consumer = consumer, pickup_address = pickup_address, delivery_address = delivery_address, pickup_datetime = pickup_datetime, delivery_datetime = delivery_datetime)
-            # new_order.product.add(product)
-            # new_order.quantity = quantity
+            for item in order_items:
+                product_id = item['product_id']
+                quantity = item ['quantity']
+                product = get_object_or_404(Product, pk = product_id)
+                order_item = OrderItem.objects.create(product = product, quantity = quantity)
+                new_order.order_items.add(order_item)
+
             new_order.total_cost = total_cost
             new_order.save()
 
