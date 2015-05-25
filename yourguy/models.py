@@ -233,6 +233,7 @@ class Order(models.Model):
     )
     order_status = models.CharField(max_length = 15, choices = ORDER_CHOICES, default = QUEUED)
 
+    # TODO: Allow Multiple products and quantities for the order
     product = models.ManyToManyField(Product)
     quantity = models.FloatField(default = 1.0)
     total_cost = models.FloatField(default = 0.0)

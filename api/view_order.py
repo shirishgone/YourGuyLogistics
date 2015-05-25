@@ -8,7 +8,7 @@ from rest_framework import viewsets
 from rest_framework.decorators import detail_route, list_route
 from rest_framework.response import Response
 
-from yourguy.models import Order, Consumer, Vendor, DeliveryGuy, Area, VendorAgent
+from yourguy.models import Order, Consumer, Vendor, DeliveryGuy, Area, VendorAgent, Address, Product
 from datetime import datetime, timedelta, time
 from api.serializers import OrderSerializer
 from api.views import user_role, is_vendorexists, is_consumerexists, is_dgexists
@@ -100,73 +100,62 @@ class OrderViewSet(viewsets.ModelViewSet):
 
         return queryset
     
-    # def create(self, request):
+    def create(self, request):
         
-    #     try:
-    #         pickup_datetime = request.data['pickup_datetime']
-    #         delivery_datetime = request.data['delivery_datetime']
+        try:
+            pickup_datetime = request.data['pickup_datetime']
+            delivery_datetime = request.data['delivery_datetime']
             
-    #         pickup_address_id = request.data['pickup_address_id']
-    #         delivery_address_id = request.data['delivery_address_id']
+            pickup_address_id = request.data['pickup_address_id']
+            delivery_address_id = request.data['delivery_address_id']
 
-    #         vendor_id = request.data['vendor_id']
-    #         consumer_id = request.data['consumer_id']
+            vendor_id = request.data['vendor_id']
+            consumer_id = request.data['consumer_id']
 
-    #         product_id = request.data['product_id']
-    #         quantity = request.data['quantity']
-    #         total_cost = request.data['total_cost']
-    #     except:
-    #         content = {'error':'Incomplete params', 'description':'pickup_datetime, delivery_datetime, pickup_address, delivery_address, vendor, consumer, product, quantity, total_cost'}
-    #         return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
-    #     role = user_role(request.user)
-    #     if role == constants.VENDOR:
-    #         vendor = get_object_or_404(Vendor, pk = vendor_id)
-    #         consumer = get_object_or_404(Consumer, pk = consumer_id)
+            # TODO:
+            products_array = request.data.getlist('products')
+            # product_id = request.data['product_id']
+            # quantity = request.data['quantity']
+            total_cost = request.data['total_cost']
 
-    #         product = get_object_or_404(Product, pk = product_id)
-    #         pickup_address = get_object_or_404(User, pk = pickup_address_id)
-    #         delivery_address = get_object_or_404(User, pk = pickup_address_id)
+        except:
+            content = {'error':'Incomplete params', 'description':'pickup_datetime, delivery_datetime, pickup_address_id, delivery_address_id , vendor_id, consumer_id, product_id, quantity, total_cost'}
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
+        try:
+            import pdb
+            pdb.set_trace()
+
+            vendor = get_object_or_404(Vendor, pk = vendor_id)
+            consumer = get_object_or_404(Consumer, pk = consumer_id)
+
+            pickup_address = get_object_or_404(Address, pk = pickup_address_id)
+            delivery_address = get_object_or_404(Address, pk = delivery_address_id)
+
+            # TOOD: product = get_object_or_404(Product, pk = product_id)
             
+            pickup_datetime = parse_datetime(pickup_datetime)
+            delivery_datetime = parse_datetime(delivery_datetime)
 
-    #         try:
-    #             vendor_id = request.data['vendor_id']
-    #             phone_number = request.data['phone_number']
-    #             name = request.data.get('name')
-    #             password = request.data['password'] 
-    #         except Exception, e:
-    #             content = {'error':'Incomplete params', 'description':'vendor_id, phone_number, name, password'}    
-    #             return Response(content, status = status.HTTP_400_BAD_REQUEST)
+        except Exception, e:
+            print e
+            content = {'error':' Wrong object ids'}    
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
+        try:
+            new_order = Order.objects.create(created_by_user = request.user, vendor = vendor, consumer = consumer, pickup_address = pickup_address, delivery_address = delivery_address, pickup_datetime = pickup_datetime, delivery_datetime = delivery_datetime)
+            # new_order.product.add(product)
+            # new_order.quantity = quantity
+            new_order.total_cost = total_cost
+            new_order.save()
+
+            content = {'order_id':new_order.id}
+            return Response(content, status = status.HTTP_201_CREATED)
             
-    #         try:
-    #             vendor = get_object_or_404(Vendor, id = vendor_id)
-    #         except:
-    #             content = {'error':'Vendor with id doesnt exists'}
-    #             return Response(content, status = status.HTTP_400_BAD_REQUEST)
-            
-    #         if is_userexists(phone_number) is True:
-    #             user = get_object_or_404(User, username = phone_number)
-    #             if is_vendoragentexists(user) is True:
-    #                 content = {'error':'Vendor Agent with same details exists'}
-    #                 return Response(content, status = status.HTTP_400_BAD_REQUEST)
-    #             else:
-    #                 vendor_agent = VendorAgent.objects.create(user = user)
-    #         else:
-    #             user = User.objects.create(username=phone_number, password=password)
-    #             new_vendor_agent = VendorAgent.objects.create(user = user, vendor = vendor)
-
-    #         # GROUP SETTING
-    #         group = get_object_or_404(Group, name=constants.VENDOR)
-    #         group.user_set.add(user)
-
-    #         token = create_token(user, constants.VENDOR)
-    #         content = {'auth_token':token.key}
-    #         return Response(content, status = status.HTTP_201_CREATED)
-
-    #     else:
-    #         content = {'error':'No permissions to create vendor agent'}   
-    #         return Response(content, status = status.HTTP_400_BAD_REQUEST)
+        except Exception, e:
+            content = {'error':'Unable to create order with the given details'}    
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
     @detail_route(methods=['post'])
     def assign_order(self, request, pk=None):
