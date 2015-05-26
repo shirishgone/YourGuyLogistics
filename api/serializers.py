@@ -43,6 +43,8 @@ class OrderItemSerializer(serializers.ModelSerializer):
 class OrderSerializer(serializers.ModelSerializer):
     consumer = ConsumerSerializer(required=False)
     order_items = OrderItemSerializer(required=False, many = True)
+    pickup_address = AddressSerializer(required=False)
+    delivery_address = AddressSerializer(required=False)
     class Meta:
         model = Order
 
