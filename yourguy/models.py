@@ -13,8 +13,9 @@ import datetime
 class Area(models.Model):
 
     # Mandatory Fields
-    area_code = models.CharField(max_length = 10)
+    area_code = models.CharField(max_length = 10, unique = True)
     area_name = models.CharField(max_length = 50)
+    city_name = models.CharField(max_length = 100, default = 'MUMBAI')
 
     # Optional Fields
 
