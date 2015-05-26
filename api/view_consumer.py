@@ -92,7 +92,7 @@ class ConsumerViewSet(viewsets.ModelViewSet):
                 user = User.objects.create(username=phone_number, first_name = name, password='')
                 consumer = Consumer.objects.create(user = user)
                 address = Address.objects.create(flat_number=flat_number, building=building, street=street, area= area)
-                consumer.address.add(address)
+                consumer.addresses.add(address)
                 consumer.save()
 
             # SETTING USER GROUP
