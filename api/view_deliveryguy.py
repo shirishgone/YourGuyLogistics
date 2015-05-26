@@ -1,9 +1,10 @@
-from yourguy.models import DeliveryGuy
+from django.shortcuts import get_object_or_404
 
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status, authentication
 from rest_framework import viewsets
 
+from yourguy.models import DeliveryGuy
 from api.serializers import DGSerializer
 
 from rest_framework.decorators import detail_route, list_route
@@ -25,6 +26,17 @@ class DGViewSet(viewsets.ModelViewSet):
     	serializer = DGSerializer(dg_list, many=True)
     	return Response(serializer.data)
 
-    @detail_route()
-    def update_location():
+    @detail_route(methods=['post'])
+    def update_location(self, request, pk=None):
+        latitude = request.data['latitude']
+        longitude = request.data['longitude']
+        
+        dg = get_object_or_404(DeliveryGuy, user = request.user)
+        dg.latitude = latitude
+        dg.longitude = longitude
+        dg.save()
+
+        content = {'description': 'Location updated'}
+        return Response(content, status = status.HTTP_201_CREATED)
+
         pass    
