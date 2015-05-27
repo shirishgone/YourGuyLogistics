@@ -41,7 +41,7 @@ def register(request):
     else:
         pass    
         
-    user = User.objects.create(username=phone_number, password=password)
+    user = User.objects.create_user(username=phone_number, password=password)
 
     if role == constants.VENDOR:
         token = create_token(user, constants.VENDOR)
