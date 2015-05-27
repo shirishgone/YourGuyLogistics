@@ -32,9 +32,6 @@ def register(request):
                     }   
         return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
-    import pdb
-    pdb.set_trace()
-
     if is_userexists(phone_number):         
         content = {
                     'error':'User already exists',
@@ -45,9 +42,6 @@ def register(request):
         pass    
         
     user = User.objects.create(username=phone_number, password=password)
-
-    import pdb
-    pdb.set_trace()
 
     if role == constants.VENDOR:
         token = create_token(user, constants.VENDOR)
