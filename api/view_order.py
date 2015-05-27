@@ -27,83 +27,87 @@ class OrderViewSet(viewsets.ModelViewSet):
         """
         Optionally restricts the returned purchases to a given user,
         by filtering against a `consumer_id` or 'vendor_id' query parameter in the URL.
-        """     
-        queryset = Order.objects.all()
-        vendor_id = self.request.QUERY_PARAMS.get('vendor_id', None)
-        consumer_phone_number = self.request.QUERY_PARAMS.get('consumer_phone_number', None)
-        dg_phone_number = self.request.QUERY_PARAMS.get('dg_phone_number', None)
-        date_string = self.request.QUERY_PARAMS.get('date', None)
+        """   
+        try:
+            pk = self.kwargs['pk']
+            return Order.objects.filter(id = pk)
+        except Exception, e:
+            queryset = Order.objects.all()
+            vendor_id = self.request.QUERY_PARAMS.get('vendor_id', None)
+            consumer_phone_number = self.request.QUERY_PARAMS.get('consumer_phone_number', None)
+            dg_phone_number = self.request.QUERY_PARAMS.get('dg_phone_number', None)
+            date_string = self.request.QUERY_PARAMS.get('date', None)
 
-        role = user_role(self.request.user)
+            role = user_role(self.request.user)
 
-        if role == constants.VENDOR:
-            vendor_agent = get_object_or_404(VendorAgent, user = self.request.user)
-            queryset = queryset.filter(vendor=vendor_agent.vendor)
+            if role == constants.VENDOR:
+                vendor_agent = get_object_or_404(VendorAgent, user = self.request.user)
+                queryset = queryset.filter(vendor=vendor_agent.vendor)
 
-        elif role == constants.CONSUMER:
-            consumer = get_object_or_404(Consumer, user = self.request.user)
-            queryset = queryset.filter(consumer=consumer)
+            elif role == constants.CONSUMER:
+                consumer = get_object_or_404(Consumer, user = self.request.user)
+                queryset = queryset.filter(consumer=consumer)
         
-        elif role == constants.DELIVERY_GUY:
-            delivery_guy = get_object_or_404(DeliveryGuy, user = self.request.user)
-            queryset = queryset.filter(delivery_guy = delivery_guy)
+            elif role == constants.DELIVERY_GUY:
+                delivery_guy = get_object_or_404(DeliveryGuy, user = self.request.user)
+                queryset = queryset.filter(delivery_guy = delivery_guy)
         
-        else:
-            # OPERATIONS FILTERING ----
+            else:
+                # OPERATIONS FILTERING ----
             
-            # 1. FILTERING BY vendor_id                
-            if vendor_id is not None:
-                if is_vendorexists(vendor_id):
-                    vendor = get_object_or_404(Vendor, id = vendor_id)
-                    queryset = queryset.filter(vendor=vendor)
+                # 1. FILTERING BY vendor_id                
+                if vendor_id is not None:
+                    if is_vendorexists(vendor_id):
+                        vendor = get_object_or_404(Vendor, id = vendor_id)
+                        queryset = queryset.filter(vendor=vendor)
+                    else:
+                        pass
+                else:
+                    pass
+            
+                #2. FILTERING BY consumer_phone_number
+                if consumer_phone_number is not None:
+                    if is_consumerexists(consumer_phone_number):
+                        user = get_object_or_404(User, username = consumer_phone_number)
+                        consumer = get_object_or_404(consumer, user = user)
+                        queryset = queryset.filter(consumer=consumer)
+                    else:
+                        pass
+                else:
+                    pass
+        
+            # FILTERING BY ASSIGNED DELIVERY GUY ----
+            if dg_phone_number is not None:
+                if is_dgexists:
+                    user = get_object_or_404(User, username = dg_phone_number)
+                    queryset = queryset.filter(assigned_deliveryGuy=user)
                 else:
                     pass
             else:
-                pass
-            
-            #2. FILTERING BY consumer_phone_number
-            if consumer_phone_number is not None:
-                if is_consumerexists(consumer_phone_number):
-                    user = get_object_or_404(User, username = consumer_phone_number)
-                    consumer = get_object_or_404(consumer, user = user)
-                    queryset = queryset.filter(consumer=consumer)
-                else:
-                    pass
+                pass        
+
+            # FILTERING BY DATE -----
+            if date_string is not None:
+                date = parse_datetime(date_string)
+                day_start = datetime.combine(date, time())
+                next_day = day_start + timedelta(1)
+                day_end = datetime.combine(next_day, time())
+                queryset = queryset.filter(delivery_datetime__lte=day_end, delivery_datetime__gte=day_start)
             else:
-                pass
-        
-        # FILTERING BY ASSIGNED DELIVERY GUY ----
-        if dg_phone_number is not None:
-            if is_dgexists:
-                user = get_object_or_404(User, username = dg_phone_number)
-                queryset = queryset.filter(assigned_deliveryGuy=user)
-            else:
-                pass
-        else:
-            pass        
-
-        # FILTERING BY DATE -----
-        if date_string is not None:
-            date = parse_datetime(date_string)
-            day_start = datetime.combine(date, time())
-            next_day = day_start + timedelta(1)
-            day_end = datetime.combine(next_day, time())
-            queryset = queryset.filter(delivery_datetime__lte=day_end, delivery_datetime__gte=day_start)
-        else:
-            date = datetime.today()
-            day_start = datetime.combine(date, time())
-            next_day = day_start + timedelta(1)
-            day_end = datetime.combine(next_day, time())
-            queryset = queryset.filter(delivery_datetime__lte=day_end, delivery_datetime__gte=day_start)
+                date = datetime.today()
+                day_start = datetime.combine(date, time())
+                next_day = day_start + timedelta(1)
+                day_end = datetime.combine(next_day, time())
+                queryset = queryset.filter(delivery_datetime__lte=day_end, delivery_datetime__gte=day_start)
 
 
-        # FILTERING BY  area_code ---
-        area_code = self.request.QUERY_PARAMS.get('area_code', None)
-        if area_code is not None:
-            area = get_object_or_404(Area, area_code = area_code)
-            queryset = queryset.filter(delivery_address__area=area)
+            # FILTERING BY  area_code ---
+            area_code = self.request.QUERY_PARAMS.get('area_code', None)
+            if area_code is not None:
+                area = get_object_or_404(Area, area_code = area_code)
+                queryset = queryset.filter(delivery_address__area=area)
 
-        return queryset
+            return queryset
     
     def create(self, request):
         
