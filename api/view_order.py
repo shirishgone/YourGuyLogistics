@@ -43,6 +43,11 @@ class OrderViewSet(viewsets.ModelViewSet):
         elif role == constants.CONSUMER:
             consumer = get_object_or_404(Consumer, user = self.request.user)
             queryset = queryset.filter(consumer=consumer)
+        
+        elif role == constants.DELIVERY_GUY:
+            delivery_guy = get_object_or_404(DeliveryGuy, user = self.request.user)
+            queryset = queryset.filter(assigned_deliveryGuy = delivery_guy)
+        
         else:
             # OPERATIONS FILTERING ----
             
