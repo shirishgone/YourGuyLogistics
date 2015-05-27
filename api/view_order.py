@@ -45,8 +45,6 @@ class OrderViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(consumer=consumer)
         
         elif role == constants.DELIVERY_GUY:
-            import pdb
-            pdb.set_trace()
             delivery_guy = get_object_or_404(DeliveryGuy, user = self.request.user)
             queryset = queryset.filter(delivery_guy = delivery_guy)
         
