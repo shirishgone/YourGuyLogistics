@@ -37,7 +37,7 @@ def is_userexists(username):
 	if User.objects.filter(username=username).count():
 		return True
 	else:	
-		return False
+		return False		
 
 def is_consumerexists(user):
 	if Consumer.objects.filter(user=user).count():

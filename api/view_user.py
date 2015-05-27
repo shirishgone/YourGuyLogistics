@@ -1,53 +1,89 @@
-from yourguy.models import User, Token
-
+from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status, authentication
 from rest_framework import viewsets
-
-from api.serializers import UserSerializer
 from rest_framework.decorators import list_route, detail_route
 from rest_framework.decorators import api_view
+from rest_framework.response import Response
 
-class UserViewSet(viewsets.ModelViewSet):
-    """
-    User viewset that provides the standard actions 
-    """
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
+from yourguy.models import User, Token, Vendor, VendorAgent, Consumer, DeliveryGuy, Employee
+from api.views import is_userexists, create_token 
+import constants
 
-# CUSTOM METHODS FOR REGISTRATION AND SIGN-IN ------
-
+## CUSTOM METHODS ------
 ## CONSUMER DIRECT REGISTRATION
 
 @api_view(['POST'])
-def register_consumer(request):
+def register(request):
+
     try:
+        role = request.data['role']
         phone_number = request.data['phone_number']
         password = request.data['password']
+        
         name = request.data.get('name')
         email = request.data.get('email')
+        vendor_id = request.data.get('vendor_id')
         
     except Exception, e:
         content = {
                     'error':'Incomplete params',
-                    'description':'phone_number, password, email'
+                    'description':'MANDATORY: role, phone_number, password. OPTIONAL: name, email, vendor_id'
                     }   
         return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
-    if is_userexists(phone_number) is True:
-        user = User.objects.get(username = phone_number)
-        if is_consumerexists(user) is True:
-            token = Token.objects.get(user = user)
-        else:
-            consumer = Consumer.objects.create(user = user)
-            token = create_token(user, constants.CONSUMER)    
-            user.password = password
-            user.save()
-    else:
-        user = User.objects.create(username=phone_number, password=password)
-        token = create_token(user, constants.CONSUMER)
-        consumer = Consumer.objects.create(user = user)
+    import pdb
+    pdb.set_trace()
 
+    if is_userexists(phone_number):         
+        content = {
+                    'error':'User already exists',
+                    'description':'User with same phone number already exists'
+                    }   
+        return Response(content, status = status.HTTP_400_BAD_REQUEST)
+    else:
+        pass    
+        
+    user = User.objects.create(username=phone_number, password=password)
+
+    import pdb
+    pdb.set_trace()
+
+    if role == constants.VENDOR:
+        token = create_token(user, constants.VENDOR)
+    elif role == constants.DELIVERY_GUY:
+        token = create_token(user, constants.DELIVERY_GUY)
+    elif role == constants.CONSUMER:
+        token = create_token(user, constants.CONSUMER)
+    elif role == constants.OPERATIONS:
+        token = create_token(user, constants.OPERATIONS)
+    elif role == constants.SALES:
+        token = create_token(user, constants.SALES)
+    else:
+        token = None
+
+    if name is not None:
+        user.first_name = name
+
+    if email is not None:
+        user.email = email
+    
+    if role == constants.VENDOR:
+        vendor = Vendor.objects.get(id =vendor_id)
+        vendor_agent = VendorAgent.objects.create(user = request.user, vendor = vendor)
+    elif role == constants.CONSUMER:
+        consumer = Consumer.objects.create(user = request.user)    
+    elif role == constants.DELIVERY_GUY:
+        delivery_guy = DeliveryGuy.objects.create(user = request.user)    
+    elif role == constants.OPERATIONS:
+        employee = Employee.objects.create(user = request.user)
+        employee.department = constants.OPERATIONS
+    elif role == constants.SALES:
+        employee = Employee.objects.create(user = request.user)
+        employee.department = constants.SALES
+    else:
+        pass
+            
     content = {'auth_token': token.key}
     return Response(content, status = status.HTTP_201_CREATED)              
 

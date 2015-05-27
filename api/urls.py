@@ -12,7 +12,7 @@ from api.view_deliveryguy import DGViewSet
 from api.view_vendor import VendorViewSet
 from api.view_vendoragent import VendorAgentViewSet
 from api.view_group import GroupViewSet
-from api.view_usergroup import UserGroupViewSet
+# from api.view_usergroup import UserGroupViewSet
 from api.view_product import ProductViewSet
 from api.view_productcategory import ProductCategoryViewSet
 
@@ -20,7 +20,7 @@ urlpatterns = patterns(
     'api.views',
     url(r'^docs/', include('rest_framework_swagger.urls')),
     url(r'^auth/', include('djoser.urls')),
-    url(r'^register_retail_consumer/', view_user.register_consumer,name='Consumer Registration'),
+    url(r'^register/', view_user.register,name='Registration'),
 )
 
 
@@ -33,7 +33,7 @@ router.register(r'deliveryguy', DGViewSet)
 router.register(r'consumer', ConsumerViewSet)
 router.register(r'order', OrderViewSet, base_name = 'orders')
 router.register(r'group', GroupViewSet)
-router.register(r'usergroup', UserGroupViewSet)
+# router.register(r'usergroup', UserGroupViewSet)
 router.register(r'product', ProductViewSet)
 router.register(r'productcategory', ProductCategoryViewSet)
 

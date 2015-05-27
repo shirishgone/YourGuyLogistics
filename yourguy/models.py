@@ -104,15 +104,15 @@ class Employee(YGUser):
     # Mandatory Fields
     employee_code = models.CharField(max_length = 20)
 
-    SALES = 'SALES'
-    OPS = 'OPERATIONS'
-    CALLER = 'CALLER'
-    MANAGER = 'MANAGER'
+    SALES = 'sales'
+    OPERATIONS = 'operations'
+    CALLER = 'caller'
+    MANAGER = 'manager'
     DEPARTMENT_CHOICES = (
-            (SALES, 'SALES'),
-            (OPS, 'OPERATIONS'),
-            (CALLER, 'CALLER'),
-            (MANAGER, 'MANAGER')
+            (SALES, 'sales'),
+            (OPERATIONS, 'operations'),
+            (CALLER, 'caller'),
+            (MANAGER, 'manager')
             )
     department = models.CharField(max_length = 15, choices = DEPARTMENT_CHOICES, default = CALLER)
 
