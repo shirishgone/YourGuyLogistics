@@ -11,9 +11,13 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterField(
+        migrations.RemoveField(
             model_name='order',
             name='assigned_deliveryGuy',
-            field=models.ForeignKey(related_name='assinged_dg', blank=True, to='yourguy.DeliveryGuy', null=True),
+        ),
+        migrations.AddField(
+            model_name='order',
+            name='delivery_guy',
+            field=models.ForeignKey(related_name='delivery_guy', blank=True, to='yourguy.DeliveryGuy', null=True),
         ),
     ]
