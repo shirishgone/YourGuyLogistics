@@ -64,16 +64,16 @@ def register(request):
     
     if role == constants.VENDOR:
         vendor = Vendor.objects.get(id =vendor_id)
-        vendor_agent = VendorAgent.objects.create(user = request.user, vendor = vendor)
+        vendor_agent = VendorAgent.objects.create(user = user, vendor = vendor)
     elif role == constants.CONSUMER:
-        consumer = Consumer.objects.create(user = request.user)    
+        consumer = Consumer.objects.create(user = user)    
     elif role == constants.DELIVERY_GUY:
-        delivery_guy = DeliveryGuy.objects.create(user = request.user)    
+        delivery_guy = DeliveryGuy.objects.create(user = user)    
     elif role == constants.OPERATIONS:
-        employee = Employee.objects.create(user = request.user)
+        employee = Employee.objects.create(user = user)
         employee.department = constants.OPERATIONS
     elif role == constants.SALES:
-        employee = Employee.objects.create(user = request.user)
+        employee = Employee.objects.create(user = user)
         employee.department = constants.SALES
     else:
         pass
