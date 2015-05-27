@@ -262,7 +262,7 @@ class Order(models.Model):
     vendor_order_id = models.CharField(max_length = 10, blank = True)
 
     is_COD = models.BooleanField(blank = True, default = False)
-    assigned_deliveryGuy = models.ForeignKey(DeliveryGuy, blank = True, related_name = 'assinged_dg', null = True)
+    delivery_guy = models.ForeignKey(DeliveryGuy, related_name = 'delivery_guy', blank = True, null = True)
 
     # Order Modified =====
     modified_by_user = models.ForeignKey(User, blank = True, related_name='order_modified_by', null = True)

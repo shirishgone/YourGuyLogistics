@@ -48,7 +48,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             import pdb
             pdb.set_trace()
             delivery_guy = get_object_or_404(DeliveryGuy, user = self.request.user)
-            queryset = queryset.filter(assigned_deliveryGuy = delivery_guy)
+            queryset = queryset.filter(delivery_guy = delivery_guy)
         
         else:
             # OPERATIONS FILTERING ----
