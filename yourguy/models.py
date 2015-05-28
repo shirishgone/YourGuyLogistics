@@ -232,10 +232,12 @@ class Order(models.Model):
     consumer = models.ForeignKey(Consumer)
 
     QUEUED = 'QUEUED'
+    OUTFORPICKUP = 'OUTFORPICKUP'
     INTRANSIT = 'INTRANSIT'
     DELIVERED = 'DELIVERED'
     ORDER_CHOICES = (
         (QUEUED, 'QUEUED'),
+        (OUTFORPICKUP, 'OUTFORPICKUP'),
         (INTRANSIT, 'INTRANSIT'),
         (DELIVERED, 'DELIVERED'),
     )
