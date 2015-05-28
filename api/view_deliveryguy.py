@@ -25,9 +25,9 @@ class DGViewSet(viewsets.ModelViewSet):
     	dg_list = DeliveryGuy.objects.filter(availability='AV')
     	serializer = DGSerializer(dg_list, many=True)
     	return Response(serializer.data)
-
+    
     @detail_route(methods=['post'])
-    def update_location(self, request, pk=None):
+    def update_location(self, request):
         latitude = request.data['latitude']
         longitude = request.data['longitude']
         

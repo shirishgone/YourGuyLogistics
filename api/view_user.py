@@ -40,7 +40,20 @@ def register(request):
         return Response(content, status = status.HTTP_400_BAD_REQUEST)
     else:
         pass    
-        
+       
+    
+    # VENDOR EXISTENCE CHECK ----   
+    if role == constants.VENDOR:
+        try:
+            vendor = Vendor.objects.get(id = vendor_id)       
+        except:
+            content = {'error':'Vendor with given id doesnt exists'}   
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+    else:
+        pass    
+    
+
+
     user = User.objects.create_user(username=phone_number, password=password)
 
     if role == constants.VENDOR:
@@ -62,8 +75,10 @@ def register(request):
     if email is not None:
         user.email = email
     
+    content = {'auth_token': token.key}
+
     if role == constants.VENDOR:
-        vendor = Vendor.objects.get(id =vendor_id)
+        vendor = get_object_or_404(Vendor, id = vendor_id)
         vendor_agent = VendorAgent.objects.create(user = user, vendor = vendor)
     elif role == constants.CONSUMER:
         consumer = Consumer.objects.create(user = user)    
@@ -78,7 +93,7 @@ def register(request):
     else:
         pass
             
-    content = {'auth_token': token.key}
+    
     return Response(content, status = status.HTTP_201_CREATED)              
 
 # @api_view(['POST'])
