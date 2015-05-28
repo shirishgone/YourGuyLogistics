@@ -165,6 +165,48 @@ class OrderViewSet(viewsets.ModelViewSet):
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
     @detail_route(methods=['post'])
+    def picked_up(self, request, pk=None):
+
+        # Change status to InTransit
+        # Set Picked up time
+        # Assign delivery Guy
+        # Make DeliveryGuy Status Busy
+
+        dg = get_object_or_404(DeliveryGuy, user = request.user)
+        order = get_object_or_404(Order, pk = pk)        
+
+        order.order_status = 'INTRANSIT'
+        order.delivery_guy = dg
+        order.pickedup_datetime = datetime.now() 
+        order.save()
+        
+        dg.status = 'BUSY'
+        dg.save()
+
+        content = {'description': 'Order updated'}
+        return Response(content, status = status.HTTP_201_CREATED)
+
+    @detail_route(methods=['post'])
+    def delivered(self, request, pk=None):
+
+        # Change status to Delivered
+        # Set delivered time
+        # Make DeliveryGuy Status available
+
+        dg = get_object_or_404(DeliveryGuy, user = request.user)
+        order = get_object_or_404(Order, pk = pk)        
+
+        order.order_status = 'DELIVERED'
+        order.completed_datetime = datetime.now()
+        order.save()
+        
+        dg.status = 'AVAILABLE'
+        dg.save()
+
+        content = {'description': 'Order updated'}
+        return Response(content, status = status.HTTP_201_CREATED)
+
+    @detail_route(methods=['post'])
     def assign_order(self, request, pk=None):
         dg_id = request.POST['dg_id']
         order_id = request.POST['order_id']
