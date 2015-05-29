@@ -36,7 +36,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         queryset = Order.objects.all()
         vendor_id = self.request.QUERY_PARAMS.get('vendor_id', None)
         consumer_phone_number = self.request.QUERY_PARAMS.get('consumer_phone_number', None)
-        dg_phone_number = self.request.QUERY_PARAMS.get('dg_phone_number', None)
+        dg_phone_number = self.request.QUERY_PARAMSda
         date_string = self.request.QUERY_PARAMS.get('date', None)
 
         role = user_role(self.request.user)
@@ -113,6 +113,9 @@ class OrderViewSet(viewsets.ModelViewSet):
     def create(self, request):
         
         try:
+            import pdb
+            pdb.set_trace()
+
             pickup_datetime = request.data['pickup_datetime']
             delivery_datetime = request.data['delivery_datetime']
             
@@ -123,8 +126,9 @@ class OrderViewSet(viewsets.ModelViewSet):
             consumer_id = request.data['consumer_id']
            
             order_items = request.data['order_items']
-            total_cost = request.data['total_cost']
-
+            
+            total_cost = request.data.get('total_cost')
+            vendor_order_id = request.data.get('vendor_order_id')
         except Exception, e:
             print e
             content = {'error':'Incomplete params', 'description':'pickup_datetime, products, delivery_datetime, pickup_address_id, delivery_address_id , vendor_id, consumer_id, product_id, quantity, total_cost'}
@@ -154,7 +158,12 @@ class OrderViewSet(viewsets.ModelViewSet):
                 order_item = OrderItem.objects.create(product = product, quantity = quantity)
                 new_order.order_items.add(order_item)
 
-            new_order.total_cost = total_cost
+            if vendor_order_id is not None:
+                new_order.vendor_order_id = vendor_order_id
+
+            if total_cost is not None:
+                new_order.total_cost = total_cost
+            
             new_order.save()
 
             content = {'order_id':new_order.id}
