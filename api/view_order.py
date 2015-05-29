@@ -113,9 +113,6 @@ class OrderViewSet(viewsets.ModelViewSet):
     def create(self, request):
         
         try:
-            import pdb
-            pdb.set_trace()
-
             pickup_datetime = request.data['pickup_datetime']
             delivery_datetime = request.data['delivery_datetime']
             
