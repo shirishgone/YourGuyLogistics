@@ -38,5 +38,3 @@ class DGViewSet(viewsets.ModelViewSet):
 
         content = {'description': 'Location updated'}
         return Response(content, status = status.HTTP_201_CREATED)
-
-        pass    

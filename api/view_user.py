@@ -10,6 +10,21 @@ from yourguy.models import User, Token, Vendor, VendorAgent, Consumer, DeliveryG
 from api.views import is_userexists, create_token 
 import constants
 
+
+# from django.contrib.auth.models import User
+# from rest_framework viewsets
+# from rest_framework.permissions import AllowAny 
+# from .permissions import IsStaffOrTargetUser
+# class UserView(viewsets.ModelViewSet):
+#     serializer_class = UserSerializer
+#     model = User
+ 
+#     def get_permissions(self):
+#         # allow non-authenticated user to create via POST
+#         return (AllowAny() if self.request.method == 'POST'
+#                 else IsStaffOrTargetUser()),
+
+
 ## CUSTOM METHODS ------
 ## CONSUMER DIRECT REGISTRATION
 

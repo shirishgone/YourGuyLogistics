@@ -111,7 +111,6 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     
     def create(self, request):
-        
         try:
             pickup_datetime = request.data['pickup_datetime']
             delivery_datetime = request.data['delivery_datetime']
@@ -170,14 +169,13 @@ class OrderViewSet(viewsets.ModelViewSet):
             content = {'error':'Unable to create order with the given details'}    
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
+    def update(self, request, pk=None):
+        # import pdb
+        # pdb.set_trace()
+        # print 'update'
+
     @detail_route(methods=['post'])
     def picked_up(self, request, pk=None):
-
-        # Change status to InTransit
-        # Set Picked up time
-        # Assign delivery Guy
-        # Make DeliveryGuy Status Busy
-
         dg = get_object_or_404(DeliveryGuy, user = request.user)
         order = get_object_or_404(Order, pk = pk)        
 
@@ -194,11 +192,6 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['post'])
     def delivered(self, request, pk=None):
-
-        # Change status to Delivered
-        # Set delivered time
-        # Make DeliveryGuy Status available
-
         dg = get_object_or_404(DeliveryGuy, user = request.user)
         order = get_object_or_404(Order, pk = pk)        
 
