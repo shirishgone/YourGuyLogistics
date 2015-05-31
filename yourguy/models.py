@@ -275,6 +275,22 @@ class Order(models.Model):
     cancel_request_time = models.DateTimeField(blank = True, null = True)
 
 
+    DOOR_STEP = 'DOOR_STEP'
+    SECURITY = 'SECURITY'
+    RECEPTION = 'RECEPTION'
+    CUSTOMER = 'CUSTOMER'
+    ATTEMPTED = 'ATTEMPTED'
+    NOT_DELIVERED = 'NOT_DELIVERED'
+    DELIVERED_AT_CHOICES = (
+        (DOOR_STEP, 'DOOR_STEP'),
+        (SECURITY, 'SECURITY'),
+        (RECEPTION, 'RECEPTION'),
+        (CUSTOMER, 'CUSTOMER'),
+        (ATTEMPTED, 'ATTEMPTED'),        
+        (NOT_DELIVERED, 'NOT_DELIVERED'),
+    )
+    delivered_at = models.CharField(max_length = 15, choices = DELIVERED_AT_CHOICES, default = NOT_DELIVERED)
+
     def __unicode__(self):
         return u"%s - %s - %s" % (self.vendor.store_name, self.consumer.user.first_name, self.order_status)
 

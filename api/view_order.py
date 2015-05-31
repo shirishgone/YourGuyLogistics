@@ -169,7 +169,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             content = {'error':'Unable to create order with the given details'}    
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
-    def update(self, request, pk=None):
+    #def update(self, request, pk=None):
         # import pdb
         # pdb.set_trace()
         # print 'update'
@@ -197,11 +197,17 @@ class OrderViewSet(viewsets.ModelViewSet):
 
         order.order_status = 'DELIVERED'
         order.completed_datetime = datetime.now()
+
+        try:
+            delivered_at = request.data['delivered_at']
+            order.delivered_at = delivered_at   
+        except:
+            content = {'error':' delivered_at value is missing or wrong. Options: DOOR_STEP, SECURITY, RECEPTION, CUSTOMER, ATTEMPTED'}    
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
         order.save()
-        
         dg.status = 'AVAILABLE'
         dg.save()
-
         content = {'description': 'Order updated'}
         return Response(content, status = status.HTTP_201_CREATED)
 
