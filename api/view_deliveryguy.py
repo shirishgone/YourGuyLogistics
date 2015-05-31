@@ -27,7 +27,7 @@ class DGViewSet(viewsets.ModelViewSet):
     	return Response(serializer.data)
     
     @detail_route(methods=['post'])
-    def update_location(self, request):
+    def update_location(self, request, pk=None):
         latitude = request.data['latitude']
         longitude = request.data['longitude']
         
