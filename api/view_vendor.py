@@ -7,7 +7,7 @@ from rest_framework.decorators import detail_route, list_route
 
 from yourguy.models import Vendor, Address, VendorAgent, Area
 from api.serializers import VendorSerializer
-from api.views import user_role
+from api.views import user_role, IsAuthenticatedOrWriteOnly
 
 import constants
 
@@ -16,7 +16,7 @@ class VendorViewSet(viewsets.ModelViewSet):
     Vendor viewset that provides the standard actions 
     """
     authentication_classes = [authentication.TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedOrWriteOnly]
     queryset = Vendor.objects.all()
     serializer_class = VendorSerializer
 

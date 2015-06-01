@@ -12,6 +12,7 @@ from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework import permissions
 
 from yourguy.models import Vendor, Consumer, DeliveryGuy, VendorAgent
 from api.serializers import UserSerializer, OrderSerializer, ConsumerSerializer
@@ -92,3 +93,17 @@ def verify_password(user, password):
 		return True
 	else:
 		return False
+
+class IsAuthenticatedOrWriteOnly(permissions.BasePermission):
+    """
+    The request is authenticated as a user, or is a write-only request.
+    """
+
+    def has_permission(self, request, view):
+        WRITE_METHODS = ["POST", ]
+
+        return (
+            request.method in WRITE_METHODS or
+            request.user and
+            request.user.is_authenticated()
+        )
