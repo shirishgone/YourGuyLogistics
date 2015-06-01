@@ -115,12 +115,15 @@ class OrderViewSet(viewsets.ModelViewSet):
             pickup_datetime = request.data['pickup_datetime']
             delivery_datetime = request.data['delivery_datetime']
             
-            pickup_address_id = request.data['pickup_address_id']
-            delivery_address_id = request.data['delivery_address_id']
-
             vendor_id = request.data['vendor_id']
+            pickup_address_id = request.data['pickup_address_id']
+            
+            # TODO: Supporting multiple customers for same order
+            #[{customer_id:'',delivery_address_id:''},{customer_id:'',delivery_address_id:''}]
+
             consumer_id = request.data['consumer_id']
-           
+            delivery_address_id = request.data['delivery_address_id']
+            
             order_items = request.data['order_items']
             
             total_cost = request.data.get('total_cost')
