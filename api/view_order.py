@@ -13,6 +13,7 @@ from datetime import datetime, timedelta, time
 from api.serializers import OrderSerializer
 from api.views import user_role, is_vendorexists, is_consumerexists, is_dgexists
 import constants
+import recurrence
 
 class OrderViewSet(viewsets.ModelViewSet):
     """
@@ -128,6 +129,20 @@ class OrderViewSet(viewsets.ModelViewSet):
             
             total_cost = request.data.get('total_cost')
             vendor_order_id = request.data.get('vendor_order_id')
+            is_recurring = request.data.get('is_recurring')
+            
+            try:
+                if is_recurring:
+                    start_date = request.data['start_date']
+                    end_date = request.data['end_date']
+                    by_day = request.data['by_day']  
+                else:
+                    pass
+            except Exception, e:
+                content = {'error':'Incomplete params', 'description':'start_date, end_date, by_day should be mentioned for recurring events'}
+                return Response(content, status = status.HTTP_400_BAD_REQUEST)
+            
+
         except Exception, e:
             print e
             content = {'error':'Incomplete params', 'description':'pickup_datetime, products, delivery_datetime, pickup_address_id, delivery_address_id , vendor_id, consumer_id, product_id, quantity, total_cost'}
@@ -156,6 +171,16 @@ class OrderViewSet(viewsets.ModelViewSet):
                 product = get_object_or_404(Product, pk = product_id)
                 order_item = OrderItem.objects.create(product = product, quantity = quantity)
                 new_order.order_items.add(order_item)
+
+            if is_recurring:
+                rule = recurrence.Rule(byday=by_day,freq=recurrence.WEEKLY)
+                recurrences = recurrence.Recurrence(
+                            dtstart=parse_datetime(start_date),
+                            dtend=parse_datetime(end_date),
+                            rrules=[rule,]
+                            )
+                new_order.recurrences = recurrences
+
 
             if vendor_order_id is not None:
                 new_order.vendor_order_id = vendor_order_id
