@@ -9,6 +9,7 @@ from django.dispatch import receiver
 from rest_framework.authtoken.models import Token
 
 import datetime
+from recurrence.fields import RecurrenceField
 
 class Area(models.Model):
 
@@ -290,6 +291,7 @@ class Order(models.Model):
         (NOT_DELIVERED, 'NOT_DELIVERED'),
     )
     delivered_at = models.CharField(max_length = 15, choices = DELIVERED_AT_CHOICES, default = NOT_DELIVERED)
+    recurrences = RecurrenceField(null = True)
 
     def __unicode__(self):
         return u"%s - %s - %s" % (self.vendor.store_name, self.consumer.user.first_name, self.order_status)
