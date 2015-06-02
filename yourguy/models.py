@@ -61,6 +61,7 @@ class DeliveryGuy(YGUser):
         (BUSY, 'BUSY'),
     )
     status = models.CharField(max_length = 15, choices = STATUS_CHOICES, default = AVAILABLE)
+    device_token = models.CharField(max_length = 200, blank = True , null = True)
 
     # Optional Fields    
     latitude = models.CharField(max_length = 10, blank = True)
@@ -131,21 +132,6 @@ class Consumer(YGUser):
 
     def __unicode__(self):
         return unicode(self.user.first_name)
-
-
-class PushDetail(models.Model):
-
-    # Mandatory Fields
-    user = models.ForeignKey(User)
-    device_token = models.CharField(max_length = 200)
-
-    # Optional Fields
-    device_id = models.CharField(max_length = 100, blank = True)
-    platform = models.CharField(max_length = 10, blank = True)
-
-    def __unicode__(self):
-        return unicode(self.device_token)
-
 
 class DGAttendance(models.Model):
 

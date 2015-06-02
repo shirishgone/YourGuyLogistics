@@ -25,7 +25,18 @@ class DGViewSet(viewsets.ModelViewSet):
     	dg_list = DeliveryGuy.objects.filter(availability='AV')
     	serializer = DGSerializer(dg_list, many=True)
     	return Response(serializer.data)
-    
+
+    @detail_route(methods=['post'])
+    def update_pushtoken(self, request, pk=None):
+        push_token = request.data['push_token']
+        
+        dg = get_object_or_404(DeliveryGuy, user = request.user)
+        dg.device_token = push_token
+        dg.save()
+
+        content = {'description': 'Push Token updated'}
+        return Response(content, status = status.HTTP_201_CREATED)
+
     @detail_route(methods=['post'])
     def update_location(self, request, pk=None):
         latitude = request.data['latitude']
