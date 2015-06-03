@@ -14,6 +14,8 @@ from api.serializers import OrderSerializer
 from api.views import user_role, is_vendorexists, is_consumerexists, is_dgexists
 import constants
 import recurrence
+from itertools import chain
+
 
 class OrderViewSet(viewsets.ModelViewSet):
     """
@@ -93,22 +95,31 @@ class OrderViewSet(viewsets.ModelViewSet):
             if area_code is not None:
                 area = get_object_or_404(Area, area_code = area_code)
                 queryset = queryset.filter(delivery_address__area=area)
-    
+                
         # FILTERING BY DATE -----
         if date_string is not None:
             date = parse_datetime(date_string)
-            day_start = datetime.combine(date, time())
-            next_day = day_start + timedelta(1)
-            day_end = datetime.combine(next_day, time())
-            queryset = queryset.filter(delivery_datetime__lte=day_end, delivery_datetime__gte=day_start)
         else:
             date = datetime.today()
-            day_start = datetime.combine(date, time())
-            next_day = day_start + timedelta(1)
-            day_end = datetime.combine(next_day, time())
-            queryset = queryset.filter(delivery_datetime__lte=day_end, delivery_datetime__gte=day_start)
-        
-        return queryset
+        day_start = datetime.combine(date, time()).replace(hour=0, minute=0, second=0)
+        next_day = day_start + timedelta(1)
+        day_end = datetime.combine(next_day, time()).replace(hour=0, minute=0, second=0)
+
+        # FILTERING BY RECURRING ORDERS
+        recurring_queryset = queryset.filter(is_recurring=True)
+        recurring_orders = []
+        for order in recurring_queryset:
+            dates = order.recurrences.between(day_start, day_end,inc=True)
+            if len(list(dates)) > 0:
+                recurring_orders.append(order)
+
+        # FILTERING SINGLE ORDER
+        non_recurring_queryset = queryset.filter(is_recurring=False, delivery_datetime__lte=day_end, delivery_datetime__gte=day_start)
+
+        # COMBINING RECURRING + SINGLE ORDERS
+        result = list(chain(non_recurring_queryset, recurring_orders))
+
+        return result
 
     
     def create(self, request):
@@ -164,7 +175,14 @@ class OrderViewSet(viewsets.ModelViewSet):
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
         try:
-            new_order = Order.objects.create(created_by_user = request.user, vendor = vendor, consumer = consumer, pickup_address = pickup_address, delivery_address = delivery_address, pickup_datetime = pickup_datetime, delivery_datetime = delivery_datetime)
+            new_order = Order.objects.create(created_by_user = request.user, 
+                                            vendor = vendor, 
+                                            consumer = consumer, 
+                                            pickup_address = pickup_address, 
+                                            delivery_address = delivery_address, 
+                                            pickup_datetime = pickup_datetime, 
+                                            delivery_datetime = delivery_datetime)
+
             for item in order_items:
                 product_id = item['product_id']
                 quantity = item ['quantity']
@@ -175,11 +193,14 @@ class OrderViewSet(viewsets.ModelViewSet):
             if is_recurring:
                 rule = recurrence.Rule(byday=by_day,freq=recurrence.WEEKLY)
                 recurrences = recurrence.Recurrence(
-                            dtstart=parse_datetime(start_date),
-                            dtend=parse_datetime(end_date),
-                            rrules=[rule,]
+                            dtstart = parse_datetime(start_date),
+                            dtend = parse_datetime(end_date),
+                            rrules = [rule,]
                             )
                 new_order.recurrences = recurrences
+                new_order.is_recurring = True
+            else:
+                new_order.is_recurring = False
 
 
             if vendor_order_id is not None:

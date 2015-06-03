@@ -71,6 +71,14 @@ def register(request):
 
     user = User.objects.create_user(username=phone_number, password=password)
 
+    if name is not None:
+        user.first_name = name
+
+    if email is not None:
+        user.email = email
+    
+    user.save()    
+
     if role == constants.VENDOR:
         token = create_token(user, constants.VENDOR)
     elif role == constants.DELIVERY_GUY:

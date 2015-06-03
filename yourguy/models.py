@@ -277,6 +277,7 @@ class Order(models.Model):
         (NOT_DELIVERED, 'NOT_DELIVERED'),
     )
     delivered_at = models.CharField(max_length = 15, choices = DELIVERED_AT_CHOICES, default = NOT_DELIVERED)
+    is_recurring = models.BooleanField(blank = True, default = False)
     recurrences = RecurrenceField(null = True)
 
     def __unicode__(self):
