@@ -95,7 +95,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             if area_code is not None:
                 area = get_object_or_404(Area, area_code = area_code)
                 queryset = queryset.filter(delivery_address__area=area)
-                
+
         # FILTERING BY DATE -----
         if date_string is not None:
             date = parse_datetime(date_string)
@@ -130,20 +130,15 @@ class OrderViewSet(viewsets.ModelViewSet):
             vendor_id = request.data['vendor_id']
             pickup_address_id = request.data['pickup_address_id']
             
-            # TODO: Supporting multiple customers for same order
-            #[{customer_id:'',delivery_address_id:''},{customer_id:'',delivery_address_id:''}]
-
-            consumer_id = request.data['consumer_id']
-            delivery_address_id = request.data['delivery_address_id']
-            
+            consumers = request.data['consumers']
             order_items = request.data['order_items']
-            
+
             total_cost = request.data.get('total_cost')
             vendor_order_id = request.data.get('vendor_order_id')
-            is_recurring = request.data.get('is_recurring')
+            is_recurring = request.data['is_recurring']
             
             try:
-                if is_recurring:
+                if is_recurring is True:
                     start_date = request.data['start_date']
                     end_date = request.data['end_date']
                     by_day = request.data['by_day']  
@@ -161,11 +156,8 @@ class OrderViewSet(viewsets.ModelViewSet):
 
         try:
             vendor = get_object_or_404(Vendor, pk = vendor_id)
-            consumer = get_object_or_404(Consumer, pk = consumer_id)
-
             pickup_address = get_object_or_404(Address, pk = pickup_address_id)
-            delivery_address = get_object_or_404(Address, pk = delivery_address_id)
-            
+
             pickup_datetime = parse_datetime(pickup_datetime)
             delivery_datetime = parse_datetime(delivery_datetime)
 
@@ -175,47 +167,54 @@ class OrderViewSet(viewsets.ModelViewSet):
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
         try:
-            new_order = Order.objects.create(created_by_user = request.user, 
+            for consumer_obj in consumers:
+                consumer_id = consumer_obj['consumer_id']
+                address_id = consumer_obj['address_id']
+
+                consumer = get_object_or_404(Consumer, pk = consumer_id)
+                address = get_object_or_404(Address, pk = address_id)
+
+                new_order = Order.objects.create(created_by_user = request.user, 
                                             vendor = vendor, 
                                             consumer = consumer, 
                                             pickup_address = pickup_address, 
-                                            delivery_address = delivery_address, 
+                                            delivery_address = address, 
                                             pickup_datetime = pickup_datetime, 
                                             delivery_datetime = delivery_datetime)
 
-            for item in order_items:
-                product_id = item['product_id']
-                quantity = item ['quantity']
-                product = get_object_or_404(Product, pk = product_id)
-                order_item = OrderItem.objects.create(product = product, quantity = quantity)
-                new_order.order_items.add(order_item)
+                for item in order_items:
+                    product_id = item['product_id']
+                    quantity = item ['quantity']
+                    product = get_object_or_404(Product, pk = product_id)
+                    order_item = OrderItem.objects.create(product = product, quantity = quantity)
+                    new_order.order_items.add(order_item)
 
-            if is_recurring:
-                rule = recurrence.Rule(byday=by_day,freq=recurrence.WEEKLY)
-                recurrences = recurrence.Recurrence(
-                            dtstart = parse_datetime(start_date),
-                            dtend = parse_datetime(end_date),
-                            rrules = [rule,]
-                            )
-                new_order.recurrences = recurrences
-                new_order.is_recurring = True
-            else:
-                new_order.is_recurring = False
+                if is_recurring is True:
+                    rule = recurrence.Rule(byday=by_day,freq=recurrence.WEEKLY)
+                    recurrences = recurrence.Recurrence(
+                                    dtstart = parse_datetime(start_date),
+                                    dtend = parse_datetime(end_date),
+                                    rrules = [rule,]
+                                    )
+                    new_order.recurrences = recurrences
+                    new_order.is_recurring = True
+                else:
+                    new_order.is_recurring = False
 
 
-            if vendor_order_id is not None:
-                new_order.vendor_order_id = vendor_order_id
+                if vendor_order_id is not None:
+                    new_order.vendor_order_id = vendor_order_id
 
-            if total_cost is not None:
-                new_order.total_cost = total_cost
+                if total_cost is not None:
+                    new_order.total_cost = total_cost
             
-            new_order.save()
+                new_order.save()
 
-            content = {'order_id':new_order.id}
+            content = {'status':'orders added'}
             return Response(content, status = status.HTTP_201_CREATED)
             
         except Exception, e:
-            content = {'error':'Unable to create order with the given details'}    
+            content = {'error':'Unable to create orders with the given details'}    
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
     #def update(self, request, pk=None):
