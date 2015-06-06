@@ -281,7 +281,7 @@ class Order(models.Model):
     recurrences = RecurrenceField(null = True)
 
     def __unicode__(self):
-        return u"%s - %s - %s" % (self.vendor.store_name, self.consumer.user.first_name, self.order_status)
+        return u"%s - %s - %s - %s" % (self.vendor.store_name, self.consumer.user.first_name, self.order_status, self.delivery_guy)
 
 
 class Suggestion(models.Model):
