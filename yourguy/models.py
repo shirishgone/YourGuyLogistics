@@ -68,7 +68,7 @@ class DeliveryGuy(YGUser):
     longitude = models.CharField(max_length = 10, blank = True)
 
     def __unicode__(self):
-        return unicode(self.user.username)
+        return u"%s - %s" % (self.user.username, self.user.first_name)                
 
 class Vendor(models.Model):
     # Mandatory Fields

@@ -221,6 +221,38 @@ class OrderViewSet(viewsets.ModelViewSet):
         # import pdb
         # pdb.set_trace()
         # print 'update'
+    
+    # def destroy(self, request, pk=None):
+    #     import pdb
+    #     pdb.set_trace()
+        
+    #     try:
+    #         is_recurring = request.data['is_recurring']
+    #         is_all_dates = request.data.get('is_all_dates')
+    #         delete_singledate = request.data.get('single_date')
+    #     except Exception, e:
+    #         content = {'error':'Mandatory param: is_recurring. Optional: is_all_dates, single_date'}
+    #         return Response(content, status = status.HTTP_400_BAD_REQUEST)
+                
+    #     if is_recurring is True:
+    #         if is_all_dates is True:
+    #             order.delete()
+    #         else:
+    #             date = parse_datetime(delete_singledate)
+    #             exrules = order.recurrences.exrules
+
+    #             new_exrule = recurrence.Rule(date)
+    #             exrules.append(new_exrule)
+
+    #             order.recurrences.exrules = exrules
+    #             order.save()
+    #     else:
+    #         order.delete()
+        
+    #     content = {'status':'order deleted'}
+    #     return Response(content, status = status.HTTP_200_OK)
+        
+
 
     @detail_route(methods=['post'])
     def picked_up(self, request, pk=None):
@@ -236,7 +268,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         dg.save()
 
         content = {'description': 'Order updated'}
-        return Response(content, status = status.HTTP_201_CREATED)
+        return Response(content, status = status.HTTP_200_OK)
 
     @detail_route(methods=['post'])
     def delivered(self, request, pk=None):
@@ -257,7 +289,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         dg.status = 'AVAILABLE'
         dg.save()
         content = {'description': 'Order updated'}
-        return Response(content, status = status.HTTP_201_CREATED)
+        return Response(content, status = status.HTTP_200_OK)
 
     @detail_route(methods=['post'])
     def assign_order(self, request, pk=None):
@@ -272,7 +304,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         order.save()
         
         content = {'description': 'Order assigned'}
-        return Response(content, status = status.HTTP_201_CREATED)
+        return Response(content, status = status.HTTP_200_OK)
 
     @list_route()
     def undelivered_orders():
