@@ -58,6 +58,7 @@ class VendorAgentSerializer(serializers.ModelSerializer):
         model = VendorAgent
 
 class DGSerializer(serializers.ModelSerializer):
+    user = UserSerializer(required=False)
     class Meta:
         model = DeliveryGuy
 
