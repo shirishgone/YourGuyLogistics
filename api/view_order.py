@@ -293,16 +293,24 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['post'])
     def assign_order(self, request, pk=None):
-        dg_id = request.POST['dg_id']
-        order_id = request.POST['order_id']
-        order = get_object_or_404(Order, id = order_id)
+           
+        try:
+            dg_id = request.data['dg_id']
+            order_ids = request.data['order_ids']    
+        except Exception, e:
+            content = {'error':'dg_id and order_ids list are Mandatory'}    
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+        
         dg = get_object_or_404(DeliveryGuy, id = dg_id)
-        dg.availability = 'BUSY'
+
+        for order_id in order_ids:
+            order = get_object_or_404(Order, id = order_id)
+            order.delivery_guy = dg
+            order.save()
+        
+        dg.status = 'BUSY'
         dg.save()
 
-        order.assigned_to = dg.user
-        order.save()
-        
         content = {'description': 'Order assigned'}
         return Response(content, status = status.HTTP_200_OK)
 
