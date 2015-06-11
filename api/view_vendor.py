@@ -22,7 +22,7 @@ class VendorViewSet(viewsets.ModelViewSet):
 
     def list(self, request):
     	role = user_role(request.user)
-    	if role == constants.SALES:
+    	if (role == constants.SALES) or (role == constants.OPERATIONS):
     		all_vendors = Vendor.objects.all()
     		serializer = VendorSerializer(all_vendors, many=True)
     		return Response(serializer.data, status=status.HTTP_201_CREATED)
