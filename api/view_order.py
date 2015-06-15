@@ -38,6 +38,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         """ 
         queryset = Order.objects.all()
         vendor_id = self.request.QUERY_PARAMS.get('vendor_id', None)
+        area_code = self.request.QUERY_PARAMS.get('area_code', None)
         consumer_phone_number = self.request.QUERY_PARAMS.get('consumer_phone_number', None)
         dg_phone_number = self.request.QUERY_PARAMS.get('dg_phone_number', None)
         date_string = self.request.QUERY_PARAMS.get('date', None)

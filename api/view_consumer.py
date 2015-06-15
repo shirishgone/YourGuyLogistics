@@ -85,11 +85,11 @@ class ConsumerViewSet(viewsets.ModelViewSet):
                     consumer = get_object_or_404(Consumer, user = user)
                 else:
                     consumer = Consumer.objects.create(user = user)
-                    address = Address.objects.create(flat_number=flat_number, building=building, street=street, area= area)
+                    address = Address.objects.create(flat_number = flat_number, building = building, street = street, area = area)
                     consumer.addresses.add(address)
                     consumer.save()
             else:
-                user = User.objects.create(username=phone_number, first_name = name, password='')
+                user = User.objects.create(username = phone_number, first_name = name, password = '')
                 consumer = Consumer.objects.create(user = user)
                 address = Address.objects.create(flat_number=flat_number, building=building, street=street, area= area)
                 consumer.addresses.add(address)
