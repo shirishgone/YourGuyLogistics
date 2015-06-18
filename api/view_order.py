@@ -15,7 +15,6 @@ from api.views import user_role, is_vendorexists, is_consumerexists, is_dgexists
 import constants
 import recurrence
 from itertools import chain
-from dateutil.relativedelta import relativedelta
 
 
 class OrderViewSet(viewsets.ModelViewSet):
