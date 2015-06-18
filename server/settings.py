@@ -44,6 +44,7 @@ INSTALLED_APPS = (
     'rest_framework_swagger',
     'djoser',
     'recurrence',
+    'python-dateutil',
 )
 
 MIDDLEWARE_CLASSES = (

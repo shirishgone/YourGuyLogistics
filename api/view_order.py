@@ -8,13 +8,14 @@ from rest_framework import viewsets
 from rest_framework.decorators import detail_route, list_route
 from rest_framework.response import Response
 
-from yourguy.models import Order, Consumer, Vendor, DeliveryGuy, Area, VendorAgent, Address, Product, OrderItem
+from yourguy.models import Order, OrderDeliveryStatus, Consumer, Vendor, DeliveryGuy, Area, VendorAgent, Address, Product, OrderItem
 from datetime import datetime, timedelta, time
 from api.serializers import OrderSerializer
-from api.views import user_role, is_vendorexists, is_consumerexists, is_dgexists
+from api.views import user_role, is_vendorexists, is_consumerexists, is_dgexists, days_in_int
 import constants
 import recurrence
 from itertools import chain
+from dateutil.relativedelta import relativedelta
 
 
 class OrderViewSet(viewsets.ModelViewSet):
@@ -23,7 +24,6 @@ class OrderViewSet(viewsets.ModelViewSet):
     """
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [IsAuthenticated]
-
     serializer_class = OrderSerializer
 
     def get_object(self):        
@@ -151,8 +151,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             
 
         except Exception, e:
-            print e
-            content = {'error':'Incomplete params', 'description':'pickup_datetime, products, delivery_datetime, pickup_address_id, delivery_address_id , vendor_id, consumer_id, product_id, quantity, total_cost'}
+            content = {'error':'Incomplete params', 'description':'pickup_datetime, delivery_datetime, order_items, pickup_address_id, delivery_address_id , vendor_id, consumer_id, product_id, quantity, total_cost'}
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
         try:
@@ -163,7 +162,6 @@ class OrderViewSet(viewsets.ModelViewSet):
             delivery_datetime = parse_datetime(delivery_datetime)
 
         except Exception, e:
-            print e
             content = {'error':' Wrong object ids'}    
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
@@ -190,8 +188,9 @@ class OrderViewSet(viewsets.ModelViewSet):
                     order_item = OrderItem.objects.create(product = product, quantity = quantity)
                     new_order.order_items.add(order_item)
 
-                if is_recurring is True:
-                    rule = recurrence.Rule(byday=by_day,freq=recurrence.WEEKLY)
+                if is_recurring is True:                    
+                    int_days = days_in_int(by_day)
+                    rule = recurrence.Rule(byday = int_days ,freq = recurrence.WEEKLY)
                     recurrences = recurrence.Recurrence(
                                     dtstart = parse_datetime(start_date),
                                     dtend = parse_datetime(end_date),
@@ -199,9 +198,16 @@ class OrderViewSet(viewsets.ModelViewSet):
                                     )
                     new_order.recurrences = recurrences
                     new_order.is_recurring = True
+                    
+                    recurring_dates = list(recurrences.occurrences())
+                    for date in recurring_dates:
+                        delivery_status = OrderDeliveryStatus.objects.create(date = date)
+                        new_order.delivery_status.add(delivery_status)
+
                 else:
                     new_order.is_recurring = False
-
+                    delivery_status = OrderDeliveryStatus.objects.create(date = delivery_datetime)
+                    new_order.delivery_status.add(delivery_status)
 
                 if vendor_order_id is not None:
                     new_order.vendor_order_id = vendor_order_id
@@ -252,7 +258,6 @@ class OrderViewSet(viewsets.ModelViewSet):
         
     #     content = {'status':'order deleted'}
     #     return Response(content, status = status.HTTP_200_OK)
-        
 
 
     @detail_route(methods=['post'])
@@ -298,6 +303,8 @@ class OrderViewSet(viewsets.ModelViewSet):
         try:
             dg_id = request.data['dg_id']
             order_ids = request.data['order_ids']    
+            #TODO Assign order according to the date
+            #date = request.data['date']
         except Exception, e:
             content = {'error':'dg_id and order_ids list are Mandatory'}    
             return Response(content, status = status.HTTP_400_BAD_REQUEST)

@@ -212,6 +212,43 @@ class OrderItem(models.Model):
     def __unicode__(self):
         return u"%s" % self.id
 
+class OrderDeliveryStatus(models.Model):
+    date = models.DateTimeField()
+    pickedup_datetime = models.DateTimeField(blank = True, null = True)
+    completed_datetime = models.DateTimeField(blank = True, null = True)
+    delivery_guy = models.ForeignKey(DeliveryGuy, related_name = 'assigned_dg', blank = True, null = True)
+
+    QUEUED = 'QUEUED'
+    OUTFORPICKUP = 'OUTFORPICKUP'
+    INTRANSIT = 'INTRANSIT'
+    DELIVERED = 'DELIVERED'
+    ORDER_CHOICES = (
+        (QUEUED, 'QUEUED'),
+        (OUTFORPICKUP, 'OUTFORPICKUP'),
+        (INTRANSIT, 'INTRANSIT'),
+        (DELIVERED, 'DELIVERED'),
+    )
+    order_status = models.CharField(max_length = 15, choices = ORDER_CHOICES, default = QUEUED)
+
+    DOOR_STEP = 'DOOR_STEP'
+    SECURITY = 'SECURITY'
+    RECEPTION = 'RECEPTION'
+    CUSTOMER = 'CUSTOMER'
+    ATTEMPTED = 'ATTEMPTED'
+    NOT_DELIVERED = 'NOT_DELIVERED'
+    DELIVERED_AT_CHOICES = (
+        (DOOR_STEP, 'DOOR_STEP'),
+        (SECURITY, 'SECURITY'),
+        (RECEPTION, 'RECEPTION'),
+        (CUSTOMER, 'CUSTOMER'),
+        (ATTEMPTED, 'ATTEMPTED'),        
+        (NOT_DELIVERED, 'NOT_DELIVERED'),
+    )
+    delivered_at = models.CharField(max_length = 15, choices = DELIVERED_AT_CHOICES, default = NOT_DELIVERED)
+    
+    def __unicode__(self):
+        return u"%s" % self.id        
+
 class Order(models.Model):
 
     # Mandatory Fields =====
@@ -238,6 +275,8 @@ class Order(models.Model):
     
     pickup_address = models.ForeignKey(Address, related_name='pickup_address', on_delete = models.CASCADE)
     delivery_address = models.ForeignKey(Address, related_name='delivery_address', on_delete = models.CASCADE)
+
+    delivery_status = models.ManyToManyField(OrderDeliveryStatus)
 
     # Auto Generated Fields =====
     created_date_time = models.DateTimeField(auto_now_add = True)
@@ -282,7 +321,6 @@ class Order(models.Model):
 
     def __unicode__(self):
         return u"%s - %s - %s - %s" % (self.vendor.store_name, self.consumer.user.first_name, self.order_status, self.delivery_guy)
-
 
 class Suggestion(models.Model):
 
