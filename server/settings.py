@@ -170,3 +170,10 @@ XS_SHARING_ALLOWED_ORIGINS = "*"
 XS_SHARING_ALLOWED_METHODS = ['POST','GET','OPTIONS', 'PUT', 'DELETE']
 XS_SHARING_ALLOWED_HEADERS = ['x-requested-with', 'content-type', 'accept', 'origin', 'authorization', 'x-csrftoken','accept-encoding','accept-language']
 XS_SHARING_ALLOWED_CREDENTIALS = 'true'
+
+EMAIL_HOST='smtp.gmail.com'
+EMAIL_USE_TLS=1
+EMAIL_PORT=587
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST_USER = 'hi@yourguy.in'
+EMAIL_HOST_PASSWORD = 'pangea1234'

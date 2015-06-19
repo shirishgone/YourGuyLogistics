@@ -1,5 +1,5 @@
 # from django.shortcuts import render
-
+from django.core.mail import send_mail
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.http import Http404
@@ -92,6 +92,12 @@ def user_role(user):
 		return constants.DELIVERY_GUY	
 	else:
 		return None	
+
+def send_email(subject, body):
+	try:
+		send_mail(subject, body, constants.FROM_MAIL_ID, constants.TO_EMAIL_IDS, fail_silently=False)        
+	except Exception, e:
+		pass
 
 def verify_password(user, password):
 	verified_user = authenticate(username=user.username, password=password)

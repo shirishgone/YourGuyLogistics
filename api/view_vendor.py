@@ -7,7 +7,7 @@ from rest_framework.decorators import detail_route, list_route
 
 from yourguy.models import Vendor, Address, VendorAgent, Area
 from api.serializers import VendorSerializer
-from api.views import user_role, IsAuthenticatedOrWriteOnly
+from api.views import user_role, IsAuthenticatedOrWriteOnly, send_email
 
 import constants
 
@@ -54,6 +54,11 @@ class VendorViewSet(viewsets.ModelViewSet):
     	vendor = Vendor.objects.create(store_name = store, email = email, phone_number = phone_number)
         vendor.addresses.add(new_address)
         vendor.save()
+
+        # SEND EMAIL TO SALES
+        subject = 'YourGuy: New Vendor Account Request'
+        body = "A New Vendor has requested for an account. \nPlease find the below details: \nStore Name:{} \nPhone Number: {} \nEmail: {} \nAddress : {}, {}, {}, {}".format(store, phone_number, email, flat_number, building, street, area_code)
+        send_email(subject, body)            
 
     	content = {'status':'Thank you! We have received your request. Our sales team will contact you soon.'}
     	return Response(content, status = status.HTTP_201_CREATED)
