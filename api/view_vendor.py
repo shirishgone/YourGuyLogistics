@@ -59,7 +59,7 @@ class VendorViewSet(viewsets.ModelViewSet):
     	return Response(content, status = status.HTTP_201_CREATED)
 
     @list_route()
-    def requestedvendors():
+    def requestedvendors(self, request):
         vendors = Vendor.objects.filter(verified=False)
         serializer = VendorSerializer(vendors, many=True)
         return Response(serializer.data)
