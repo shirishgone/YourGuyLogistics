@@ -276,6 +276,36 @@ class OrderViewSet(viewsets.ModelViewSet):
         return Response(content, status = status.HTTP_200_OK)
 
     @detail_route(methods=['post'])
+    def exclude_dates(self, request, pk):
+        order = get_object_or_404(Order, pk = pk)
+        try:
+            exclude_dates = request.data['exclude_dates']    
+        except Exception, e:
+            content = {'error': 'exclude_dates is an array of dates, is missing'}
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
+        is_deleted = False
+        for exclude_date_string in exclude_dates:
+            exclude_date = parse_datetime(exclude_date_string)
+            print exclude_date
+
+            all_deliveries = order.delivery_status.all()
+            for delivery in all_deliveries:
+                print delivery.date
+                
+                if delivery.date.date() == exclude_date.date():
+                    delivery.delete()
+                    is_deleted = True
+                    break
+        
+        if is_deleted is True:
+            content = {'description': 'Deleted Successfully'}
+            return Response(content, status = status.HTTP_200_OK)
+        else:
+            content = {'error': 'Date not found'}
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
+    @detail_route(methods=['post'])
     def delivered(self, request, pk=None):
         dg = get_object_or_404(DeliveryGuy, user = request.user)
         order = get_object_or_404(Order, pk = pk)        
