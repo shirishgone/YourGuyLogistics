@@ -94,9 +94,9 @@ def user_role(user):
 	else:
 		return None	
 
-def send_email(subject, body):
+def send_email(to_mail_ids, subject, body):
 	try:
-		send_mail(subject, body, constants.FROM_MAIL_ID, constants.TO_EMAIL_IDS, fail_silently=False)        
+		send_mail(subject, body, constants.FROM_MAIL_ID, to_mail_ids, fail_silently=False)
 	except Exception, e:
 		pass
 

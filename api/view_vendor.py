@@ -5,9 +5,9 @@ from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework.decorators import detail_route, list_route
 
-from yourguy.models import Vendor, Address, VendorAgent, Area
+from yourguy.models import Vendor, Address, VendorAgent, Area, User, VendorAgent
 from api.serializers import VendorSerializer
-from api.views import user_role, IsAuthenticatedOrWriteOnly, send_email
+from api.views import user_role, IsAuthenticatedOrWriteOnly, send_email, is_userexists, send_sms
 
 import constants
 
@@ -58,7 +58,7 @@ class VendorViewSet(viewsets.ModelViewSet):
         # SEND EMAIL TO SALES
         subject = 'YourGuy: New Vendor Account Request'
         body = "A New Vendor has requested for an account. \nPlease find the below details: \nStore Name:{} \nPhone Number: {} \nEmail: {} \nAddress : {}, {}, {}, {}".format(store, phone_number, email, flat_number, building, street, area_code)
-        send_email(subject, body)            
+        send_email(constants.SALES_EMAIL, subject, body)
 
     	content = {'status':'Thank you! We have received your request. Our sales team will contact you soon.'}
     	return Response(content, status = status.HTTP_201_CREATED)
@@ -68,3 +68,37 @@ class VendorViewSet(viewsets.ModelViewSet):
         vendors = Vendor.objects.filter(verified=False)
         serializer = VendorSerializer(vendors, many=True)
         return Response(serializer.data)
+
+    @detail_route(methods=['post'])
+    def approve(self, request, pk):
+        vendor = get_object_or_404(Vendor, pk = pk)
+        notes = request.data.get('notes')
+        try:
+            username = vendor.phone_number
+            password = vendor.store_name.replace(" ", "")
+            password = password.lower()
+
+            if is_userexists(username):
+                user = get_object_or_404(User, username = username)
+            else:    
+                user = User.objects.create_user(username = username, password = password)
+            
+            vendor_agent = VendorAgent.objects.create(user = user, vendor = vendor)
+            vendor.verified = True
+            vendor.notes = notes
+        except Exception, e:
+            content = {'error':'An error occured creating the account. Please try again'}
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
+        # SEND AN EMAIL/SMS TO CUSTOMER AND SALES WITH ACCOUNT CREDENTIALS
+        subject = 'YourGuy: Account created for {}'.format(vendor.store_name)
+        customer_message = 'YourGuy : Your account has been created. \nPlease login using following credentials: \nUsername:{} \nPassword:{}'.format(vendor.phone_number, password)
+        customer_emails = [vendor.email]
+        send_email(customer_emails, subject, customer_message)
+        send_sms(vendor.phone_number, customer_message)
+
+        sales_message = 'YourGuy: An account has been created for {} and credentials are sent via SMS and Email.'.format(vendor.store_name)
+        send_email(constants.SALES_EMAIL, subject, sales_message)
+
+        content = {'description': 'Your account credentials has been sent via email and SMS.'}
+        return Response(content, status = status.HTTP_200_OK)
