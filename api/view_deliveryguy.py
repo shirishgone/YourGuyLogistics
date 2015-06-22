@@ -3,12 +3,12 @@ from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status, authentication
 from rest_framework import viewsets
+from rest_framework.decorators import detail_route, list_route
+from rest_framework.response import Response
 
 from yourguy.models import DeliveryGuy
 from api.serializers import DGSerializer
-
-from rest_framework.decorators import detail_route, list_route
-from rest_framework.response import Response
+from datetime import datetime
 
 class DGViewSet(viewsets.ModelViewSet):
     """
@@ -19,7 +19,7 @@ class DGViewSet(viewsets.ModelViewSet):
 
     queryset = DeliveryGuy.objects.all()
     serializer_class = DGSerializer
-    
+
     @list_route()
     def available_dgs():
     	dg_list = DeliveryGuy.objects.filter(availability='AV')
@@ -45,6 +45,7 @@ class DGViewSet(viewsets.ModelViewSet):
         dg = get_object_or_404(DeliveryGuy, user = request.user)
         dg.latitude = latitude
         dg.longitude = longitude
+        dg.last_connected_time = datetime.now() 
         dg.save()
 
         content = {'description': 'Location updated'}

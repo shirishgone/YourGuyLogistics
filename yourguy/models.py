@@ -62,10 +62,13 @@ class DeliveryGuy(YGUser):
     )
     status = models.CharField(max_length = 15, choices = STATUS_CHOICES, default = AVAILABLE)
     device_token = models.CharField(max_length = 200, blank = True , null = True)
+    
+    latitude = models.CharField(max_length = 20, blank = True)
+    longitude = models.CharField(max_length = 20, blank = True)
 
-    # Optional Fields    
-    latitude = models.CharField(max_length = 10, blank = True)
-    longitude = models.CharField(max_length = 10, blank = True)
+    battery_percentage = models.FloatField(default = 0.0)
+    last_connected_time = models.DateTimeField(blank = True , null = True)
+    app_version = models.FloatField(default = 0.0)
 
     def __unicode__(self):
         return u"%s - %s" % (self.user.username, self.user.first_name)                
@@ -155,7 +158,6 @@ class DGAttendance(models.Model):
 
     def __unicode__(self):
         return u"%s %s" % (self.dg.user.username, self.status)
-
 
 class Group(models.Model):
     
