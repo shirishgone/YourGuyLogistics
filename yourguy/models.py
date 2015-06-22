@@ -63,8 +63,8 @@ class DeliveryGuy(YGUser):
     status = models.CharField(max_length = 15, choices = STATUS_CHOICES, default = AVAILABLE)
     device_token = models.CharField(max_length = 200, blank = True , null = True)
     
-    latitude = models.FloatField(default = 0.0)
-    longitude = models.FloatField(default = 0.0)
+    latitude = models.CharField(max_length = 20, blank = True)
+    longitude = models.CharField(max_length = 20, blank = True)
 
     battery_percentage = models.FloatField(default = 0.0)
     last_connected_time = models.DateTimeField(blank = True , null = True)
