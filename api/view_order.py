@@ -11,7 +11,7 @@ from rest_framework.response import Response
 from yourguy.models import Order, OrderDeliveryStatus, Consumer, Vendor, DeliveryGuy, Area, VendorAgent, Address, Product, OrderItem
 from datetime import datetime, timedelta, time
 from api.serializers import OrderSerializer
-from api.views import user_role, is_vendorexists, is_consumerexists, is_dgexists, days_in_int
+from api.views import user_role, is_vendorexists, is_consumerexists, is_dgexists, days_in_int, send_sms
 import constants
 import recurrence
 from itertools import chain
@@ -216,6 +216,14 @@ class OrderViewSet(viewsets.ModelViewSet):
             
                 new_order.save()
 
+            # CONFIRMATION MESSAGE TO OPS
+            message = 'A New order has been placed by {}, please assign a DG.'.format(vendor.store_name)
+            send_sms(constants.OPS_PHONE_NUMBER, message)
+
+            # CONFIRMATION MESSAGE TO CUSTOMER
+            message = 'Your order has been placed and will be processed soon - Team YourGuy'
+            send_sms(vendor.phone_number, message)
+
             content = {'status':'orders added'}
             return Response(content, status = status.HTTP_201_CREATED)
             
@@ -292,6 +300,11 @@ class OrderViewSet(viewsets.ModelViewSet):
         order.save()
         dg.status = 'AVAILABLE'
         dg.save()
+
+        # CONFIRMATION MESSAGE TO CUSTOMER
+        message = 'Your order has been delivered to {} at {} - Team YourGuy'.format(order.consumer.user.first_name, delivered_at)
+        send_sms(order.vendor.phone_number, message)
+
         content = {'description': 'Order updated'}
         return Response(content, status = status.HTTP_200_OK)
 
@@ -316,6 +329,11 @@ class OrderViewSet(viewsets.ModelViewSet):
         
         dg.status = 'BUSY'
         dg.save()
+
+        # TODO: Need to revisit and understand whether we need to send 100 SMS if there are 100 orders.
+        # CONFIRMATION MESSAGE TO CUSTOMER
+        # message = 'A DeliveryGuy has been assigned for your order. He will be arriving soon - Team YourGuy'
+        # send_sms(vendor.phone_number, message)
 
         content = {'description': 'Order assigned'}
         return Response(content, status = status.HTTP_200_OK)

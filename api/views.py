@@ -23,6 +23,7 @@ import string
 
 import constants
 import base64
+import requests
 
 def days_in_int(by_day):
 	day_values = {'MO':0, 'TU':1 , 'WE':2 , 'TU':3 , 'FR':4 , 'SA':5 , 'SU': 6}
@@ -98,6 +99,16 @@ def send_email(subject, body):
 		send_mail(subject, body, constants.FROM_MAIL_ID, constants.TO_EMAIL_IDS, fail_silently=False)        
 	except Exception, e:
 		pass
+
+def send_sms(phonenumber, message):
+    # url = "http://api.smscountry.com/SMSCwebservice_bulk.aspx?User=shirishgone&passwd=shirish542&mobilenumber={mobile_number}&message={message_text}&sid=GTTEAM&mtype=N&DR=Y".format(mobile_number=mobilenumber, message_text=message)
+    url = "http://api.smscountry.com/SMSCwebservice_bulk.aspx?User=yourguy&passwd=yourguydotin&mobilenumber={mobile_number}&message={message_text}&mtype=N&DR=Y".format(mobile_number=phonenumber, message_text=message)
+    try:
+        r = requests.get(url)
+    except:
+        send_email('SMS error', 'problem sending SMS \nplease check {} {}'.format(phonenumber,message),
+              SERVER_MAIL, ['tech@yourguy.in'], fail_silently=False)
+
 
 def verify_password(user, password):
 	verified_user = authenticate(username=user.username, password=password)
