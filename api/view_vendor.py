@@ -56,8 +56,9 @@ class VendorViewSet(viewsets.ModelViewSet):
         vendor.save()
 
         # SEND EMAIL TO SALES
+        approval_link = 'http://vendor-yourguy.herokuapp.com/#/home/vendor/{}'.format(vendor.id)
         subject = 'YourGuy: New Vendor Account Request'
-        body = "A New Vendor has requested for an account. \nPlease find the below details: \nStore Name:{} \nPhone Number: {} \nEmail: {} \nAddress : {}, {}, {}, {}".format(store, phone_number, email, flat_number, building, street, area_code)
+        body = "A New Vendor has requested for an account. \nPlease find the below details: \nStore Name:{} \nPhone Number: {} \nEmail: {} \nAddress : {}, {}, {}, {} \nApproval link:{}".format(store, phone_number, email, flat_number, building, street, area_code, approval_link)
         send_email(constants.SALES_EMAIL, subject, body)
 
     	content = {'status':'Thank you! We have received your request. Our sales team will contact you soon.'}
