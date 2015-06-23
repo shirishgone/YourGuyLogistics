@@ -84,6 +84,7 @@ class VendorViewSet(viewsets.ModelViewSet):
             else:    
                 user = User.objects.create_user(username = username, password = password)
             
+            token = create_token(user, constants.VENDOR)
             vendor_agent = VendorAgent.objects.create(user = user, vendor = vendor)
             
             vendor.verified = True
