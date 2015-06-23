@@ -84,8 +84,10 @@ class VendorViewSet(viewsets.ModelViewSet):
                 user = User.objects.create_user(username = username, password = password)
             
             vendor_agent = VendorAgent.objects.create(user = user, vendor = vendor)
+            
             vendor.verified = True
             vendor.notes = notes
+            vendor.save()
         except Exception, e:
             content = {'error':'An error occured creating the account. Please try again'}
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
