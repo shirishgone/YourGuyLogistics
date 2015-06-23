@@ -7,7 +7,7 @@ from rest_framework.decorators import detail_route, list_route
 
 from yourguy.models import Vendor, Address, VendorAgent, Area, User, VendorAgent
 from api.serializers import VendorSerializer
-from api.views import user_role, IsAuthenticatedOrWriteOnly, send_email, is_userexists, send_sms
+from api.views import user_role, IsAuthenticatedOrWriteOnly, send_email, is_userexists, send_sms, create_token
 
 import constants
 
