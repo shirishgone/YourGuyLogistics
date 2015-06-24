@@ -6,7 +6,7 @@ from rest_framework import viewsets
 from rest_framework.decorators import detail_route, list_route
 from rest_framework.response import Response
 
-from yourguy.models import DeliveryGuy
+from yourguy.models import DeliveryGuy, DGAttendance
 from api.serializers import DGSerializer
 from datetime import datetime
 
@@ -35,7 +35,7 @@ class DGViewSet(viewsets.ModelViewSet):
         dg.save()
 
         content = {'description': 'Push Token updated'}
-        return Response(content, status = status.HTTP_201_CREATED)
+        return Response(content, status = status.HTTP_200_OK)
 
     @detail_route(methods=['post'])
     def update_location(self, request, pk=None):
@@ -49,4 +49,25 @@ class DGViewSet(viewsets.ModelViewSet):
         dg.save()
 
         content = {'description': 'Location updated'}
-        return Response(content, status = status.HTTP_201_CREATED)
+        return Response(content, status = status.HTTP_200_OK)
+
+        
+    @detail_route(methods=['post'])
+    def check_in(self, request, pk=None):
+        dg = get_object_or_404(DeliveryGuy, user = request.user)
+        attendance = DGAttendance.objects.create(dg = dg, login_time = datetime.now())
+
+        content = {'description': 'Checked-in done.'}
+        return Response(content, status = status.HTTP_200_OK)
+
+
+    @detail_route(methods=['post'])
+    def check_out(self, request, pk=None):        
+        dg = get_object_or_404(DeliveryGuy, user = request.user)
+
+        attendance = DGAttendance.objects.filter(dg=dg).latest('date')
+        attendance.logout_time = datetime.now()
+        attendance.save()
+
+        content = {'description': 'Checkout done.'}
+        return Response(content, status = status.HTTP_200_OK)
