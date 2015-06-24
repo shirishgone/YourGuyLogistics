@@ -139,8 +139,11 @@ class OrderViewSet(viewsets.ModelViewSet):
             
             try:
                 if is_recurring is True:
-                    start_date = request.data['start_date']
-                    end_date = request.data['end_date']
+                    start_date_string = request.data['start_date']
+                    start_date = datetime.combine(parse_datetime(start_date_string), time()).replace(hour=0, minute=0, second=0)
+                    end_date_string = request.data['end_date']
+                    end_date = datetime.combine(parse_datetime(end_date_string), time()).replace(hour=0, minute=0, second=0)
+
                     by_day = request.data['by_day']  
                 else:
                     pass
@@ -191,8 +194,8 @@ class OrderViewSet(viewsets.ModelViewSet):
                     int_days = days_in_int(by_day)
                     rule = recurrence.Rule(byday = int_days ,freq = recurrence.WEEKLY)
                     recurrences = recurrence.Recurrence(
-                                    dtstart = parse_datetime(start_date),
-                                    dtend = parse_datetime(end_date),
+                                    dtstart = start_date,
+                                    dtend = end_date,
                                     rrules = [rule,]
                                     )
                     new_order.recurrences = recurrences
