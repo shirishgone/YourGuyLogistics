@@ -235,23 +235,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         # import pdb
         # pdb.set_trace()
         # print 'update'
-
-    @detail_route(methods=['post'])
-    def picked_up(self, request, pk=None):
-        dg = get_object_or_404(DeliveryGuy, user = request.user)
-        order = get_object_or_404(Order, pk = pk)        
-
-        order.order_status = 'INTRANSIT'
-        order.delivery_guy = dg
-        order.pickedup_datetime = datetime.now() 
-        order.save()
-        
-        dg.status = 'BUSY'
-        dg.save()
-
-        content = {'description': 'Order updated'}
-        return Response(content, status = status.HTTP_200_OK)
-
+    
     @detail_route(methods=['post'])
     def exclude_dates(self, request, pk):
         order = get_object_or_404(Order, pk = pk)
@@ -283,6 +267,29 @@ class OrderViewSet(viewsets.ModelViewSet):
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
     @detail_route(methods=['post'])
+    def picked_up(self, request, pk=None):
+        dg = get_object_or_404(DeliveryGuy, user = request.user)
+        order = get_object_or_404(Order, pk = pk)        
+
+        order.order_status = 'INTRANSIT'
+        order.delivery_guy = dg
+
+        # PICKEDUP DATE TIME
+        pickedup_datetime = request.data.get('pickedup_datetime')
+        if pickedup_datetime is not None:
+            order.pickedup_datetime = parse_datetime(pickedup_datetime) 
+        else:
+            order.pickedup_datetime = datetime.now() 
+        order.save()
+        
+        
+        dg.status = 'BUSY'
+        dg.save()
+
+        content = {'description': 'Order updated'}
+        return Response(content, status = status.HTTP_200_OK)
+
+    @detail_route(methods=['post'])
     def delivered(self, request, pk=None):
         dg = get_object_or_404(DeliveryGuy, user = request.user)
         order = get_object_or_404(Order, pk = pk)        
@@ -298,6 +305,15 @@ class OrderViewSet(viewsets.ModelViewSet):
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
         order.save()
+        
+        # DELIVERED DATE TIME
+        delivered_datetime = request.data.get('delivered_datetime')
+        if delivered_datetime is not None:
+            order.delivered_datetime = parse_datetime(delivered_datetime) 
+        else:
+            order.delivered_datetime = datetime.now() 
+
+
         dg.status = 'AVAILABLE'
         dg.save()
 
