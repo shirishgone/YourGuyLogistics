@@ -26,7 +26,7 @@ import base64
 import requests
 
 def days_in_int(by_day):
-	day_values = {'MO':0, 'TU':1 , 'WE':2 , 'TU':3 , 'FR':4 , 'SA':5 , 'SU': 6}
+	day_values = {'MO':0, 'TU':1 , 'WE':2 , 'TH':3 , 'FR':4 , 'SA':5 , 'SU': 6}
 	int_days = []
 	for day in by_day:
 		int_days.append(day_values[day])
