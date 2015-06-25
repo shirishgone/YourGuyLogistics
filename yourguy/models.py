@@ -69,6 +69,19 @@ class DeliveryGuy(YGUser):
     battery_percentage = models.FloatField(default = 0.0)
     last_connected_time = models.DateTimeField(blank = True , null = True)
     app_version = models.FloatField(default = 0.0)
+    
+    BIKE = 'BIKE'
+    AC_VEHICLE = 'AC_VEHICLE'
+    NON_AC_VEHICLE = 'NON_AC_VEHICLE'
+    PUBLIC_TRANSPORT = 'PUBLIC_TRANSPORT'
+    TRANSPORT_MODE_CHOICES = (
+        (PUBLIC_TRANSPORT, 'PUBLIC_TRANSPORT'),
+        (NON_AC_VEHICLE, 'NON_AC_VEHICLE'),
+        (AC_VEHICLE, 'AC_VEHICLE'),
+        (BIKE, 'BIKE'),
+    )
+    transport_mode = models.CharField(max_length = 15, choices = TRANSPORT_MODE_CHOICES, default = PUBLIC_TRANSPORT)
+
 
     def __unicode__(self):
         return u"%s - %s" % (self.user.username, self.user.first_name)                
@@ -220,17 +233,19 @@ class OrderDeliveryStatus(models.Model):
     completed_datetime = models.DateTimeField(blank = True, null = True)
     delivery_guy = models.ForeignKey(DeliveryGuy, related_name = 'assigned_dg', blank = True, null = True)
 
+    ORDER_PLACED = 'ORDER_PLACED'
     QUEUED = 'QUEUED'
     OUTFORPICKUP = 'OUTFORPICKUP'
     INTRANSIT = 'INTRANSIT'
     DELIVERED = 'DELIVERED'
     ORDER_CHOICES = (
+        (ORDER_PLACED, 'ORDER_PLACED'),
         (QUEUED, 'QUEUED'),
         (OUTFORPICKUP, 'OUTFORPICKUP'),
         (INTRANSIT, 'INTRANSIT'),
         (DELIVERED, 'DELIVERED'),
     )
-    order_status = models.CharField(max_length = 15, choices = ORDER_CHOICES, default = QUEUED)
+    order_status = models.CharField(max_length = 15, choices = ORDER_CHOICES, default = ORDER_PLACED)
 
     DOOR_STEP = 'DOOR_STEP'
     SECURITY = 'SECURITY'
@@ -257,6 +272,7 @@ class Order(models.Model):
     vendor = models.ForeignKey(Vendor)
     consumer = models.ForeignKey(Consumer)
 
+    ORDER_PLACED = 'ORDER_PLACED'
     QUEUED = 'QUEUED'
     OUTFORPICKUP = 'OUTFORPICKUP'
     INTRANSIT = 'INTRANSIT'
@@ -267,7 +283,7 @@ class Order(models.Model):
         (INTRANSIT, 'INTRANSIT'),
         (DELIVERED, 'DELIVERED'),
     )
-    order_status = models.CharField(max_length = 15, choices = ORDER_CHOICES, default = QUEUED)
+    order_status = models.CharField(max_length = 15, choices = ORDER_CHOICES, default = ORDER_PLACED)
 
     order_items = models.ManyToManyField(OrderItem)
     total_cost = models.FloatField(default = 0.0)
@@ -320,6 +336,20 @@ class Order(models.Model):
     delivered_at = models.CharField(max_length = 15, choices = DELIVERED_AT_CHOICES, default = NOT_DELIVERED)
     is_recurring = models.BooleanField(blank = True, default = False)
     recurrences = RecurrenceField(null = True)
+
+
+    BIKE = 'BIKE'
+    AC_VEHICLE = 'AC_VEHICLE'
+    NON_AC_VEHICLE = 'NON_AC_VEHICLE'
+    PUBLIC_TRANSPORT = 'PUBLIC_TRANSPORT'
+    TRANSPORT_MODE_CHOICES = (
+        (PUBLIC_TRANSPORT, 'PUBLIC_TRANSPORT'),
+        (NON_AC_VEHICLE, 'NON_AC_VEHICLE'),
+        (AC_VEHICLE, 'AC_VEHICLE'),
+        (BIKE, 'BIKE'),
+    )
+    transport_mode = models.CharField(max_length = 15, choices = TRANSPORT_MODE_CHOICES, default = PUBLIC_TRANSPORT)
+
     
     def __unicode__(self):
         return u"%s - %s - %s - %s" % (self.vendor.store_name, self.consumer.user.first_name, self.order_status, self.delivery_guy)
