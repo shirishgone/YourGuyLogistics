@@ -278,6 +278,7 @@ class Order(models.Model):
     INTRANSIT = 'INTRANSIT'
     DELIVERED = 'DELIVERED'
     ORDER_CHOICES = (
+        (ORDER_PLACED, 'ORDER_PLACED'),
         (QUEUED, 'QUEUED'),
         (OUTFORPICKUP, 'OUTFORPICKUP'),
         (INTRANSIT, 'INTRANSIT'),
