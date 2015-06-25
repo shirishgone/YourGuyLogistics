@@ -69,7 +69,7 @@ class DeliveryGuy(YGUser):
     battery_percentage = models.FloatField(default = 0.0)
     last_connected_time = models.DateTimeField(blank = True , null = True)
     app_version = models.FloatField(default = 0.0)
-    
+
     BIKE = 'BIKE'
     AC_VEHICLE = 'AC_VEHICLE'
     NON_AC_VEHICLE = 'NON_AC_VEHICLE'
@@ -80,7 +80,7 @@ class DeliveryGuy(YGUser):
         (AC_VEHICLE, 'AC_VEHICLE'),
         (BIKE, 'BIKE'),
     )
-    transport_mode = models.CharField(max_length = 15, choices = TRANSPORT_MODE_CHOICES, default = PUBLIC_TRANSPORT)
+    transport_mode = models.CharField(max_length = 25, choices = TRANSPORT_MODE_CHOICES, default = PUBLIC_TRANSPORT)
 
 
     def __unicode__(self):
@@ -348,7 +348,7 @@ class Order(models.Model):
         (AC_VEHICLE, 'AC_VEHICLE'),
         (BIKE, 'BIKE'),
     )
-    transport_mode = models.CharField(max_length = 15, choices = TRANSPORT_MODE_CHOICES, default = PUBLIC_TRANSPORT)
+    transport_mode = models.CharField(max_length = 25, choices = TRANSPORT_MODE_CHOICES, default = PUBLIC_TRANSPORT)
 
     
     def __unicode__(self):
