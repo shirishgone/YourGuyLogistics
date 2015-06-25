@@ -16,7 +16,6 @@ import constants
 import recurrence
 from itertools import chain
 
-
 class OrderViewSet(viewsets.ModelViewSet):
     """
     Order viewset that provides the standard actions 
@@ -102,13 +101,12 @@ class OrderViewSet(viewsets.ModelViewSet):
         else:
             date = datetime.today()
         day_start = datetime.combine(date, time()).replace(hour=0, minute=0, second=0)
-        next_day = day_start + timedelta(1)
-        day_end = datetime.combine(next_day, time()).replace(hour=0, minute=0, second=0)
+        day_end = datetime.combine(date, time()).replace(hour=23, minute=59, second=59)
 
         # FILTERING BY RECURRING ORDERS
         recurring_queryset = queryset.filter(is_recurring=True)
         recurring_orders = []
-        for order in recurring_queryset:
+        for order in recurring_queryset:            
             dates = order.recurrences.between(day_start, day_end,inc=True)
             if len(list(dates)) > 0:
                 recurring_orders.append(order)
@@ -140,10 +138,13 @@ class OrderViewSet(viewsets.ModelViewSet):
             try:
                 if is_recurring is True:
                     start_date_string = request.data['start_date']
-                    start_date = datetime.combine(parse_datetime(start_date_string), time()).replace(hour=0, minute=0, second=0)
-                    end_date_string = request.data['end_date']
-                    end_date = datetime.combine(parse_datetime(end_date_string), time()).replace(hour=0, minute=0, second=0)
+                    start_date = parse_datetime(start_date_string)
+                    start_date = datetime.combine(start_date, time()).replace(hour=0, minute=0, second=0)
 
+                    end_date_string = request.data['end_date']
+                    end_date = parse_datetime(end_date_string)
+                    end_date = datetime.combine(end_date, time()).replace(hour=0, minute=0, second=0)
+                    
                     by_day = request.data['by_day']  
                 else:
                     pass
@@ -190,16 +191,17 @@ class OrderViewSet(viewsets.ModelViewSet):
                     order_item = OrderItem.objects.create(product = product, quantity = quantity)
                     new_order.order_items.add(order_item)
 
-                if is_recurring is True:                    
+                if is_recurring is True:
+                    new_order.is_recurring = True                                        
                     int_days = days_in_int(by_day)
-                    rule = recurrence.Rule(byday = int_days ,freq = recurrence.WEEKLY)
+                    
+                    rule = recurrence.Rule(byday = int_days, freq = recurrence.WEEKLY)
                     recurrences = recurrence.Recurrence(
                                     dtstart = start_date,
                                     dtend = end_date,
-                                    rrules = [rule,]
+                                    rrules = [rule]
                                     )
                     new_order.recurrences = recurrences
-                    new_order.is_recurring = True
                     
                     recurring_dates = list(recurrences.occurrences())
                     for date in recurring_dates:
@@ -216,7 +218,7 @@ class OrderViewSet(viewsets.ModelViewSet):
 
                 if total_cost is not None:
                     new_order.total_cost = total_cost
-            
+
                 new_order.save()
 
             # CONFIRMATION MESSAGE TO OPS
