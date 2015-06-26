@@ -135,6 +135,9 @@ class OrderViewSet(viewsets.ModelViewSet):
             vendor_order_id = request.data.get('vendor_order_id')
             is_recurring = request.data['is_recurring']
             
+            is_cod = request.data.get('is_cod')
+            cod_amount = request.data.get('cod_amount')
+
             try:
                 if is_recurring is True:
                     start_date_string = request.data['start_date']
@@ -186,6 +189,10 @@ class OrderViewSet(viewsets.ModelViewSet):
 
                 if vendor.is_retail is False:
                     new_order.order_status = 'QUEUED'
+
+                if is_cod is True:
+                    new_order.is_cod = is_cod
+                    new_order.cod_amount = cod_amount
 
                 for item in order_items:
                     product_id = item['product_id']
