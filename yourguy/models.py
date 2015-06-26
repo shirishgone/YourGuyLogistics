@@ -253,16 +253,16 @@ class OrderDeliveryStatus(models.Model):
     RECEPTION = 'RECEPTION'
     CUSTOMER = 'CUSTOMER'
     ATTEMPTED = 'ATTEMPTED'
-    UNKNOWN = 'UNKNOWN'
+    NOT_DELIVERED = 'NOT_DELIVERED'
     DELIVERED_AT_CHOICES = (
         (DOOR_STEP, 'DOOR_STEP'),
         (SECURITY, 'SECURITY'),
         (RECEPTION, 'RECEPTION'),
         (CUSTOMER, 'CUSTOMER'),
         (ATTEMPTED, 'ATTEMPTED'),        
-        (UNKNOWN, 'UNKNOWN'),
+        (NOT_DELIVERED, 'NOT_DELIVERED'),
     )
-    delivered_at = models.CharField(max_length = 15, choices = DELIVERED_AT_CHOICES, default = UNKNOWN)
+    delivered_at = models.CharField(max_length = 15, choices = DELIVERED_AT_CHOICES, default = NOT_DELIVERED)
     
     def __unicode__(self):
         return u"%s" % self.id        
@@ -326,16 +326,16 @@ class Order(models.Model):
     RECEPTION = 'RECEPTION'
     CUSTOMER = 'CUSTOMER'
     ATTEMPTED = 'ATTEMPTED'
-    UNKNOWN = 'UNKNOWN'
+    NOT_DELIVERED = 'NOT_DELIVERED'
     DELIVERED_AT_CHOICES = (
         (DOOR_STEP, 'DOOR_STEP'),
         (SECURITY, 'SECURITY'),
         (RECEPTION, 'RECEPTION'),
         (CUSTOMER, 'CUSTOMER'),
         (ATTEMPTED, 'ATTEMPTED'),        
-        (UNKNOWN, 'UNKNOWN'),
+        (NOT_DELIVERED, 'NOT_DELIVERED'),
     )
-    delivered_at = models.CharField(max_length = 15, choices = DELIVERED_AT_CHOICES, default = UNKNOWN)
+    delivered_at = models.CharField(max_length = 15, choices = DELIVERED_AT_CHOICES, default = NOT_DELIVERED)
     is_recurring = models.BooleanField(blank = True, default = False)
     recurrences = RecurrenceField(null = True)
 
