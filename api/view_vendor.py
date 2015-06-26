@@ -48,6 +48,14 @@ class VendorViewSet(viewsets.ModelViewSet):
     		content = {'error':'Incomplete params', 'description':'phone_number, store_name, email, flat_number, building, street, area_code'}
     		return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
+
+        # CHECK IF THE VENDOR HAS ALREADY REQUESTED FOR AN ACCOUNT
+        existing_vendors = Vendor.objects.filter(phone_number=phone_number)
+        if len(existing_vendors) > 0:
+            content = {'error':'Already exists', 'description':'Vendor with similar details already exists'}
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
+
     	area = get_object_or_404(Area, area_code = area_code)
     	new_address = Address.objects.create(flat_number=flat_number, building=building, street=street, area = area)
 
