@@ -117,6 +117,35 @@ def verify_password(user, password):
 	else:
 		return False
 
+
+def normalize_offset_awareness(dt, from_dt=None):
+    """
+    Given two `datetime.datetime` objects, return the second object as
+    timezone offset-aware or offset-naive depending on the existence
+    of the first object's tzinfo.
+    If the second object is to be made offset-aware, it is assumed to
+    be in the local timezone (with the timezone derived from the
+    TIME_ZONE setting). If it is to be made offset-naive, It is first
+    converted to the local timezone before being made naive.
+    :Parameters:
+        `dt` : `datetime.datetime`
+            The datetime object to make offset-aware/offset-naive.
+        `from_dt` : `datetime.datetime`
+            The datetime object to test the existence of a tzinfo. If
+            the value is nonzero, it will be understood as
+            offset-naive
+    """
+    if from_dt and from_dt.tzinfo and dt.tzinfo:
+        return dt
+    elif from_dt and from_dt.tzinfo and not dt.tzinfo:
+        dt = localtz.localize(dt)
+    elif dt.tzinfo:
+        dt = dt.astimezone(localtz)
+        dt = datetime.datetime(
+            dt.year, dt.month, dt.day,
+            dt.hour, dt.minute, dt.second)
+    return dt
+
 class IsAuthenticatedOrWriteOnly(permissions.BasePermission):
     """
     The request is authenticated as a user, or is a write-only request.

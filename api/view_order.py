@@ -11,7 +11,7 @@ from rest_framework.response import Response
 from yourguy.models import Order, OrderDeliveryStatus, Consumer, Vendor, DeliveryGuy, Area, VendorAgent, Address, Product, OrderItem
 from datetime import datetime, timedelta, time
 from api.serializers import OrderSerializer
-from api.views import user_role, is_vendorexists, is_consumerexists, is_dgexists, days_in_int, send_sms
+from api.views import user_role, is_vendorexists, is_consumerexists, is_dgexists, days_in_int, send_sms, normalize_offset_awareness
 import constants
 import recurrence
 from itertools import chain
@@ -184,6 +184,9 @@ class OrderViewSet(viewsets.ModelViewSet):
                                             pickup_datetime = pickup_datetime, 
                                             delivery_datetime = delivery_datetime)
 
+                if vendor.is_retail is False:
+                    new_order.order_status = 'QUEUED'
+
                 for item in order_items:
                     product_id = item['product_id']
                     quantity = item ['quantity']
@@ -331,12 +334,16 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['post'])
     def assign_order(self, request, pk=None):
-           
         try:
             dg_id = request.data['dg_id']
             order_ids = request.data['order_ids']    
-            #TODO Assign order according to the date
-            #date = request.data['date']
+            
+            date_string = request.data.get('date')
+            if date_string is None:
+                date = datetime.today()
+            else:
+                date = parse_datetime(date_string)    
+
         except Exception, e:
             content = {'error':'dg_id and order_ids list are Mandatory'}    
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
@@ -345,7 +352,17 @@ class OrderViewSet(viewsets.ModelViewSet):
 
         for order_id in order_ids:
             order = get_object_or_404(Order, id = order_id)
+
+            # UPDATING THE DELIVERY STATUS OF THE PARTICULAR DAY
+            # delivery_statuses = order.delivery_status.all()
+            # for delivery_status in delivery_statuses:
+            #     date = normalize_offset_awareness(date, delivery_status.date)
+            #     if delivery_status.date.replace(hour=0, minute=0, second=0, microsecond=0) == date.replace(hour=0, minute=0, second=0, microsecond=0):
+            #         delivery_status.delivery_guy = dg
+            #         delivery_status.save()
+                                       
             order.delivery_guy = dg
+            order.order_status = 'QUEUED'
             order.save()
         
         dg.status = 'BUSY'

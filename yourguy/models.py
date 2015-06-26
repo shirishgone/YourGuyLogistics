@@ -92,7 +92,8 @@ class Vendor(models.Model):
     email = models.EmailField(max_length = 50)
     phone_number = models.CharField(max_length = 15, blank = True, null = True)
     addresses = models.ManyToManyField(Address)
-    
+    is_retail = models.BooleanField(default = False)
+
     # Optional
     website_url = models.CharField(max_length = 100, blank = True)
     verified = models.BooleanField(blank = True, default = False)
@@ -252,16 +253,16 @@ class OrderDeliveryStatus(models.Model):
     RECEPTION = 'RECEPTION'
     CUSTOMER = 'CUSTOMER'
     ATTEMPTED = 'ATTEMPTED'
-    NOT_DELIVERED = 'NOT_DELIVERED'
+    UNKNOWN = 'UNKNOWN'
     DELIVERED_AT_CHOICES = (
         (DOOR_STEP, 'DOOR_STEP'),
         (SECURITY, 'SECURITY'),
         (RECEPTION, 'RECEPTION'),
         (CUSTOMER, 'CUSTOMER'),
         (ATTEMPTED, 'ATTEMPTED'),        
-        (NOT_DELIVERED, 'NOT_DELIVERED'),
+        (UNKNOWN, 'UNKNOWN'),
     )
-    delivered_at = models.CharField(max_length = 15, choices = DELIVERED_AT_CHOICES, default = NOT_DELIVERED)
+    delivered_at = models.CharField(max_length = 15, choices = DELIVERED_AT_CHOICES, default = UNKNOWN)
     
     def __unicode__(self):
         return u"%s" % self.id        
@@ -325,16 +326,16 @@ class Order(models.Model):
     RECEPTION = 'RECEPTION'
     CUSTOMER = 'CUSTOMER'
     ATTEMPTED = 'ATTEMPTED'
-    NOT_DELIVERED = 'NOT_DELIVERED'
+    UNKNOWN = 'UNKNOWN'
     DELIVERED_AT_CHOICES = (
         (DOOR_STEP, 'DOOR_STEP'),
         (SECURITY, 'SECURITY'),
         (RECEPTION, 'RECEPTION'),
         (CUSTOMER, 'CUSTOMER'),
         (ATTEMPTED, 'ATTEMPTED'),        
-        (NOT_DELIVERED, 'NOT_DELIVERED'),
+        (UNKNOWN, 'UNKNOWN'),
     )
-    delivered_at = models.CharField(max_length = 15, choices = DELIVERED_AT_CHOICES, default = NOT_DELIVERED)
+    delivered_at = models.CharField(max_length = 15, choices = DELIVERED_AT_CHOICES, default = UNKNOWN)
     is_recurring = models.BooleanField(blank = True, default = False)
     recurrences = RecurrenceField(null = True)
 
