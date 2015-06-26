@@ -74,6 +74,7 @@ class VendorViewSet(viewsets.ModelViewSet):
     def approve(self, request, pk):
         vendor = get_object_or_404(Vendor, pk = pk)
         notes = request.data.get('notes')
+        is_retail = request.data.get('is_retail')
         try:
             username = vendor.phone_number
             password = vendor.store_name.replace(" ", "")
@@ -89,6 +90,9 @@ class VendorViewSet(viewsets.ModelViewSet):
             
             vendor.verified = True
             vendor.notes = notes
+            if is_retail is not None:
+                vendor.is_retail = is_retail
+            
             vendor.save()
         except Exception, e:
             content = {'error':'An error occured creating the account. Please try again'}
