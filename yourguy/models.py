@@ -309,8 +309,12 @@ class Order(models.Model):
     notes = models.CharField(max_length = 500, blank = True)
     vendor_order_id = models.CharField(max_length = 10, blank = True)
 
-    is_COD = models.BooleanField(blank = True, default = False)
     delivery_guy = models.ForeignKey(DeliveryGuy, related_name = 'delivery_guy', blank = True, null = True)
+    
+    is_COD = models.BooleanField(blank = True, default = False)
+    cod_amount = models.FloatField(default = 0.0)
+    
+    is_reverse_pickup = models.BooleanField(default = False)
 
     # Order Modified =====
     modified_by_user = models.ForeignKey(User, blank = True, related_name='order_modified_by', null = True)
