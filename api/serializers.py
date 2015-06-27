@@ -44,15 +44,6 @@ class OrderDeliveryStatusSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrderDeliveryStatus    
 
-class OrderSerializer(serializers.ModelSerializer):
-    consumer = ConsumerSerializer(required=False)
-    delivery_status = OrderDeliveryStatusSerializer(required=False, many = True)
-    order_items = OrderItemSerializer(required=False, many = True)
-    pickup_address = AddressSerializer(required=False)
-    delivery_address = AddressSerializer(required=False)
-    class Meta:
-        model = Order
-
 class VendorSerializer(serializers.ModelSerializer):
     addresses = AddressSerializer(required=False, many=True)
     class Meta:
@@ -75,4 +66,13 @@ class UserGroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserGroup
 
-        
+class OrderSerializer(serializers.ModelSerializer):
+    delivery_guy = DGSerializer(required = False)
+    consumer = ConsumerSerializer(required=False)
+    delivery_status = OrderDeliveryStatusSerializer(required=False, many = True)
+    order_items = OrderItemSerializer(required=False, many = True)
+    pickup_address = AddressSerializer(required=False)
+    delivery_address = AddressSerializer(required=False)
+    class Meta:
+        model = Order
+     
