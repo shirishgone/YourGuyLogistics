@@ -55,8 +55,18 @@ class DGViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['post'])
     def check_in(self, request, pk=None):
         dg = get_object_or_404(DeliveryGuy, user = request.user)
-        attendance = DGAttendance.objects.create(dg = dg, login_time = datetime.now())
+        login_time = datetime.now()
+        
+        attendance_list = DGAttendance.objects.filter(dg=dg)
+        if len(attendance_list) > 0:
+            attendance = DGAttendance.objects.filter(dg=dg).latest('date')
+            attendance.login_time = login_time
+        else:
+            attendance = DGAttendance.objects.create(dg = dg, login_time = login_time)
 
+        attendance.status = 'WORKING'
+        attendance.save()
+        
         content = {'description': 'Checked-in done.'}
         return Response(content, status = status.HTTP_200_OK)
 

@@ -166,6 +166,8 @@ class OrderViewSet(viewsets.ModelViewSet):
 
             pickup_datetime = parse_datetime(pickup_datetime)
             delivery_datetime = parse_datetime(delivery_datetime)
+            # delivery_datetime = delivery_datetime.replace(tzinfo=utc)
+            # delivery_datetime = timezone.make_aware(delivery_datetime, timezone.get_current_timezone())
 
         except Exception, e:
             content = {'error':' Wrong object ids'}    
