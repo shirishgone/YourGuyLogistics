@@ -67,7 +67,8 @@ class UserGroupSerializer(serializers.ModelSerializer):
         model = UserGroup
 
 class OrderSerializer(serializers.ModelSerializer):
-    delivery_guy = DGSerializer(required = False)
+    # TODO: Enable later
+    #delivery_guy = DGSerializer(required = False)
     consumer = ConsumerSerializer(required=False)
     delivery_status = OrderDeliveryStatusSerializer(required=False, many = True)
     order_items = OrderItemSerializer(required=False, many = True)
