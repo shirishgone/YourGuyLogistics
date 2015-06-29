@@ -296,14 +296,29 @@ class OrderViewSet(viewsets.ModelViewSet):
         order.delivery_guy = dg
 
         # PICKEDUP DATE TIME
-        pickedup_datetime = request.data.get('pickedup_datetime')
-        if pickedup_datetime is not None:
-            order.pickedup_datetime = parse_datetime(pickedup_datetime) 
+        pickedup_datetime_string = request.data.get('pickedup_datetime')
+        if pickedup_datetime_string is not None:
+            pickedup_datetime = parse_datetime(pickedup_datetime_string) 
         else:
-            order.pickedup_datetime = datetime.now() 
+            pickedup_datetime = datetime.now() 
+
+        order.pickedup_datetime = pickedup_datetime    
         order.save()
         
-        
+        #UPDATING THE DELIVERY STATUS OF THE PARTICULAR DAY
+        delivery_statuses = order.delivery_status.all()
+        for delivery_status in delivery_statuses:
+
+            date_1 = datetime.combine(pickedup_datetime, time()).replace(hour=0, minute=0, second=0)
+            date_2 = datetime.combine(delivery_status.date, time()).replace(hour=0, minute=0, second=0)
+
+            if date_1 == date_2:
+                delivery_status.order_status = constants.ORDER_STATUS_INTRANSIT
+                delivery_status.pickedup_datetime = pickedup_datetime
+                delivery_status.save()
+                break
+
+        # UPDATE DG STATUS
         dg.status = constants.DG_STATUS_BUSY
         dg.save()
 
@@ -312,29 +327,42 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['post'])
     def delivered(self, request, pk=None):
+
         dg = get_object_or_404(DeliveryGuy, user = request.user)
         order = get_object_or_404(Order, pk = pk)        
 
-        order.order_status = constants.ORDER_STATUS_DELIVERED
-        order.completed_datetime = datetime.now()
+        # DELIVERED DATE TIME
+        delivered_datetime_string = request.data.get('delivered_datetime')
+        if delivered_datetime_string is not None:
+            delivered_datetime = parse_datetime(delivered_datetime_string) 
+        else:
+            delivered_datetime = datetime.now()
 
         try:
-            delivered_at = request.data['delivered_at']
-            order.delivered_at = delivered_at   
+            delivered_at = request.data['delivered_at'] 
         except:
             content = {'error':' delivered_at value is missing or wrong. Options: DOOR_STEP, SECURITY, RECEPTION, CUSTOMER, ATTEMPTED'}    
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
+        order.order_status = constants.ORDER_STATUS_DELIVERED
+        order.delivered_at = delivered_at
+        order.completed_datetime = delivered_datetime
         order.save()
         
-        # DELIVERED DATE TIME
-        delivered_datetime = request.data.get('delivered_datetime')
-        if delivered_datetime is not None:
-            order.delivered_datetime = parse_datetime(delivered_datetime) 
-        else:
-            order.delivered_datetime = datetime.now() 
+        # UPDATE THE DELIVERY STATUS OF THE PARTICULAR DAY
+        delivery_statuses = order.delivery_status.all()
+        for delivery_status in delivery_statuses:
+            date_1 = datetime.combine(delivered_datetime, time()).replace(hour=0, minute=0, second=0)
+            date_2 = datetime.combine(delivery_status.date, time()).replace(hour=0, minute=0, second=0)
 
-
+            if date_1 == date_2:
+                delivery_status.order_status = constants.ORDER_STATUS_DELIVERED
+                delivery_status.completed_datetime = delivered_datetime
+                delivery_status.delivered_at = delivered_at
+                delivery_status.save()
+                break
+                                       
+        # UPDATE DG STATUS
         dg.status = constants.DG_STATUS_AVAILABLE
         dg.save()
 
@@ -366,13 +394,18 @@ class OrderViewSet(viewsets.ModelViewSet):
         for order_id in order_ids:
             order = get_object_or_404(Order, id = order_id)
 
-            # UPDATING THE DELIVERY STATUS OF THE PARTICULAR DAY
-            # delivery_statuses = order.delivery_status.all()
-            # for delivery_status in delivery_statuses:
-            #     date = normalize_offset_awareness(date, delivery_status.date)
-            #     if delivery_status.date.replace(hour=0, minute=0, second=0, microsecond=0) == date.replace(hour=0, minute=0, second=0, microsecond=0):
-            #         delivery_status.delivery_guy = dg
-            #         delivery_status.save()
+            #UPDATING THE DELIVERY STATUS OF THE PARTICULAR DAY
+            delivery_statuses = order.delivery_status.all()
+            for delivery_status in delivery_statuses:
+
+                date_1 = datetime.combine(date, time()).replace(hour=0, minute=0, second=0)
+                date_2 = datetime.combine(delivery_status.date, time()).replace(hour=0, minute=0, second=0)
+
+                if date_1 == date_2:
+                    delivery_status.delivery_guy = dg
+                    delivery_status.order_status = constants.ORDER_STATUS_QUEUED
+                    delivery_status.save()
+                    break
                                        
             order.delivery_guy = dg
             order.order_status = constants.ORDER_STATUS_QUEUED

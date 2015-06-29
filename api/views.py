@@ -105,8 +105,7 @@ def send_sms(phonenumber, message):
     try:
         r = requests.get(url)
     except:
-        send_email('SMS error', 'problem sending SMS \nplease check {} {}'.format(phonenumber,message),
-              SERVER_MAIL, ['tech@yourguy.in'], fail_silently=False)
+        send_email('SMS error', 'problem sending SMS \nplease check {} {}'.format(phonenumber,message), constants.FROM_MAIL_ID, ['tech@yourguy.in'], fail_silently=False)
 
 
 def verify_password(user, password):
