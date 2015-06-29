@@ -8,7 +8,7 @@ from rest_framework.response import Response
 
 from yourguy.models import DeliveryGuy, DGAttendance
 from api.serializers import DGSerializer
-from datetime import datetime
+from datetime import date, datetime, time
 
 import constants
 
@@ -62,7 +62,14 @@ class DGViewSet(viewsets.ModelViewSet):
         attendance_list = DGAttendance.objects.filter(dg=dg)
         if len(attendance_list) > 0:
             attendance = DGAttendance.objects.filter(dg=dg).latest('date')
-            attendance.login_time = login_time
+            
+            today_date = datetime.combine(datetime.today(), time()).replace(hour=0, minute=0, second=0)
+            attendance_date = datetime.combine(attendance.date, time()).replace(hour=0, minute=0, second=0)
+
+            if today_date == attendance_date:
+                attendance.login_time = login_time
+            else:
+                attendance = DGAttendance.objects.create(dg = dg, login_time = login_time)
         else:
             attendance = DGAttendance.objects.create(dg = dg, login_time = login_time)
 
