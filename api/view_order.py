@@ -191,7 +191,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                                             delivery_datetime = delivery_datetime)
 
                 if vendor.is_retail is False:
-                    new_order.order_status = 'QUEUED'
+                    new_order.order_status = constants.ORDER_STATUS_QUEUED
 
                 if notes is not None:
                     new_order.notes = notes
@@ -291,7 +291,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         dg = get_object_or_404(DeliveryGuy, user = request.user)
         order = get_object_or_404(Order, pk = pk)        
 
-        order.order_status = 'INTRANSIT'
+        order.order_status = constants.ORDER_STATUS_INTRANSIT
         order.delivery_guy = dg
 
         # PICKEDUP DATE TIME
@@ -303,7 +303,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         order.save()
         
         
-        dg.status = 'BUSY'
+        dg.status = constants.DG_STATUS_BUSY
         dg.save()
 
         content = {'description': 'Order updated'}
@@ -314,7 +314,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         dg = get_object_or_404(DeliveryGuy, user = request.user)
         order = get_object_or_404(Order, pk = pk)        
 
-        order.order_status = 'DELIVERED'
+        order.order_status = constants.ORDER_STATUS_DELIVERED
         order.completed_datetime = datetime.now()
 
         try:
@@ -334,7 +334,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             order.delivered_datetime = datetime.now() 
 
 
-        dg.status = 'AVAILABLE'
+        dg.status = constants.DG_STATUS_AVAILABLE
         dg.save()
 
         # CONFIRMATION MESSAGE TO CUSTOMER
@@ -374,10 +374,10 @@ class OrderViewSet(viewsets.ModelViewSet):
             #         delivery_status.save()
                                        
             order.delivery_guy = dg
-            order.order_status = 'QUEUED'
+            order.order_status = constants.ORDER_STATUS_QUEUED
             order.save()
         
-        dg.status = 'BUSY'
+        dg.status = constants.DG_STATUS_BUSY
         dg.save()
 
         # TODO: Need to revisit and understand whether we need to send 100 SMS if there are 100 orders.
@@ -390,7 +390,7 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     @list_route()
     def undelivered_orders():
-        orders = Order.objects.filter(order_status='INTRANSIT')
+        orders = Order.objects.filter(order_status=constants.ORDER_STATUS_INTRANSIT)
         serializer = OrderSerializer(orders, many=True)
         return Response(serializer.data)        
 

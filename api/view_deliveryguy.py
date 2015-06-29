@@ -10,6 +10,8 @@ from yourguy.models import DeliveryGuy, DGAttendance
 from api.serializers import DGSerializer
 from datetime import datetime
 
+import constants
+
 class DGViewSet(viewsets.ModelViewSet):
     """
     DeliveryGuy viewset that provides the standard actions 
@@ -64,7 +66,7 @@ class DGViewSet(viewsets.ModelViewSet):
         else:
             attendance = DGAttendance.objects.create(dg = dg, login_time = login_time)
 
-        attendance.status = 'WORKING'
+        attendance.status = constants.DG_STATUS_WORKING
         attendance.save()
         
         content = {'description': 'Checked-in done.'}

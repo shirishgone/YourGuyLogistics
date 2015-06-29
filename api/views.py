@@ -101,7 +101,7 @@ def send_email(to_mail_ids, subject, body):
 		pass
 
 def send_sms(phonenumber, message):
-    url = "http://api.smscountry.com/SMSCwebservice_bulk.aspx?User=yourguy&passwd=yourguydotin&mobilenumber={mobile_number}&message={message_text}&sid=YOURGY&mtype=N&DR=Y".format(mobile_number=phonenumber, message_text=message)
+    url = constants.SMS_URL.format(mobile_number=phonenumber, message_text=message)
     try:
         r = requests.get(url)
     except:

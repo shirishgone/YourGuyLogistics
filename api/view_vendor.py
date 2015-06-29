@@ -66,7 +66,7 @@ class VendorViewSet(viewsets.ModelViewSet):
         # SEND EMAIL TO SALES
         approval_link = 'http://vendor-yourguy.herokuapp.com/#/home/vendor/{}'.format(vendor.id)
         subject = 'YourGuy: New Vendor Account Request'
-        body = "A New Vendor has requested for an account. \nPlease find the below details: \nStore Name:{} \nPhone Number: {} \nEmail: {} \nAddress : {}, {}, {}, {} \nApproval link:{}".format(store, phone_number, email, flat_number, building, street, area_code, approval_link)
+        body = constants.VENDOR_ACCOUNT_REQUESTED_MESSAGE_SALES.format(store, phone_number, email, flat_number, building, street, area_code, approval_link)
         send_email(constants.SALES_EMAIL, subject, body)
 
     	content = {'status':'Thank you! We have received your request. Our sales team will contact you soon.'}
@@ -103,7 +103,7 @@ class VendorViewSet(viewsets.ModelViewSet):
             
             vendor.save()
         except Exception, e:
-            content = {'error':'An error occured creating the account. Please try again'}
+            content = {'error':'An error occurred creating the account. Please try again'}
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
         # SEND AN EMAIL/SMS TO CUSTOMER AND SALES WITH ACCOUNT CREDENTIALS
@@ -113,7 +113,7 @@ class VendorViewSet(viewsets.ModelViewSet):
         send_email(customer_emails, subject, customer_message)
         send_sms(vendor.phone_number, customer_message)
 
-        sales_message = 'YourGuy: An account has been created for {} and credentials are sent via SMS and Email.'.format(vendor.store_name)
+        sales_message = constants.VENDOR_ACCOUNT_APPROVED_MESSAGE_SALES.format(vendor.store_name)
         send_email(constants.SALES_EMAIL, subject, sales_message)
 
         content = {'description': 'Your account credentials has been sent via email and SMS.'}
