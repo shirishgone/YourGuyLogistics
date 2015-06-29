@@ -83,7 +83,8 @@ class OrderViewSet(viewsets.ModelViewSet):
             if dg_phone_number is not None:
                 if is_dgexists:
                     user = get_object_or_404(User, username = dg_phone_number)
-                    queryset = queryset.filter(assigned_deliveryGuy=user)
+                    dg = get_object_or_404(DeliveryGuy, user = user)
+                    queryset = queryset.filter(delivery_guy=dg)
                 else:
                     pass
             else:
