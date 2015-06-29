@@ -38,7 +38,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         vendor_id = self.request.QUERY_PARAMS.get('vendor_id', None)
         area_code = self.request.QUERY_PARAMS.get('area_code', None)
         consumer_phone_number = self.request.QUERY_PARAMS.get('consumer_phone_number', None)
-        dg_phone_number = self.request.QUERY_PARAMS.get('dg_phone_number', None)
+        dg_phone_number = self.request.QUERY_PARAMS.get('dg_username', None)
         date_string = self.request.QUERY_PARAMS.get('date', None)
 
         role = user_role(self.request.user)
