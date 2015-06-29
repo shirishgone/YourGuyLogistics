@@ -108,7 +108,7 @@ class VendorViewSet(viewsets.ModelViewSet):
 
         # SEND AN EMAIL/SMS TO CUSTOMER AND SALES WITH ACCOUNT CREDENTIALS
         subject = 'YourGuy: Account created for {}'.format(vendor.store_name)
-        customer_message = 'YourGuy : Your account has been created. \nPlease login using following credentials: \nUsername:{} \nPassword:{}'.format(vendor.phone_number, password)
+        customer_message = constants.VENDOR_ACCOUNT_APPROVED_MESSAGE.format(vendor.phone_number, password)
         customer_emails = [vendor.email]
         send_email(customer_emails, subject, customer_message)
         send_sms(vendor.phone_number, customer_message)

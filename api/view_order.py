@@ -238,12 +238,11 @@ class OrderViewSet(viewsets.ModelViewSet):
                 new_order.save()
 
             # CONFIRMATION MESSAGE TO OPS
-            message = 'A New order has been placed by {}, please assign a DG.'.format(vendor.store_name)
+            message = constants.ORDER_PLACED_MESSAGE_OPS.format(vendor.store_name)
             send_sms(constants.OPS_PHONE_NUMBER, message)
 
             # CONFIRMATION MESSAGE TO CUSTOMER
-            message = 'Your order has been placed and will be processed soon - Team YourGuy'
-            send_sms(vendor.phone_number, message)
+            send_sms(vendor.phone_number, constants.ORDER_PLACED_MESSAGE_CLIENT)
 
             content = {'status':'orders added'}
             return Response(content, status = status.HTTP_201_CREATED)
@@ -339,7 +338,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         dg.save()
 
         # CONFIRMATION MESSAGE TO CUSTOMER
-        message = 'Your order has been delivered to {} at {} - Team YourGuy'.format(order.consumer.user.first_name, delivered_at)
+        message = constants.ORDER_DELIVERED_MESSAGE_CLIENT.format(order.consumer.user.first_name, delivered_at)
         send_sms(order.vendor.phone_number, message)
 
         content = {'description': 'Order updated'}
