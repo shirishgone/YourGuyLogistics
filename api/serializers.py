@@ -74,6 +74,8 @@ class OrderSerializer(serializers.ModelSerializer):
     order_items = OrderItemSerializer(required=False, many = True)
     pickup_address = AddressSerializer(required=False)
     delivery_address = AddressSerializer(required=False)
+    vendor = VendorSerializer(required = False)
+    
     class Meta:
         model = Order
      
