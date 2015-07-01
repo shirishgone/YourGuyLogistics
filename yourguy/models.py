@@ -61,26 +61,37 @@ class DeliveryGuy(YGUser):
         (BUSY, 'BUSY'),
     )
     status = models.CharField(max_length = 15, choices = STATUS_CHOICES, default = AVAILABLE)
-    device_token = models.CharField(max_length = 200, blank = True , null = True)
+    
     
     latitude = models.CharField(max_length = 20, blank = True)
     longitude = models.CharField(max_length = 20, blank = True)
 
+    device_token = models.CharField(max_length = 200, blank = True , null = True)
     battery_percentage = models.FloatField(default = 0.0)
     last_connected_time = models.DateTimeField(blank = True , null = True)
     app_version = models.FloatField(default = 0.0)
 
-    BIKE = 'BIKE'
-    AC_VEHICLE = 'AC_VEHICLE'
-    NON_AC_VEHICLE = 'NON_AC_VEHICLE'
-    PUBLIC_TRANSPORT = 'PUBLIC_TRANSPORT'
-    TRANSPORT_MODE_CHOICES = (
-        (PUBLIC_TRANSPORT, 'PUBLIC_TRANSPORT'),
-        (NON_AC_VEHICLE, 'NON_AC_VEHICLE'),
-        (AC_VEHICLE, 'AC_VEHICLE'),
-        (BIKE, 'BIKE'),
+    area = models.ForeignKey(Area, blank = True, null = True)
+
+    CORPORATE = 'CORPORATE'
+    RETAIL = 'RETAIL'
+    ALL = 'ALL'
+    WORK_ASSIGNMENT_CHOICES = (
+        (CORPORATE, 'CORPORATE'),
+        (RETAIL, 'RETAIL'),
+        (ALL, 'ALL'),
     )
-    transport_mode = models.CharField(max_length = 25, choices = TRANSPORT_MODE_CHOICES, default = PUBLIC_TRANSPORT)
+    assignment_type = models.CharField(max_length = 50, choices = WORK_ASSIGNMENT_CHOICES, default = ALL)
+
+    BIKER = 'BIKER'
+    WALKER = 'WALKER'
+    CAR_DRIVER = 'CAR_DRIVER'
+    TRANSPORTATION_MODE_CHOICES = (
+        (WALKER, 'WALKER'),
+        (BIKER, 'BIKER'),
+        (CAR_DRIVER, 'CAR_DRIVER'),
+    )
+    transportation_mode = models.CharField(max_length = 50, choices = TRANSPORTATION_MODE_CHOICES, default = WALKER)
 
 
     def __unicode__(self):
