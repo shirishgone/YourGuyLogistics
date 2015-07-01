@@ -11,10 +11,11 @@ from rest_framework.response import Response
 from yourguy.models import Order, OrderDeliveryStatus, Consumer, Vendor, DeliveryGuy, Area, VendorAgent, Address, Product, OrderItem, User
 from datetime import datetime, timedelta, time
 from api.serializers import OrderSerializer
-from api.views import user_role, is_vendorexists, is_consumerexists, is_dgexists, days_in_int, send_sms, normalize_offset_awareness
+from api.views import user_role, is_vendorexists, is_consumerexists, is_dgexists, days_in_int, send_sms, normalize_offset_awareness, delivery_status_of_the_day, update_daily_status
 import constants
 import recurrence
 from itertools import chain
+import json
 
 class OrderViewSet(viewsets.ModelViewSet):
     """
@@ -27,7 +28,18 @@ class OrderViewSet(viewsets.ModelViewSet):
     def get_object(self):        
         pk = self.kwargs['pk']
         #TODO: Filter objects according to the permissions e.g VendorA shouldn't see orders of VendorB
-        return get_object_or_404(Order, id = pk)
+
+        date_string = self.request.QUERY_PARAMS.get('date', None)
+        if date_string is not None:
+            date = parse_datetime(date_string)
+        else:
+            date = datetime.today()
+        order = get_object_or_404(Order, id = pk)
+
+        # UPDATING DELIVERY STATUS OF THE DAY
+        update_daily_status(order, date)
+
+        return order
 
     def get_queryset(self):
         """
@@ -118,8 +130,11 @@ class OrderViewSet(viewsets.ModelViewSet):
         # COMBINING RECURRING + SINGLE ORDERS
         result = list(chain(non_recurring_queryset, recurring_orders))
 
-        return result
+        # UPDATING DELIVERY STATUS OF THE DAY
+        for single_order in result:
+            update_daily_status(single_order, date)
 
+        return result
     
     def create(self, request):
         try:

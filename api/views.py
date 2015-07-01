@@ -17,7 +17,7 @@ from rest_framework import permissions
 from yourguy.models import Vendor, Consumer, DeliveryGuy, VendorAgent
 from api.serializers import UserSerializer, OrderSerializer, ConsumerSerializer
 
-import datetime
+from datetime import datetime, timedelta, time
 import random
 import string
 
@@ -144,6 +144,27 @@ def normalize_offset_awareness(dt, from_dt=None):
             dt.hour, dt.minute, dt.second)
     return dt
 
+
+def delivery_status_of_the_day(order, date):
+	delivery_statuses = order.delivery_status.all()
+	for delivery_status in delivery_statuses:
+		date_1 = datetime.combine(date, time()).replace(hour=0, minute=0, second=0)
+		date_2 = datetime.combine(delivery_status.date, time()).replace(hour=0, minute=0, second=0)
+		if date_1 == date_2:
+			delivery_item = delivery_status
+			break
+	return delivery_item  	
+
+def update_daily_status(order, date):
+	delivery_status = delivery_status_of_the_day(order, date)
+	order.delivered_at = delivery_status.delivered_at
+	order.pickedup_datetime = delivery_status.pickedup_datetime
+	order.completed_datetime = delivery_status.completed_datetime
+	order.order_status = delivery_status.order_status
+	order.delivery_guy = delivery_status.delivery_guy
+	return order
+
+    
 class IsAuthenticatedOrWriteOnly(permissions.BasePermission):
     """
     The request is authenticated as a user, or is a write-only request.
