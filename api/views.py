@@ -147,6 +147,8 @@ def normalize_offset_awareness(dt, from_dt=None):
 
 def delivery_status_of_the_day(order, date):
 	delivery_statuses = order.delivery_status.all()
+
+	delivery_item = None
 	for delivery_status in delivery_statuses:
 		date_1 = datetime.combine(date, time()).replace(hour=0, minute=0, second=0)
 		date_2 = datetime.combine(delivery_status.date, time()).replace(hour=0, minute=0, second=0)
