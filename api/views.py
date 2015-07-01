@@ -159,11 +159,12 @@ def delivery_status_of_the_day(order, date):
 
 def update_daily_status(order, date):
 	delivery_status = delivery_status_of_the_day(order, date)
-	order.delivered_at = delivery_status.delivered_at
-	order.pickedup_datetime = delivery_status.pickedup_datetime
-	order.completed_datetime = delivery_status.completed_datetime
-	order.order_status = delivery_status.order_status
-	order.delivery_guy = delivery_status.delivery_guy
+	if delivery_status is not None:
+		order.delivered_at = delivery_status.delivered_at
+		order.pickedup_datetime = delivery_status.pickedup_datetime
+		order.completed_datetime = delivery_status.completed_datetime
+		order.order_status = delivery_status.order_status
+		order.delivery_guy = delivery_status.delivery_guy
 	return order
 
     
