@@ -359,7 +359,13 @@ class OrderViewSet(viewsets.ModelViewSet):
             content = {'error':' delivered_at value is missing or wrong. Options: DOOR_STEP, SECURITY, RECEPTION, CUSTOMER, ATTEMPTED'}    
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
-        order.order_status = constants.ORDER_STATUS_DELIVERED
+        if delivered_at == 'ATTEMPTED':
+            order_status = constants.ORDER_STATUS_ATTEMPTED
+            delivered_at = 'NOT_DELIVERED'
+        else:
+            order_status = constants.ORDER_STATUS_DELIVERED
+
+        order.order_status = order_status
         order.delivered_at = delivered_at
         order.completed_datetime = delivered_datetime
         order.save()
@@ -371,9 +377,9 @@ class OrderViewSet(viewsets.ModelViewSet):
             date_2 = datetime.combine(delivery_status.date, time()).replace(hour=0, minute=0, second=0)
 
             if date_1 == date_2:
-                delivery_status.order_status = constants.ORDER_STATUS_DELIVERED
-                delivery_status.completed_datetime = delivered_datetime
+                delivery_status.order_status = order_status
                 delivery_status.delivered_at = delivered_at
+                delivery_status.completed_datetime = delivered_datetime                
                 delivery_status.save()
                 break
                                        
