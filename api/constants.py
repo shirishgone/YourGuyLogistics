@@ -16,7 +16,7 @@ SMS_URL = "http://api.smscountry.com/SMSCwebservice_bulk.aspx?User=yourguy&passw
 
 ORDER_PLACED_MESSAGE_OPS = 'A New order has been placed by {}, please assign a DG.'
 ORDER_PLACED_MESSAGE_CLIENT = 'Your order has been placed and will be processed soon - Team YourGuy'
-ORDER_DELIVERED_MESSAGE_CLIENT = 'Your order has been delivered to {} at {} - Team YourGuy'
+ORDER_DELIVERED_MESSAGE_CLIENT = 'Your order has been {} to {} at {} - Team YourGuy'
 
 VENDOR_ACCOUNT_REQUESTED_MESSAGE_SALES = "A New Vendor has requested for an account. \nPlease find the below details: \nStore Name:{} \nPhone Number: {} \nEmail: {} \nAddress : {}, {}, {}, {} \nApproval link:{}"
 VENDOR_ACCOUNT_APPROVED_MESSAGE = 'Your account has been approved. \nPlease login using following credentials: \nUsername:{} \nPassword:{} - Team YourGuy'

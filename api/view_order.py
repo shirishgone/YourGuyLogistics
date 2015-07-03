@@ -388,7 +388,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         dg.save()
 
         # CONFIRMATION MESSAGE TO CUSTOMER
-        message = constants.ORDER_DELIVERED_MESSAGE_CLIENT.format(order.consumer.user.first_name, delivered_at)
+        message = constants.ORDER_DELIVERED_MESSAGE_CLIENT.format(order_status, order.consumer.user.first_name, delivered_at)
         send_sms(order.vendor.phone_number, message)
 
         content = {'description': 'Order updated'}
