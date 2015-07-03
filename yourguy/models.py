@@ -278,7 +278,7 @@ class OrderDeliveryStatus(models.Model):
     delivered_at = models.CharField(max_length = 15, choices = DELIVERED_AT_CHOICES, default = NOT_DELIVERED)
     
     def __unicode__(self):
-        return u"%s" % self.id        
+        return u"%s - %s" % (self.id, self.delivered_at)
 
 class Order(models.Model):
 
@@ -373,7 +373,7 @@ class Order(models.Model):
 
     
     def __unicode__(self):
-        return u"%s - %s - %s - %s" % (self.vendor.store_name, self.consumer.user.first_name, self.order_status, self.delivery_guy)
+        return u"%s - %s - %s - %s - %s" % (self.vendor.store_name, self.consumer.user.first_name, self.order_status, self.delivery_guy, self.delivered_at)
 
 class Suggestion(models.Model):
 
