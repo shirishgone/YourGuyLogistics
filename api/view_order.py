@@ -359,9 +359,9 @@ class OrderViewSet(viewsets.ModelViewSet):
             content = {'error':' delivered_at value is missing or wrong. Options: DOOR_STEP, SECURITY, RECEPTION, CUSTOMER, ATTEMPTED'}    
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
-        if delivered_at == 'ATTEMPTED':
+        if delivered_at == constants.ORDER_STATUS_ATTEMPTED:
             order_status = constants.ORDER_STATUS_ATTEMPTED
-            delivered_at = 'NOT_DELIVERED'
+            delivered_at = constants.ORDER_STATUS_NOT_DELIVERED
         else:
             order_status = constants.ORDER_STATUS_DELIVERED
 
