@@ -250,12 +250,14 @@ class OrderDeliveryStatus(models.Model):
     OUTFORPICKUP = 'OUTFORPICKUP'
     INTRANSIT = 'INTRANSIT'
     DELIVERED = 'DELIVERED'
+    CANCELLED = 'CANCELLED'
     ORDER_CHOICES = (
         (ORDER_PLACED, 'ORDER_PLACED'),
         (QUEUED, 'QUEUED'),
         (OUTFORPICKUP, 'OUTFORPICKUP'),
         (INTRANSIT, 'INTRANSIT'),
         (DELIVERED, 'DELIVERED'),
+        (CANCELLED, 'CANCELLED'),
     )
     order_status = models.CharField(max_length = 15, choices = ORDER_CHOICES, default = ORDER_PLACED)
 
@@ -289,12 +291,14 @@ class Order(models.Model):
     OUTFORPICKUP = 'OUTFORPICKUP'
     INTRANSIT = 'INTRANSIT'
     DELIVERED = 'DELIVERED'
+    CANCELLED = 'CANCELLED'
     ORDER_CHOICES = (
         (ORDER_PLACED, 'ORDER_PLACED'),
         (QUEUED, 'QUEUED'),
         (OUTFORPICKUP, 'OUTFORPICKUP'),
         (INTRANSIT, 'INTRANSIT'),
         (DELIVERED, 'DELIVERED'),
+        (CANCELLED, 'CANCELLED'),
     )
     order_status = models.CharField(max_length = 15, choices = ORDER_CHOICES, default = ORDER_PLACED)
 
