@@ -250,12 +250,14 @@ class OrderDeliveryStatus(models.Model):
     OUTFORPICKUP = 'OUTFORPICKUP'
     INTRANSIT = 'INTRANSIT'
     DELIVERED = 'DELIVERED'
+    ATTEMPTED = 'ATTEMPTED'
     CANCELLED = 'CANCELLED'
     ORDER_CHOICES = (
         (ORDER_PLACED, 'ORDER_PLACED'),
         (QUEUED, 'QUEUED'),
         (OUTFORPICKUP, 'OUTFORPICKUP'),
         (INTRANSIT, 'INTRANSIT'),
+        (ATTEMPTED, 'ATTEMPTED'),
         (DELIVERED, 'DELIVERED'),
         (CANCELLED, 'CANCELLED'),
     )
@@ -265,14 +267,12 @@ class OrderDeliveryStatus(models.Model):
     SECURITY = 'SECURITY'
     RECEPTION = 'RECEPTION'
     CUSTOMER = 'CUSTOMER'
-    ATTEMPTED = 'ATTEMPTED'
     NOT_DELIVERED = 'NOT_DELIVERED'
     DELIVERED_AT_CHOICES = (
         (DOOR_STEP, 'DOOR_STEP'),
         (SECURITY, 'SECURITY'),
         (RECEPTION, 'RECEPTION'),
         (CUSTOMER, 'CUSTOMER'),
-        (ATTEMPTED, 'ATTEMPTED'),        
         (NOT_DELIVERED, 'NOT_DELIVERED'),
     )
     delivered_at = models.CharField(max_length = 15, choices = DELIVERED_AT_CHOICES, default = NOT_DELIVERED)
@@ -291,12 +291,14 @@ class Order(models.Model):
     OUTFORPICKUP = 'OUTFORPICKUP'
     INTRANSIT = 'INTRANSIT'
     DELIVERED = 'DELIVERED'
+    ATTEMPTED = 'ATTEMPTED'
     CANCELLED = 'CANCELLED'
     ORDER_CHOICES = (
         (ORDER_PLACED, 'ORDER_PLACED'),
         (QUEUED, 'QUEUED'),
         (OUTFORPICKUP, 'OUTFORPICKUP'),
         (INTRANSIT, 'INTRANSIT'),
+        (ATTEMPTED, 'ATTEMPTED'),
         (DELIVERED, 'DELIVERED'),
         (CANCELLED, 'CANCELLED'),
     )
@@ -344,14 +346,12 @@ class Order(models.Model):
     SECURITY = 'SECURITY'
     RECEPTION = 'RECEPTION'
     CUSTOMER = 'CUSTOMER'
-    ATTEMPTED = 'ATTEMPTED'
     NOT_DELIVERED = 'NOT_DELIVERED'
     DELIVERED_AT_CHOICES = (
         (DOOR_STEP, 'DOOR_STEP'),
         (SECURITY, 'SECURITY'),
         (RECEPTION, 'RECEPTION'),
         (CUSTOMER, 'CUSTOMER'),
-        (ATTEMPTED, 'ATTEMPTED'),        
         (NOT_DELIVERED, 'NOT_DELIVERED'),
     )
     delivered_at = models.CharField(max_length = 15, choices = DELIVERED_AT_CHOICES, default = NOT_DELIVERED)
