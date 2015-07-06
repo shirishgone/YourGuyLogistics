@@ -83,6 +83,9 @@ class VendorViewSet(viewsets.ModelViewSet):
         vendor = get_object_or_404(Vendor, pk = pk)
         notes = request.data.get('notes')
         is_retail = request.data.get('is_retail')
+        # pricing = request.data.get('pricing')
+        # pan = request.data.get('pan')
+
         try:
             username = vendor.phone_number
             password = vendor.store_name.replace(" ", "")
@@ -105,6 +108,17 @@ class VendorViewSet(viewsets.ModelViewSet):
         except Exception, e:
             content = {'error':'An error occurred creating the account. Please try again'}
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
+        # TODO: CREATE BILLING ACCOUNT
+        # if pricing is None:
+        #     pricing = 0.0  
+        # else:
+        #     pricing = float(pricing)
+        
+        # new_account = VendorAccount.objects.create(vendor = vendor, pricing = pricing)
+        # if pan is not None:
+        #     new_account.pan = pan
+        #     new_account.save()
 
         # SEND AN EMAIL/SMS TO CUSTOMER AND SALES WITH ACCOUNT CREDENTIALS
         subject = 'YourGuy: Account created for {}'.format(vendor.store_name)

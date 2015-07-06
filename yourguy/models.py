@@ -97,18 +97,33 @@ class DeliveryGuy(YGUser):
     def __unicode__(self):
         return u"%s - %s" % (self.user.username, self.user.first_name)                
 
+class VendorAccount(models.Model):
+    # Mandatory Fields
+    pricing = models.FloatField(default = 0.0)
+    
+    pan = models.CharField(max_length = 50, blank = True)
+    billing_address = models.ForeignKey(Address, related_name='billing_address', on_delete = models.CASCADE, null = True)
+    last_update_date = models.DateTimeField(auto_now_add = True)
+    
+    # Optional Fields
+
+    def __unicode__(self):
+        return u"%s" % self.id
+
 class Vendor(models.Model):
     # Mandatory Fields
     store_name = models.CharField(max_length = 100)
     email = models.EmailField(max_length = 50)
     phone_number = models.CharField(max_length = 15, blank = True, null = True)
+    alternate_phone_number = models.CharField(max_length = 15, blank = True, null = True)
+
     addresses = models.ManyToManyField(Address)
     is_retail = models.BooleanField(default = False)
+    account = models.ForeignKey(VendorAccount, related_name='account', null = True)
 
     # Optional
     website_url = models.CharField(max_length = 100, blank = True)
     verified = models.BooleanField(blank = True, default = False)
-    pan_card = models.CharField(max_length = 15, blank = True)
     notes = models.CharField(max_length = 500, blank = True)
 
     def __unicode__(self):
