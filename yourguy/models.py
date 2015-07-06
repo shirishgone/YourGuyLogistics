@@ -14,8 +14,8 @@ from recurrence.fields import RecurrenceField
 class Area(models.Model):
 
     # Mandatory Fields
-    area_code = models.CharField(max_length = 10, unique = True)
-    area_name = models.CharField(max_length = 50)
+    area_code = models.CharField(max_length = 25, unique = True)
+    area_name = models.CharField(max_length = 100)
     city_name = models.CharField(max_length = 100, default = 'MUMBAI')
 
     # Optional Fields
@@ -26,18 +26,18 @@ class Area(models.Model):
 class Address(models.Model):
 
     # Mandatory Fields
-    flat_number = models.CharField(max_length = 50) 
-    building = models.CharField(max_length = 100)
-    street = models.CharField(max_length = 100)
+    flat_number = models.CharField(max_length = 100) 
+    building = models.CharField(max_length = 500)
+    street = models.CharField(max_length = 500)
     area = models.ForeignKey(Area, blank = True, null = True)
 
     # Optional Fields
-    landmark = models.CharField(max_length = 50, blank = True)
-    pin_code = models.CharField(max_length = 10, blank = True)
-    country_code = models.CharField(max_length = 10, default='IN')
+    landmark = models.CharField(max_length = 100, blank = True)
+    pin_code = models.CharField(max_length = 25, blank = True)
+    country_code = models.CharField(max_length = 25, default='IN')
 
-    latitude = models.CharField(max_length = 20, blank = True)
-    longitude = models.CharField(max_length = 20, blank = True)
+    latitude = models.CharField(max_length = 50, blank = True)
+    longitude = models.CharField(max_length = 50, blank = True)
 
     def __unicode__(self):
         return u"%s - %s - %s" % (self.flat_number, self.building, self.street)                
@@ -47,7 +47,7 @@ class YGUser(models.Model):
     user = models.OneToOneField(User)
 
     # Optional Fields
-    picture_link = models.CharField(max_length = 50, blank = True)
+    picture_link = models.CharField(max_length = 500, blank = True)
 
     class Meta:
         abstract = True
@@ -60,11 +60,11 @@ class DeliveryGuy(YGUser):
         (AVAILABLE, 'AVAILABLE'),
         (BUSY, 'BUSY'),
     )
-    status = models.CharField(max_length = 15, choices = STATUS_CHOICES, default = AVAILABLE)
+    status = models.CharField(max_length = 25, choices = STATUS_CHOICES, default = AVAILABLE)
     
     
-    latitude = models.CharField(max_length = 20, blank = True)
-    longitude = models.CharField(max_length = 20, blank = True)
+    latitude = models.CharField(max_length = 50, blank = True)
+    longitude = models.CharField(max_length = 50, blank = True)
 
     device_token = models.CharField(max_length = 200, blank = True , null = True)
     battery_percentage = models.FloatField(default = 0.0)
