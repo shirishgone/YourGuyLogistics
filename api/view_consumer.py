@@ -111,8 +111,7 @@ class ConsumerViewSet(viewsets.ModelViewSet):
             content = {'error':'No permissions to create consumer'}   
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
     
-    def destroy(self, request, pk):        
-        
+    def destroy(self, request, pk):                
         role = user_role(request.user)
         if (role == constants.VENDOR):
             vendor_agent = get_object_or_404(VendorAgent, user = request.user)
@@ -127,5 +126,45 @@ class ConsumerViewSet(viewsets.ModelViewSet):
             content = {'description': 'You dont have permissions to remove the customer.'}
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
-              
+    @detail_route(methods=['post'])
+    def add_address(self, request, pk):
+        try:
+            flat_number = request.data['flat_number']
+            building = request.data['building']
+            street = request.data['street']
+            area_code = request.data['area_code']
+            consumer_id = request.data['consumer_id']
+        except:
+            content = {'error':'Incomplete params', 'description':'flat_number, building, street, area_code, consumer_id'}
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
+        area = get_object_or_404(Area, area_code = area_code)
+        new_address = Address.objects.create(flat_number=flat_number, building=building, street=street, area = area)
+
+        role = user_role(request.user)
+        if role == constants.VENDOR:
+            consumer = get_object_or_404(Consumer, pk = consumer_id)
+            consumer.addresses.add(new_address)
+
+            content = {'description': 'Address added successfully'}
+            return Response(content, status = status.HTTP_200_OK)
+        else:
+            content = {'description': 'You dont have permissions to add address.'}
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+    
+    @detail_route(methods=['post'])
+    def remove_address(self, request, pk):
+        try:
+            address_id = request.data['address_id']
+        except:
+            content = {'error':'Incomplete params', 'description':'address_id'}
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+        
+        address = get_object_or_404(Address, pk = address_id)
+        address.delete()
+        
+        content = {'description': 'Deleted successfully'}
+        return Response(content, status = status.HTTP_200_OK)
+
+         
         
