@@ -110,4 +110,22 @@ class ConsumerViewSet(viewsets.ModelViewSet):
         else:
             content = {'error':'No permissions to create consumer'}   
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
+    
+    def destroy(self, request, pk):        
+        
+        role = user_role(request.user)
+        if (role == constants.VENDOR):
+            vendor_agent = get_object_or_404(VendorAgent, user = request.user)
+            vendor = vendor_agent.vendor
+            consumer = get_object_or_404(Consumer, pk = pk)
+            consumer.associated_vendor.remove(vendor)
+            
+            content = {'description': 'Customer removed.'}
+            return Response(content, status = status.HTTP_200_OK)
+
+        else:    
+            content = {'description': 'You dont have permissions to remove the customer.'}
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
+              
         
