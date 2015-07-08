@@ -19,7 +19,7 @@ ORDER_PLACED_MESSAGE_CLIENT = 'Your order has been placed and will be processed 
 ORDER_DELIVERED_MESSAGE_CLIENT = 'Your order has been {} to {} at {} - Team YourGuy'
 
 VENDOR_ACCOUNT_REQUESTED_MESSAGE_SALES = "A New Vendor has requested for an account. \nPlease find the below details: \nStore Name:{} \nPhone Number: {} \nEmail: {} \nAddress : {}, {}, {}, {} \nApproval link:{}"
-VENDOR_ACCOUNT_APPROVED_MESSAGE = 'Your account has been approved. \nPlease login using following credentials: \nUsername:{} \nPassword:{} - Team YourGuy'
+VENDOR_ACCOUNT_APPROVED_MESSAGE = 'Your account has been approved. \n http://app.yourguy.in \nPlease login using following credentials: \nUsername:{} \nPassword:{} - Team YourGuy'
 VENDOR_ACCOUNT_APPROVED_MESSAGE_SALES = 'YourGuy: An account has been created for {} and credentials are sent via SMS and Email.'
 
 ORDER_STATUS_PLACED = 'ORDER_PLACED'
