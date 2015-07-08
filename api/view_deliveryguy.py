@@ -1,4 +1,5 @@
 from django.shortcuts import get_object_or_404
+from django.utils.dateparse import parse_datetime
 
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status, authentication
@@ -8,7 +9,7 @@ from rest_framework.response import Response
 
 from yourguy.models import DeliveryGuy, DGAttendance
 from api.serializers import DGSerializer, DGAttendanceSerializer
-from datetime import date, datetime, time
+from datetime import date, datetime, timedelta, time
 
 import constants
 
@@ -106,3 +107,17 @@ class DGViewSet(viewsets.ModelViewSet):
 
         serializer = DGAttendanceSerializer(all_attendance, many=True)
         return Response(serializer.data)
+    
+    @list_route()
+    def all_dg_attendance(self, request):
+        date_string = self.request.QUERY_PARAMS.get('date', None)
+        if date_string is not None:
+            date = parse_datetime(date_string)
+        else:
+            date = datetime.today()
+
+        all_attendance = DGAttendance.objects.filter(date = date)
+
+        serializer = DGAttendanceSerializer(all_attendance, many=True)
+        return Response(serializer.data)
+
