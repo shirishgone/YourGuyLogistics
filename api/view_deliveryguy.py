@@ -7,7 +7,7 @@ from rest_framework.decorators import detail_route, list_route
 from rest_framework.response import Response
 
 from yourguy.models import DeliveryGuy, DGAttendance
-from api.serializers import DGSerializer
+from api.serializers import DGSerializer, DGAttendanceSerializer
 from datetime import date, datetime, time
 
 import constants
@@ -90,3 +90,19 @@ class DGViewSet(viewsets.ModelViewSet):
 
         content = {'description': 'Checkout done.'}
         return Response(content, status = status.HTTP_200_OK)
+
+    @detail_route(methods=['post'])
+    def attendance(self, request, pk):
+        month = request.data.get('month')
+        year = request.data.get('year')
+         
+        dg = get_object_or_404(DeliveryGuy, pk = pk)
+        all_attendance = DGAttendance.objects.filter(dg = dg)
+
+        if year is not None:
+            all_attendance = all_attendance.filter(date__year = year)
+        if month is not None:
+            all_attendance = all_attendance.filter(date__month = month)
+
+        serializer = DGAttendanceSerializer(all_attendance, many=True)
+        return Response(serializer.data)
