@@ -17,6 +17,8 @@ SMS_URL = "http://api.smscountry.com/SMSCwebservice_bulk.aspx?User=yourguy&passw
 ORDER_PLACED_MESSAGE_OPS = 'A New order has been placed by {}, please assign a DG.'
 ORDER_PLACED_MESSAGE_CLIENT = 'Your order has been placed and will be processed soon - Team YourGuy'
 ORDER_DELIVERED_MESSAGE_CLIENT = 'Your order has been {} to {} at {} - Team YourGuy'
+ORDER_APPROVED_MESSAGE_CLIENT = 'Your order for {} has been approved & QUEUED for delivery - Team YourGuy'
+ORDER_REJECTED_MESSAGE_CLIENT = 'Your order for {} has been rejected because of {} - Team YourGuy'
 
 VENDOR_ACCOUNT_REQUESTED_MESSAGE_SALES = "A New Vendor has requested for an account. \nPlease find the below details: \nStore Name:{} \nPhone Number: {} \nEmail: {} \nAddress : {}, {}, {}, {} \nApproval link:{}"
 VENDOR_ACCOUNT_APPROVED_MESSAGE = 'Your account has been approved. \n http://app.yourguy.in \nPlease login using following credentials: \nUsername:{} \nPassword:{} - Team YourGuy'
@@ -24,11 +26,15 @@ VENDOR_ACCOUNT_APPROVED_MESSAGE_SALES = 'YourGuy: An account has been created fo
 
 ORDER_STATUS_PLACED = 'ORDER_PLACED'
 ORDER_STATUS_QUEUED = 'QUEUED'
-ORDER_STATUS_INTRANSIT = 'INTRANSIT'
+ORDER_STATUS_REJECTED = 'REJECTED'
 ORDER_STATUS_OUTFORPICKUP = 'OUTFORPICKUP'
+ORDER_STATUS_INTRANSIT = 'INTRANSIT'
+ORDER_STATUS_OUTFORDELIVERY = 'OUTFORDELIVERY'
 ORDER_STATUS_DELIVERED = 'DELIVERED'
 ORDER_STATUS_ATTEMPTED = 'ATTEMPTED'
 ORDER_STATUS_NOT_DELIVERED = 'NOT_DELIVERED'
+ORDER_STATUS_CANCELLED = 'CANCELLED'
+
 
 DG_STATUS_WORKING = 'WORKING'
 DG_STATUS_LEAVE = 'LEAVE'

@@ -442,6 +442,66 @@ class OrderViewSet(viewsets.ModelViewSet):
 
         content = {'description': 'Order assigned'}
         return Response(content, status = status.HTTP_200_OK)
+    
+    @detail_route(methods=['post'])
+    def approve(self, request, pk ):
+        try:
+            date_string = request.data['date']
+            date = parse_datetime(date_string)
+        except Exception, e:
+            content = {'error':'Incomplete params', 'description':'date'}
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
+        order = get_object_or_404(Order, id = pk)
+
+        #UPDATING THE DELIVERY STATUS OF THE PARTICULAR DAY
+        delivery_statuses = order.delivery_status.all()
+        for delivery_status in delivery_statuses:
+
+            date_1 = datetime.combine(date, time()).replace(hour=0, minute=0, second=0)
+            date_2 = datetime.combine(delivery_status.date, time()).replace(hour=0, minute=0, second=0)
+
+            if date_1 == date_2:
+                delivery_status.order_status = constants.ORDER_STATUS_QUEUED
+                delivery_status.save()
+                break
+        
+
+        message = constants.ORDER_APPROVED_MESSAGE_CLIENT.format(order.consumer.user.first_name)
+        send_sms(order.vendor.phone_number, message)
+
+        return Response(status = status.HTTP_200_OK)
+
+    @detail_route(methods=['post'])
+    def reject(self, request, pk ):
+        try:
+            reason_message = request.data['rejection_reason']
+            date_string = request.data['date']
+            date = parse_datetime(date_string)
+
+        except Exception, e:
+            content = {'error':'Incomplete params', 'description':'rejection_reason, date'}
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
+        order = get_object_or_404(Order, id = pk)
+
+        #UPDATING THE DELIVERY STATUS OF THE PARTICULAR DAY
+        delivery_statuses = order.delivery_status.all()
+        for delivery_status in delivery_statuses:
+
+            date_1 = datetime.combine(date, time()).replace(hour=0, minute=0, second=0)
+            date_2 = datetime.combine(delivery_status.date, time()).replace(hour=0, minute=0, second=0)
+
+            if date_1 == date_2:
+                delivery_status.order_status = constants.ORDER_STATUS_REJECTED
+                delivery_status.rejection_reason = reason_message
+                delivery_status.save()
+                break
+        
+        message = constants.ORDER_REJECTED_MESSAGE_CLIENT.format(order.consumer.user.first_name, reason_message)
+        send_sms(order.vendor.phone_number, message)
+
+        return Response(status = status.HTTP_200_OK)
 
     @list_route()
     def undelivered_orders():

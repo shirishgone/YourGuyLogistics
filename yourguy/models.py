@@ -259,24 +259,30 @@ class OrderDeliveryStatus(models.Model):
     pickedup_datetime = models.DateTimeField(blank = True, null = True)
     completed_datetime = models.DateTimeField(blank = True, null = True)
     delivery_guy = models.ForeignKey(DeliveryGuy, related_name = 'assigned_dg', blank = True, null = True)
-
+    rejection_reason = models.CharField(max_length = 500, blank = True)
+    
     ORDER_PLACED = 'ORDER_PLACED'
     QUEUED = 'QUEUED'
+    REJECTED = 'REJECTED'
     OUTFORPICKUP = 'OUTFORPICKUP'
     INTRANSIT = 'INTRANSIT'
-    DELIVERED = 'DELIVERED'
+    OUTFORDELIVERY = 'OUTFORDELIVERY'
     ATTEMPTED = 'ATTEMPTED'
+    DELIVERED = 'DELIVERED'
     CANCELLED = 'CANCELLED'
+    
     ORDER_CHOICES = (
         (ORDER_PLACED, 'ORDER_PLACED'),
         (QUEUED, 'QUEUED'),
+        (REJECTED, 'REJECTED'),
         (OUTFORPICKUP, 'OUTFORPICKUP'),
         (INTRANSIT, 'INTRANSIT'),
+        (OUTFORDELIVERY, 'OUTFORDELIVERY'),
         (ATTEMPTED, 'ATTEMPTED'),
         (DELIVERED, 'DELIVERED'),
         (CANCELLED, 'CANCELLED'),
     )
-    order_status = models.CharField(max_length = 15, choices = ORDER_CHOICES, default = ORDER_PLACED)
+    order_status = models.CharField(max_length = 50, choices = ORDER_CHOICES, default = ORDER_PLACED)
 
     DOOR_STEP = 'DOOR_STEP'
     SECURITY = 'SECURITY'
@@ -292,6 +298,7 @@ class OrderDeliveryStatus(models.Model):
     )
     delivered_at = models.CharField(max_length = 15, choices = DELIVERED_AT_CHOICES, default = NOT_DELIVERED)
     
+
     def __unicode__(self):
         return u"%s - %s" % (self.id, self.delivered_at)
 
@@ -303,21 +310,26 @@ class Order(models.Model):
 
     ORDER_PLACED = 'ORDER_PLACED'
     QUEUED = 'QUEUED'
+    REJECTED = 'REJECTED'
     OUTFORPICKUP = 'OUTFORPICKUP'
     INTRANSIT = 'INTRANSIT'
-    DELIVERED = 'DELIVERED'
+    OUTFORDELIVERY = 'OUTFORDELIVERY'
     ATTEMPTED = 'ATTEMPTED'
+    DELIVERED = 'DELIVERED'
     CANCELLED = 'CANCELLED'
+    
     ORDER_CHOICES = (
         (ORDER_PLACED, 'ORDER_PLACED'),
         (QUEUED, 'QUEUED'),
+        (REJECTED, 'REJECTED'),
         (OUTFORPICKUP, 'OUTFORPICKUP'),
         (INTRANSIT, 'INTRANSIT'),
+        (OUTFORDELIVERY, 'OUTFORDELIVERY'),
         (ATTEMPTED, 'ATTEMPTED'),
         (DELIVERED, 'DELIVERED'),
         (CANCELLED, 'CANCELLED'),
     )
-    order_status = models.CharField(max_length = 15, choices = ORDER_CHOICES, default = ORDER_PLACED)
+    order_status = models.CharField(max_length = 50, choices = ORDER_CHOICES, default = ORDER_PLACED)
 
     order_items = models.ManyToManyField(OrderItem)
     total_cost = models.FloatField(default = 0.0)
@@ -385,7 +397,7 @@ class Order(models.Model):
         (BIKE, 'BIKE'),
     )
     transport_mode = models.CharField(max_length = 25, choices = TRANSPORT_MODE_CHOICES, default = PUBLIC_TRANSPORT)
-
+    rejection_reason = models.CharField(max_length = 500, blank = True)
     
     def __unicode__(self):
         return u"%s - %s - %s - %s - %s" % (self.vendor.store_name, self.consumer.user.first_name, self.order_status, self.delivery_guy, self.delivered_at)
