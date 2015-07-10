@@ -424,12 +424,10 @@ class OrderViewSet(viewsets.ModelViewSet):
 
                 if date_1 == date_2:
                     delivery_status.delivery_guy = dg
-                    delivery_status.order_status = constants.ORDER_STATUS_QUEUED
                     delivery_status.save()
                     break
                                        
             order.delivery_guy = dg
-            order.order_status = constants.ORDER_STATUS_QUEUED
             order.save()
         
         dg.status = constants.DG_STATUS_BUSY
