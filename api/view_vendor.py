@@ -84,8 +84,7 @@ class VendorViewSet(viewsets.ModelViewSet):
         notes = request.data.get('notes')
         is_retail = request.data.get('is_retail')
         # pricing = request.data.get('pricing')
-        # pan = request.data.get('pan')
-
+        # pan = request.data.get('pan')        
         try:
             username = vendor.phone_number
             password = vendor.store_name.replace(" ", "")
@@ -93,6 +92,8 @@ class VendorViewSet(viewsets.ModelViewSet):
 
             if is_userexists(username):
                 user = get_object_or_404(User, username = username)
+                user.set_password(password)
+                user.save()
             else:    
                 user = User.objects.create_user(username = username, password = password)
             
