@@ -243,6 +243,9 @@ class OrderViewSet(viewsets.ModelViewSet):
                 else:
                     new_order.is_recurring = False
                     delivery_status = OrderDeliveryStatus.objects.create(date = delivery_datetime)
+                    if vendor.is_retail is False:
+                        delivery_status.order_status = constants.ORDER_STATUS_QUEUED
+
                     new_order.delivery_status.add(delivery_status)
 
                 if vendor_order_id is not None:
@@ -346,6 +349,9 @@ class OrderViewSet(viewsets.ModelViewSet):
         dg = get_object_or_404(DeliveryGuy, user = request.user)
         order = get_object_or_404(Order, pk = pk)        
 
+        latitude = request.data.get('latitude')
+        longitude = request.data.get('longitude')
+
         # DELIVERED DATE TIME
         delivered_datetime_string = request.data.get('delivered_datetime')
         if delivered_datetime_string is not None:
@@ -390,6 +396,9 @@ class OrderViewSet(viewsets.ModelViewSet):
         # CONFIRMATION MESSAGE TO CUSTOMER
         message = constants.ORDER_DELIVERED_MESSAGE_CLIENT.format(order_status, order.consumer.user.first_name, delivered_at)
         send_sms(order.vendor.phone_number, message)
+
+        # UPDATE CUSTOMER LOCATION
+        # if latitude is not None and longitude is not None:
 
         content = {'description': 'Order updated'}
         return Response(content, status = status.HTTP_200_OK)
