@@ -56,28 +56,25 @@ class DGViewSet(viewsets.ModelViewSet):
 
         
     @detail_route(methods=['post'])
-    def check_in(self, request, pk=None):
+    def check_in(self, request, pk=None):        
         dg = get_object_or_404(DeliveryGuy, user = request.user)
         login_time = datetime.now()
-        
-        attendance_list = DGAttendance.objects.filter(dg=dg)
-        if len(attendance_list) > 0:
-            attendance = DGAttendance.objects.filter(dg=dg).latest('date')
-            
-            today_date = datetime.combine(datetime.today(), time()).replace(hour=0, minute=0, second=0)
-            attendance_date = datetime.combine(attendance.date, time()).replace(hour=0, minute=0, second=0)
+        today_date = datetime.combine(datetime.today(), time()).replace(hour = 0, minute = 0, second = 0)
 
+        attendance_list = DGAttendance.objects.filter(dg = dg)
+        is_today_checkedIn = False
+
+        for attendance in attendance_list:
+            attendance_date = datetime.combine(attendance.date, time()).replace(hour = 0, minute = 0, second = 0)
             if today_date == attendance_date:
-                attendance.login_time = login_time
-            else:
-                attendance = DGAttendance.objects.create(dg = dg, login_time = login_time)
-        else:
-            attendance = DGAttendance.objects.create(dg = dg, login_time = login_time)
+                is_today_checkedIn = True
 
-        attendance.status = constants.DG_STATUS_WORKING
-        attendance.save()
-        
-        content = {'description': 'Checked-in done.'}
+        if is_today_checkedIn == False:
+            attendance = DGAttendance.objects.create(dg = dg, date = today_date, login_time = login_time)
+            attendance.status = constants.DG_STATUS_WORKING
+            attendance.save()
+
+        content = {'description': 'Thanks for checking in.'}
         return Response(content, status = status.HTTP_200_OK)
 
 
@@ -85,11 +82,16 @@ class DGViewSet(viewsets.ModelViewSet):
     def check_out(self, request, pk=None):        
         dg = get_object_or_404(DeliveryGuy, user = request.user)
 
-        attendance = DGAttendance.objects.filter(dg=dg).latest('date')
-        attendance.logout_time = datetime.now()
-        attendance.save()
+        attendance_list = DGAttendance.objects.filter(dg=dg)
+        today_date = datetime.combine(datetime.today(), time()).replace(hour = 0, minute = 0, second = 0)
 
-        content = {'description': 'Checkout done.'}
+        for attendance in attendance_list:
+            attendance_date = datetime.combine(attendance.date, time()).replace(hour = 0, minute = 0, second = 0)
+            if today_date == attendance_date:
+                attendance.logout_time = datetime.now()
+                attendance.save()
+
+        content = {'description': 'Thanks for checking out.'}
         return Response(content, status = status.HTTP_200_OK)
 
     @detail_route(methods=['post'])
