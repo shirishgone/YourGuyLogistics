@@ -62,7 +62,9 @@ class DeliveryGuy(YGUser):
     )
     status = models.CharField(max_length = 25, choices = STATUS_CHOICES, default = AVAILABLE)
     
-    
+    shift_start_datetime = models.TimeField(blank=True, null = True)
+    shift_end_datetime = models.TimeField(blank=True, null = True)
+
     latitude = models.CharField(max_length = 50, blank = True)
     longitude = models.CharField(max_length = 50, blank = True)
 

@@ -430,9 +430,10 @@ class OrderViewSet(viewsets.ModelViewSet):
 
                 date_1 = datetime.combine(date, time()).replace(hour=0, minute=0, second=0)
                 date_2 = datetime.combine(delivery_status.date, time()).replace(hour=0, minute=0, second=0)
-
+                
+                delivery_status.delivery_guy = dg
                 if date_1 == date_2:
-                    delivery_status.delivery_guy = dg
+                    
                     if delivery_status.order_status == constants.ORDER_STATUS_PLACED:
                         delivery_status.order_status = constants.ORDER_STATUS_QUEUED
                     delivery_status.save()
