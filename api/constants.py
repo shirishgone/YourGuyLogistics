@@ -8,6 +8,10 @@ OPS_PHONE_NUMBER = '+919820252216'
 FROM_MAIL_ID = 'hi@yourguy.in'
 TO_EMAIL_IDS = ['tech@yourguy.in','alay@yourguy.in', 'sameet@yourguy.in', 'winston@yourguy.in']
 
+GCM_PUSH_API_KEY = 'AIzaSyBTWgr5O4ooWYoFTryEii2xkyP9qRahWPo'
+GCM_SENDER_ID = '943077519707'
+
+
 SALES_EMAIL = ['sameet@yourguy.in', 'winston@yourguy.in']
 
 EMAIL_SIGNATURE = "- \n Team YourGuy \nhttp://www.yourguy.in"
