@@ -398,7 +398,13 @@ class OrderViewSet(viewsets.ModelViewSet):
         send_sms(order.vendor.phone_number, message)
 
         # UPDATE CUSTOMER LOCATION
-        # if latitude is not None and longitude is not None:
+        if order_status == constants.ORDER_STATUS_DELIVERED and latitude is not None and longitude is not None:            
+            address_id = order.delivery_address.id
+            address = get_object_or_404(Address, pk = address_id)        
+            address.latitude = latitude
+            address.longitude = longitude
+            address.save()
+
 
         content = {'description': 'Order updated'}
         return Response(content, status = status.HTTP_200_OK)
