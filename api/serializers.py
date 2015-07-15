@@ -59,6 +59,7 @@ class DGSerializer(serializers.ModelSerializer):
         model = DeliveryGuy
 
 class DGAttendanceSerializer(serializers.ModelSerializer):
+    dg = DGSerializer(required= False)
     class Meta:
         model = DGAttendance
 
