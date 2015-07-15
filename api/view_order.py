@@ -16,6 +16,7 @@ import constants
 import recurrence
 from itertools import chain
 import json
+from api.push import send_push
 
 class OrderViewSet(viewsets.ModelViewSet):
     """
@@ -451,6 +452,16 @@ class OrderViewSet(viewsets.ModelViewSet):
         dg.status = constants.DG_STATUS_BUSY
         dg.save()
 
+        # SEND PUSH NOTIFICATION TO DELIVERYGUY
+        data = {
+                'message':'A new order has been assigned to you.', 
+                'type': 'order_assigned',
+                'data':{
+                    'order_id': order.id 
+                    }
+                }
+        send_push(dg.device_token, data)
+        
         # TODO: Need to revisit and understand whether we need to send 100 SMS if there are 100 orders.
         # CONFIRMATION MESSAGE TO CUSTOMER
         # message = 'A DeliveryGuy has been assigned for your order. He will be arriving soon - Team YourGuy'
