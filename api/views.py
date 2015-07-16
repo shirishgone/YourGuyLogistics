@@ -165,7 +165,9 @@ def update_daily_status(order, date):
 		order.completed_datetime = delivery_status.completed_datetime
 		order.order_status = delivery_status.order_status
 		order.delivery_guy = delivery_status.delivery_guy
-	return order
+		return order
+	else:
+		return None	
 
     
 class IsAuthenticatedOrWriteOnly(permissions.BasePermission):

@@ -133,7 +133,8 @@ class OrderViewSet(viewsets.ModelViewSet):
 
         # UPDATING DELIVERY STATUS OF THE DAY
         for single_order in result:
-            update_daily_status(single_order, date)
+            if update_daily_status(single_order, date) is None:
+                result.remove(single_order)
 
         return result
     
@@ -288,11 +289,9 @@ class OrderViewSet(viewsets.ModelViewSet):
         is_deleted = False
         for exclude_date_string in exclude_dates:
             exclude_date = parse_datetime(exclude_date_string)
-            print exclude_date
 
             all_deliveries = order.delivery_status.all()
             for delivery in all_deliveries:
-                print delivery.date
                 
                 if delivery.date.date() == exclude_date.date():
                     delivery.delete()
