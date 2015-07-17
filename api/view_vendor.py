@@ -101,7 +101,10 @@ class VendorViewSet(viewsets.ModelViewSet):
             vendor_agent = VendorAgent.objects.create(user = user, vendor = vendor)
             
             vendor.verified = True
-            vendor.notes = notes
+            
+            if notes is not None:
+                vendor.notes = notes
+            
             if is_retail is not None:
                 vendor.is_retail = is_retail
             

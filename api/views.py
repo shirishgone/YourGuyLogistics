@@ -145,31 +145,6 @@ def normalize_offset_awareness(dt, from_dt=None):
     return dt
 
 
-def delivery_status_of_the_day(order, date):
-	delivery_statuses = order.delivery_status.all()
-
-	delivery_item = None
-	for delivery_status in delivery_statuses:
-		date_1 = datetime.combine(date, time()).replace(hour=0, minute=0, second=0)
-		date_2 = datetime.combine(delivery_status.date, time()).replace(hour=0, minute=0, second=0)
-		if date_1 == date_2:
-			delivery_item = delivery_status
-			break
-	return delivery_item  	
-
-def update_daily_status(order, date):
-	delivery_status = delivery_status_of_the_day(order, date)
-	if delivery_status is not None:
-		order.delivered_at = delivery_status.delivered_at
-		order.pickedup_datetime = delivery_status.pickedup_datetime
-		order.completed_datetime = delivery_status.completed_datetime
-		order.order_status = delivery_status.order_status
-		order.delivery_guy = delivery_status.delivery_guy
-		return order
-	else:
-		return None	
-
-    
 class IsAuthenticatedOrWriteOnly(permissions.BasePermission):
     """
     The request is authenticated as a user, or is a write-only request.

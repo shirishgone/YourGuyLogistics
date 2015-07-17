@@ -54,17 +54,23 @@ class YGUser(models.Model):
 
 class DeliveryGuy(YGUser):
     # Mandatory Fields
+    UN_AVAILABLE = 'UN_AVAILABLE'
     AVAILABLE = 'AVAILABLE'
     BUSY = 'BUSY'
     STATUS_CHOICES = (
+        (UN_AVAILABLE, 'UN_AVAILABLE'),
         (AVAILABLE, 'AVAILABLE'),
         (BUSY, 'BUSY'),
     )
-    status = models.CharField(max_length = 25, choices = STATUS_CHOICES, default = AVAILABLE)
+    status = models.CharField(max_length = 50, choices = STATUS_CHOICES, default = UN_AVAILABLE)
     
     shift_start_datetime = models.TimeField(blank=True, null = True)
     shift_end_datetime = models.TimeField(blank=True, null = True)
 
+    current_load = models.IntegerField(default = 0)
+    capacity = models.IntegerField(default = 0)
+
+    area = models.ForeignKey(Area, blank = True, null = True)
     latitude = models.CharField(max_length = 50, blank = True)
     longitude = models.CharField(max_length = 50, blank = True)
 
@@ -72,8 +78,6 @@ class DeliveryGuy(YGUser):
     battery_percentage = models.FloatField(default = 0.0)
     last_connected_time = models.DateTimeField(blank = True , null = True)
     app_version = models.FloatField(default = 0.0)
-
-    area = models.ForeignKey(Area, blank = True, null = True)
 
     CORPORATE = 'CORPORATE'
     RETAIL = 'RETAIL'

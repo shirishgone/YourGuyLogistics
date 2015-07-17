@@ -11,12 +11,38 @@ from rest_framework.response import Response
 from yourguy.models import Order, OrderDeliveryStatus, Consumer, Vendor, DeliveryGuy, Area, VendorAgent, Address, Product, OrderItem, User
 from datetime import datetime, timedelta, time
 from api.serializers import OrderSerializer
-from api.views import user_role, is_vendorexists, is_consumerexists, is_dgexists, days_in_int, send_sms, normalize_offset_awareness, delivery_status_of_the_day, update_daily_status
+from api.views import user_role, is_vendorexists, is_consumerexists, is_dgexists, days_in_int, send_sms, normalize_offset_awareness
 import constants
 import recurrence
 from itertools import chain
 import json
 from api.push import send_push
+
+
+def delivery_status_of_the_day(order, date):
+    delivery_statuses = order.delivery_status.all()
+
+    delivery_item = None
+    for delivery_status in delivery_statuses:
+        date_1 = datetime.combine(date, time()).replace(hour=0, minute=0, second=0)
+        date_2 = datetime.combine(delivery_status.date, time()).replace(hour=0, minute=0, second=0)
+        if date_1 == date_2:
+            delivery_item = delivery_status
+            break
+    return delivery_item    
+
+def update_daily_status(order, date):
+    delivery_status = delivery_status_of_the_day(order, date)
+    if delivery_status is not None:
+        order.delivered_at = delivery_status.delivered_at
+        order.pickedup_datetime = delivery_status.pickedup_datetime
+        order.completed_datetime = delivery_status.completed_datetime
+        order.order_status = delivery_status.order_status
+        order.delivery_guy = delivery_status.delivery_guy
+        return order
+    else:
+        return None 
+
 
 class OrderViewSet(viewsets.ModelViewSet):
     """
@@ -124,7 +150,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             dates = order.recurrences.between(day_start, day_end,inc=True)
             if len(list(dates)) > 0:
                 recurring_orders.append(order)
-
+        
         # FILTERING SINGLE ORDER
         non_recurring_queryset = queryset.filter(is_recurring=False, delivery_datetime__lte=day_end, delivery_datetime__gte=day_start)
 
@@ -271,11 +297,6 @@ class OrderViewSet(viewsets.ModelViewSet):
         except Exception, e:
             content = {'error':'Unable to create orders with the given details'}    
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
-
-    #def update(self, request, pk=None):
-        # import pdb
-        # pdb.set_trace()
-        # print 'update'
     
     @detail_route(methods=['post'])
     def exclude_dates(self, request, pk):
@@ -404,7 +425,6 @@ class OrderViewSet(viewsets.ModelViewSet):
             address.latitude = latitude
             address.longitude = longitude
             address.save()
-
 
         content = {'description': 'Order updated'}
         return Response(content, status = status.HTTP_200_OK)
