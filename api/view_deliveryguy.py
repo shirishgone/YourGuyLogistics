@@ -58,6 +58,9 @@ class DGViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['post'])
     def check_in(self, request, pk=None):        
         dg = get_object_or_404(DeliveryGuy, user = request.user)
+        dg.status = DG_STATUS_AVAILABLE
+        dg.save()
+
         login_time = datetime.now()
         today_date = datetime.combine(datetime.today(), time()).replace(hour = 0, minute = 0, second = 0)
 
@@ -69,10 +72,11 @@ class DGViewSet(viewsets.ModelViewSet):
             if today_date == attendance_date:
                 is_today_checkedIn = True
 
-        if is_today_checkedIn == False:
+        if is_today_checkedIn == False:            
             attendance = DGAttendance.objects.create(dg = dg, date = today_date, login_time = login_time)
             attendance.status = constants.DG_STATUS_WORKING
             attendance.save()
+
 
         content = {'description': 'Thanks for checking in.'}
         return Response(content, status = status.HTTP_200_OK)
@@ -81,6 +85,8 @@ class DGViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['post'])
     def check_out(self, request, pk=None):        
         dg = get_object_or_404(DeliveryGuy, user = request.user)
+        dg.status = DG_STATUS_UN_AVAILABLE
+        dg.save()
 
         attendance_list = DGAttendance.objects.filter(dg=dg)
         today_date = datetime.combine(datetime.today(), time()).replace(hour = 0, minute = 0, second = 0)
