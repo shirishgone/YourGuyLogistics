@@ -17,6 +17,7 @@ class Area(models.Model):
     area_code = models.CharField(max_length = 25, unique = True)
     area_name = models.CharField(max_length = 100)
     city_name = models.CharField(max_length = 100, default = 'MUMBAI')
+    pin_code = models.CharField(max_length = 25, null = True)
 
     # Optional Fields
 
