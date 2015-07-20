@@ -364,8 +364,10 @@ class Order(models.Model):
     
     is_cod = models.BooleanField(blank = True, default = False)
     cod_amount = models.FloatField(default = 0.0)
-    
+    cod_collected = models.BooleanField(default = False)
+
     is_reverse_pickup = models.BooleanField(default = False)
+    delivery_charges = models.FloatField(default = 0.0)
 
     # Order Modified =====
     modified_by_user = models.ForeignKey(User, blank = True, related_name='order_modified_by', null = True)
