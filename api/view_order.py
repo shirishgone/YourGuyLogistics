@@ -65,6 +65,7 @@ def update_daily_status(order, date):
         order.completed_datetime = delivery_status.completed_datetime
         order.order_status = delivery_status.order_status
         order.delivery_guy = delivery_status.delivery_guy
+        order.is_cod_collected = delivery_status.is_cod_collected
         return order
     else:
         return None 
@@ -397,6 +398,7 @@ class OrderViewSet(viewsets.ModelViewSet):
 
         latitude = request.data.get('latitude')
         longitude = request.data.get('longitude')
+        is_cod_collected = request.data.get('cod_collected')
 
         # DELIVERED DATE TIME
         delivered_datetime_string = request.data.get('delivered_datetime')
@@ -431,7 +433,9 @@ class OrderViewSet(viewsets.ModelViewSet):
             if date_1 == date_2:
                 delivery_status.order_status = order_status
                 delivery_status.delivered_at = delivered_at
-                delivery_status.completed_datetime = delivered_datetime                
+                delivery_status.completed_datetime = delivered_datetime
+                if is_cod_collected is not None:
+                    delivery_status.is_cod_collected = is_cod_collected
                 delivery_status.save()
                 break
                                        
