@@ -19,6 +19,32 @@ import json
 from api.push import send_push
 
 
+def update_pending_count(dg):
+
+    # FILTERING BY DATE -----
+    date = parse_datetime(date_string)
+    day_start = datetime.combine(date, time()).replace(hour=0, minute=0, second=0)
+    day_end = datetime.combine(date, time()).replace(hour=23, minute=59, second=59)
+
+    # NON RECURRING ORDERS ---
+    non_recurring_queryset = Order.objects.filter(dg = dg, is_recurring = False, delivery_datetime__lte = day_end, delivery_datetime__gte = day_start)
+
+    # FILTERING BY RECURRING ORDERS
+    recurring_queryset = Order.objects.filter(dg = dg, is_recurring = True)
+    recurring_orders = []
+    for order in recurring_queryset:            
+        dates = order.recurrences.between(day_start, day_end, inc = True)
+        if len(list(dates)) > 0:
+            recurring_orders.append(order)
+        
+    # COMBINING RECURRING + SINGLE ORDERS
+    result = list(chain(non_recurring_queryset, recurring_orders))
+    
+    # ASSIGN THE LOAD TO DG
+    dg.current_load = len(result)
+    dg.save()
+
+
 def delivery_status_of_the_day(order, date):
     delivery_statuses = order.delivery_status.all()
 
@@ -42,7 +68,6 @@ def update_daily_status(order, date):
         return order
     else:
         return None 
-
 
 class OrderViewSet(viewsets.ModelViewSet):
     """
