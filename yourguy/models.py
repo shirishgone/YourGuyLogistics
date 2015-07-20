@@ -267,6 +267,7 @@ class OrderDeliveryStatus(models.Model):
     completed_datetime = models.DateTimeField(blank = True, null = True)
     delivery_guy = models.ForeignKey(DeliveryGuy, related_name = 'assigned_dg', blank = True, null = True)
     rejection_reason = models.CharField(max_length = 500, blank = True)
+    is_cod_collected = models.BooleanField(default = False)
     
     ORDER_PLACED = 'ORDER_PLACED'
     QUEUED = 'QUEUED'
@@ -364,7 +365,7 @@ class Order(models.Model):
     
     is_cod = models.BooleanField(blank = True, default = False)
     cod_amount = models.FloatField(default = 0.0)
-    cod_collected = models.BooleanField(default = False)
+    is_cod_collected = models.BooleanField(default = False)
 
     is_reverse_pickup = models.BooleanField(default = False)
     delivery_charges = models.FloatField(default = 0.0)
