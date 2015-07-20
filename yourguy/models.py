@@ -126,7 +126,7 @@ class Vendor(models.Model):
 
     addresses = models.ManyToManyField(Address)
     is_retail = models.BooleanField(default = False)
-    account = models.ForeignKey(VendorAccount, related_name='account', null = True)
+    account = models.ForeignKey(VendorAccount, related_name='account', blank = True, null = True)
 
     # Optional
     website_url = models.CharField(max_length = 100, blank = True)
