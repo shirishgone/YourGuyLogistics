@@ -130,7 +130,7 @@ class Vendor(models.Model):
     email = models.EmailField(max_length = 50)
     phone_number = models.CharField(max_length = 15, blank = True, null = True)
     alternate_phone_number = models.CharField(max_length = 15, blank = True, null = True)
-    industry = models.ForeignKey(Industry, related_name = 'industry', blank = True, null = True)
+    industries = models.ManyToManyField(Industry)
 
     addresses = models.ManyToManyField(Address)
     is_retail = models.BooleanField(default = False)

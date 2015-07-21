@@ -83,7 +83,7 @@ class VendorViewSet(viewsets.ModelViewSet):
         vendor = get_object_or_404(Vendor, pk = pk)
         notes = request.data.get('notes')
         is_retail = request.data.get('is_retail')
-        industry_id = request.data.get('industry_id')
+        industry_ids = request.data.get('industry_ids')
         # pricing = request.data.get('pricing')
         # pan = request.data.get('pan')        
         try:
@@ -109,9 +109,13 @@ class VendorViewSet(viewsets.ModelViewSet):
             if is_retail is not None:
                 vendor.is_retail = is_retail
 
-            if industry_id is not None:
-                industry = get_object_or_404(Industry, pk = industry_id)
-                vendor.industry = industry
+            try:
+                if industry_ids is not None:
+                    for industry_id in industry_ids:
+                        industry = get_object_or_404(Industry, pk = industry_id)
+                        vendor.industries.add(industry)
+            except Exception, e:
+                pass
 
             vendor.save()
         except Exception, e:
