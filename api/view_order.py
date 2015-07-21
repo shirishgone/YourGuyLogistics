@@ -18,31 +18,17 @@ from itertools import chain
 import json
 from api.push import send_push
 
-
 def update_pending_count(dg):
-
-    # FILTERING BY DATE -----
-    date = parse_datetime(date_string)
-    day_start = datetime.combine(date, time()).replace(hour=0, minute=0, second=0)
-    day_end = datetime.combine(date, time()).replace(hour=23, minute=59, second=59)
-
-    # NON RECURRING ORDERS ---
-    non_recurring_queryset = Order.objects.filter(dg = dg, is_recurring = False, delivery_datetime__lte = day_end, delivery_datetime__gte = day_start)
-
-    # FILTERING BY RECURRING ORDERS
-    recurring_queryset = Order.objects.filter(dg = dg, is_recurring = True)
-    recurring_orders = []
-    for order in recurring_queryset:            
-        dates = order.recurrences.between(day_start, day_end, inc = True)
-        if len(list(dates)) > 0:
-            recurring_orders.append(order)
-        
-    # COMBINING RECURRING + SINGLE ORDERS
-    result = list(chain(non_recurring_queryset, recurring_orders))
+    try:
+        today = datetime.now()
+        delivery_statuses = OrderDeliveryStatus.objects.filter(delivery_guy = dg, date__year = today.year , date__month = today.month, date__day = today.day)
+        orders = Order.objects.filter(delivery_status__in = delivery_statuses).distinct()
     
-    # ASSIGN THE LOAD TO DG
-    dg.current_load = len(result)
-    dg.save()
+        dg.current_load = len(orders)
+        dg.save()
+    except Exception, e:
+        print e
+        pass
 
 
 def delivery_status_of_the_day(order, date):
@@ -386,6 +372,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         # UPDATE DG STATUS
         dg.status = constants.DG_STATUS_BUSY
         dg.save()
+        update_pending_count(dg)
 
         content = {'description': 'Order updated'}
         return Response(content, status = status.HTTP_200_OK)
@@ -442,6 +429,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         # UPDATE DG STATUS
         dg.status = constants.DG_STATUS_AVAILABLE
         dg.save()
+        update_pending_count(dg)
 
         # CONFIRMATION MESSAGE TO CUSTOMER
         message = constants.ORDER_DELIVERED_MESSAGE_CLIENT.format(order_status, order.consumer.user.first_name, delivered_at)
@@ -460,6 +448,8 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['post'])
     def assign_order(self, request, pk=None):
+
+
         try:
             dg_id = request.data['dg_id']
             order_ids = request.data['order_ids']    
@@ -475,7 +465,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
         
         dg = get_object_or_404(DeliveryGuy, id = dg_id)
-
+        
         for order_id in order_ids:
             order = get_object_or_404(Order, id = order_id)
 
@@ -499,6 +489,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         
         dg.status = constants.DG_STATUS_BUSY
         dg.save()
+        update_pending_count(dg)
 
         # SEND PUSH NOTIFICATION TO DELIVERYGUY
         data = {
