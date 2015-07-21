@@ -117,12 +117,16 @@ class VendorAccount(models.Model):
     def __unicode__(self):
         return u"%s" % self.id
 
+class Industry(models.Model):
+    name = models.CharField(max_length = 100)
+
 class Vendor(models.Model):
     # Mandatory Fields
     store_name = models.CharField(max_length = 100)
     email = models.EmailField(max_length = 50)
     phone_number = models.CharField(max_length = 15, blank = True, null = True)
     alternate_phone_number = models.CharField(max_length = 15, blank = True, null = True)
+    industry = models.ForeignKey(Industry, related_name = 'industry', blank = True, null = True)
 
     addresses = models.ManyToManyField(Address)
     is_retail = models.BooleanField(default = False)
