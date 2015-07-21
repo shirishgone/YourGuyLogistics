@@ -117,17 +117,17 @@ class OrderViewSet(viewsets.ModelViewSet):
                     delivery_status__date__day = date.day)
 
             if vendor_id is not None:
-                vendor = get_object_or_404(Vendor, id = vendor_id)
-                queryset = queryset.objects.filter(vendor = vendor)
+                vendor = get_object_or_404(Vendor, pk = vendor_id)
+                queryset = queryset.filter(vendor = vendor)
 
             if dg_phone_number is not None:
                 user = get_object_or_404(User, username = dg_phone_number)
                 dg = get_object_or_404(DeliveryGuy, user = user)
-                queryset = queryset.objects.filter(delivery_guy=dg)
+                queryset = queryset.filter(delivery_guy=dg)
 
             if area_code is not None:
                 area = get_object_or_404(Area, area_code = area_code)
-                queryset = queryset.objects.filter(delivery_address__area=area)
+                queryset = queryset.filter(delivery_address__area=area)
 
         # UPDATING DELIVERY STATUS OF THE DAY
         result = []
