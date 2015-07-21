@@ -71,106 +71,73 @@ class OrderViewSet(viewsets.ModelViewSet):
             date = parse_datetime(date_string)
         else:
             date = datetime.today()
+        
         order = get_object_or_404(Order, id = pk)
-
-        # UPDATING DELIVERY STATUS OF THE DAY
-        update_daily_status(order, date)
-
-        return order
+        return update_daily_status(order, date)
 
     def get_queryset(self):
         """
         Optionally restricts the returned purchases to a given user,
         by filtering against a `consumer_id` or 'vendor_id' query parameter in the URL.
         """ 
-        queryset = Order.objects.all()
         vendor_id = self.request.QUERY_PARAMS.get('vendor_id', None)
         area_code = self.request.QUERY_PARAMS.get('area_code', None)
-        consumer_phone_number = self.request.QUERY_PARAMS.get('consumer_phone_number', None)
         dg_phone_number = self.request.QUERY_PARAMS.get('dg_username', None)
+        
         date_string = self.request.QUERY_PARAMS.get('date', None)
-
-        role = user_role(self.request.user)
-
-        if role == constants.VENDOR:
-            vendor_agent = get_object_or_404(VendorAgent, user = self.request.user)
-            queryset = queryset.filter(vendor=vendor_agent.vendor)
-
-        elif role == constants.CONSUMER:
-            consumer = get_object_or_404(Consumer, user = self.request.user)
-            queryset = queryset.filter(consumer=consumer)
-        
-        elif role == constants.DELIVERY_GUY:
-            delivery_guy = get_object_or_404(DeliveryGuy, user = self.request.user)
-            queryset = queryset.filter(delivery_guy = delivery_guy)
-        
-        else:
-            # OPERATIONS FILTERING ----
-            
-            # 1. FILTERING BY vendor_id                
-            if vendor_id is not None:
-                if is_vendorexists(vendor_id):
-                    vendor = get_object_or_404(Vendor, id = vendor_id)
-                    queryset = queryset.filter(vendor=vendor)
-                else:
-                    pass
-            else:
-                pass
-            
-            #2. FILTERING BY consumer_phone_number
-            if consumer_phone_number is not None:
-                if is_consumerexists(consumer_phone_number):
-                    user = get_object_or_404(User, username = consumer_phone_number)
-                    consumer = get_object_or_404(consumer, user = user)
-                    queryset = queryset.filter(consumer=consumer)
-                else:
-                    pass
-            else:
-                pass
-        
-            # FILTERING BY ASSIGNED DELIVERY GUY ----
-            if dg_phone_number is not None:
-                if is_dgexists:
-                    user = get_object_or_404(User, username = dg_phone_number)
-                    dg = get_object_or_404(DeliveryGuy, user = user)
-                    queryset = queryset.filter(delivery_guy=dg)
-                else:
-                    pass
-            else:
-                pass        
-
-            # FILTERING BY  area_code ---
-            area_code = self.request.QUERY_PARAMS.get('area_code', None)
-            if area_code is not None:
-                area = get_object_or_404(Area, area_code = area_code)
-                queryset = queryset.filter(delivery_address__area=area)
-
-        # FILTERING BY DATE -----
         if date_string is not None:
             date = parse_datetime(date_string)
         else:
             date = datetime.today()
-        day_start = datetime.combine(date, time()).replace(hour=0, minute=0, second=0)
-        day_end = datetime.combine(date, time()).replace(hour=23, minute=59, second=59)
 
-        # FILTERING BY RECURRING ORDERS
-        recurring_queryset = queryset.filter(is_recurring=True)
-        recurring_orders = []
-        for order in recurring_queryset:            
-            dates = order.recurrences.between(day_start, day_end,inc=True)
-            if len(list(dates)) > 0:
-                recurring_orders.append(order)
+        import pdb
+        pdb.set_trace()
         
-        # FILTERING SINGLE ORDER
-        non_recurring_queryset = queryset.filter(is_recurring=False, delivery_datetime__lte=day_end, delivery_datetime__gte=day_start)
+        role = user_role(self.request.user)
+        if role == constants.VENDOR:
+            vendor_agent = get_object_or_404(VendorAgent, user = self.request.user)
+            vendor = vendor_agent.vendor
+            
+            queryset = Order.objects.filter(vendor = vendor, 
+                delivery_status__date__year = date.year , 
+                delivery_status__date__month = date.month, 
+                delivery_status__date__day = date.day)
+        
+        elif role == constants.DELIVERY_GUY:
 
-        # COMBINING RECURRING + SINGLE ORDERS
-        result = list(chain(non_recurring_queryset, recurring_orders))
+            delivery_guy = get_object_or_404(DeliveryGuy, user = self.request.user)
+            delivery_statuses = OrderDeliveryStatus.objects.filter(delivery_guy = delivery_guy, 
+                date__year = date.year, 
+                date__month = date.month, 
+                date__day = date.day)
+
+            queryset = Order.objects.filter(delivery_status__in = delivery_statuses)
+
+        else:
+
+            queryset = Order.objects.filter(delivery_status__date__year = date.year, 
+                    delivery_status__date__month = date.month, 
+                    delivery_status__date__day = date.day)
+
+            if vendor_id is not None:
+                vendor = get_object_or_404(Vendor, id = vendor_id)
+                queryset = queryset.objects.filter(vendor = vendor)
+
+            if dg_phone_number is not None:
+                user = get_object_or_404(User, username = dg_phone_number)
+                dg = get_object_or_404(DeliveryGuy, user = user)
+                queryset = queryset.objects.filter(delivery_guy=dg)
+
+            if area_code is not None:
+                area = get_object_or_404(Area, area_code = area_code)
+                queryset = queryset.objects.filter(delivery_address__area=area)
 
         # UPDATING DELIVERY STATUS OF THE DAY
-        for single_order in result:
-            if update_daily_status(single_order, date) is None:
-                result.remove(single_order)
+        result = []
+        for single_order in queryset:
+            order = update_daily_status(single_order, date)
+            if order is not None:
+                result.append(order)
 
         return result
     
@@ -470,9 +437,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         return Response(content, status = status.HTTP_200_OK)
 
     @detail_route(methods=['post'])
-    def assign_order(self, request, pk=None):
-
-
+    def assign_order(self, request, pk = None):
         try:
             dg_id = request.data['dg_id']
             order_ids = request.data['order_ids']    
@@ -496,16 +461,14 @@ class OrderViewSet(viewsets.ModelViewSet):
             delivery_statuses = order.delivery_status.all()
             for delivery_status in delivery_statuses:
 
-                date_1 = datetime.combine(date, time()).replace(hour=0, minute=0, second=0)
-                date_2 = datetime.combine(delivery_status.date, time()).replace(hour=0, minute=0, second=0)
+                assign_date = datetime.combine(date, time()).replace(hour = 0, minute = 0, second = 0)
+                delivery_date = datetime.combine(delivery_status.date, time()).replace(hour = 0, minute = 0, second = 0)
                 
-                delivery_status.delivery_guy = dg
-                if date_1 == date_2:
-                    
+                if assign_date >= delivery_date:
+                    delivery_status.delivery_guy = dg
                     if delivery_status.order_status == constants.ORDER_STATUS_PLACED:
                         delivery_status.order_status = constants.ORDER_STATUS_QUEUED
                     delivery_status.save()
-                    break
                                        
             order.delivery_guy = dg
             order.save()
