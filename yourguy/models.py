@@ -120,6 +120,10 @@ class VendorAccount(models.Model):
 class Industry(models.Model):
     name = models.CharField(max_length = 100)
 
+    def __unicode__(self):
+        return u"%s" % self.name
+
+
 class Vendor(models.Model):
     # Mandatory Fields
     store_name = models.CharField(max_length = 100)
