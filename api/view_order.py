@@ -22,9 +22,7 @@ def update_pending_count(dg):
     try:
         today = datetime.now()
         delivery_statuses = OrderDeliveryStatus.objects.filter(delivery_guy = dg, date__year = today.year , date__month = today.month, date__day = today.day)
-        orders = Order.objects.filter(delivery_status__in = delivery_statuses).distinct()
-    
-        dg.current_load = len(orders)
+        dg.current_load = len(delivery_statuses)
         dg.save()
     except Exception, e:
         print e
@@ -309,6 +307,31 @@ class OrderViewSet(viewsets.ModelViewSet):
         except Exception, e:
             content = {'error':'Unable to create orders with the given details'}    
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
+    
+    @list_route(methods = ['get'])
+    def pause_for_the_day(self, request):
+        try:
+            order_ids_string = self.request.QUERY_PARAMS['order_ids']
+            order_ids = order_ids_string.split(',')
+        except Exception, e:
+            content = {'error': 'Order_ids is an array of order ids, is missing'}
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+        
+        today = datetime.now()
+
+        delete_orders = []
+        for order_id in order_ids:
+            order = get_object_or_404(Order, pk = order_id)
+            all_statuses = order.delivery_status.all()
+            for delivery_status in all_statuses:
+                if delivery_status.date.year == today.year and delivery_status.date.month == today.month and delivery_status.date.day == today.day:
+                    delete_orders.append(delivery_status)
+                
+        for delivery_status in delete_orders:
+            delivery_status.delete()
+        content = {'description': 'Deleted Successfully'}
+        return Response(content, status = status.HTTP_200_OK)
     
     @detail_route(methods=['post'])
     def exclude_dates(self, request, pk):
