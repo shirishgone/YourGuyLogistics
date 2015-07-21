@@ -5,7 +5,7 @@ from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework.decorators import detail_route, list_route
 
-from yourguy.models import Vendor, Address, VendorAgent, Area, User
+from yourguy.models import Vendor, Address, VendorAgent, Area, User, Industry
 from api.serializers import VendorSerializer
 from api.views import user_role, IsAuthenticatedOrWriteOnly, send_email, is_userexists, send_sms, create_token
 
@@ -83,6 +83,7 @@ class VendorViewSet(viewsets.ModelViewSet):
         vendor = get_object_or_404(Vendor, pk = pk)
         notes = request.data.get('notes')
         is_retail = request.data.get('is_retail')
+        industry_id = request.data.get('industry_id')
         # pricing = request.data.get('pricing')
         # pan = request.data.get('pan')        
         try:
@@ -107,7 +108,11 @@ class VendorViewSet(viewsets.ModelViewSet):
             
             if is_retail is not None:
                 vendor.is_retail = is_retail
-            
+
+            if industry_id is not None:
+                industry = get_object_or_404(Industry, pk = industry_id)
+                vendor.industry = industry
+
             vendor.save()
         except Exception, e:
             content = {'error':'An error occurred creating the account. Please try again'}
