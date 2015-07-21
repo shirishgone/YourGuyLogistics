@@ -260,7 +260,7 @@ class ProductCategory(models.Model):
     details = models.CharField(max_length = 500, blank = True, null = True)
 
     def __unicode__(self):
-        return u"%s" % self.id
+        return u"%s" % self.category_name
 
 class OrderItem(models.Model):
     product = models.ForeignKey(Product, blank = True, null = True)
