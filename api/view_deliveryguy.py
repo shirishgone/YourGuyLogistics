@@ -58,47 +58,53 @@ class DGViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['post'])
     def check_in(self, request, pk=None):        
         dg = get_object_or_404(DeliveryGuy, user = request.user)
-        dg.status = DG_STATUS_AVAILABLE
+        dg.status = constants.DG_STATUS_AVAILABLE
         dg.save()
 
-        login_time = datetime.now()
-        today_date = datetime.combine(datetime.today(), time()).replace(hour = 0, minute = 0, second = 0)
-
-        attendance_list = DGAttendance.objects.filter(dg = dg)
+        today = datetime.now()
         is_today_checkedIn = False
+        
+        attendance_list = DGAttendance.objects.filter(dg = dg, date__year = today.year , date__month = today.month, date__day = today.day)
+        if len(attendance_list) > 0:
+            is_today_checkedIn = True
 
-        for attendance in attendance_list:
-            attendance_date = datetime.combine(attendance.date, time()).replace(hour = 0, minute = 0, second = 0)
-            if today_date == attendance_date:
-                is_today_checkedIn = True
-
-        if is_today_checkedIn == False:            
-            attendance = DGAttendance.objects.create(dg = dg, date = today_date, login_time = login_time)
+        if is_today_checkedIn == False:
+            attendance = DGAttendance.objects.create(dg = dg, date = today, login_time = today)
             attendance.status = constants.DG_STATUS_WORKING
             attendance.save()
+            is_today_checkedIn = True
 
-
-        content = {'description': 'Thanks for checking in.'}
-        return Response(content, status = status.HTTP_200_OK)
-
+        if is_today_checkedIn is True:
+            content = {'description': 'Thanks for checking in.'}
+            return Response(content, status = status.HTTP_200_OK)
+        else:
+            content = {'error':'Something went wrong'}
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+ 
 
     @detail_route(methods=['post'])
-    def check_out(self, request, pk=None):        
+    def check_out(self, request, pk=None):
         dg = get_object_or_404(DeliveryGuy, user = request.user)
-        dg.status = DG_STATUS_UN_AVAILABLE
+        dg.status = constants.DG_STATUS_UN_AVAILABLE
         dg.save()
+    
+        is_checkout_done = False
+        today = datetime.now()
+                
+        attendance = DGAttendance.objects.filter(dg = dg, date__year = today.year , date__month = today.month, date__day = today.day).latest('date')
+        
+        if attendance is not None:
+            attendance.logout_time = datetime.now()
+            attendance.save()
+            is_checkout_done = True
 
-        attendance_list = DGAttendance.objects.filter(dg=dg)
-        today_date = datetime.combine(datetime.today(), time()).replace(hour = 0, minute = 0, second = 0)
-
-        for attendance in attendance_list:
-            attendance_date = datetime.combine(attendance.date, time()).replace(hour = 0, minute = 0, second = 0)
-            if today_date == attendance_date:
-                attendance.logout_time = datetime.now()
-                attendance.save()
-
-        content = {'description': 'Thanks for checking out.'}
-        return Response(content, status = status.HTTP_200_OK)
+        if is_checkout_done is True:
+            content = {'description': 'Thanks for checking out.'}
+            return Response(content, status = status.HTTP_200_OK)
+        else:
+            content = {'error':'Something went wrong'}
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+    
 
     @detail_route(methods=['post'])
     def attendance(self, request, pk):
