@@ -90,9 +90,6 @@ class OrderViewSet(viewsets.ModelViewSet):
         else:
             date = datetime.today()
 
-        import pdb
-        pdb.set_trace()
-        
         role = user_role(self.request.user)
         if role == constants.VENDOR:
             vendor_agent = get_object_or_404(VendorAgent, user = self.request.user)
