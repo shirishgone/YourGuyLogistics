@@ -461,7 +461,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                 assign_date = datetime.combine(date, time()).replace(hour = 0, minute = 0, second = 0)
                 delivery_date = datetime.combine(delivery_status.date, time()).replace(hour = 0, minute = 0, second = 0)
                 
-                if assign_date >= delivery_date:
+                if delivery_date >= assign_date:
                     delivery_status.delivery_guy = dg
                     if delivery_status.order_status == constants.ORDER_STATUS_PLACED:
                         delivery_status.order_status = constants.ORDER_STATUS_QUEUED
