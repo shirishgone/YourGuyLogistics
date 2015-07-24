@@ -148,7 +148,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             
             consumers = request.data['consumers']
             if len(consumers) > 20:
-                content = {'error':'Order Overload', 'description':'Placing orders for more than 20 customers  at once is not allowed.'}
+                content = {'error':'Placing orders for more than 20 customers at once, is not allowed.', 'description':'Placing orders for more than 20 customers  at once is not allowed.'}
                 return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
             order_items = request.data['order_items']
