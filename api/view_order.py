@@ -147,6 +147,10 @@ class OrderViewSet(viewsets.ModelViewSet):
             pickup_address_id = request.data['pickup_address_id']
             
             consumers = request.data['consumers']
+            if len(consumers) > 20:
+                content = {'error':'Order Overload', 'description':'Placing orders for more than 20 customers  at once is not allowed.'}
+                return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
             order_items = request.data['order_items']
 
             total_cost = request.data.get('total_cost')
