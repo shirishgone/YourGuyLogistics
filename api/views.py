@@ -25,6 +25,17 @@ import constants
 import base64
 import requests
 
+from boto.s3.connection import S3Connection
+import os
+
+def s3_connection():
+    AWS_ACCESS_KEY = os.environ.get('AWS_ACCESS_KEY')
+    AWS_SECRET_KEY = os.environ.get('AWS_SECRET_KEY')
+    return S3Connection(AWS_ACCESS_KEY, AWS_SECRET_KEY)
+
+def s3_bucket_pod():
+    return os.environ.get('S3_BUCKET_POD')
+
 def days_in_int(by_day):
 	day_values = {'MO':0, 'TU':1 , 'WE':2 , 'TH':3 , 'FR':4 , 'SA':5 , 'SU': 6}
 	int_days = []

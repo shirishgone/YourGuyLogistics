@@ -11,6 +11,7 @@ TO_EMAIL_IDS = ['tech@yourguy.in','alay@yourguy.in', 'sameet@yourguy.in', 'winst
 GCM_PUSH_API_KEY = 'AIzaSyBTWgr5O4ooWYoFTryEii2xkyP9qRahWPo'
 GCM_SENDER_ID = '943077519707'
 
+URL_EXPIRY_TIME = 300 #300 seconds
 
 SALES_EMAIL = ['sameet@yourguy.in', 'winston@yourguy.in']
 

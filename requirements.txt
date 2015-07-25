@@ -16,4 +16,5 @@ djoser==0.3.0
 django-recurrence
 requests==2.7.0
 python-gcm
+boto
 

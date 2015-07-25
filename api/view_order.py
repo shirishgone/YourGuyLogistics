@@ -12,11 +12,18 @@ from yourguy.models import Order, OrderDeliveryStatus, Consumer, Vendor, Deliver
 from datetime import datetime, timedelta, time
 from api.serializers import OrderSerializer
 from api.views import user_role, is_vendorexists, is_consumerexists, is_dgexists, days_in_int, send_sms, normalize_offset_awareness
+from api.views import s3_connection, s3_bucket_pod
 import constants
 import recurrence
 from itertools import chain
 import json
 from api.push import send_push
+
+from boto.s3.connection import S3Connection
+from boto.s3.key import Key
+
+def pod_file_name(order_id, date):
+    file_name = order_id+'-'+date.strftime('%d-%m-%Y')
 
 def update_pending_count(dg):
     try:
@@ -27,7 +34,6 @@ def update_pending_count(dg):
     except Exception, e:
         print e
         pass
-
 
 def delivery_status_of_the_day(order, date):
     delivery_statuses = order.delivery_status.all()
@@ -568,3 +574,52 @@ class OrderViewSet(viewsets.ModelViewSet):
         serializer = OrderSerializer(orders, many=True)
         return Response(serializer.data)        
     
+    @detail_route(methods=['post'])
+    def pod_download_url(self, request, pk ):
+
+        connection = s3_connection()
+        S3_BUCKET = s3_bucket_pod()
+        
+        date_string = request.data['date']
+        if date_string is None:
+            content = {'error':'Incomplete params', 'description':'date'}
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+        
+        date = parse_datetime(date_string)
+        file_name = pod_file_name(pk, date)
+
+        url = connection.generate_url(constants.URL_EXPIRY_TIME,
+                                'GET', 
+                                S3_BUCKET, 
+                                file_name,
+            response_headers={
+                'response-content-type': 'application/octet-stream'
+            })
+    
+        content = json.dumps({
+            'url': url,
+        })
+        return Response(content, status = status.HTTP_200_OK)
+
+    @detail_route(methods=['post'])
+    def pod_upload_url(self, request, pk ):
+
+        connection = s3_connection()
+        S3_BUCKET = s3_bucket_pod()
+
+        date_string = request.data['date']
+        if date_string is None:
+            content = {'error':'Incomplete params', 'description':'date'}
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+        
+        date = parse_datetime(date_string)
+        file_name = pod_file_name(pk, date)
+
+        url = connection.generate_url(constants.URL_EXPIRY_TIME, 
+                                    'PUT', 
+                                    S3_BUCKET, 
+                                    file_name)
+        content = json.dumps({
+            'url': url,
+            })
+        return Response(content, status = status.HTTP_200_OK)
