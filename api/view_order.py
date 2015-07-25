@@ -596,9 +596,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                 'response-content-type': 'application/octet-stream'
             })
     
-        content = json.dumps({
-            'url': url,
-        })
+        content = {'url': url}
         return Response(content, status = status.HTTP_200_OK)
 
     @detail_route(methods=['post'])
@@ -619,7 +617,5 @@ class OrderViewSet(viewsets.ModelViewSet):
                                     'PUT', 
                                     S3_BUCKET, 
                                     file_name)
-        content = json.dumps({
-            'url': url,
-            })
+        content = {'url': url}
         return Response(content, status = status.HTTP_200_OK)
