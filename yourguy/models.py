@@ -20,9 +20,14 @@ class Area(models.Model):
     pin_code = models.CharField(max_length = 25, null = True)
 
     # Optional Fields
-
     def __unicode__(self):
         return u"%s" % self.area_name
+
+class Picture(models.Model):
+    name = models.CharField(max_length = 100, blank = True)  
+    url = models.CharField(max_length = 250)
+    def __unicode__(self):
+        return u"%s" % self.url
 
 class Address(models.Model):
 
@@ -44,12 +49,9 @@ class Address(models.Model):
         return u"%s - %s - %s" % (self.flat_number, self.building, self.street)                
 
 class YGUser(models.Model):
-
     user = models.OneToOneField(User)
-
     # Optional Fields
-    picture_link = models.CharField(max_length = 500, blank = True)
-
+    profile_picture = models.ForeignKey(Picture, blank = True, null = True)
     class Meta:
         abstract = True
 
@@ -268,7 +270,16 @@ class OrderItem(models.Model):
     cost = models.FloatField(default = 0.0)
     def __unicode__(self):
         return u"%s" % self.id
+        
+class ProofOfDelivery(models.Model):
+    date_time = models.DateTimeField(auto_now_add = True)
+    receiver_name = models.CharField(max_length = 100)
+    signature = models.ForeignKey(Picture, related_name = 'pod_signature')
+    pictures = models.ManyToManyField(Picture)
 
+    def __unicode__(self):
+        return u"%s" % self.id
+        
 class OrderDeliveryStatus(models.Model):
     date = models.DateTimeField()
     pickedup_datetime = models.DateTimeField(blank = True, null = True)
@@ -314,6 +325,8 @@ class OrderDeliveryStatus(models.Model):
     )
     delivered_at = models.CharField(max_length = 15, choices = DELIVERED_AT_CHOICES, default = NOT_DELIVERED)
     
+    pickup_proof = models.ForeignKey(ProofOfDelivery, related_name = 'pickup_pod', blank = True, null = True)
+    delivery_proof = models.ForeignKey(ProofOfDelivery, related_name = 'delivery_pod', blank = True, null = True)
 
     def __unicode__(self):
         return u"%s - %s" % (self.id, self.delivered_at)
