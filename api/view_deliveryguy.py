@@ -56,9 +56,13 @@ class DGViewSet(viewsets.ModelViewSet):
 
         
     @detail_route(methods=['post'])
-    def check_in(self, request, pk=None):        
+    def check_in(self, request, pk=None):   
+        app_version = request.data.get('app_version')
+
         dg = get_object_or_404(DeliveryGuy, user = request.user)
         dg.status = constants.DG_STATUS_AVAILABLE
+        if app_version is not None:
+            dg.app_version = float(app_version)
         dg.save()
 
         today = datetime.now()
