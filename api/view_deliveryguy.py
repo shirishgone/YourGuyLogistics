@@ -62,7 +62,7 @@ class DGViewSet(viewsets.ModelViewSet):
         dg = get_object_or_404(DeliveryGuy, user = request.user)
         dg.status = constants.DG_STATUS_AVAILABLE
         if app_version is not None:
-            dg.app_version = float(app_version)
+            dg.app_version = app_version
         dg.save()
 
         today = datetime.now()

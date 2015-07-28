@@ -80,7 +80,7 @@ class DeliveryGuy(YGUser):
     device_token = models.CharField(max_length = 200, blank = True , null = True)
     battery_percentage = models.FloatField(default = 0.0)
     last_connected_time = models.DateTimeField(blank = True , null = True)
-    app_version = models.FloatField(default = 0.0)
+    app_version = models.CharField(max_length = 50, blank = True , null = True)
 
     CORPORATE = 'CORPORATE'
     RETAIL = 'RETAIL'
