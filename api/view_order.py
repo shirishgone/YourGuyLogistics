@@ -48,7 +48,11 @@ def delivery_status_of_the_day(order, date):
     return delivery_item    
 
 def update_daily_status(order, date):
-    delivery_status = delivery_status_of_the_day(order, date)
+    if order.is_recurring is True:
+        delivery_status = delivery_status_of_the_day(order, date)
+    else:
+        delivery_status = order.delivery_status.latest('date')
+
     if delivery_status is not None:
         order.delivered_at = delivery_status.delivered_at
         order.pickedup_datetime = delivery_status.pickedup_datetime
@@ -70,15 +74,31 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     def get_object(self):        
         pk = self.kwargs['pk']
-        #TODO: Filter objects according to the permissions e.g VendorA shouldn't see orders of VendorB
-
-        date_string = self.request.QUERY_PARAMS.get('date', None)
-        if date_string is not None:
-            date = parse_datetime(date_string)
-        else:
-            date = datetime.today()
-        
         order = get_object_or_404(Order, id = pk)
+        
+        # Access check for vendors
+        role = user_role(self.request.user)
+        if role == constants.VENDOR:
+            vendor_agent = get_object_or_404(VendorAgent, user = self.request.user)
+            vendor = vendor_agent.vendor
+            if order.vendor.id != vendor.id:
+                content = {'error':'Access privileges', 'description':'You cant access other vendor orders'}
+                return Response(content, status = status.HTTP_400_BAD_REQUEST)
+    
+        # date filtering
+        date_string = self.request.QUERY_PARAMS.get('date', None)
+        if order.is_recurring is True:
+            if date_string is None:
+                content = {'error':'Insufficient params', 'description':'For recurring orders, date param in url is compulsory'}
+                return Response(content, status = status.HTTP_400_BAD_REQUEST)
+            else:
+                date = parse_datetime(date_string)        
+        else:
+            if date_string is None:
+                date = order.delivery_datetime
+            else:
+                date = parse_datetime(date_string)        
+        
         return update_daily_status(order, date)
 
     def get_queryset(self):
