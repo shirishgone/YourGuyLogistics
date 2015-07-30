@@ -14,7 +14,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import permissions
 
-from yourguy.models import Vendor, Consumer, DeliveryGuy, VendorAgent
+from yourguy.models import Vendor, Consumer, DeliveryGuy, VendorAgent, Address
 from api.serializers import UserSerializer, OrderSerializer, ConsumerSerializer
 
 from datetime import datetime, timedelta, time
@@ -126,7 +126,20 @@ def verify_password(user, password):
 	else:
 		return False
 
-
+def is_address_exists(flat_number, building, street, landmark, pin_code):
+	try:
+		addresses = Address.objects.filter(flat_number = flat_number, 
+			building = building,
+			street = street,
+			landmark = landmark,
+			pin_code = pin_code)
+		if len(addresses) > 0:
+			return addresses[0]
+		else:
+			return None
+	except:
+		return None
+	
 def normalize_offset_awareness(dt, from_dt=None):
     """
     Given two `datetime.datetime` objects, return the second object as

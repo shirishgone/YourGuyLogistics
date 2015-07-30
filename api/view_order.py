@@ -11,7 +11,7 @@ from rest_framework.response import Response
 from yourguy.models import Order, OrderDeliveryStatus, Consumer, Vendor, DeliveryGuy, Area, VendorAgent, Address, Product, OrderItem, User
 from datetime import datetime, timedelta, time
 from api.serializers import OrderSerializer
-from api.views import user_role, is_vendorexists, is_consumerexists, is_dgexists, days_in_int, send_sms, normalize_offset_awareness
+from api.views import user_role, is_userexists, is_vendorexists, is_consumerexists, is_dgexists, is_address_exists, days_in_int, send_sms, normalize_offset_awareness
 from api.views import s3_connection, s3_bucket_pod
 import constants
 import recurrence
@@ -302,7 +302,144 @@ class OrderViewSet(viewsets.ModelViewSet):
             content = {'error':'Unable to create orders with the given details'}    
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
+    @detail_route(methods=['post'])
+    def place_order(self, request, pk):
+
+        try:
+            pickup_datetime = request.data['pickup_datetime']
+            delivery_datetime = request.data['delivery_datetime']
+            
+            consumer_name = request.data['customer_name']
+            consumer_phone_number = request.data['customer_phone_number']
     
+            pickup_address = request.data['pickup_address']
+            delivery_address = request.data['delivery_address']
+
+            order_items = request.data['order_items']
+
+            total_cost = request.data.get('total_cost')
+            vendor_order_id = request.data.get('vendor_order_id')
+            
+            is_cod = request.data.get('is_cod')
+            cod_amount = request.data.get('cod_amount')
+            notes = request.data.get('notes')            
+
+        except Exception, e:
+            content = {'error':'Incomplete params', 'description':'pickup_datetime, delivery_datetime, customer_name, customer_phone_number, pickup_address, delivery_address , product_id, quantity, total_cost'}
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
+        try:
+            role = user_role(self.request.user)
+            if role == constants.VENDOR:
+                vendor_agent = get_object_or_404(VendorAgent, user = self.request.user)
+                vendor = vendor_agent.vendor
+            else:
+                content = {'error':'API Access limited.', 'description':'You cant access this api'}
+                return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
+            pickup_datetime = parse_datetime(pickup_datetime)
+            delivery_datetime = parse_datetime(delivery_datetime)
+
+        except Exception, e:
+            content = {'error':'Error parsing dates'}
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
+        try:
+            pickup_flat_number = pickup_address['flat_number']
+            pickup_building = pickup_address['building']
+            pickup_street = pickup_address['street']
+            pickup_landmark = pickup_address['landmark']
+            pickup_pin_code = pickup_address['pincode']
+
+            pickup_address = is_address_exists(pickup_flat_number, pickup_building, pickup_street, pickup_landmark, pickup_pin_code)
+            if pickup_address is None:
+                pickup_address = Address.objects.create(flat_number = pickup_flat_number, 
+                    building = pickup_flat_number, 
+                    street = pickup_street, 
+                    landmark = pickup_landmark, 
+                    pin_code = pickup_pin_code)
+            
+            delivery_flat_number = delivery_address['flat_number']
+            delivery_building = delivery_address['building']
+            delivery_street = delivery_address['street']
+            delivery_landmark = delivery_address['landmark']
+            delivery_pin_code = delivery_address['pincode']
+
+            delivery_address = is_address_exists(delivery_flat_number, delivery_building, delivery_street, delivery_landmark, delivery_pin_code)
+            if delivery_address is None:
+                delivery_address = Address.objects.create(flat_number = delivery_flat_number, 
+                    building = delivery_building, 
+                    street = delivery_street, 
+                    landmark = delivery_landmark, 
+                    pin_code = delivery_pin_code)
+
+        except:
+            content = {'error':' Error parsing addresses'}
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
+        try:
+            if is_userexists(consumer_phone_number) is True:
+                user = get_object_or_404(User, username = consumer_phone_number)
+                if is_consumerexists(user) is True:
+                    consumer = get_object_or_404(Consumer, user = user)
+                else:
+                    consumer = Consumer.objects.create(user = user)
+                    consumer.associated_vendor.add(vendor)
+            else:
+                user = User.objects.create(username = consumer_phone_number, first_name = consumer_name, password = '')
+                consumer = Consumer.objects.create(user = user)
+                consumer.associated_vendor.add(vendor)
+            
+            new_order = Order.objects.create(created_by_user = request.user, 
+                                            vendor = vendor, 
+                                            consumer = consumer, 
+                                            pickup_address = pickup_address, 
+                                            delivery_address = delivery_address, 
+                                            pickup_datetime = pickup_datetime, 
+                                            delivery_datetime = delivery_datetime)
+            
+            if notes is not None:
+                new_order.notes = notes
+
+            if is_cod is True:
+                new_order.is_cod = is_cod
+                new_order.cod_amount = cod_amount
+            
+            if vendor_order_id is not None:
+                new_order.vendor_order_id = vendor_order_id
+
+            if total_cost is not None:
+                new_order.total_cost = total_cost
+
+            # ORDER ITEMS =====
+            for item in order_items:
+                product_id = item['product_id']
+                quantity = item ['quantity']
+                product = get_object_or_404(Product, pk = product_id)
+                order_item = OrderItem.objects.create(product = product, quantity = quantity)
+                new_order.order_items.add(order_item)
+
+            delivery_status = OrderDeliveryStatus.objects.create(date = delivery_datetime)
+            if vendor.is_retail is False:
+                delivery_status.order_status = constants.ORDER_STATUS_QUEUED
+            new_order.delivery_status.add(delivery_status)
+            new_order.save()
+            
+            # CONFIRMATION MESSAGE TO OPS
+            message = constants.ORDER_PLACED_MESSAGE_OPS.format(vendor.store_name)
+            send_sms(constants.OPS_PHONE_NUMBER, message)
+
+            # CONFIRMATION MESSAGE TO CUSTOMER
+            send_sms(vendor.phone_number, constants.ORDER_PLACED_MESSAGE_CLIENT)
+
+            content = {'data':{'order_id':new_order.id}, 'message':'Your Order has been placed.'}
+            return Response(content, status = status.HTTP_201_CREATED)
+            
+        except Exception, e:
+            content = {'error':'Unable to create orders with the given details'}    
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
+   
     @list_route(methods = ['get'])
     def pause_for_the_day(self, request):
         try:
@@ -327,6 +464,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         content = {'description': 'Deleted Successfully'}
         return Response(content, status = status.HTTP_200_OK)
     
+
     @detail_route(methods=['post'])
     def exclude_dates(self, request, pk):
         order = get_object_or_404(Order, pk = pk)
