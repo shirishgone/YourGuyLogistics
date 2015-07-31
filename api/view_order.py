@@ -474,6 +474,8 @@ class OrderViewSet(viewsets.ModelViewSet):
             content = {'error': 'exclude_dates is an array of dates, is missing'}
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
+        today = datetime.now()
+
         is_deleted = False
         for exclude_date_string in exclude_dates:
             exclude_date = parse_datetime(exclude_date_string)
@@ -481,7 +483,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             all_deliveries = order.delivery_status.all()
             for delivery in all_deliveries:
                 
-                if delivery.date.date() == exclude_date.date():
+                if delivery.date.date() == exclude_date.date() and exclude_date.date() >= today.date():
                     delivery.delete()
                     is_deleted = True
                     break
@@ -490,7 +492,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             content = {'description': 'Deleted Successfully'}
             return Response(content, status = status.HTTP_200_OK)
         else:
-            content = {'error': 'Date not found'}
+            content = {'error': 'Date not found or past date cant be deleted'}
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
     @detail_route(methods=['post'])
