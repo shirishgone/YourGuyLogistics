@@ -376,6 +376,31 @@ class OrderViewSet(viewsets.ModelViewSet):
         except:
             content = {'error':' Error parsing addresses'}
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
+        
+        delivery_dates = []
+        try:
+            recurring = request.data['recurring']
+            try:
+                start_date_string = recurring['start_date']
+                end_date_string = recurring['end_date']
+                by_day = recurring['by_day']  
+
+                start_date = parse_datetime(start_date_string)
+                end_date = parse_datetime(end_date_string)
+                int_days = days_in_int(by_day)
+
+                rule = recurrence.Rule(byday = int_days, freq = recurrence.WEEKLY)
+                recurrences = recurrence.Recurrence(
+                    dtstart = start_date,
+                    dtend = end_date,
+                    rrules = [rule]
+                    )
+                delivery_dates = list(recurrences.occurrences())
+            except:
+                content = {'error':'Incomplete params', 'description':'start_date, end_date, by_day should be mentioned for recurring events'}
+                return Response(content, status = status.HTTP_400_BAD_REQUEST)
+        except:
+            delivery_dates.append(delivery_datetime)
 
         try:
             if is_userexists(consumer_phone_number) is True:
@@ -419,10 +444,9 @@ class OrderViewSet(viewsets.ModelViewSet):
                 order_item = OrderItem.objects.create(product = product, quantity = quantity)
                 new_order.order_items.add(order_item)
 
-            delivery_status = OrderDeliveryStatus.objects.create(date = delivery_datetime)
-            if vendor.is_retail is False:
-                delivery_status.order_status = constants.ORDER_STATUS_QUEUED
-            new_order.delivery_status.add(delivery_status)
+            for date in delivery_dates:
+                delivery_status = OrderDeliveryStatus.objects.create(date = date)
+                new_order.delivery_status.add(delivery_status)
             new_order.save()
             
             # CONFIRMATION MESSAGE TO OPS
