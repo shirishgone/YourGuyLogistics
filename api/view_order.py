@@ -12,18 +12,12 @@ from yourguy.models import Order, OrderDeliveryStatus, Consumer, Vendor, Deliver
 from datetime import datetime, timedelta, time
 from api.serializers import OrderSerializer
 from api.views import user_role, is_userexists, is_vendorexists, is_consumerexists, is_dgexists, is_address_exists, days_in_int, send_sms, normalize_offset_awareness
-from api.views import s3_connection, s3_bucket_pod
+
 import constants
 import recurrence
 from itertools import chain
 import json
 from api.push import send_push
-
-from boto.s3.connection import S3Connection
-from boto.s3.key import Key
-
-def pod_file_name(order_id, date):
-    file_name = order_id+'-'+date.strftime('%d-%m-%Y')
 
 def update_pending_count(dg):
     try:
@@ -36,23 +30,22 @@ def update_pending_count(dg):
         pass
 
 def delivery_status_of_the_day(order, date):
-    delivery_statuses = order.delivery_status.all()
-
     delivery_item = None
-    for delivery_status in delivery_statuses:
-        date_1 = datetime.combine(date, time()).replace(hour=0, minute=0, second=0)
-        date_2 = datetime.combine(delivery_status.date, time()).replace(hour=0, minute=0, second=0)
-        if date_1 == date_2:
-            delivery_item = delivery_status
-            break
+    if order.is_recurring is False:
+        delivery_item = order.delivery_status.latest('date')
+    else:
+        delivery_statuses = order.delivery_status.all()
+        for delivery_status in delivery_statuses:
+            date_1 = datetime.combine(date, time()).replace(hour=0, minute=0, second=0)
+            date_2 = datetime.combine(delivery_status.date, time()).replace(hour=0, minute=0, second=0)
+            if date_1 == date_2:
+                delivery_item = delivery_status
+                break
+
     return delivery_item    
 
 def update_daily_status(order, date):
-    if order.is_recurring is True:
-        delivery_status = delivery_status_of_the_day(order, date)
-    else:
-        delivery_status = order.delivery_status.latest('date')
-
+    delivery_status = delivery_status_of_the_day(order, date)
     if delivery_status is not None:
         order.delivered_at = delivery_status.delivered_at
         order.pickedup_datetime = delivery_status.pickedup_datetime
@@ -72,10 +65,10 @@ class OrderViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = OrderSerializer
 
-    def get_object(self):        
+    def get_object(self):
         pk = self.kwargs['pk']
         order = get_object_or_404(Order, id = pk)
-        
+
         # Access check for vendors
         role = user_role(self.request.user)
         if role == constants.VENDOR:
@@ -84,21 +77,18 @@ class OrderViewSet(viewsets.ModelViewSet):
             if order.vendor.id != vendor.id:
                 content = {'error':'Access privileges', 'description':'You cant access other vendor orders'}
                 return Response(content, status = status.HTTP_400_BAD_REQUEST)
-    
-        # date filtering
+
+        
+        #TODO: Filter objects according to the permissions e.g VendorA shouldn't see orders of VendorB
         date_string = self.request.QUERY_PARAMS.get('date', None)
         if order.is_recurring is True:
             if date_string is None:
                 content = {'error':'Insufficient params', 'description':'For recurring orders, date param in url is compulsory'}
                 return Response(content, status = status.HTTP_400_BAD_REQUEST)
             else:
-                date = parse_datetime(date_string)        
+                date = parse_datetime(date_string)   
         else:
-            if date_string is None:
-                date = order.delivery_datetime
-            else:
-                date = parse_datetime(date_string)        
-        
+            date = order.delivery_datetime        
         return update_daily_status(order, date)
 
     def get_queryset(self):
@@ -174,9 +164,8 @@ class OrderViewSet(viewsets.ModelViewSet):
             
             consumers = request.data['consumers']
             if len(consumers) > 20:
-                content = {'error':'Placing orders for more than 20 customers at once, is not allowed.', 'description':'Placing orders for more than 20 customers  at once is not allowed.'}
+                content = {'error':'Placing orders for more than 20 customers at once, is not allowed.'}
                 return Response(content, status = status.HTTP_400_BAD_REQUEST)
-
             order_items = request.data['order_items']
 
             total_cost = request.data.get('total_cost')
@@ -215,8 +204,6 @@ class OrderViewSet(viewsets.ModelViewSet):
 
             pickup_datetime = parse_datetime(pickup_datetime)
             delivery_datetime = parse_datetime(delivery_datetime)
-            # delivery_datetime = delivery_datetime.replace(tzinfo=utc)
-            # delivery_datetime = timezone.make_aware(delivery_datetime, timezone.get_current_timezone())
 
         except Exception, e:
             content = {'error':' Wrong object ids'}    
@@ -304,7 +291,7 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['post'])
     def place_order(self, request, pk):
-
+        
         try:
             pickup_datetime = request.data['pickup_datetime']
             delivery_datetime = request.data['delivery_datetime']
@@ -322,8 +309,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             
             is_cod = request.data.get('is_cod')
             cod_amount = request.data.get('cod_amount')
-            notes = request.data.get('notes')            
-
+            notes = request.data.get('notes')
         except Exception, e:
             content = {'error':'Incomplete params', 'description':'pickup_datetime, delivery_datetime, customer_name, customer_phone_number, pickup_address, delivery_address , product_id, quantity, total_cost'}
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
@@ -376,7 +362,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         except:
             content = {'error':' Error parsing addresses'}
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
-        
+
         delivery_dates = []
         try:
             recurring = request.data['recurring']
@@ -443,12 +429,13 @@ class OrderViewSet(viewsets.ModelViewSet):
                 product = get_object_or_404(Product, pk = product_id)
                 order_item = OrderItem.objects.create(product = product, quantity = quantity)
                 new_order.order_items.add(order_item)
-
+            
             for date in delivery_dates:
                 delivery_status = OrderDeliveryStatus.objects.create(date = date)
                 new_order.delivery_status.add(delivery_status)
-            new_order.save()
             
+            new_order.save()
+
             # CONFIRMATION MESSAGE TO OPS
             message = constants.ORDER_PLACED_MESSAGE_OPS.format(vendor.store_name)
             send_sms(constants.OPS_PHONE_NUMBER, message)
@@ -462,8 +449,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         except Exception, e:
             content = {'error':'Unable to create orders with the given details'}    
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
-
-   
+    
     @list_route(methods = ['get'])
     def pause_for_the_day(self, request):
         try:
@@ -488,7 +474,6 @@ class OrderViewSet(viewsets.ModelViewSet):
         content = {'description': 'Deleted Successfully'}
         return Response(content, status = status.HTTP_200_OK)
     
-
     @detail_route(methods=['post'])
     def exclude_dates(self, request, pk):
         order = get_object_or_404(Order, pk = pk)
@@ -756,50 +741,4 @@ class OrderViewSet(viewsets.ModelViewSet):
     def unassigned_orders():
         orders = Order.objects.filter(assigned_deliveryGuy= None)
         serializer = OrderSerializer(orders, many=True)
-        return Response(serializer.data)        
-    
-    @detail_route(methods=['post'])
-    def pod_download_url(self, request, pk ):
-
-        connection = s3_connection()
-        S3_BUCKET = s3_bucket_pod()
-        
-        date_string = request.data['date']
-        if date_string is None:
-            content = {'error':'Incomplete params', 'description':'date'}
-            return Response(content, status = status.HTTP_400_BAD_REQUEST)
-        
-        date = parse_datetime(date_string)
-        file_name = pod_file_name(pk, date)
-
-        url = connection.generate_url(constants.URL_EXPIRY_TIME,
-                                'GET', 
-                                S3_BUCKET, 
-                                file_name,
-            response_headers={
-                'response-content-type': 'application/octet-stream'
-            })
-    
-        content = {'url': url}
-        return Response(content, status = status.HTTP_200_OK)
-
-    @detail_route(methods=['post'])
-    def pod_upload_url(self, request, pk ):
-
-        connection = s3_connection()
-        S3_BUCKET = s3_bucket_pod()
-
-        date_string = request.data['date']
-        if date_string is None:
-            content = {'error':'Incomplete params', 'description':'date'}
-            return Response(content, status = status.HTTP_400_BAD_REQUEST)
-        
-        date = parse_datetime(date_string)
-        file_name = pod_file_name(pk, date)
-
-        url = connection.generate_url(constants.URL_EXPIRY_TIME, 
-                                    'PUT', 
-                                    S3_BUCKET, 
-                                    file_name)
-        content = {'url': url}
-        return Response(content, status = status.HTTP_200_OK)
+        return Response(serializer.data)
