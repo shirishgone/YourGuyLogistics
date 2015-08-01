@@ -133,7 +133,6 @@ class ConsumerViewSet(viewsets.ModelViewSet):
             building = request.data['building']
             street = request.data['street']
             area_code = request.data['area_code']
-            consumer_id = request.data['consumer_id']
         except:
             content = {'error':'Incomplete params', 'description':'flat_number, building, street, area_code, consumer_id'}
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
@@ -143,7 +142,7 @@ class ConsumerViewSet(viewsets.ModelViewSet):
 
         role = user_role(request.user)
         if role == constants.VENDOR:
-            consumer = get_object_or_404(Consumer, pk = consumer_id)
+            consumer = get_object_or_404(Consumer, pk = pk)
             consumer.addresses.add(new_address)
 
             content = {'description': 'Address added successfully'}
@@ -165,6 +164,4 @@ class ConsumerViewSet(viewsets.ModelViewSet):
         
         content = {'description': 'Deleted successfully'}
         return Response(content, status = status.HTTP_200_OK)
-
-         
         
