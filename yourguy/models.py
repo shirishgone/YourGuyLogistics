@@ -274,7 +274,7 @@ class OrderItem(models.Model):
 class ProofOfDelivery(models.Model):
     date_time = models.DateTimeField(auto_now_add = True)
     receiver_name = models.CharField(max_length = 100)
-    signature = models.ForeignKey(Picture, related_name = 'pod_signature')
+    signature = models.ForeignKey(Picture, related_name = 'pod_signature', blank = True, null = True)
     pictures = models.ManyToManyField(Picture)
 
     def __unicode__(self):
