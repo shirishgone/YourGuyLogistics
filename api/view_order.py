@@ -581,6 +581,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         order.save()
         
         # POD ===================
+        new_pod = None
         try:
             if pod is not None:
                 receiver_name = pod['receiver_name']
