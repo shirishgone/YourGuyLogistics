@@ -585,11 +585,11 @@ class OrderViewSet(viewsets.ModelViewSet):
         try:
             if pod is not None:
                 receiver_name = pod['receiver_name']
-                signature = pod['signature']
+                signature_name = pod['signature']
                 pictures = pod['image_names']
                 
-                new_pod = ProofOfDelivery.objects.create(receiver_name = receiver_name)
-                new_pod.signature = Picture.objects.create(name = signature)
+                signature = Picture.objects.create(name = signature_name)
+                new_pod = ProofOfDelivery.objects.create(receiver_name = receiver_name, signature = signature)
                 for picture in pictures:
                     new_pod.pictures.add(Picture.objects.create(name = picture))                       
         except:
