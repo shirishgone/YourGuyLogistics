@@ -9,6 +9,8 @@ from rest_framework.decorators import detail_route, list_route
 from rest_framework.response import Response
 
 from yourguy.models import Order, OrderDeliveryStatus, Consumer, Vendor, DeliveryGuy, Area, VendorAgent, Address, Product, OrderItem, User
+from yourguy.models import ProofOfDelivery, Picture
+
 from datetime import datetime, timedelta, time
 from api.serializers import OrderSerializer
 from api.views import user_role, is_userexists, is_vendorexists, is_consumerexists, is_dgexists, is_address_exists, days_in_int, send_sms, normalize_offset_awareness
@@ -551,8 +553,9 @@ class OrderViewSet(viewsets.ModelViewSet):
 
         latitude = request.data.get('latitude')
         longitude = request.data.get('longitude')
-        is_cod_collected = request.data.get('cod_collected')
-
+        is_cod_collected = request.data.get('cod_collected')        
+        pod = request.data.get('pod')
+            
         # DELIVERED DATE TIME
         delivered_datetime_string = request.data.get('delivered_datetime')
         if delivered_datetime_string is not None:
@@ -577,6 +580,21 @@ class OrderViewSet(viewsets.ModelViewSet):
         order.completed_datetime = delivered_datetime
         order.save()
         
+        # POD ===================
+        try:
+            if pod is not None:
+                receiver_name = pod['receiver_name']
+                signature = pod['signature']
+                pictures = pod['image_names']
+                
+                new_pod = ProofOfDelivery.objects.create(receiver_name = receiver_name)
+                new_pod.signature = Picture.objects.create(name = signature)
+                for picture in pictures:
+                    new_pod.pictures.add(Picture.objects.create(name = picture))                       
+        except:
+            content = {'error':'An error with pod params'}
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
         # UPDATE THE DELIVERY STATUS OF THE PARTICULAR DAY
         delivery_statuses = order.delivery_status.all()
         for delivery_status in delivery_statuses:
@@ -589,9 +607,11 @@ class OrderViewSet(viewsets.ModelViewSet):
                 delivery_status.completed_datetime = delivered_datetime
                 if is_cod_collected is not None:
                     delivery_status.is_cod_collected = is_cod_collected
+                if new_pod is not None:
+                    delivery_status.delivery_proof = new_pod    
                 delivery_status.save()
                 break
-                                       
+
         # UPDATE DG STATUS
         dg.status = constants.DG_STATUS_AVAILABLE
         dg.save()

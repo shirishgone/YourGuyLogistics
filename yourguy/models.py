@@ -25,7 +25,7 @@ class Area(models.Model):
 
 class Picture(models.Model):
     name = models.CharField(max_length = 100, blank = True)  
-    url = models.CharField(max_length = 250)
+    url = models.CharField(max_length = 250, blank = True)
     def __unicode__(self):
         return u"%s" % self.url
 
