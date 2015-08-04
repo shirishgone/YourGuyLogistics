@@ -28,6 +28,17 @@ import constants
 ## CUSTOM METHODS ------
 ## CONSUMER DIRECT REGISTRATION
 
+@api_view(['GET'])
+def all_vendor_emails(request):
+    all_vendors = Vendor.objects.all()
+    all_vendors_emails = []
+    for vendor in all_vendors:
+        all_vendors_emails.append(vendor.email)
+    
+    content = {'all_vendor_emails':all_vendors_emails}
+    return Response(content, status = status.HTTP_200_OK)
+        
+
 @api_view(['POST'])
 def register(request):
 
@@ -67,8 +78,6 @@ def register(request):
     else:
         pass    
     
-
-
     user = User.objects.create_user(username=phone_number, password=password)
 
     if name is not None:
@@ -116,73 +125,4 @@ def register(request):
     else:
         pass
             
-    
     return Response(content, status = status.HTTP_201_CREATED)              
-
-# @api_view(['POST'])
-# def forgot_password(request):
-#     # TODO: Send an email
-#     return Response(status=status.HTTP_201_CREATED)      
-
-# @api_view(['POST'])
-# def request_vendor_account(request):
-#     """
-#     Registration for Vendor
-#     """
-#     try:
-#         store = request.data['store_name']
-#         phone_number = request.data['phone_number']
-#         email = request.data['email']
-
-#         flat_number = request.data['flat_number']
-#         building = request.data['building']
-#         street = request.data['street']
-#         area_code = request.data['area_code']
-#     except:
-#         content = {'error':'Incomplete params', 'description':'phone_number, store_name, email, flat_number, building, street, area_code'}
-#         return Response(content, status = status.HTTP_400_BAD_REQUEST)
-
-#     new_address = Address.objects.create(flat_number=flat_number, building=building, street=street, area_code= area_code)
-#     new_requested_vendor = RequestedVendor.objects.create(store_name = store, address = new_address, email = email, phone_number = phone_number)
-
-#     content = {'description':'Request submitted successfully'}
-#     return Response(content, status = status.HTTP_201_CREATED)
-#
-# @api_view(['POST'])
-# def sign_in(request):
-#     username = request.POST['username']
-#     password = request.POST['password']
-#     user = authenticate(username = username, password = password)
-#     if user is not None:
-#         if user.is_active:
-#             login(request,user)
-#             token = Token.objects.get(user = user)
-#             content = {'user_id':user.id, 'token':token.key}
-#             return Response(content, status = status.HTTP_201_CREATED)
-#         else:
-#           content = {'description':'disabled account'}  
-#           return Response(content, status = status.HTTP_400_BAD_REQUEST)
-#     else:
-#        content = {'description': 'Invalid Login'}
-#        return Response(content, status = status.HTTP_400_BAD_REQUEST)
-
-
-# @api_view(['POST'])
-# def dg_signin(request):
-#     phone_number = request.data['phone_number']
-#     password = request.data['password']
-#     if is_dgexists(phone_number) is True:
-#         user = User.objects.get(username = phone_number)
-#         dg = DeliveryGuy.objects.get(user = user)
-        
-#         if verify_password(user, password):
-#             token = Token.objects.get(user=dg.user)
-#             content = {'auth_token': token.key}
-#             return Response(content, status = status.HTTP_201_CREATED)   
-#         else:
-#             content = {'error': 'Invalid Credentials'}
-#             return Response(content, status = status.HTTP_201_CREATED)   
-#     else:
-#         content = {'error':'user with phone number doesnt exists'}  
-#         return Response(content, status = status.HTTP_404_NOT_FOUND)
-

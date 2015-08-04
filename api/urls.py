@@ -4,6 +4,8 @@ from rest_framework.urlpatterns import format_suffix_patterns
 from rest_framework.routers import DefaultRouter
 
 from api import view_user
+#from api import view_dashboard
+
 from api.view_address import AddressViewSet
 from api.view_area import AreaViewSet
 from api.view_consumer import ConsumerViewSet
@@ -21,6 +23,8 @@ urlpatterns = patterns(
     url(r'^docs/', include('rest_framework_swagger.urls')),
     url(r'^auth/', include('djoser.urls')),
     url(r'^register/', view_user.register,name='Registration'),
+    url(r'^all_vendor_emails/', view_user.all_vendor_emails,name='all_vendor_emails'),
+    #url(r'^vendor_dashboard/', view_dashboard.vendor_dashboard, name='vendor_dashboard'),
 )
 
 
