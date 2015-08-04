@@ -37,7 +37,7 @@ def vendor_dashboard(request):
 	except Exception, e:
 		content = {'error':'Missing params. start_date and end_date'}
 		return Response(content, status = status.HTTP_400_BAD_REQUEST)
-		
+
 	role = user_role(request.user)
 	if role == constants.VENDOR:
 		total_order_count = 0
@@ -72,8 +72,19 @@ def vendor_dashboard(request):
 			count = delivery_status_per_date.count()
 			result = {'count':count, 'date': date.date()}
 			orders_count_per_date.append(result)
-			
-		content = { 'total_order_count':total_order_count, 'orders':orders_count_per_date }
+
+			for delivery_status in delivery_status_per_date:
+				order = Order.objects.filter(delivery_status = delivery_status).latest('pickup_datetime')
+				total_cod_amount = total_cod_amount + order.cod_amount
+				total_sales = total_sales + order.total_cost
+
+		content = {
+		'total_order_count':total_order_count, 
+		'total_cod_amount':total_cod_amount,
+		'total_sales':total_sales,
+		'orders':orders_count_per_date 
+		}
+		
 		return Response(content, status = status.HTTP_200_OK)
 	else:
 		content = {'error':'Only vendors can access their analytics.'}
