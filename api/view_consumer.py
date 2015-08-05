@@ -105,7 +105,12 @@ class ConsumerViewSet(viewsets.ModelViewSet):
             consumer.save()
             
             # SUCCESS RESPONSE FOR CONSUMER CREATION BY VENDOR
-            content = {'consumer_id':consumer.id}   
+            serializer = ConsumerSerializer(consumer)
+            
+            content = {
+            'consumer':serializer.data
+            }
+
             return Response(content, status = status.HTTP_201_CREATED)
         else:
             content = {'error':'No permissions to create consumer'}   
