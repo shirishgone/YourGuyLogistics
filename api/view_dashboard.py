@@ -40,10 +40,13 @@ def vendor_dashboard(request):
 
 	role = user_role(request.user)
 	if role == constants.VENDOR:
-		total_order_count = 0
+		total_orders_placed = 0
+		total_orders_delivered = 0
+		total_orders_cancelled = 0
+
 		total_cod_amount = 0
 		total_sales = 0
-		orders_count_per_date = []
+		orders_graph = []
 
 		vendor_agent = get_object_or_404(VendorAgent, user = request.user)
 		vendor = vendor_agent.vendor
@@ -59,30 +62,46 @@ def vendor_dashboard(request):
 
 		# QUERY SET ==================
 		queryset = OrderDeliveryStatus.objects.filter(order__vendor__id = vendor.id, date__gte = start_date, date__lte = end_date)
-		queryset = queryset.filter(Q(order_status='DELIVERED') | Q(order_status='ATTEMPTED'))
-		
-		total_order_count = queryset.count()
+		total_orders_placed = queryset.count()
+
+		cancelled_queryset = queryset.filter(Q(order_status='CANCELLED') | Q(order_status='REJECTED'))
+		total_orders_cancelled = cancelled_queryset.count()
+
+		delivered_queryset = queryset.filter(Q(order_status='DELIVERED') | Q(order_status='ATTEMPTED'))
+		total_orders_delivered = delivered_queryset.count()
 
 		# FOR ORDER COUNT FOR INDIVIDUAL DATES ==================
 		for date in alldates:
 			delivery_status_per_date = queryset.filter(date__year = date.year, 
 				date__month = date.month, 
 				date__day = date.day)
+			orders_placed_count = delivery_status_per_date.count()
 
-			count = delivery_status_per_date.count()
-			result = {'count':count, 'date': date.date()}
-			orders_count_per_date.append(result)
+			delivery_status_delivered_queryset = delivery_status_per_date.filter(Q(order_status = 'DELIVERED') | Q(order_status = 'ATTEMPTED'))
+			orders_delivered_count = delivery_status_delivered_queryset.count()
+			
+			result = {
+			'orders_placed_count':orders_placed_count, 
+			'orders_delivered_count':orders_delivered_count,
+			'date': date.date()
+			}
 
-			for delivery_status in delivery_status_per_date:
+			orders_graph.append(result)
+
+			for delivery_status in delivery_status_delivered_queryset:
 				order = Order.objects.filter(delivery_status = delivery_status).latest('pickup_datetime')
 				total_cod_amount = total_cod_amount + order.cod_amount
 				total_sales = total_sales + order.total_cost
 
+		new_consumers_count = Consumer.objects.filter(associated_vendor = vendor, user__date_joined__gte = start_date, user__date_joined__lte = end_date).count()		
 		content = {
-		'total_order_count':total_order_count, 
+		'new_customers': new_consumers_count,
+		'total_orders_placed':total_orders_placed,
+		'total_orders_delivered':total_orders_delivered,
+		'total_orders_cancelled':total_orders_cancelled,
 		'total_cod_amount':total_cod_amount,
 		'total_sales':total_sales,
-		'orders':orders_count_per_date 
+		'orders':orders_graph 
 		}
 		
 		return Response(content, status = status.HTTP_200_OK)
