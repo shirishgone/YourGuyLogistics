@@ -752,27 +752,6 @@ class OrderViewSet(viewsets.ModelViewSet):
 
         return Response(status = status.HTTP_200_OK)
 
-    @detail_route(methods = ['post'])
-    def transfer(self, request, pk):
-        try:
-            dg_id = request.data['dg_id']
-            order_ids = request.data['order_ids']
-        except:
-            content = {'error':'Incomplete params', 'description':'dg_id, order_ids'}
-            return Response(content, status = status.HTTP_400_BAD_REQUEST)
- 
-        dg = get_object_or_404(DeliveryGuy, pk = dg_id)
-        for order_id in order_ids:
-            order = get_object_or_404(Order, pk = order_id)
-            today = datetime.now()
-            delivery_status = delivery_status_of_the_day(order, today)
-            
-            delivery_status.delivery_guy = dg
-            delivery_status.save()
-                
-        content = {'description': 'Order updated'}
-        return Response(content, status = status.HTTP_200_OK)
-
     @list_route()
     def undelivered_orders():
         orders = Order.objects.filter(order_status=constants.ORDER_STATUS_INTRANSIT)
