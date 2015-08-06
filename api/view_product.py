@@ -6,6 +6,7 @@ from rest_framework import viewsets
 from rest_framework.response import Response
 
 from django.shortcuts import get_object_or_404
+from django.db.models.functions import Lower
 
 from api.serializers import ProductSerializer
 from api.views import user_role
@@ -26,7 +27,7 @@ class ProductViewSet(viewsets.ModelViewSet):
         role = user_role(request.user)
         if role == constants.VENDOR:
             vendor_agent = VendorAgent.objects.get(user = self.request.user)
-            products_of_vendor = Product.objects.filter(vendor = vendor_agent.vendor)
+            products_of_vendor = Product.objects.filter(vendor = vendor_agent.vendor).order_by(Lower('name'))
             serializer = ProductSerializer(products_of_vendor, many=True)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
