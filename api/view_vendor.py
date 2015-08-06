@@ -1,4 +1,6 @@
 from django.shortcuts import get_object_or_404
+from django.db.models.functions import Lower
+
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status, authentication
 from rest_framework import viewsets
@@ -23,7 +25,7 @@ class VendorViewSet(viewsets.ModelViewSet):
     def list(self, request):
     	role = user_role(request.user)
     	if (role == constants.SALES) or (role == constants.OPERATIONS):
-    		all_vendors = Vendor.objects.filter(verified=True)
+    		all_vendors = Vendor.objects.filter(verified=True).order_by(Lower('store_name'))
     		serializer = VendorSerializer(all_vendors, many=True)
     		return Response(serializer.data, status=status.HTTP_201_CREATED)
     	elif role == constants.VENDOR:
