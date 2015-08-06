@@ -139,7 +139,7 @@ class DGViewSet(viewsets.ModelViewSet):
         else:
             date = datetime.today()
 
-        all_attendance = DGAttendance.objects.filter(date = date)
+        all_attendance = DGAttendance.objects.filter(date = date).order_by(Lower('dg__user__first_name'))
 
         serializer = DGAttendanceSerializer(all_attendance, many=True)
         return Response(serializer.data)
