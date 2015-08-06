@@ -768,7 +768,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             delivery_status = delivery_status_of_the_day(order, today)
             
             delivery_status.delivery_guy = dg
-            delivery_status.status()
+            delivery_status.save()
                 
         content = {'description': 'Order updated'}
         return Response(content, status = status.HTTP_200_OK)
