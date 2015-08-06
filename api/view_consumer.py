@@ -1,5 +1,6 @@
 from django.contrib.auth.models import User, Group
 from django.shortcuts import get_object_or_404
+from django.db.models.functions import Lower
 
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status, authentication
@@ -28,12 +29,12 @@ class ConsumerViewSet(viewsets.ModelViewSet):
         role = user_role(request.user)
         if role == constants.VENDOR:
             vendor_agent = get_object_or_404(VendorAgent, user = request.user)
-            consumers_of_vendor = Consumer.objects.filter(associated_vendor = vendor_agent.vendor)
+            consumers_of_vendor = Consumer.objects.filter(associated_vendor = vendor_agent.vendor).order_by(Lower('user__first_name'))
             
             serializer = ConsumerSerializer(consumers_of_vendor, many=True)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         elif role == constants.OPERATIONS:
-            all_customers = Consumer.objects.all()
+            all_customers = Consumer.objects.all().order_by(Lower('user__first_name'))
             serializer = ConsumerSerializer(all_customers, many=True)
         else:
             content = {'error':'You dont have permissions to view all Consumers'}
