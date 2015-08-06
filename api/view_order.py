@@ -116,7 +116,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             queryset = Order.objects.filter(vendor = vendor, 
                 delivery_status__date__year = date.year , 
                 delivery_status__date__month = date.month, 
-                delivery_status__date__day = date.day)
+                delivery_status__date__day = date.day).order_by('pickup_datetime')
         
         elif role == constants.DELIVERY_GUY:
 
@@ -126,13 +126,13 @@ class OrderViewSet(viewsets.ModelViewSet):
                 date__month = date.month, 
                 date__day = date.day)
 
-            queryset = Order.objects.filter(delivery_status__in = delivery_statuses)
+            queryset = Order.objects.filter(delivery_status__in = delivery_statuses).order_by('pickup_datetime')
 
         else:
 
             queryset = Order.objects.filter(delivery_status__date__year = date.year, 
                     delivery_status__date__month = date.month, 
-                    delivery_status__date__day = date.day)
+                    delivery_status__date__day = date.day).order_by('pickup_datetime')
 
             if vendor_id is not None:
                 vendor = get_object_or_404(Vendor, pk = vendor_id)
