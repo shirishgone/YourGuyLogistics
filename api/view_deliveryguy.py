@@ -1,5 +1,6 @@
 from django.shortcuts import get_object_or_404
 from django.utils.dateparse import parse_datetime
+from django.db.models.functions import Lower
 
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status, authentication
@@ -23,10 +24,14 @@ class DGViewSet(viewsets.ModelViewSet):
     queryset = DeliveryGuy.objects.all()
     serializer_class = DGSerializer
 
+    def get_queryset(self):
+        queryset = DeliveryGuy.objects.order_by(Lower('user__first_name'))
+        return queryset
+
     @list_route()
     def available_dgs():
-    	dg_list = DeliveryGuy.objects.filter(availability='AV')
-    	serializer = DGSerializer(dg_list, many=True)
+    	dg_list = DeliveryGuy.objects.filter(availability = 'AV')
+    	serializer = DGSerializer(dg_list, many = True)
     	return Response(serializer.data)
 
     @detail_route(methods=['post'])
