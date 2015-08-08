@@ -364,7 +364,7 @@ class Order(models.Model):
     total_cost = models.FloatField(default = 0.0)
 
     pickup_datetime = models.DateTimeField()
-    delivery_datetime = models.DateTimeField()
+    delivery_datetime = models.DateTimeField(blank = True, null = True)
     
     pickup_address = models.ForeignKey(Address, related_name='pickup_address', on_delete = models.CASCADE)
     delivery_address = models.ForeignKey(Address, related_name='delivery_address', on_delete = models.CASCADE)
