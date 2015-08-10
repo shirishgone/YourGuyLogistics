@@ -54,12 +54,8 @@ class ProductViewSet(viewsets.ModelViewSet):
                 description = description, 
                 cost = cost)
 
-            content = {
-            'product_id':new_product.id,
-            'description': 'product added successfully'
-            }
-
-            return Response(content, status = status.HTTP_200_OK)
+            serializer = ProductSerializer(new_product)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             content = {'error':'You dont have permissions to add a product'}
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
