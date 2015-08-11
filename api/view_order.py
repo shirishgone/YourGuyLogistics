@@ -628,6 +628,8 @@ class OrderViewSet(viewsets.ModelViewSet):
         order.order_status = constants.ORDER_STATUS_INTRANSIT
         order.delivery_guy = dg
 
+        pop = request.data.get('pop')
+
         # PICKEDUP DATE TIME
         pickedup_datetime_string = request.data.get('pickedup_datetime')
         if pickedup_datetime_string is not None:
@@ -638,6 +640,23 @@ class OrderViewSet(viewsets.ModelViewSet):
         order.pickedup_datetime = pickedup_datetime    
         order.save()
         
+        # POP ===================
+        new_pop = None
+        try:
+            if pop is not None:
+                receiver_name = pop['receiver_name']
+                signature_name = pop['signature']
+                pictures = pop['image_names']
+                
+                signature = Picture.objects.create(name = signature_name)
+                new_pop = ProofOfDelivery.objects.create(receiver_name = receiver_name, signature = signature)
+                for picture in pictures:
+                    new_pop.pictures.add(Picture.objects.create(name = picture))                       
+        except:
+            content = {'error':'An error with pod params'}
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
+
         #UPDATING THE DELIVERY STATUS OF THE PARTICULAR DAY
         delivery_statuses = order.delivery_status.all()
         for delivery_status in delivery_statuses:
@@ -648,8 +667,11 @@ class OrderViewSet(viewsets.ModelViewSet):
             if date_1 == date_2:
                 delivery_status.order_status = constants.ORDER_STATUS_INTRANSIT
                 delivery_status.pickedup_datetime = pickedup_datetime
+                if new_pop is not None:
+                    delivery_status.pickup_proof = new_pop
                 delivery_status.save()
                 break
+
 
         # UPDATE DG STATUS
         dg.status = constants.DG_STATUS_BUSY
