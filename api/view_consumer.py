@@ -34,7 +34,7 @@ class ConsumerViewSet(viewsets.ModelViewSet):
             serializer = ConsumerSerializer(consumers_of_vendor, many=True)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         elif role == constants.OPERATIONS:
-            all_customers = Consumer.objects.all().order_by(Lower('user__first_name'))
+            all_customers = Consumer.objects.all()
             serializer = ConsumerSerializer(all_customers, many=True)
         else:
             content = {'error':'You dont have permissions to view all Consumers'}
