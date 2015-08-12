@@ -40,6 +40,7 @@ INSTALLED_APPS = (
     'yourguy',
     'rest_framework',
     'api',
+    'api_v2',
     'rest_framework.authtoken',
     'djoser',
     'recurrence',
