@@ -13,6 +13,7 @@ from rest_framework.response import Response
 from yourguy.models import Consumer, Vendor, VendorAgent, Address, Area
 from api.views import user_role
 
+import datetime
 class ConsumerViewSet(viewsets.ModelViewSet):
     """
     Consumer viewset that provides the standard actions 
@@ -26,6 +27,8 @@ class ConsumerViewSet(viewsets.ModelViewSet):
         if role == 'vendor':
             vendor_agent = get_object_or_404(VendorAgent, user = request.user)
             consumers_of_vendor = Consumer.objects.filter(associated_vendor = vendor_agent.vendor).order_by(Lower('user__first_name'))
+
+            print datetime.datetime.now()
 
             result = []
             for consumer in consumers_of_vendor:
@@ -50,6 +53,7 @@ class ConsumerViewSet(viewsets.ModelViewSet):
                 
                 result.append(result_consumer)
             
+            print datetime.datetime.now()
             return Response(json.dumps(result), status = status.HTTP_200_OK)
         else:
             content = {'error':'You dont have permissions to view all Consumers'}
