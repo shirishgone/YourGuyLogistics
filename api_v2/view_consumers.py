@@ -28,7 +28,7 @@ class ConsumerViewSet(viewsets.ModelViewSet):
             vendor_agent = get_object_or_404(VendorAgent, user = request.user)
             consumers_of_vendor = Consumer.objects.filter(associated_vendor = vendor_agent.vendor).order_by(Lower('user__first_name'))
 
-            print datetime.datetime.now()
+            start_time = str(datetime.datetime.now())
 
             result = []
             for consumer in consumers_of_vendor:
@@ -53,8 +53,14 @@ class ConsumerViewSet(viewsets.ModelViewSet):
                 
                 result.append(result_consumer)
             
-            print datetime.datetime.now()
-            return Response(json.dumps(result), status = status.HTTP_200_OK)
+            end_time = str(datetime.datetime.now())
+            
+            final_response = {
+            "start_time":start_time,
+            "end_time":end_time,
+            "data":result
+            }
+            return Response(json.dumps(final_response), status = status.HTTP_200_OK)
         else:
             content = {'error':'You dont have permissions to view all Consumers'}
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
