@@ -37,24 +37,24 @@ class ConsumerViewSet(viewsets.ModelViewSet):
                 "name":consumer.user.first_name,
                 "phone_number":consumer.user.username
                 }
-                all_addresses = consumer.addresses.all()
-                for address in all_addresses:
-                    ad = {
-                        "id":address.id,
-                        "flat":address.flat_number,
-                        "building":address.building,
-                        "street":address.street,
-                        "landmark":address.landmark,
-                        "pin_code":address.pin_code,
-                        "area_name":address.area.area_name,
-                        "area_code":address.area.area_code
-                    }
-                    result_consumer['address'] = ad
-                
+                # all_addresses = consumer.addresses.all()
+                # for address in all_addresses:
+                #     ad = {
+                #         "id":address.id,
+                #         "flat":address.flat_number,
+                #         "building":address.building,
+                #         "street":address.street,
+                #         "landmark":address.landmark,
+                #         "pin_code":address.pin_code,
+                #         "area_name":address.area.area_name,
+                #         "area_code":address.area.area_code
+                #     }
+                #     result_consumer['address'] = ad
+                                
                 result.append(result_consumer)
             
             end_time = str(datetime.datetime.now())
-            
+
             final_response = {
             "start_time":start_time,
             "end_time":end_time,
