@@ -141,7 +141,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             if dg_phone_number is not None:
                 user = get_object_or_404(User, username = dg_phone_number)
                 dg = get_object_or_404(DeliveryGuy, user = user)
-                queryset = queryset.filter(delivery_guy=dg)
+                queryset = queryset.filter(delivery_status__delivery_guy = dg)
 
             if area_code is not None:
                 area = get_object_or_404(Area, area_code = area_code)
