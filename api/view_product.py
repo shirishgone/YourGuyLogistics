@@ -59,4 +59,24 @@ class ProductViewSet(viewsets.ModelViewSet):
         else:
             content = {'error':'You dont have permissions to add a product'}
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
+    
+    def destroy(self, request, pk):        
+        role = user_role(request.user)
+        product = get_object_or_404(Product, pk = pk)
+
+        if (role == constants.VENDOR):
+            vendor_agent = get_object_or_404(VendorAgent, user = request.user)
+            vendor = vendor_agent.vendor
+            
+            if product.vendor == vendor:
+                product.delete()
+                content = {'description': 'Product deleted Successfully.'}
+                return Response(content, status = status.HTTP_200_OK)
+            else:
+                content = {'description': 'You dont have permissions to delete this product.'}
+                return Response(content, status = status.HTTP_400_BAD_REQUEST)
+        
+        else:
+            content = {'description': 'You dont have permissions to delete this order.'}
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
