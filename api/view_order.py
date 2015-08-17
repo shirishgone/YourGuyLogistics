@@ -278,11 +278,12 @@ class OrderViewSet(viewsets.ModelViewSet):
                 new_order.save()
 
             # CONFIRMATION MESSAGE TO OPS
-            message = constants.ORDER_PLACED_MESSAGE_OPS.format(vendor.store_name)
+            message = constants.ORDER_PLACED_MESSAGE_OPS.format(new_order.id, vendor.store_name)
             send_sms(constants.OPS_PHONE_NUMBER, message)
 
             # CONFIRMATION MESSAGE TO CUSTOMER
-            send_sms(vendor.phone_number, constants.ORDER_PLACED_MESSAGE_CLIENT)
+            message_client = constants.ORDER_PLACED_MESSAGE_CLIENT.format(new_order.id)
+            send_sms(vendor.phone_number, message_client)
 
             content = {'status':'orders added'}
             return Response(content, status = status.HTTP_201_CREATED)
