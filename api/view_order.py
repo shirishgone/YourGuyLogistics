@@ -292,6 +292,30 @@ class OrderViewSet(viewsets.ModelViewSet):
             content = {'error':'Unable to create orders with the given details'}    
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
+    def destroy(self, request, pk):                
+        role = user_role(request.user)
+        order = get_object_or_404(Order, pk = pk)
+        
+        if (role == constants.VENDOR):
+            vendor_agent = get_object_or_404(VendorAgent, user = request.user)
+            vendor = vendor_agent.vendor
+            if order.vendor == vendor:
+                order.delete()
+            else:
+                content = {'description': 'You dont have permissions to delete this order.'}
+                return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
+            content = {'description': 'Order deleted Successfully.'}
+            return Response(content, status = status.HTTP_200_OK)
+        
+        elif(role == constants.OPERATIONS):
+            order.delete()
+            content = {'description': 'Order deleted Successfully.'}
+            return Response(content, status = status.HTTP_200_OK)
+        else:
+            content = {'description': 'You dont have permissions to delete this order.'}
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
     @detail_route(methods=['post'])
     def place_order(self, request, pk):
         
