@@ -19,8 +19,8 @@ EMAIL_SIGNATURE = "- \n Team YourGuy \nhttp://www.yourguy.in"
 
 SMS_URL = "http://api.smscountry.com/SMSCwebservice_bulk.aspx?User=yourguy&passwd=yourguydotin&mobilenumber={mobile_number}&message={message_text}&sid=YOURGY&mtype=N&DR=Y"
 
-ORDER_PLACED_MESSAGE_OPS = 'A New order has been placed by {}, please assign a DG.'
-ORDER_PLACED_MESSAGE_CLIENT = 'Your order has been placed and will be processed soon - Team YourGuy'
+ORDER_PLACED_MESSAGE_OPS = 'A New order with order number {} has been placed by {}, please assign a DG.'
+ORDER_PLACED_MESSAGE_CLIENT = 'Your order with order number {} has been placed and will be processed soon - Team YourGuy'
 ORDER_DELIVERED_MESSAGE_CLIENT = 'Your order has been {} to {} at {} - Team YourGuy'
 ORDER_APPROVED_MESSAGE_CLIENT = 'Your order for {} has been approved & QUEUED for delivery - Team YourGuy'
 ORDER_REJECTED_MESSAGE_CLIENT = 'Your order for {} has been rejected because of {} - Team YourGuy'
