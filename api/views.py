@@ -1,4 +1,5 @@
 # from django.shortcuts import render
+from django.shortcuts import get_object_or_404
 from django.core.mail import send_mail
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
@@ -83,9 +84,12 @@ def is_dgexists(user):
 		return False
 
 def create_token(user,user_role):
-	full_string = '%s:%s'% (user.username, user_role)	
-	token_string = base64.b64encode(full_string)
-	token = Token.objects.create(user = user, key= token_string)
+	if Token.objects.filter(user=user).count():
+		token = get_object_or_404(Token, user = user)
+	else:
+		full_string = '%s:%s'% (user.username, user_role)
+		token_string = base64.b64encode(full_string)
+		token = Token.objects.create(user = user, key= token_string)
 	return token
 
 def user_role(user):	

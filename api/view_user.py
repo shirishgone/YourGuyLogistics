@@ -59,70 +59,41 @@ def register(request):
         return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
     if is_userexists(phone_number):         
+        user = User.objects.get(username = phone_number)
+    else:
+        user = User.objects.create_user(username = phone_number, password = password)
+        if name is not None:
+            user.first_name = name
+        if email is not None:
+            user.email = email
+        user.save()
+    
+    try:
+        if role == constants.VENDOR:
+            vendor = get_object_or_404(Vendor, id = vendor_id)
+            token = create_token(user, constants.VENDOR)
+            vendor_agent = VendorAgent.objects.create(user = user, vendor = vendor)
+        elif role == constants.CONSUMER:
+            token = create_token(user, constants.CONSUMER)
+            consumer = Consumer.objects.create(user = user)
+        elif role == constants.DELIVERY_GUY:
+            token = create_token(user, constants.DELIVERY_GUY)
+            delivery_guy = DeliveryGuy.objects.create(user = user)
+        elif role == constants.OPERATIONS:
+            token = create_token(user, constants.OPERATIONS)
+            employee = Employee.objects.create(user = user)
+            employee.department = constants.OPERATIONS
+        elif role == constants.SALES:
+            token = create_token(user, constants.SALES)
+            employee = Employee.objects.create(user = user)
+            employee.department = constants.SALES
+        else:
+            pass    
+    except Exception, e:
         content = {
-                    'error':'User already exists',
-                    'description':'User with same phone number already exists'
-                    }   
+        'error':'Something went wrong, please try again.'
+        }
         return Response(content, status = status.HTTP_400_BAD_REQUEST)
-    else:
-        pass    
-       
-    
-    # VENDOR EXISTENCE CHECK ----   
-    if role == constants.VENDOR:
-        try:
-            vendor = Vendor.objects.get(id = vendor_id)       
-        except:
-            content = {'error':'Vendor with given id doesnt exists'}   
-            return Response(content, status = status.HTTP_400_BAD_REQUEST)
-    else:
-        pass    
-    
-    user = User.objects.create_user(username=phone_number, password=password)
 
-    if name is not None:
-        user.first_name = name
-
-    if email is not None:
-        user.email = email
-    
-    user.save()    
-
-    if role == constants.VENDOR:
-        token = create_token(user, constants.VENDOR)
-    elif role == constants.DELIVERY_GUY:
-        token = create_token(user, constants.DELIVERY_GUY)
-    elif role == constants.CONSUMER:
-        token = create_token(user, constants.CONSUMER)
-    elif role == constants.OPERATIONS:
-        token = create_token(user, constants.OPERATIONS)
-    elif role == constants.SALES:
-        token = create_token(user, constants.SALES)
-    else:
-        token = None
-
-    if name is not None:
-        user.first_name = name
-
-    if email is not None:
-        user.email = email
-    
-    content = {'auth_token': token.key}
-
-    if role == constants.VENDOR:
-        vendor = get_object_or_404(Vendor, id = vendor_id)
-        vendor_agent = VendorAgent.objects.create(user = user, vendor = vendor)
-    elif role == constants.CONSUMER:
-        consumer = Consumer.objects.create(user = user)    
-    elif role == constants.DELIVERY_GUY:
-        delivery_guy = DeliveryGuy.objects.create(user = user)    
-    elif role == constants.OPERATIONS:
-        employee = Employee.objects.create(user = user)
-        employee.department = constants.OPERATIONS
-    elif role == constants.SALES:
-        employee = Employee.objects.create(user = user)
-        employee.department = constants.SALES
-    else:
-        pass
-            
+    content = {'auth_token': token.key} 
     return Response(content, status = status.HTTP_201_CREATED)              
