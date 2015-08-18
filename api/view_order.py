@@ -174,7 +174,6 @@ class OrderViewSet(viewsets.ModelViewSet):
             vendor_order_id = request.data.get('vendor_order_id')
             is_recurring = request.data['is_recurring']
             
-            is_cod = request.data.get('is_cod')
             cod_amount = request.data.get('cod_amount')
             notes = request.data.get('notes')
             
@@ -233,9 +232,9 @@ class OrderViewSet(viewsets.ModelViewSet):
                 if notes is not None:
                     new_order.notes = notes
 
-                if is_cod is True:
-                    new_order.is_cod = is_cod
-                    new_order.cod_amount = cod_amount
+                if cod_amount is not None and float(cod_amount) > 0:
+                    new_order.is_cod = True
+                    new_order.cod_amount = float(cod_amount)
 
                 for item in order_items:
                     product_id = item['product_id']
@@ -334,7 +333,6 @@ class OrderViewSet(viewsets.ModelViewSet):
             total_cost = request.data.get('total_cost')
             vendor_order_id = request.data.get('vendor_order_id')
             
-            is_cod = request.data.get('is_cod')
             cod_amount = request.data.get('cod_amount')
             notes = request.data.get('notes')
         except Exception, e:
@@ -439,9 +437,9 @@ class OrderViewSet(viewsets.ModelViewSet):
             if notes is not None:
                 new_order.notes = notes
 
-            if is_cod is True:
-                new_order.is_cod = is_cod
-                new_order.cod_amount = cod_amount
+            if cod_amount is not None and float(cod_amount) > 0:
+                new_order.is_cod = True
+                new_order.cod_amount = float(cod_amount)
             
             if vendor_order_id is not None:
                 new_order.vendor_order_id = vendor_order_id
