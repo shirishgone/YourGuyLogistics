@@ -833,13 +833,13 @@ class OrderViewSet(viewsets.ModelViewSet):
         dg.status = constants.DG_STATUS_BUSY
         dg.save()
         update_pending_count(dg)
-
+        
         # SEND PUSH NOTIFICATION TO DELIVERYGUY
         data = {
                 'message':'A new order has been assigned to you.', 
                 'type': 'order_assigned',
                 'data':{
-                    'order_id': order.id 
+                    'order_id': order_ids
                     }
                 }
         send_push(dg.device_token, data)
