@@ -210,6 +210,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             content = {'error':' Wrong object ids'}    
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
+        new_order_ids = []
         try:
             for consumer_obj in consumers:
                 consumer_id = consumer_obj['consumer_id']
@@ -275,6 +276,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                     new_order.total_cost = total_cost
 
                 new_order.save()
+                new_order_ids.append(new_order.id)
 
             # CONFIRMATION MESSAGE TO OPS
             message = constants.ORDER_PLACED_MESSAGE_OPS.format(new_order.id, vendor.store_name)
@@ -284,7 +286,10 @@ class OrderViewSet(viewsets.ModelViewSet):
             message_client = constants.ORDER_PLACED_MESSAGE_CLIENT.format(new_order.id)
             send_sms(vendor.phone_number, message_client)
 
-            content = {'status':'orders added'}
+            content = {
+            'status':'orders added',
+            'order_ids':new_order_ids
+            }
             return Response(content, status = status.HTTP_201_CREATED)
             
         except Exception, e:
@@ -833,7 +838,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         dg.status = constants.DG_STATUS_BUSY
         dg.save()
         update_pending_count(dg)
-        
+
         # SEND PUSH NOTIFICATION TO DELIVERYGUY
         data = {
                 'message':'A new order has been assigned to you.', 
