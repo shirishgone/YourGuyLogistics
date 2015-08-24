@@ -16,10 +16,10 @@ from api.serializers import OrderSerializer
 from api.views import user_role, is_userexists, is_vendorexists, is_consumerexists, is_dgexists, is_address_exists, days_in_int, send_sms, normalize_offset_awareness
 
 import constants
-import recurrence
 from itertools import chain
 import json
 from api.push import send_push
+from dateutil.rrule import rrule, WEEKLY
 
 def update_pending_count(dg):
     try:
@@ -235,7 +235,7 @@ class OrderViewSet(viewsets.ModelViewSet):
 
                 if cod_amount is not None and float(cod_amount) > 0:
                     new_order.is_cod = True
-                    new_order.cod_amount = float(cod_amount)
+                    new_order.cod_amount = float(cod_amount)                    
 
                 for item in order_items:
                     product_id = item['product_id']
@@ -245,18 +245,11 @@ class OrderViewSet(viewsets.ModelViewSet):
                     new_order.order_items.add(order_item)
 
                 if is_recurring is True:
-                    new_order.is_recurring = True                                        
+                    new_order.is_recurring = True
                     int_days = days_in_int(by_day)
-                    
-                    rule = recurrence.Rule(byday = int_days, freq = recurrence.WEEKLY)
-                    recurrences = recurrence.Recurrence(
-                                    dtstart = start_date,
-                                    dtend = end_date,
-                                    rrules = [rule]
-                                    )
-                    new_order.recurrences = recurrences
-                    
-                    recurring_dates = list(recurrences.occurrences())
+                    rule_week = rrule(WEEKLY, dtstart=start_date, until=end_date, byweekday=int_days)
+                    recurring_dates = list(rule_week)
+
                     for date in recurring_dates:
                         delivery_status = OrderDeliveryStatus.objects.create(date = date)
                         new_order.delivery_status.add(delivery_status)
@@ -290,6 +283,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             'status':'orders added',
             'order_ids':new_order_ids
             }
+
             return Response(content, status = status.HTTP_201_CREATED)
             
         except Exception, e:
@@ -404,14 +398,9 @@ class OrderViewSet(viewsets.ModelViewSet):
                 start_date = parse_datetime(start_date_string)
                 end_date = parse_datetime(end_date_string)
                 int_days = days_in_int(by_day)
-
-                rule = recurrence.Rule(byday = int_days, freq = recurrence.WEEKLY)
-                recurrences = recurrence.Recurrence(
-                    dtstart = start_date,
-                    dtend = end_date,
-                    rrules = [rule]
-                    )
-                delivery_dates = list(recurrences.occurrences())
+                
+                rule_week = rrule(WEEKLY, dtstart=start_date, until=end_date, byweekday=int_days)
+                delivery_dates = list(rule_week)
             except:
                 content = {'error':'Incomplete params', 'description':'start_date, end_date, by_day should be mentioned for recurring events'}
                 return Response(content, status = status.HTTP_400_BAD_REQUEST)
@@ -700,7 +689,6 @@ class OrderViewSet(viewsets.ModelViewSet):
                     delivery_status.pickup_proof = new_pop
                 delivery_status.save()
                 break
-
 
         # UPDATE DG STATUS
         dg.status = constants.DG_STATUS_BUSY

@@ -17,4 +17,4 @@ django-recurrence
 requests==2.7.0
 python-gcm
 boto
-
+python-dateutil
