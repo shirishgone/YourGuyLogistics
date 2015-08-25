@@ -419,7 +419,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                 user = User.objects.create(username = consumer_phone_number, first_name = consumer_name, password = '')
                 consumer = Consumer.objects.create(user = user)
                 consumer.associated_vendor.add(vendor)
-            
+            consumer.addresses.add(delivery_address)
             new_order = Order.objects.create(created_by_user = request.user, 
                                             vendor = vendor, 
                                             consumer = consumer, 
