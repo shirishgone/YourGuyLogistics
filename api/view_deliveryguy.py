@@ -94,23 +94,24 @@ class DGViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['post'])
     def check_out(self, request, pk=None):
         dg = get_object_or_404(DeliveryGuy, user = request.user)
-        dg.status = constants.DG_STATUS_UN_AVAILABLE
-        dg.save()
-    
-        is_checkout_done = False
-        today = datetime.now()
-                
-        attendance = DGAttendance.objects.filter(dg = dg, date__year = today.year , date__month = today.month, date__day = today.day).latest('date')
-        
-        if attendance is not None:
-            attendance.logout_time = datetime.now()
+        today_now = datetime.now()
+        try:
+            try:
+                attendance = DGAttendance.objects.filter(dg = dg, date__year = today_now.year , date__month = today_now.month, date__day = today_now.day).latest('date')        
+            except Exception, e:
+                content = {'error':'You havent checked-in properly or forgot to checkout the day before.'}
+                return Response(content, status = status.HTTP_200_OK)
+            
+            attendance.logout_time = today_now
             attendance.save()
-            is_checkout_done = True
 
-        if is_checkout_done is True:
+            # UPDATE DG AS UNAVAILABLE
+            dg.status = constants.DG_STATUS_UN_AVAILABLE
+            dg.save()
+
             content = {'description': 'Thanks for checking out.'}
             return Response(content, status = status.HTTP_200_OK)
-        else:
+        except Exception, e:
             content = {'error':'Something went wrong'}
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
     
