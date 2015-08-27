@@ -20,13 +20,36 @@ from itertools import chain
 import json
 from api.push import send_push
 from dateutil.rrule import rrule, WEEKLY
+from pytz import timezone
+
+def filter_with_ist_date(date):
+    tzinfo = timezone('Asia/Kolkata')
+    return date.astimezone(tzinfo)
+
+def time_delta():
+    return timedelta(hours=5, minutes=30)
+
+def ist_day_start(date):
+    ist_timedelta = time_delta()
+    day_start = datetime.combine(date, time()).replace(hour=0, minute=0, second=0)
+    return day_start - ist_timedelta
+
+def ist_day_end(date):
+    ist_timedelta = time_delta()
+    day_end = datetime.combine(date, time()).replace(hour=23, minute=59, second=59)
+    return day_end - ist_timedelta
 
 def update_pending_count(dg):
     try:
         today = datetime.now()
-        delivery_statuses = OrderDeliveryStatus.objects.filter(delivery_guy = dg, date__year = today.year , date__month = today.month, date__day = today.day)
+
+        day_start = day_start(today)
+        day_end = day_end(today)
+
+        delivery_statuses = OrderDeliveryStatus.objects.filter(delivery_guy = dg, date__gte = day_start , date__lte = day_end)
         dg.current_load = len(delivery_statuses)
         dg.save()
+
     except Exception, e:
         print e
         pass
@@ -38,9 +61,7 @@ def delivery_status_of_the_day(order, date):
     else:
         delivery_statuses = order.delivery_status.all()
         for delivery_status in delivery_statuses:
-            date_1 = datetime.combine(date, time()).replace(hour=0, minute=0, second=0)
-            date_2 = datetime.combine(delivery_status.date, time()).replace(hour=0, minute=0, second=0)
-            if date_1 == date_2:
+            if date.date() == delivery_status.date.date():
                 delivery_item = delivery_status
                 break
 
@@ -80,7 +101,6 @@ class OrderViewSet(viewsets.ModelViewSet):
                 content = {'error':'Access privileges', 'description':'You cant access other vendor orders'}
                 return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
-        
         #TODO: Filter objects according to the permissions e.g VendorA shouldn't see orders of VendorB
         date_string = self.request.QUERY_PARAMS.get('date', None)
         if order.is_recurring is True:
@@ -90,7 +110,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             else:
                 date = parse_datetime(date_string)   
         else:
-            date = order.delivery_datetime        
+            date = order.pickup_datetime
         return update_daily_status(order, date)
 
     def get_queryset(self):
@@ -108,31 +128,28 @@ class OrderViewSet(viewsets.ModelViewSet):
         else:
             date = datetime.today()
 
+        day_start = ist_day_start(date)
+        day_end = ist_day_end(date)
+
         role = user_role(self.request.user)
         if role == constants.VENDOR:
             vendor_agent = get_object_or_404(VendorAgent, user = self.request.user)
             vendor = vendor_agent.vendor
             
             queryset = Order.objects.filter(vendor = vendor, 
-                delivery_status__date__year = date.year , 
-                delivery_status__date__month = date.month, 
-                delivery_status__date__day = date.day).order_by('pickup_datetime')
+                delivery_status__date__gte = day_start,
+                delivery_status__date__lte = day_end)
         
         elif role == constants.DELIVERY_GUY:
-
             delivery_guy = get_object_or_404(DeliveryGuy, user = self.request.user)
             delivery_statuses = OrderDeliveryStatus.objects.filter(delivery_guy = delivery_guy, 
-                date__year = date.year, 
-                date__month = date.month, 
-                date__day = date.day)
+                date__gte = day_start,
+                date__lte = day_end)
 
             queryset = Order.objects.filter(delivery_status__in = delivery_statuses).order_by('pickup_datetime')
-
         else:
-
-            queryset = Order.objects.filter(delivery_status__date__year = date.year, 
-                    delivery_status__date__month = date.month, 
-                    delivery_status__date__day = date.day).order_by('pickup_datetime')
+            queryset = Order.objects.filter(delivery_status__date__gte = day_start,
+                delivery_status__date__lte = day_end)
 
             if vendor_id is not None:
                 vendor = get_object_or_404(Vendor, pk = vendor_id)
@@ -152,8 +169,8 @@ class OrderViewSet(viewsets.ModelViewSet):
         for single_order in queryset:
             order = update_daily_status(single_order, date)
             if order is not None:
-                result.append(order)
-
+                result.append(order)        
+        
         return result
     
     def create(self, request):
@@ -181,11 +198,9 @@ class OrderViewSet(viewsets.ModelViewSet):
                 if is_recurring is True:
                     start_date_string = request.data['start_date']
                     start_date = parse_datetime(start_date_string)
-                    start_date = datetime.combine(start_date, time()).replace(hour=0, minute=0, second=0)
-
+                    
                     end_date_string = request.data['end_date']
                     end_date = parse_datetime(end_date_string)
-                    end_date = datetime.combine(end_date, time()).replace(hour=0, minute=0, second=0)
                     
                     by_day = request.data['by_day']  
                 else:
@@ -256,7 +271,7 @@ class OrderViewSet(viewsets.ModelViewSet):
 
                 else:
                     new_order.is_recurring = False
-                    delivery_status = OrderDeliveryStatus.objects.create(date = delivery_datetime)
+                    delivery_status = OrderDeliveryStatus.objects.create(date = pickup_datetime)
                     if vendor.is_retail is False:
                         delivery_status.order_status = constants.ORDER_STATUS_QUEUED
 
@@ -315,7 +330,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
     @detail_route(methods=['post'])
-    def place_order(self, request, pk):
+    def place_order(self, request, pk):        
         
         try:
             pickup_datetime = request.data['pickup_datetime']
@@ -405,7 +420,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                 content = {'error':'Incomplete params', 'description':'start_date, end_date, by_day should be mentioned for recurring events'}
                 return Response(content, status = status.HTTP_400_BAD_REQUEST)
         except:
-            delivery_dates.append(delivery_datetime)
+            delivery_dates.append(pickup_datetime)
 
         try:
             if is_userexists(consumer_phone_number) is True:
@@ -419,6 +434,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                 user = User.objects.create(username = consumer_phone_number, first_name = consumer_name, password = '')
                 consumer = Consumer.objects.create(user = user)
                 consumer.associated_vendor.add(vendor)
+
             consumer.addresses.add(delivery_address)
             new_order = Order.objects.create(created_by_user = request.user, 
                                             vendor = vendor, 
@@ -573,7 +589,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                     new_order.is_cod = True
                     new_order.cod_amount = float(cod_amount)
                 
-                delivery_status = OrderDeliveryStatus.objects.create(date = pickup_datetime.date())
+                delivery_status = OrderDeliveryStatus.objects.create(date = pickup_datetime)
                 new_order.delivery_status.add(delivery_status)
                 new_order.save()
 
@@ -594,13 +610,13 @@ class OrderViewSet(viewsets.ModelViewSet):
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
         
         today = datetime.now()
-
+        
         delete_orders = []
         for order_id in order_ids:
             order = get_object_or_404(Order, pk = order_id)
             all_statuses = order.delivery_status.all()
             for delivery_status in all_statuses:
-                if delivery_status.date.year == today.year and delivery_status.date.month == today.month and delivery_status.date.day == today.day:
+                if delivery_status.date.date() == today.date():
                     delete_orders.append(delivery_status)
                 
         for delivery_status in delete_orders:
@@ -625,7 +641,6 @@ class OrderViewSet(viewsets.ModelViewSet):
 
             all_deliveries = order.delivery_status.all()
             for delivery in all_deliveries:
-                
                 if delivery.date.date() == exclude_date.date() and exclude_date.date() >= today.date():
                     delivery.delete()
                     is_deleted = True
@@ -677,12 +692,8 @@ class OrderViewSet(viewsets.ModelViewSet):
 
         #UPDATING THE DELIVERY STATUS OF THE PARTICULAR DAY
         delivery_statuses = order.delivery_status.all()
-        for delivery_status in delivery_statuses:
-
-            date_1 = datetime.combine(pickedup_datetime, time()).replace(hour=0, minute=0, second=0)
-            date_2 = datetime.combine(delivery_status.date, time()).replace(hour=0, minute=0, second=0)
-
-            if date_1 == date_2:
+        for delivery_status in delivery_statuses:            
+            if delivery_status.date.date() == pickedup_datetime.date():
                 delivery_status.order_status = constants.ORDER_STATUS_INTRANSIT
                 delivery_status.pickedup_datetime = pickedup_datetime
                 if new_pop is not None:
@@ -690,7 +701,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                 delivery_status.save()
                 break
 
-        # UPDATE DG STATUS
+        # UPDATE DG STATUS ======
         dg.status = constants.DG_STATUS_BUSY
         dg.save()
         update_pending_count(dg)
@@ -752,10 +763,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         # UPDATE THE DELIVERY STATUS OF THE PARTICULAR DAY
         delivery_statuses = order.delivery_status.all()
         for delivery_status in delivery_statuses:
-            date_1 = datetime.combine(delivered_datetime, time()).replace(hour=0, minute=0, second=0)
-            date_2 = datetime.combine(delivery_status.date, time()).replace(hour=0, minute=0, second=0)
-
-            if date_1 == date_2:
+            if delivery_status.date.date() == delivered_datetime.date():
                 delivery_status.order_status = order_status
                 delivery_status.delivered_at = delivered_at
                 delivery_status.completed_datetime = delivered_datetime
@@ -809,12 +817,8 @@ class OrderViewSet(viewsets.ModelViewSet):
 
             #UPDATING THE DELIVERY STATUS OF THE PARTICULAR DAY
             delivery_statuses = order.delivery_status.all()
-            for delivery_status in delivery_statuses:
-
-                assign_date = datetime.combine(date, time()).replace(hour = 0, minute = 0, second = 0)
-                delivery_date = datetime.combine(delivery_status.date, time()).replace(hour = 0, minute = 0, second = 0)
-                
-                if delivery_date >= assign_date:
+            for delivery_status in delivery_statuses: 
+                if delivery_status.date.date() >= date.date():
                     delivery_status.delivery_guy = dg
                     if delivery_status.order_status == constants.ORDER_STATUS_PLACED:
                         delivery_status.order_status = constants.ORDER_STATUS_QUEUED
@@ -857,18 +861,13 @@ class OrderViewSet(viewsets.ModelViewSet):
         order = get_object_or_404(Order, id = pk)
 
         #UPDATING THE DELIVERY STATUS OF THE PARTICULAR DAY
-        delivery_statuses = order.delivery_status.all()
+        delivery_statuses = order.delivery_status.all()        
         for delivery_status in delivery_statuses:
-
-            date_1 = datetime.combine(date, time()).replace(hour=0, minute=0, second=0)
-            date_2 = datetime.combine(delivery_status.date, time()).replace(hour=0, minute=0, second=0)
-
-            if date_1 == date_2:
+            if date.date() == delivery_status.date.date():
                 delivery_status.order_status = constants.ORDER_STATUS_QUEUED
                 delivery_status.save()
                 break
         
-
         message = constants.ORDER_APPROVED_MESSAGE_CLIENT.format(order.consumer.user.first_name)
         send_sms(order.vendor.phone_number, message)
 
@@ -890,11 +889,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         #UPDATING THE DELIVERY STATUS OF THE PARTICULAR DAY
         delivery_statuses = order.delivery_status.all()
         for delivery_status in delivery_statuses:
-
-            date_1 = datetime.combine(date, time()).replace(hour=0, minute=0, second=0)
-            date_2 = datetime.combine(delivery_status.date, time()).replace(hour=0, minute=0, second=0)
-
-            if date_1 == date_2:
+            if delivery_status.date.date() == date.date():
                 delivery_status.order_status = constants.ORDER_STATUS_REJECTED
                 delivery_status.rejection_reason = reason_message
                 delivery_status.save()
