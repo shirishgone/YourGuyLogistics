@@ -19,6 +19,7 @@ import json
 
 import recurrence
 from datetime import datetime
+from dateutil.rrule import rrule, DAILY
 
 def calculate_customers(vendor):
 	return 0
@@ -39,7 +40,7 @@ def vendor_dashboard(request):
 		return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
 	role = user_role(request.user)
-	if role == constants.VENDOR:
+	if (role == constants.VENDOR or role == constants.OPERATIONS):
 		total_orders_placed = 0
 		total_orders_delivered = 0
 		total_orders_cancelled = 0
@@ -48,22 +49,22 @@ def vendor_dashboard(request):
 		total_sales = 0
 		orders_graph = []
 
-		vendor_agent = get_object_or_404(VendorAgent, user = request.user)
-		vendor = vendor_agent.vendor
-
 		# CREATE DATE RULE ==================
-		rule = recurrence.Rule(recurrence.DAILY)
-		pattern = recurrence.Recurrence(
-			dtstart = start_date,
-			dtend = end_date,
-			rrules = [rule,]
-			)
-		alldates = pattern.occurrences()
-
+		rule_daily = rrule(DAILY, dtstart=start_date, until=end_date)
+		alldates = list(rule_daily)
+		
 		# QUERY SET ==================
-		queryset = OrderDeliveryStatus.objects.filter(order__vendor__id = vendor.id, date__gte = start_date, date__lte = end_date)
+		if role == constants.VENDOR:
+			vendor_agent = get_object_or_404(VendorAgent, user = request.user)
+			vendor = vendor_agent.vendor
+			queryset = OrderDeliveryStatus.objects.filter(order__vendor__id = vendor.id, date__gte = start_date, date__lte = end_date)
+		elif role == constants.OPERATIONS:
+			queryset = OrderDeliveryStatus.objects.filter(date__gte = start_date, date__lte = end_date)
+		else:
+			content = {'error':'You dont have permissions.'}
+			return Response(content, status = status.HTTP_400_BAD_REQUEST)
+		
 		total_orders_placed = queryset.count()
-
 		cancelled_queryset = queryset.filter(Q(order_status='CANCELLED') | Q(order_status='REJECTED'))
 		total_orders_cancelled = cancelled_queryset.count()
 
