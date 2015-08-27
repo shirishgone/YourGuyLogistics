@@ -58,8 +58,10 @@ def vendor_dashboard(request):
 			vendor_agent = get_object_or_404(VendorAgent, user = request.user)
 			vendor = vendor_agent.vendor
 			queryset = OrderDeliveryStatus.objects.filter(order__vendor__id = vendor.id, date__gte = start_date, date__lte = end_date)
+			new_consumers_count = Consumer.objects.filter(associated_vendor = vendor, user__date_joined__gte = start_date, user__date_joined__lte = end_date).count()		
 		elif role == constants.OPERATIONS:
 			queryset = OrderDeliveryStatus.objects.filter(date__gte = start_date, date__lte = end_date)
+			new_consumers_count = Consumer.objects.filter(user__date_joined__gte = start_date, user__date_joined__lte = end_date).count()
 		else:
 			content = {'error':'You dont have permissions.'}
 			return Response(content, status = status.HTTP_400_BAD_REQUEST)
@@ -98,7 +100,7 @@ def vendor_dashboard(request):
 				total_cod_amount = total_cod_amount + order.cod_amount
 				total_sales = total_sales + order.total_cost
 
-		new_consumers_count = Consumer.objects.filter(associated_vendor = vendor, user__date_joined__gte = start_date, user__date_joined__lte = end_date).count()		
+		
 		content = {
 		'new_customers': new_consumers_count,
 		'total_orders_placed':total_orders_placed,
