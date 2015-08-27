@@ -90,7 +90,11 @@ def vendor_dashboard(request):
 			orders_graph.append(result)
 
 			for delivery_status in delivery_status_delivered_queryset:
-				order = Order.objects.filter(delivery_status = delivery_status).latest('pickup_datetime')
+				try:
+					order = Order.objects.filter(delivery_status = delivery_status).latest('pickup_datetime')	
+				except Exception, e:
+					continue
+				
 				total_cod_amount = total_cod_amount + order.cod_amount
 				total_sales = total_sales + order.total_cost
 
