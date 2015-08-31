@@ -24,6 +24,8 @@ ORDER_PLACED_MESSAGE_CLIENT = 'Your order with order id {} has been placed and w
 ORDER_DELIVERED_MESSAGE_CLIENT = 'Your order has been {} to {} at {} - Team YourGuy'
 ORDER_APPROVED_MESSAGE_CLIENT = 'Your order for {} has been approved & QUEUED for delivery - Team YourGuy'
 ORDER_REJECTED_MESSAGE_CLIENT = 'Your order for {} has been rejected because of {} - Team YourGuy'
+ORDER_RESCHEDULED_MESSAGE_CLIENT = 'Your order for {} with order no {} has been rescheduled to {} - Team YourGuy'
+ORDER_CANCELLED_MESSAGE_CLIENT = 'Your order for {} with order no {} has been cancelled - Team YourGuy'
 
 VENDOR_ACCOUNT_REQUESTED_MESSAGE_SALES = "A New Vendor has requested for an account. \nPlease find the below details: \nStore Name:{} \nPhone Number: {} \nEmail: {} \nAddress : {}, {}, {}, {} \nApproval link:{}"
 VENDOR_ACCOUNT_APPROVED_MESSAGE = 'Your account has been approved. \n http://app.yourguy.in \nPlease login using following credentials: \nUsername:{} \nPassword:{} - Team YourGuy'

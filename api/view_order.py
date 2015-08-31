@@ -858,6 +858,67 @@ class OrderViewSet(viewsets.ModelViewSet):
         return Response(status = status.HTTP_200_OK)
 
     @detail_route(methods=['post'])
+    def cancel(self, request, pk):
+        try:
+            date_string = request.data['date']
+        except Exception, e:
+            content = {'error':'Incomplete params', 'description':'date'}
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+        
+        date = parse_datetime(date_string)
+                
+        is_cancelled = False
+        order = get_object_or_404(Order, id = pk)
+        delivery_statuses = order.delivery_status.all()
+        for delivery_status in delivery_statuses:
+            if delivery_status.date.date() == date.date():
+                delivery_status.order_status = constants.ORDER_STATUS_CANCELLED
+                delivery_status.save()
+                is_cancelled = True
+                break
+        
+        if is_cancelled:
+            message = constants.ORDER_CANCELLED_MESSAGE_CLIENT.format(order.consumer.user.first_name, order.id)
+            send_sms(order.vendor.phone_number, message)
+            return Response(status = status.HTTP_200_OK)
+        else:
+            content = {'error':'Reschedule unsuccessful'}
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
+    @detail_route(methods=['post'])
+    def reschedule(self, request, pk):
+        try:
+            old_date_string = request.data['old_date']
+            new_date_string = request.data['new_date']
+        except Exception, e:
+            content = {'error':'Incomplete params', 'description':'old_date & new_date'}
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+        
+        old_date = parse_datetime(old_date_string)
+        new_date = parse_datetime(new_date_string)
+
+        is_rescheduled = False
+        order = get_object_or_404(Order, id = pk)
+        delivery_statuses = order.delivery_status.all()
+        for delivery_status in delivery_statuses:
+            if delivery_status.date.date() == old_date.date():
+                delivery_status.date = new_date
+                delivery_status.save()
+                is_rescheduled = True
+                break
+
+        if is_rescheduled:
+            readable_date = new_date.strftime("%B %d, %Y")
+            message = constants.ORDER_RESCHEDULED_MESSAGE_CLIENT.format(order.consumer.user.first_name, order.id, readable_date)
+            send_sms(order.vendor.phone_number, message)
+
+            content = {'description':'Reschedule successful'}
+            return Response(content, status = status.HTTP_200_OK)
+        else:
+            content = {'error':'Reschedule unsuccessful'}
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
+    @detail_route(methods=['post'])
     def reject(self, request, pk ):
         try:
             reason_message = request.data['rejection_reason']
