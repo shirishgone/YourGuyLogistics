@@ -29,6 +29,10 @@ import requests
 from boto.s3.connection import S3Connection
 import os
 
+import datetime
+import pytz
+from datetime import datetime, timedelta, time
+
 def s3_connection():
     AWS_ACCESS_KEY = os.environ.get('AWS_ACCESS_KEY')
     AWS_SECRET_KEY = os.environ.get('AWS_SECRET_KEY')
@@ -143,7 +147,24 @@ def is_address_exists(flat_number, building, street, landmark, pin_code):
 			return None
 	except:
 		return None
-	
+
+# TIME ZONE ISSUES =============
+
+def time_delta():
+    return timedelta(hours=5, minutes=30)
+
+def ist_day_start(date):
+    ist_timedelta = time_delta()
+    day_start = datetime.combine(date, time()).replace(hour=0, minute=0, second=0)
+    return day_start - ist_timedelta
+
+def ist_day_end(date):
+    ist_timedelta = time_delta()
+    day_end = datetime.combine(date, time()).replace(hour=23, minute=59, second=59)
+    return day_end - ist_timedelta
+
+# =============
+
 def normalize_offset_awareness(dt, from_dt=None):
     """
     Given two `datetime.datetime` objects, return the second object as

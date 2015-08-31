@@ -14,6 +14,7 @@ from yourguy.models import ProofOfDelivery, Picture
 from datetime import datetime, timedelta, time
 from api.serializers import OrderSerializer
 from api.views import user_role, is_userexists, is_vendorexists, is_consumerexists, is_dgexists, is_address_exists, days_in_int, send_sms, normalize_offset_awareness
+from api.views import ist_day_start, ist_day_end
 
 import constants
 from itertools import chain
@@ -22,29 +23,12 @@ from api.push import send_push
 from dateutil.rrule import rrule, WEEKLY
 from pytz import timezone
 
-def filter_with_ist_date(date):
-    tzinfo = timezone('Asia/Kolkata')
-    return date.astimezone(tzinfo)
-
-def time_delta():
-    return timedelta(hours=5, minutes=30)
-
-def ist_day_start(date):
-    ist_timedelta = time_delta()
-    day_start = datetime.combine(date, time()).replace(hour=0, minute=0, second=0)
-    return day_start - ist_timedelta
-
-def ist_day_end(date):
-    ist_timedelta = time_delta()
-    day_end = datetime.combine(date, time()).replace(hour=23, minute=59, second=59)
-    return day_end - ist_timedelta
-
 def update_pending_count(dg):
     try:
         today = datetime.now()
 
-        day_start = day_start(today)
-        day_end = day_end(today)
+        day_start = ist_day_start(today)
+        day_end = ist_day_start(today)
 
         delivery_statuses = OrderDeliveryStatus.objects.filter(delivery_guy = dg, date__gte = day_start , date__lte = day_end)
         dg.current_load = len(delivery_statuses)

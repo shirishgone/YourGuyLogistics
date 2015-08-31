@@ -11,8 +11,10 @@ from rest_framework.response import Response
 from yourguy.models import DeliveryGuy, DGAttendance
 from api.serializers import DGSerializer, DGAttendanceSerializer
 from datetime import date, datetime, timedelta, time
+from api.views import ist_day_start, ist_day_end
 
 import constants
+
 
 class DGViewSet(viewsets.ModelViewSet):
     """
@@ -140,8 +142,11 @@ class DGViewSet(viewsets.ModelViewSet):
         else:
             date = datetime.today()
 
-        all_attendance = DGAttendance.objects.filter(date = date).order_by(Lower('dg__user__first_name'))
+        day_start = ist_day_start(date)
+        day_end = ist_day_end(date)
+
+        all_attendance = DGAttendance.objects.filter(date__gte = day_start , date__lte = day_end).order_by(Lower('dg__user__first_name'))
 
         serializer = DGAttendanceSerializer(all_attendance, many=True)
         return Response(serializer.data)
-
+        
