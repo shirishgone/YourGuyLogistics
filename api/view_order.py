@@ -796,6 +796,12 @@ class OrderViewSet(viewsets.ModelViewSet):
         
         dg = get_object_or_404(DeliveryGuy, id = dg_id)
         
+        order_count = len(order_ids)
+        if order_count > 10:
+            content = {'error':'Cant assign more than 10 orders at a time.'}
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
+
         for order_id in order_ids:
             order = get_object_or_404(Order, id = order_id)
 
