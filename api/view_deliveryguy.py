@@ -73,6 +73,7 @@ class DGViewSet(viewsets.ModelViewSet):
         dg.save()
 
         today = datetime.now()
+
         is_today_checkedIn = False
         
         attendance_list = DGAttendance.objects.filter(dg = dg, date__year = today.year , date__month = today.month, date__day = today.day)
@@ -142,10 +143,9 @@ class DGViewSet(viewsets.ModelViewSet):
         else:
             date = datetime.today()
 
-        day_start = ist_day_start(date)
-        day_end = ist_day_end(date)
-
-        all_attendance = DGAttendance.objects.filter(date__gte = day_start , date__lte = day_end).order_by(Lower('dg__user__first_name'))
+        # day_start = ist_day_start(date)
+        # day_end = ist_day_end(date)        
+        all_attendance = DGAttendance.objects.filter(date__year = date.year, date__month = date.month, date__day = date.day).order_by(Lower('dg__user__first_name'))
 
         serializer = DGAttendanceSerializer(all_attendance, many=True)
         return Response(serializer.data)
