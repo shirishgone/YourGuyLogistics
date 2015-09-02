@@ -831,10 +831,13 @@ class OrderViewSet(viewsets.ModelViewSet):
                 }
         send_push(dg.device_token, data)
         
-        # TODO: Need to revisit and understand whether we need to send 100 SMS if there are 100 orders.
-        # CONFIRMATION MESSAGE TO CUSTOMER
-        # message = 'A DeliveryGuy has been assigned for your order. He will be arriving soon - Team YourGuy'
-        # send_sms(vendor.phone_number, message)
+        # CONFIRMATION MESSAGE TO VENDOR =======
+        try:
+            message = 'A DeliveryGuy has been assigned for your order {} . Please get your products ready, he will be there soon - Team YourGuy'.format(order.id)
+            send_sms(order.vendor.phone_number, message)
+        except Exception, e:
+            print 'assignment message not sent to vendor'
+            pass
 
         content = {'description': 'Order assigned'}
         return Response(content, status = status.HTTP_200_OK)
