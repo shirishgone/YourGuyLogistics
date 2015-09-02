@@ -816,24 +816,36 @@ class OrderViewSet(viewsets.ModelViewSet):
                                        
             order.delivery_guy = dg
             order.save()
-        
+
+            # SMS to Delivery Guy =======
+            try:
+                message = 'New Order Assigned. Order no:{}, vendor name: {}, Customer name:{} Phone number:{} COD:{} Address:{}'.format(order.id, 
+                    order.vendor.store_name, 
+                    order.consumer.user.first_name,
+                    order.consumer.user.username,
+                    order.cod_amount,
+                    order.delivery_address)
+                
+                send_sms(dg.user.username, message)
+            except Exception, e:
+                print 'Order assigned to DG error.'
+                pass
+
         dg.status = constants.DG_STATUS_BUSY
         dg.save()
         update_pending_count(dg)
-
+        
         # SEND PUSH NOTIFICATION TO DELIVERYGUY
-        data = {
-                'message':'A new order has been assigned to you.', 
-                'type': 'order_assigned',
-                'data':{
-                    'order_id': order_ids
-                    }
-                }
-        send_push(dg.device_token, data)
+        try:
+            data = { 'message':'A new order has been assigned to you.', 'type': 'order_assigned', 'data':{'order_id': order_ids}}
+            send_push(dg.device_token, data)
+        except Exception, e:
+            print 'push notification not sent in order assignment'
+            pass
         
         # CONFIRMATION MESSAGE TO VENDOR =======
         try:
-            message = 'A DeliveryGuy has been assigned for your order {} . Please get your products ready, he will be there soon - Team YourGuy'.format(order.id)
+            message = 'A DeliveryGuy has been assigned for your orders {} . Please get your products ready, he will be there soon - Team YourGuy'.format(order_ids)
             send_sms(order.vendor.phone_number, message)
         except Exception, e:
             print 'assignment message not sent to vendor'
