@@ -819,7 +819,7 @@ class OrderViewSet(viewsets.ModelViewSet):
 
             # SMS to Delivery Guy =======
             try:
-                message = 'New Order Assigned. Order no:{}, vendor name: {}, Customer name:{} Phone number:{} COD:{} Address:{}'.format(order.id, 
+                message = 'New Order:{},Client:{},Cust:{},{},COD:{},{}'.format(order.id, 
                     order.vendor.store_name, 
                     order.consumer.user.first_name,
                     order.consumer.user.username,
