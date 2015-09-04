@@ -819,12 +819,17 @@ class OrderViewSet(viewsets.ModelViewSet):
 
             # SMS to Delivery Guy =======
             try:
-                message = 'New Order:{},Client:{},Cust:{},{},COD:{},{}'.format(order.id, 
+                pickup_date_string = date.strftime("%b%d")
+                pickup_time_string = order.pickup_datetime.time().strftime("%H:%M%p")
+                pickup_total_string = "%s,%s" % (pickup_date_string, pickup_time_string)
+
+                message = 'New Order:{},Pickup:{},Client:{},Cust:{},{},{},COD:{}'.format(order.id, 
+                    pickup_total_string,
                     order.vendor.store_name, 
                     order.consumer.user.first_name,
                     order.consumer.user.username,
-                    order.cod_amount,
-                    order.delivery_address)
+                    order.delivery_address,
+                    order.cod_amount)
                 
                 send_sms(dg.user.username, message)
             except Exception, e:
