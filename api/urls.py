@@ -5,6 +5,7 @@ from rest_framework.routers import DefaultRouter
 
 from api import view_user
 from api import view_dashboard
+from api import view_freshdesk
 
 from api.view_address import AddressViewSet
 from api.view_area import AreaViewSet
@@ -24,6 +25,12 @@ urlpatterns = patterns(
     url(r'^auth/', include('djoser.urls')),
     url(r'^register/', view_user.register,name='Registration'),
     url(r'^vendor_dashboard/', view_dashboard.vendor_dashboard, name='vendor_dashboard'),
+	url(r'^freshdesk/all_tickets', view_freshdesk.all_tickets, name='freshdesk_all_tickets'),
+	url(r'^freshdesk/groups', view_freshdesk.groups, name='freshdesk_groups'),
+	url(r'^freshdesk/create_ticket', view_freshdesk.create_ticket, name='freshdesk_create_ticket'),
+	url(r'^freshdesk/get_ticket', view_freshdesk.get_ticket, name='freshdesk_get_ticket'),
+	url(r'^freshdesk/add_note', view_freshdesk.add_note, name='freshdesk_add_note'),
+	url(r'^freshdesk/resolve', view_freshdesk.resolve, name='freshdesk_resolve'),
 )
 
 

@@ -11,6 +11,8 @@ TO_EMAIL_IDS = ['tech@yourguy.in','alay@yourguy.in', 'sameet@yourguy.in', 'winst
 GCM_PUSH_API_KEY = 'AIzaSyBTWgr5O4ooWYoFTryEii2xkyP9qRahWPo'
 GCM_SENDER_ID = '943077519707'
 
+FRESHDESK_BASEURL = 'https://yourguy.freshdesk.com'
+
 URL_EXPIRY_TIME = 300 #300 seconds
 
 SALES_EMAIL = ['sameet@yourguy.in', 'winston@yourguy.in']
@@ -25,7 +27,7 @@ ORDER_DELIVERED_MESSAGE_CLIENT = 'Your order has been {} to {} at {} - Team Your
 ORDER_APPROVED_MESSAGE_CLIENT = 'Your order for {} has been approved & QUEUED for delivery - Team YourGuy'
 ORDER_REJECTED_MESSAGE_CLIENT = 'Your order for {} has been rejected because of {} - Team YourGuy'
 ORDER_RESCHEDULED_MESSAGE_CLIENT = 'Your order for {} with order no {} has been rescheduled to {} - Team YourGuy'
-ORDER_CANCELLED_MESSAGE_CLIENT = 'Your order for {} with order no {} has been cancelled - Team YourGuy'
+ORDER_CANCELLED_MESSAGE_CLIENT = 'Your order for {} with order no {} has been canceled - Team YourGuy'
 
 VENDOR_ACCOUNT_REQUESTED_MESSAGE_SALES = "A New Vendor has requested for an account. \nPlease find the below details: \nStore Name:{} \nPhone Number: {} \nEmail: {} \nAddress : {}, {}, {}, {} \nApproval link:{}"
 VENDOR_ACCOUNT_APPROVED_MESSAGE = 'Your account has been approved. \n http://app.yourguy.in \nPlease login using following credentials: \nUsername:{} \nPassword:{} - Team YourGuy'
