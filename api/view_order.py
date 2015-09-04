@@ -639,15 +639,12 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['post'])
     def picked_up(self, request, pk=None):
-        dg = get_object_or_404(DeliveryGuy, user = request.user)
-        order = get_object_or_404(Order, pk = pk)        
-
+        order = get_object_or_404(Order, pk = pk)
         order.order_status = constants.ORDER_STATUS_INTRANSIT
-        order.delivery_guy = dg
 
         pop = request.data.get('pop')
 
-        # PICKEDUP DATE TIME
+        # PICKEDUP DATE TIME =============
         pickedup_datetime_string = request.data.get('pickedup_datetime')
         if pickedup_datetime_string is not None:
             pickedup_datetime = parse_datetime(pickedup_datetime_string) 
@@ -680,23 +677,24 @@ class OrderViewSet(viewsets.ModelViewSet):
             if delivery_status.date.date() == pickedup_datetime.date():
                 delivery_status.order_status = constants.ORDER_STATUS_INTRANSIT
                 delivery_status.pickedup_datetime = pickedup_datetime
+                
+                # UPDATE DG STATUS ==========
+                dg = delivery_status.delivery_guy
+                if dg is not None:
+                    dg.status = constants.DG_STATUS_BUSY
+                    dg.save()
+                    # TODO: update_pending_count(dg)
+                
                 if new_pop is not None:
                     delivery_status.pickup_proof = new_pop
                 delivery_status.save()
                 break
-
-        # UPDATE DG STATUS ======
-        dg.status = constants.DG_STATUS_BUSY
-        dg.save()
-        update_pending_count(dg)
-
+        
         content = {'description': 'Order updated'}
         return Response(content, status = status.HTTP_200_OK)
 
     @detail_route(methods=['post'])
-    def delivered(self, request, pk=None):
-
-        dg = get_object_or_404(DeliveryGuy, user = request.user)
+    def delivered(self, request, pk=None):        
         order = get_object_or_404(Order, pk = pk)        
 
         latitude = request.data.get('latitude')
@@ -756,12 +754,14 @@ class OrderViewSet(viewsets.ModelViewSet):
                 if new_pod is not None:
                     delivery_status.delivery_proof = new_pod    
                 delivery_status.save()
-                break
 
-        # UPDATE DG STATUS
-        dg.status = constants.DG_STATUS_AVAILABLE
-        dg.save()
-        update_pending_count(dg)
+                # UPDATE DG STATUS ==========
+                dg = delivery_status.delivery_guy
+                if dg is not None:
+                    dg.status = constants.DG_STATUS_AVAILABLE
+                    dg.save()
+                    # TODO: update_pending_count(dg)
+                break
 
         # CONFIRMATION MESSAGE TO CUSTOMER
         message = constants.ORDER_DELIVERED_MESSAGE_CLIENT.format(order_status, order.consumer.user.first_name, delivered_at)
