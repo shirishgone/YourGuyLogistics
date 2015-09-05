@@ -14,6 +14,22 @@ from yourguy.models import Consumer, Vendor, VendorAgent, Address, Area
 from api.views import user_role
 
 import datetime
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+import constants
+
+def paginate(list, page):    
+    paginator = Paginator(list, constants.PAGINATION_PAGE_SIZE) # Show 25 contacts per page
+    try:
+        customers = paginator.page(page)
+    except PageNotAnInteger:
+        # If page is not an integer, deliver first page.
+        customers = paginator.page(1)
+    except EmptyPage:
+        # If page is out of range (e.g. 9999), deliver last page of results.
+        customers = paginator.page(paginator.num_pages)
+
+    return customers.object_list
+        
 class ConsumerViewSet(viewsets.ModelViewSet):
     """
     Consumer viewset that provides the standard actions 
@@ -23,44 +39,45 @@ class ConsumerViewSet(viewsets.ModelViewSet):
     queryset = Consumer.objects.all()
 
     def list(self, request):
+        page = self.request.QUERY_PARAMS.get('page', None)
+
         role = user_role(request.user)
         if role == 'vendor':
             vendor_agent = get_object_or_404(VendorAgent, user = request.user)
             consumers_of_vendor = Consumer.objects.filter(associated_vendor = vendor_agent.vendor).order_by(Lower('user__first_name'))
-
-            start_time = str(datetime.datetime.now())
 
             result = []
             for consumer in consumers_of_vendor:
                 result_consumer = {
                 "id":consumer.id,
                 "name":consumer.user.first_name,
-                "phone_number":consumer.user.username
+                "phone_number":consumer.user.username,
+                "addresses":[]
                 }
-                # all_addresses = consumer.addresses.all()
-                # for address in all_addresses:
-                #     ad = {
-                #         "id":address.id,
-                #         "flat":address.flat_number,
-                #         "building":address.building,
-                #         "street":address.street,
-                #         "landmark":address.landmark,
-                #         "pin_code":address.pin_code,
-                #         "area_name":address.area.area_name,
-                #         "area_code":address.area.area_code
-                #     }
-                #     result_consumer['address'] = ad
-                                
-                result.append(result_consumer)
-            
-            end_time = str(datetime.datetime.now())
 
-            final_response = {
-            "start_time":start_time,
-            "end_time":end_time,
-            "data":result
-            }
-            return Response(json.dumps(final_response), status = status.HTTP_200_OK)
+                all_addresses = consumer.addresses.all()
+                for address in all_addresses:
+                    adr = {
+                        "id":address.id,
+                        "flat":address.flat_number,
+                        "building":address.building,
+                        "street":address.street,
+                        "landmark":address.landmark,
+                        "pin_code":address.pin_code
+                    }
+                    area = address.area
+                    if area is not None:
+                        adr["area_name"] = address.area.area_name
+                        adr["area_code"] = address.area.area_code
+                    else:
+                        adr["area_name"] = None
+                        adr["area_code"] = None
+
+                    result_consumer['addresses'].append(adr)
+                result.append(result_consumer)
+        
+            customers = paginate(result, page)
+            return Response(customers, status = status.HTTP_200_OK)
         else:
             content = {'error':'You dont have permissions to view all Consumers'}
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
