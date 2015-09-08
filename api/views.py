@@ -163,6 +163,11 @@ def ist_day_end(date):
     day_end = datetime.combine(date, time()).replace(hour=23, minute=59, second=59)
     return day_end - ist_timedelta
 
+def ist_datetime(datetime):
+    ist_timedelta = time_delta()
+    #day_start = datetime.combine(date, time()).replace(hour=0, minute=0, second=0)
+    return datetime + ist_timedelta
+
 # =============
 
 def normalize_offset_awareness(dt, from_dt=None):

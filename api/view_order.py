@@ -14,7 +14,7 @@ from yourguy.models import ProofOfDelivery, Picture
 from datetime import datetime, timedelta, time
 from api.serializers import OrderSerializer
 from api.views import user_role, is_userexists, is_vendorexists, is_consumerexists, is_dgexists, is_address_exists, days_in_int, send_sms, normalize_offset_awareness
-from api.views import ist_day_start, ist_day_end
+from api.views import ist_day_start, ist_day_end, ist_datetime
 
 import constants
 from itertools import chain
@@ -839,7 +839,9 @@ class OrderViewSet(viewsets.ModelViewSet):
             # SMS to Delivery Guy =======
             try:
                 pickup_date_string = date.strftime("%b%d")
-                pickup_time_string = order.pickup_datetime.time().strftime("%H:%M%p")
+                
+                ist_date_time = ist_datetime(order.pickup_datetime)
+                pickup_time_string = ist_date_time.time().strftime("%H:%M%p")
                 pickup_total_string = "%s,%s" % (pickup_date_string, pickup_time_string)
 
                 message = 'New Order:{},Pickup:{},Client:{},Cust:{},{},{},COD:{}'.format(order.id, 
