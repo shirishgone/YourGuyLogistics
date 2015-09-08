@@ -539,6 +539,9 @@ class OrderViewSet(viewsets.ModelViewSet):
                     content = {'error':'Pickup time not acceptable', 'description':'Pickup time can only be between 5.30AM to 10.00PM'}
                     return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
+                delivery_timedelta = timedelta(hours = 3, minutes = 0)
+                delivery_datetime = pickup_datetime + delivery_timedelta
+
             except Exception, e:
                 content = {'error':'Error parsing dates'}
                 return Response(content, status = status.HTTP_400_BAD_REQUEST)
@@ -586,6 +589,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                                                 pickup_address = pickup_address, 
                                                 delivery_address = delivery_address, 
                                                 pickup_datetime = pickup_datetime, 
+                                                delivery_datetime = delivery_datetime,
                                                 vendor_order_id = vendor_order_id)
                 
                 if cod_amount is not None and float(cod_amount) > 0:
