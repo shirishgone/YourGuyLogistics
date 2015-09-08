@@ -841,7 +841,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                 pickup_date_string = date.strftime("%b%d")
                 
                 ist_date_time = ist_datetime(order.pickup_datetime)
-                pickup_time_string = ist_date_time.time().strftime("%H:%M%p")
+                pickup_time_string = ist_date_time.time().strftime("%I:%M%p")
                 pickup_total_string = "%s,%s" % (pickup_date_string, pickup_time_string)
 
                 message = 'New Order:{},Pickup:{},Client:{},Cust:{},{},{},COD:{}'.format(order.id, 
