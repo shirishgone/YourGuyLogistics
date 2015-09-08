@@ -38,6 +38,12 @@ def update_pending_count(dg):
         print e
         pass
 
+def is_pickup_time_acceptable(datetime):
+    if time(0, 0) <= datetime.time() <= time(16, 30):
+        return True
+    else:
+        return False
+
 def delivery_status_of_the_day(order, date):
     delivery_item = None
     if order.is_recurring is False:
@@ -197,12 +203,17 @@ class OrderViewSet(viewsets.ModelViewSet):
         except Exception, e:
             content = {'error':'Incomplete params', 'description':'pickup_datetime, delivery_datetime, order_items, pickup_address_id, delivery_address_id , vendor_id, consumer_id, product_id, quantity, total_cost'}
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
-
+        
         try:
             vendor = get_object_or_404(Vendor, pk = vendor_id)
             pickup_address = get_object_or_404(Address, pk = pickup_address_id)
 
             pickup_datetime = parse_datetime(pickup_datetime)
+            
+            if is_pickup_time_acceptable(pickup_datetime) is False:
+                content = {'error':'Pickup time not acceptable', 'description':'Pickup time can only be between 5.30AM to 10.00PM'}
+                return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
             delivery_datetime = parse_datetime(delivery_datetime)
 
         except Exception, e:
@@ -347,6 +358,10 @@ class OrderViewSet(viewsets.ModelViewSet):
                 return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
             pickup_datetime = parse_datetime(pickup_datetime)
+            if is_pickup_time_acceptable(pickup_datetime) is False:
+                content = {'error':'Pickup time not acceptable', 'description':'Pickup time can only be between 5.30AM to 10.00PM'}
+                return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
             delivery_datetime = parse_datetime(delivery_datetime)
 
         except Exception, e:
@@ -520,6 +535,10 @@ class OrderViewSet(viewsets.ModelViewSet):
                     return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
                 pickup_datetime = parse_datetime(pickup_datetime)
+                if is_pickup_time_acceptable(pickup_datetime) is False:
+                    content = {'error':'Pickup time not acceptable', 'description':'Pickup time can only be between 5.30AM to 10.00PM'}
+                    return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
             except Exception, e:
                 content = {'error':'Error parsing dates'}
                 return Response(content, status = status.HTTP_400_BAD_REQUEST)

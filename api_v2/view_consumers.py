@@ -13,22 +13,11 @@ from rest_framework.response import Response
 from yourguy.models import Consumer, Vendor, VendorAgent, Address, Area
 from api.views import user_role
 
+from api_v2.views import paginate
+
 import datetime
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 import constants
-
-def paginate(list, page):    
-    paginator = Paginator(list, constants.PAGINATION_PAGE_SIZE) # Show 25 contacts per page
-    try:
-        customers = paginator.page(page)
-    except PageNotAnInteger:
-        # If page is not an integer, deliver first page.
-        customers = paginator.page(1)
-    except EmptyPage:
-        # If page is out of range (e.g. 9999), deliver last page of results.
-        customers = paginator.page(paginator.num_pages)
-
-    return customers.object_list
         
 class ConsumerViewSet(viewsets.ModelViewSet):
     """
