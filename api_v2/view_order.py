@@ -17,6 +17,7 @@ from api_v2.views import paginate
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 import constants
 from datetime import datetime, timedelta, time
+import math
 
 
 def delivery_status_of_the_day(order, date):
@@ -156,6 +157,8 @@ class OrderViewSet(viewsets.ViewSet):
                 area = get_object_or_404(Area, area_code = area_code)
                 queryset = queryset.filter(delivery_address__area=area)
 
+        total_orders_count = len(queryset)
+        total_pages =  int(total_orders_count/constants.PAGINATION_PAGE_SIZE) + 1
         orders = paginate(queryset, page)
         
         # UPDATING DELIVERY STATUS OF THE DAY
@@ -165,4 +168,5 @@ class OrderViewSet(viewsets.ViewSet):
             if order is not None:
                 result.append(order)        
         
-        return Response(result, status = status.HTTP_200_OK)        
+        response_content = { "data": result, "total_pages": total_pages }
+        return Response(response_content, status = status.HTTP_200_OK)

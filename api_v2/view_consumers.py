@@ -65,8 +65,11 @@ class ConsumerViewSet(viewsets.ModelViewSet):
                     result_consumer['addresses'].append(adr)
                 result.append(result_consumer)
         
+            total_customers_count = len(result)
+            total_pages =  int(total_customers_count/constants.PAGINATION_PAGE_SIZE) + 1
             customers = paginate(result, page)
-            return Response(customers, status = status.HTTP_200_OK)
+            response_content = { "data": customers, "total_pages": total_pages }
+            return Response(response_content, status = status.HTTP_200_OK)
         else:
             content = {'error':'You dont have permissions to view all Consumers'}
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
