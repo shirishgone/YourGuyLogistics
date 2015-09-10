@@ -28,6 +28,9 @@ import requests
 from boto.s3.connection import S3Connection
 import os
 
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+
+
 def paginate(list, page):    
     paginator = Paginator(list, constants.PAGINATION_PAGE_SIZE) # Show 25 contacts per page
     try:
