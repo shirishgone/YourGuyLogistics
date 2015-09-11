@@ -33,10 +33,15 @@ class ConsumerViewSet(viewsets.ModelViewSet):
         role = user_role(request.user)
         if role == 'vendor':
             vendor_agent = get_object_or_404(VendorAgent, user = request.user)
-            consumers_of_vendor = Consumer.objects.filter(associated_vendor = vendor_agent.vendor).order_by(Lower('user__first_name'))
+            total_consumers_of_vendor = Consumer.objects.filter(associated_vendor = vendor_agent.vendor).order_by(Lower('user__first_name'))
+        
+            # PAGINATE ========
+            customers = paginate(total_consumers_of_vendor, page)
+            total_customers_count = len(total_consumers_of_vendor)
+            total_pages =  int(total_customers_count/constants.PAGINATION_PAGE_SIZE) + 1
 
             result = []
-            for consumer in consumers_of_vendor:
+            for consumer in customers:
                 result_consumer = {
                 "id":consumer.id,
                 "name":consumer.user.first_name,
@@ -65,10 +70,7 @@ class ConsumerViewSet(viewsets.ModelViewSet):
                     result_consumer['addresses'].append(adr)
                 result.append(result_consumer)
         
-            total_customers_count = len(result)
-            total_pages =  int(total_customers_count/constants.PAGINATION_PAGE_SIZE) + 1
-            customers = paginate(result, page)
-            response_content = { "data": customers, "total_pages": total_pages }
+            response_content = { "data": result, "total_pages": total_pages }
             return Response(response_content, status = status.HTTP_200_OK)
         else:
             content = {'error':'You dont have permissions to view all Consumers'}
