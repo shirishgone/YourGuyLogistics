@@ -32,11 +32,20 @@ def vendor_dashboard(request):
 	try:
 		start_date_string = request.data['start_date']
 		end_date_string = request.data['end_date']	
+		vendor_id = request.data.get('vendor_id')
 		
+		# CHECK IF VENDOR WITH ID EXISTS
+		if vendor_id is not None:
+			try:
+				vendor = get_object_or_404(Vendor, pk = vendor_id)
+			except Exception, e:
+				content = {'error':'Invalid vendor_id'}
+				return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
 		start_date = parse_datetime(start_date_string)
 		end_date = parse_datetime(end_date_string)
 	except Exception, e:
-		content = {'error':'Missing params. start_date and end_date'}
+		content = {'error':'Error in params: start_date, end_date'}
 		return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
 	role = user_role(request.user)
@@ -57,25 +66,31 @@ def vendor_dashboard(request):
 		if role == constants.VENDOR:
 			vendor_agent = get_object_or_404(VendorAgent, user = request.user)
 			vendor = vendor_agent.vendor
-			queryset = OrderDeliveryStatus.objects.filter(order__vendor__id = vendor.id, date__gte = start_date, date__lte = end_date)
-			new_consumers_count = Consumer.objects.filter(associated_vendor = vendor, user__date_joined__gte = start_date, user__date_joined__lte = end_date).count()		
+			queryset_orders = OrderDeliveryStatus.objects.filter(order__vendor__id = vendor.id, date__gte = start_date, date__lte = end_date)
+			queryset_consumers = Consumer.objects.filter(associated_vendor = vendor, user__date_joined__gte = start_date, user__date_joined__lte = end_date)		
 		elif role == constants.OPERATIONS:
-			queryset = OrderDeliveryStatus.objects.filter(date__gte = start_date, date__lte = end_date)
-			new_consumers_count = Consumer.objects.filter(user__date_joined__gte = start_date, user__date_joined__lte = end_date).count()
+			queryset_orders = OrderDeliveryStatus.objects.filter(date__gte = start_date, date__lte = end_date)
+			queryset_consumers = Consumer.objects.filter(user__date_joined__gte = start_date, user__date_joined__lte = end_date)
+			if vendor_id is not None:
+				queryset_orders = queryset_orders.filter(order__vendor__id = vendor_id)
+				queryset_consumers = queryset_consumers.filter(associated_vendor__id = vendor_id)
+		
 		else:
 			content = {'error':'You dont have permissions.'}
 			return Response(content, status = status.HTTP_400_BAD_REQUEST)
 		
-		total_orders_placed = queryset.count()
-		cancelled_queryset = queryset.filter(Q(order_status='CANCELLED') | Q(order_status='REJECTED'))
+		total_orders_placed = queryset_orders.count()
+		cancelled_queryset = queryset_orders.filter(Q(order_status='CANCELLED') | Q(order_status='REJECTED'))
 		total_orders_cancelled = cancelled_queryset.count()
 
-		delivered_queryset = queryset.filter(Q(order_status='DELIVERED') | Q(order_status='ATTEMPTED'))
+		delivered_queryset = queryset_orders.filter(Q(order_status='DELIVERED') | Q(order_status='ATTEMPTED'))
 		total_orders_delivered = delivered_queryset.count()
+
+		new_consumers_count = queryset_consumers.count()
 
 		# FOR ORDER COUNT FOR INDIVIDUAL DATES ==================
 		for date in alldates:
-			delivery_status_per_date = queryset.filter(date__year = date.year, 
+			delivery_status_per_date = queryset_orders.filter(date__year = date.year, 
 				date__month = date.month, 
 				date__day = date.day)
 			orders_placed_count = delivery_status_per_date.count()
