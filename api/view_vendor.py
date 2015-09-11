@@ -75,6 +75,23 @@ class VendorViewSet(viewsets.ModelViewSet):
     	return Response(content, status = status.HTTP_201_CREATED)
 
     @list_route()
+    def all_vendor_emails(self, request):
+        role = user_role(request.user)
+        if role == constants.OPERATIONS:
+            vendors = Vendor.objects.filter(verified=True)
+            all_emails = ''
+            for vendor in vendors:
+                all_emails = all_emails + vendor.email
+                all_emails = all_emails + ','
+            
+            content = { 'all_emails':all_emails }
+            return Response(content, status = status.HTTP_200_OK)
+        else:
+            content = {'error':'No permissions', 'description':'You dont have permissions to access this.'}
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+  
+    
+    @list_route()
     def requestedvendors(self, request):
         vendors = Vendor.objects.filter(verified=False)
         serializer = VendorSerializer(vendors, many=True)
