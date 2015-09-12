@@ -344,6 +344,9 @@ class OrderViewSet(viewsets.ModelViewSet):
             
             cod_amount = request.data.get('cod_amount')
             notes = request.data.get('notes')
+            
+            is_reverse_pickup = request.data.get('is_reverse_pickup')
+
         except Exception, e:
             content = {'error':'Incomplete params', 'description':'pickup_datetime, delivery_datetime, customer_name, customer_phone_number, pickup_address, delivery_address , product_id, quantity, total_cost'}
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
@@ -378,7 +381,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             pickup_address = is_address_exists(pickup_flat_number, pickup_building, pickup_street, pickup_landmark, pickup_pin_code)
             if pickup_address is None:
                 pickup_address = Address.objects.create(flat_number = pickup_flat_number, 
-                    building = pickup_flat_number, 
+                    building = pickup_building, 
                     street = pickup_street, 
                     landmark = pickup_landmark, 
                     pin_code = pickup_pin_code)
@@ -434,7 +437,14 @@ class OrderViewSet(viewsets.ModelViewSet):
                 consumer = Consumer.objects.create(user = user)
                 consumer.associated_vendor.add(vendor)
 
-            consumer.addresses.add(delivery_address)
+            if is_reverse_pickup is not None:
+                if is_reverse_pickup is True:
+                    consumer.addresses.add(pickup_address)
+                    vendor.addresses.add(delivery_address)
+                else:
+                    consumer.addresses.add(delivery_address)
+                    vendor.addresses.add(pickup_address)
+                
             new_order = Order.objects.create(created_by_user = request.user, 
                                             vendor = vendor, 
                                             consumer = consumer, 
