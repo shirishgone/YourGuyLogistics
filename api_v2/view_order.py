@@ -18,6 +18,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 import constants
 from datetime import datetime, timedelta, time
 import math
+import pytz
 
 
 def delivery_status_of_the_day(order, date):
@@ -47,8 +48,12 @@ def address_string(address):
 def update_daily_status(order, date):
     delivery_status = delivery_status_of_the_day(order, date)
     if delivery_status is not None:
-        new_pickup_datetime = datetime.combine(date.date(), order.pickup_datetime.time())
-        new_delivery_datetime = datetime.combine(date.date(), order.delivery_datetime.time())
+        
+        new_pickup_datetime = datetime.combine(date, order.pickup_datetime.time())
+        new_pickup_datetime = pytz.utc.localize(new_pickup_datetime)
+
+        new_delivery_datetime = datetime.combine(date, order.delivery_datetime.time())
+        new_delivery_datetime = pytz.utc.localize(new_delivery_datetime)
 
         res_order = {
             'id' : order.id,

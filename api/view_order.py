@@ -21,7 +21,7 @@ from itertools import chain
 import json
 from api.push import send_push
 from dateutil.rrule import rrule, WEEKLY
-from pytz import timezone
+import pytz
 
 def update_pending_count(dg):
     try:
@@ -59,9 +59,14 @@ def delivery_status_of_the_day(order, date):
 
 def update_daily_status(order, date):
     delivery_status = delivery_status_of_the_day(order, date)
-    if delivery_status is not None:
-        new_pickup_datetime = datetime.combine(date.date(), order.pickup_datetime.time())
-        new_delivery_datetime = datetime.combine(date.date(), order.delivery_datetime.time())
+    if delivery_status is not None:    
+        
+        new_pickup_datetime = datetime.combine(date, order.pickup_datetime.time())
+        new_pickup_datetime = pytz.utc.localize(new_pickup_datetime)
+
+        new_delivery_datetime = datetime.combine(date, order.delivery_datetime.time())
+        new_delivery_datetime = pytz.utc.localize(new_delivery_datetime)
+        
         order.pickup_datetime = new_pickup_datetime
         order.delivery_datetime = new_delivery_datetime
 
