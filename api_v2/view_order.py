@@ -44,15 +44,16 @@ def address_string(address):
         print e
         return ''
     
-
 def update_daily_status(order, date):
     delivery_status = delivery_status_of_the_day(order, date)
     if delivery_status is not None:
+        new_pickup_datetime = datetime.combine(date.date(), order.pickup_datetime.time())
+        new_delivery_datetime = datetime.combine(date.date(), order.delivery_datetime.time())
 
         res_order = {
             'id' : order.id,
-            'pickup_datetime' : order.pickup_datetime,
-            'delivery_datetime' : order.delivery_datetime,
+            'pickup_datetime' : new_pickup_datetime,
+            'delivery_datetime' : new_delivery_datetime,
             'pickup_address':address_string(order.pickup_address),
             'delivery_address':address_string(order.delivery_address),
             'status' : delivery_status.order_status,
