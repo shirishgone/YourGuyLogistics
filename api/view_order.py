@@ -60,6 +60,11 @@ def delivery_status_of_the_day(order, date):
 def update_daily_status(order, date):
     delivery_status = delivery_status_of_the_day(order, date)
     if delivery_status is not None:
+        new_pickup_datetime = datetime.combine(date.date(), order.pickup_datetime.time())
+        new_delivery_datetime = datetime.combine(date.date(), order.delivery_datetime.time())
+        order.pickup_datetime = new_pickup_datetime
+        order.delivery_datetime = new_delivery_datetime
+
         order.delivered_at = delivery_status.delivered_at
         order.pickedup_datetime = delivery_status.pickedup_datetime
         order.completed_datetime = delivery_status.completed_datetime
@@ -336,7 +341,8 @@ class OrderViewSet(viewsets.ModelViewSet):
     
             pickup_address = request.data['pickup_address']
             delivery_address = request.data['delivery_address']
-
+            is_reverse_pickup = request.data['is_reverse_pickup']            
+            
             order_items = request.data['order_items']
 
             total_cost = request.data.get('total_cost')
@@ -344,11 +350,9 @@ class OrderViewSet(viewsets.ModelViewSet):
             
             cod_amount = request.data.get('cod_amount')
             notes = request.data.get('notes')
-            
-            is_reverse_pickup = request.data.get('is_reverse_pickup')
 
         except Exception, e:
-            content = {'error':'Incomplete params', 'description':'pickup_datetime, delivery_datetime, customer_name, customer_phone_number, pickup_address, delivery_address , product_id, quantity, total_cost'}
+            content = {'error':'Incomplete params', 'description':'pickup_datetime, delivery_datetime, customer_name, customer_phone_number, pickup_address, delivery_address , product_id, quantity, total_cost, is_reverse_pickup'}
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
         try:
@@ -437,13 +441,12 @@ class OrderViewSet(viewsets.ModelViewSet):
                 consumer = Consumer.objects.create(user = user)
                 consumer.associated_vendor.add(vendor)
 
-            if is_reverse_pickup is not None:
-                if is_reverse_pickup is True:
-                    consumer.addresses.add(pickup_address)
-                    vendor.addresses.add(delivery_address)
-                else:
-                    consumer.addresses.add(delivery_address)
-                    vendor.addresses.add(pickup_address)
+            if is_reverse_pickup is True:
+                consumer.addresses.add(pickup_address)
+                vendor.addresses.add(delivery_address)
+            else:
+                consumer.addresses.add(delivery_address)
+                vendor.addresses.add(pickup_address)
                 
             new_order = Order.objects.create(created_by_user = request.user, 
                                             vendor = vendor, 
@@ -451,7 +454,8 @@ class OrderViewSet(viewsets.ModelViewSet):
                                             pickup_address = pickup_address, 
                                             delivery_address = delivery_address, 
                                             pickup_datetime = pickup_datetime, 
-                                            delivery_datetime = delivery_datetime)
+                                            delivery_datetime = delivery_datetime,
+                                            is_reverse_pickup = is_reverse_pickup)
             
             if notes is not None:
                 new_order.notes = notes
@@ -466,17 +470,21 @@ class OrderViewSet(viewsets.ModelViewSet):
             if total_cost is not None:
                 new_order.total_cost = total_cost
 
-            # ORDER ITEMS =====
-            for item in order_items:
-                product_id = item['product_id']
-                quantity = item ['quantity']
-                product = get_object_or_404(Product, pk = product_id)
-                order_item = OrderItem.objects.create(product = product, quantity = quantity)
-                new_order.order_items.add(order_item)
-            
             for date in delivery_dates:
                 delivery_status = OrderDeliveryStatus.objects.create(date = date)
                 new_order.delivery_status.add(delivery_status)
+
+            # ORDER ITEMS =====
+            try:
+                for item in order_items:
+                    product_id = item['product_id']
+                    quantity = item ['quantity']
+                    product = get_object_or_404(Product, pk = product_id)
+                    order_item = OrderItem.objects.create(product = product, quantity = quantity)
+                    new_order.order_items.add(order_item)
+            except Exception, e:
+                print 'product_id is incorrect'
+                pass
             
             new_order.save()
 
