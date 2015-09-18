@@ -23,16 +23,14 @@ import pytz
 
 def delivery_status_of_the_day(order, date):
     delivery_item = None
-    if order.is_recurring is False:
-        delivery_item = order.delivery_status.latest('date')
-    else:
-        delivery_statuses = order.delivery_status.all()
-        for delivery_status in delivery_statuses:
-            if date.date() == delivery_status.date.date():
-                delivery_item = delivery_status
-                break
-
+    
+    for delivery_status in order.delivery_status.all():
+        if date.date() == delivery_status.date.date():
+            delivery_item = delivery_status
+            break            
+    
     return delivery_item    
+
 
 def address_string(address):
     try:
