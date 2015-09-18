@@ -154,10 +154,9 @@ class OrderViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
 
     def retrieve(self, request, pk=None):
-        
         order = get_object_or_404(Order, id = pk)
 
-        # Access check for vendors
+        # VENDOR PERMISSION CHECK ==============
         role = user_role(request.user)
         if role == 'vendor':
             vendor_agent = get_object_or_404(VendorAgent, user = request.user)
@@ -166,16 +165,12 @@ class OrderViewSet(viewsets.ViewSet):
                 content = {'error':'Access privileges', 'description':'You cant access other vendor orders'}
                 return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
-        #TODO: Filter objects according to the permissions e.g VendorA shouldn't see orders of VendorB
         date_string = self.request.QUERY_PARAMS.get('date', None)
-        if order.is_recurring is True:
-            if date_string is None:
-                content = {'error':'Insufficient params', 'description':'For recurring orders, date param in url is compulsory'}
-                return Response(content, status = status.HTTP_400_BAD_REQUEST)
-            else:
-                date = parse_datetime(date_string)   
+        if date_string is None:
+            content = {'error':'Insufficient params', 'description':'For recurring orders, date param in url is compulsory'}
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
         else:
-            date = order.pickup_datetime
+            date = parse_datetime(date_string)   
         
         result  = order_details(order, date)
         return Response(result, status = status.HTTP_200_OK)        
