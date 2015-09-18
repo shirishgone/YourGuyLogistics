@@ -229,5 +229,5 @@ class OrderViewSet(viewsets.ViewSet):
             if order is not None:
                 result.append(order)        
         
-        response_content = { "data": result, "total_pages": total_pages }
+        response_content = { "data": result, "total_pages": total_pages, "total_orders" : total_orders_count}
         return Response(response_content, status = status.HTTP_200_OK)
