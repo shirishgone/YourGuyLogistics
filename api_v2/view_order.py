@@ -190,6 +190,7 @@ class OrderViewSet(viewsets.ViewSet):
         dg_phone_number = request.QUERY_PARAMS.get('dg_username', None)
         page = request.QUERY_PARAMS.get('page', None)
         date_string = request.QUERY_PARAMS.get('date', None)
+        order_id = request.QUERY_PARAMS.get('order_id', None)
 
         if date_string is not None:
             date = parse_datetime(date_string)
@@ -215,6 +216,9 @@ class OrderViewSet(viewsets.ViewSet):
                 date__lte = day_end)
 
             queryset = Order.objects.filter(delivery_status__in = delivery_statuses).order_by('pickup_datetime')
+            if order_id is not None:
+                queryset = queryset.filter(id = order_id)
+                
         else:
             queryset = Order.objects.filter(delivery_status__date__gte = day_start,
                 delivery_status__date__lte = day_end)
@@ -231,6 +235,9 @@ class OrderViewSet(viewsets.ViewSet):
             if area_code is not None:
                 area = get_object_or_404(Area, area_code = area_code)
                 queryset = queryset.filter(delivery_address__area=area)
+
+            if order_id is not None:
+                queryset = queryset.filter(id = order_id)
 
         total_orders_count = len(queryset)
         total_pages =  int(total_orders_count/constants.PAGINATION_PAGE_SIZE) + 1
