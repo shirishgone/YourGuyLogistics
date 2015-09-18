@@ -125,7 +125,21 @@ def update_daily_status(order, date):
         }
 
         if delivery_status.delivery_guy is not None:
-            res_order['dg_name'] = delivery_status.delivery_guy.user.first_name
+            res_order['deliveryguy_name'] = delivery_status.delivery_guy.user.first_name
+            res_order['deliveryguy_phonenumber'] = delivery_status.delivery_guy.user.username
+        else:
+            res_order['deliveryguy_name'] = None
+            res_order['deliveryguy_phonenumber'] = None
+        
+        order_items_array = []
+        for order_item in order.order_items.all():
+            order_item_obj = {}
+            order_item_obj['product_name'] = order_item.product.name
+            order_item_obj['quantity'] = order_item.quantity
+            order_item_obj['cost'] = order_item.cost
+            order_items_array.append(order_item_obj)
+
+        res_order['order_items'] = order_items_array
 
         return res_order
     else:
