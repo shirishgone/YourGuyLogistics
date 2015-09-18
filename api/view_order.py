@@ -37,6 +37,8 @@ def can_user_update_this_order(order, user):
         vendor = vendor_agent.vendor
         if order.vendor == vendor:
             can_update_order = True
+    elif (role == constants.OPERATIONS):
+        can_update_order = True    
     return can_update_order
 
 def update_pending_count(dg):
