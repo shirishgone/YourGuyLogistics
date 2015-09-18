@@ -45,6 +45,61 @@ def address_string(address):
         print e
         return ''
     
+def order_details(order, date):
+    delivery_status = delivery_status_of_the_day(order, date)
+    if delivery_status is not None:
+        
+        new_pickup_datetime = datetime.combine(date, order.pickup_datetime.time())
+        new_pickup_datetime = pytz.utc.localize(new_pickup_datetime)
+
+        new_delivery_datetime = datetime.combine(date, order.delivery_datetime.time())
+        new_delivery_datetime = pytz.utc.localize(new_delivery_datetime)
+
+        res_order = {
+            'id' : order.id,
+            'pickup_datetime' : new_pickup_datetime,
+            'delivery_datetime' : new_delivery_datetime,
+            'pickup_address':address_string(order.pickup_address),
+            'delivery_address':address_string(order.delivery_address),
+            'status' : delivery_status.order_status,
+            'is_recurring' : order.is_recurring,
+            'cod_amount' : order.cod_amount,
+            'customer_name' : order.consumer.user.first_name,
+            'customer_phonenumber' : order.consumer.user.username,
+            'vendor_name' : order.vendor.store_name,
+            'delivered_at' : delivery_status.delivered_at,
+            
+            'order_placed_datetime': order.created_date_time,
+            'pickedup_datetime' : delivery_status.pickedup_datetime,
+            'completed_datetime' : delivery_status.completed_datetime,
+            'notes':order.notes,
+            'vendor_order_id':order.vendor_order_id,
+            'vendor_phonenumber':order.vendor.phone_number,
+            'total_cost':order.total_cost
+        }
+
+        if delivery_status.delivery_guy is not None:
+            res_order['deliveryguy_name'] = delivery_status.delivery_guy.user.first_name
+            res_order['deliveryguy_phonenumber'] = delivery_status.delivery_guy.user.username
+        else:
+            res_order['deliveryguy_name'] = None
+            res_order['deliveryguy_phonenumber'] = None
+
+        
+        order_items_array = []
+        for order_item in order.order_items.all():
+            order_item_obj = {}
+            order_item_obj['product_name'] = order_item.product.name
+            order_item_obj['quantity'] = order_item.quantity
+            order_item_obj['cost'] = order_item.cost
+            order_items_array.append(order_item_obj)
+
+        res_order['order_items'] = order_items_array
+        return res_order
+    else:
+        return None 
+
+
 def update_daily_status(order, date):
     delivery_status = delivery_status_of_the_day(order, date)
     if delivery_status is not None:
@@ -108,7 +163,7 @@ class OrderViewSet(viewsets.ViewSet):
         else:
             date = order.pickup_datetime
         
-        result  = update_daily_status(order, date)
+        result  = order_details(order, date)
         return Response(result, status = status.HTTP_200_OK)        
 
     def list(self, request):

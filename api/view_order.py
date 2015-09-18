@@ -23,6 +23,22 @@ from api.push import send_push
 from dateutil.rrule import rrule, WEEKLY
 import pytz
 
+def can_update_delivery_status(delivery_status):
+    if delivery_status.order_status == constants.ORDER_STATUS_PLACED or delivery_status.order_status == constants.ORDER_STATUS_QUEUED:
+        return True
+    else:
+        return False  
+
+def can_user_update_this_order(order, user):
+    can_update_order = False
+    role = user_role(user)
+    if (role == constants.VENDOR):
+        vendor_agent = get_object_or_404(VendorAgent, user = user)
+        vendor = vendor_agent.vendor
+        if order.vendor == vendor:
+            can_update_order = True
+    return can_update_order
+
 def update_pending_count(dg):
     try:
         today = datetime.now()
@@ -310,30 +326,10 @@ class OrderViewSet(viewsets.ModelViewSet):
             content = {'error':'Unable to create orders with the given details'}    
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
-    def destroy(self, request, pk):                
-        role = user_role(request.user)
-        order = get_object_or_404(Order, pk = pk)
-        
-        if (role == constants.VENDOR):
-            vendor_agent = get_object_or_404(VendorAgent, user = request.user)
-            vendor = vendor_agent.vendor
-            if order.vendor == vendor:
-                order.delete()
-            else:
-                content = {'description': 'You dont have permissions to delete this order.'}
-                return Response(content, status = status.HTTP_400_BAD_REQUEST)
-
-            content = {'description': 'Order deleted Successfully.'}
-            return Response(content, status = status.HTTP_200_OK)
-        
-        elif(role == constants.OPERATIONS):
-            order.delete()
-            content = {'description': 'Order deleted Successfully.'}
-            return Response(content, status = status.HTTP_200_OK)
-        else:
-            content = {'description': 'You dont have permissions to delete this order.'}
-            return Response(content, status = status.HTTP_400_BAD_REQUEST)
-
+    def destroy(self, request, pk):  
+        content = {'description': "Deleting an order is not allowed."}
+        return Response(content, status = status.HTTP_400_BAD_REQUEST)
+               
     @detail_route(methods=['post'])
     def place_order(self, request, pk):        
         
@@ -622,41 +618,22 @@ class OrderViewSet(viewsets.ModelViewSet):
                 delivery_status = OrderDeliveryStatus.objects.create(date = pickup_datetime)
                 new_order.delivery_status.add(delivery_status)
                 new_order.save()
-
             except Exception, e:
                 content = {'error':'Unable to create orders with the given details'}    
                 return Response(content, status = status.HTTP_400_BAD_REQUEST)
         
         content = {'message':'Your Orders has been placed.'}
         return Response(content, status = status.HTTP_201_CREATED)
-
-    @list_route(methods = ['get'])
-    def pause_for_the_day(self, request):
-        try:
-            order_ids_string = self.request.QUERY_PARAMS['order_ids']
-            order_ids = order_ids_string.split(',')
-        except Exception, e:
-            content = {'error': 'Order_ids is an array of order ids, is missing'}
-            return Response(content, status = status.HTTP_400_BAD_REQUEST)
-        
-        today = datetime.now()
-        
-        delete_orders = []
-        for order_id in order_ids:
-            order = get_object_or_404(Order, pk = order_id)
-            all_statuses = order.delivery_status.all()
-            for delivery_status in all_statuses:
-                if delivery_status.date.date() == today.date():
-                    delete_orders.append(delivery_status)
-                
-        for delivery_status in delete_orders:
-            delivery_status.delete()
-        content = {'description': 'Deleted Successfully'}
-        return Response(content, status = status.HTTP_200_OK)
     
     @detail_route(methods=['post'])
     def exclude_dates(self, request, pk):
+        role = user_role(request.user)
         order = get_object_or_404(Order, pk = pk)
+          
+        if can_user_update_this_order(order, request.user) is False:
+            content = {'description': "You don't have permissions to cancel this order."}
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
         try:
             exclude_dates = request.data['exclude_dates']    
         except Exception, e:
@@ -665,22 +642,27 @@ class OrderViewSet(viewsets.ModelViewSet):
 
         today = datetime.now()
 
-        is_deleted = False
+        is_canceled = False
         for exclude_date_string in exclude_dates:
             exclude_date = parse_datetime(exclude_date_string)
 
             all_deliveries = order.delivery_status.all()
             for delivery in all_deliveries:
                 if delivery.date.date() == exclude_date.date() and exclude_date.date() >= today.date():
-                    delivery.delete()
-                    is_deleted = True
-                    break
+                    if can_update_delivery_status(delivery):
+                        delivery.order_status = constants.ORDER_STATUS_CANCELLED
+                        delivery.save()
+                        is_canceled = True
+                        break
+                    else:
+                        content = {'description': "The order has already been processed, cant cancel now."}
+                        return Response(content, status = status.HTTP_400_BAD_REQUEST)
         
-        if is_deleted is True:
-            content = {'description': 'Deleted Successfully'}
+        if is_canceled is True:
+            content = {'description': 'Order canceled successfully'}
             return Response(content, status = status.HTTP_200_OK)
         else:
-            content = {'error': 'Date not found or past date cant be deleted'}
+            content = {'error': 'Date not found or past date cant be canceled'}
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
     @detail_route(methods=['post'])
@@ -935,28 +917,37 @@ class OrderViewSet(viewsets.ModelViewSet):
     def cancel(self, request, pk):
         try:
             date_string = request.data['date']
+            date = parse_datetime(date_string)
         except Exception, e:
             content = {'error':'Incomplete params', 'description':'date'}
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
-        
-        date = parse_datetime(date_string)
-                
-        is_cancelled = False
+
         order = get_object_or_404(Order, id = pk)
+        if can_user_update_this_order(order, request.user) is False:
+            content = {'error': "You don't have permissions to cancel this order."}
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
+        is_cancelled = False
         delivery_statuses = order.delivery_status.all()
+        
         for delivery_status in delivery_statuses:
             if delivery_status.date.date() == date.date():
-                delivery_status.order_status = constants.ORDER_STATUS_CANCELLED
-                delivery_status.save()
-                is_cancelled = True
-                break
+                if can_update_delivery_status(delivery_status):
+                    delivery_status.order_status = constants.ORDER_STATUS_CANCELLED
+                    delivery_status.save()
+                    is_cancelled = True
+                    break
+                else:
+                    content = {'error': "The order has already been processed, now you cant update the status."}
+                    return Response(content, status = status.HTTP_400_BAD_REQUEST)
         
         if is_cancelled:
             message = constants.ORDER_CANCELLED_MESSAGE_CLIENT.format(order.consumer.user.first_name, order.id)
             send_sms(order.vendor.phone_number, message)
-            return Response(status = status.HTTP_200_OK)
+            content = {'description':'Order has been canceled'}
+            return Response(content, status = status.HTTP_200_OK)
         else:
-            content = {'error':'Reschedule unsuccessful'}
+            content = {'error':'Order cancellation failed'}
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
     @detail_route(methods=['post'])
