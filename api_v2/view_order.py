@@ -102,11 +102,17 @@ def update_daily_status(order, date):
     delivery_status = delivery_status_of_the_day(order, date)
     if delivery_status is not None:
         
-        new_pickup_datetime = datetime.combine(date, order.pickup_datetime.time())
-        new_pickup_datetime = pytz.utc.localize(new_pickup_datetime)
+        if order.pickup_datetime is not None:
+            new_pickup_datetime = datetime.combine(date, order.pickup_datetime.time())
+            new_pickup_datetime = pytz.utc.localize(new_pickup_datetime)
+        else:
+            new_pickup_datetime = None
 
-        new_delivery_datetime = datetime.combine(date, order.delivery_datetime.time())
-        new_delivery_datetime = pytz.utc.localize(new_delivery_datetime)
+        if order.delivery_datetime is not None:
+            new_delivery_datetime = datetime.combine(date, order.delivery_datetime.time())
+            new_delivery_datetime = pytz.utc.localize(new_delivery_datetime)
+        else:
+            new_delivery_datetime = None
 
         res_order = {
             'id' : order.id,
