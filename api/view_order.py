@@ -670,8 +670,6 @@ class OrderViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['post'])
     def picked_up(self, request, pk=None):
         order = get_object_or_404(Order, pk = pk)
-        order.order_status = constants.ORDER_STATUS_INTRANSIT
-
         pop = request.data.get('pop')
 
         # PICKEDUP DATE TIME =============
@@ -681,8 +679,9 @@ class OrderViewSet(viewsets.ModelViewSet):
         else:
             pickedup_datetime = datetime.now() 
 
-        order.pickedup_datetime = pickedup_datetime    
-        order.save()
+        # order.order_status = constants.ORDER_STATUS_INTRANSIT
+        # order.pickedup_datetime = pickedup_datetime    
+        # order.save()
         
         # POP ===================
         new_pop = None
@@ -707,17 +706,19 @@ class OrderViewSet(viewsets.ModelViewSet):
             if delivery_status.date.date() == pickedup_datetime.date():
                 delivery_status.order_status = constants.ORDER_STATUS_INTRANSIT
                 delivery_status.pickedup_datetime = pickedup_datetime
-                
-                # UPDATE DG STATUS ==========
-                dg = delivery_status.delivery_guy
-                if dg is not None:
-                    dg.status = constants.DG_STATUS_BUSY
-                    dg.save()
-                    # TODO: update_pending_count(dg)
-                
                 if new_pop is not None:
                     delivery_status.pickup_proof = new_pop
                 delivery_status.save()
+                
+                # UPDATE DG STATUS ==========
+                try:
+                    dg = delivery_status.delivery_guy
+                    if dg is not None:
+                        dg.status = constants.DG_STATUS_BUSY
+                        dg.save()
+                        # TODO: update_pending_count(dg)
+                except Exception, e:
+                    pass
                 break
         
         content = {'description': 'Order updated'}
@@ -751,10 +752,10 @@ class OrderViewSet(viewsets.ModelViewSet):
         else:
             order_status = constants.ORDER_STATUS_DELIVERED
 
-        order.order_status = order_status
-        order.delivered_at = delivered_at
-        order.completed_datetime = delivered_datetime
-        order.save()
+        # order.order_status = order_status
+        # order.delivered_at = delivered_at
+        # order.completed_datetime = delivered_datetime
+        # order.save()
         
         # POD ===================
         new_pod = None
@@ -786,11 +787,14 @@ class OrderViewSet(viewsets.ModelViewSet):
                 delivery_status.save()
 
                 # UPDATE DG STATUS ==========
-                dg = delivery_status.delivery_guy
-                if dg is not None:
-                    dg.status = constants.DG_STATUS_AVAILABLE
-                    dg.save()
-                    # TODO: update_pending_count(dg)
+                try:
+                    dg = delivery_status.delivery_guy
+                    if dg is not None:
+                        dg.status = constants.DG_STATUS_AVAILABLE
+                        dg.save()
+                        # TODO: update_pending_count(dg)
+                except Exception, e:
+                    pass                
                 break
 
         # CONFIRMATION MESSAGE TO CUSTOMER
@@ -825,7 +829,13 @@ class OrderViewSet(viewsets.ModelViewSet):
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
         
         dg = get_object_or_404(DeliveryGuy, id = dg_id)
-        
+        try:
+            dg.status = constants.DG_STATUS_BUSY
+            dg.save()
+            #TODO: update_pending_count(dg)
+        except Exception, e:
+            pass
+
         order_count = len(order_ids)
         if order_count > 10:
             content = {'error':'Cant assign more than 10 orders at a time.'}
@@ -844,8 +854,8 @@ class OrderViewSet(viewsets.ModelViewSet):
                         delivery_status.order_status = constants.ORDER_STATUS_QUEUED
                     delivery_status.save()
                                        
-            order.delivery_guy = dg
-            order.save()
+            # order.delivery_guy = dg
+            # order.save()
 
             # SMS to Delivery Guy =======
             try:
@@ -868,9 +878,6 @@ class OrderViewSet(viewsets.ModelViewSet):
                 print 'Order assigned to DG error.'
                 pass
 
-        dg.status = constants.DG_STATUS_BUSY
-        dg.save()
-        update_pending_count(dg)
         
         # SEND PUSH NOTIFICATION TO DELIVERYGUY
         try:
