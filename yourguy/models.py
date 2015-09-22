@@ -328,6 +328,9 @@ class OrderDeliveryStatus(models.Model):
     pickup_proof = models.ForeignKey(ProofOfDelivery, related_name = 'pickup_pod', blank = True, null = True)
     delivery_proof = models.ForeignKey(ProofOfDelivery, related_name = 'delivery_pod', blank = True, null = True)
 
+    cod_collected_amount = models.FloatField(default = 0.0)
+    cod_remarks = models.CharField(max_length = 500, blank = True)
+
     def __unicode__(self):
         return u"%s - %s" % (self.id, self.delivered_at)
 

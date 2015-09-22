@@ -79,7 +79,9 @@ def order_details(order, date):
             'notes':order.notes,
             'vendor_order_id':order.vendor_order_id,
             'vendor_phonenumber':order.vendor.phone_number,
-            'total_cost':order.total_cost
+            'total_cost':order.total_cost,
+            'cod_collected_amount':delivery_status.cod_collected_amount,
+            'cod_remarks':delivery_status.cod_remarks
         }
 
         if delivery_status.delivery_guy is not None:

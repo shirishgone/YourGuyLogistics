@@ -335,7 +335,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['post'])
     def place_order(self, request, pk):        
         
-        try:
+        try:            
             pickup_datetime = request.data['pickup_datetime']
             delivery_datetime = request.data['delivery_datetime']
             
@@ -418,13 +418,24 @@ class OrderViewSet(viewsets.ModelViewSet):
                 start_date_string = recurring['start_date']
                 end_date_string = recurring['end_date']
                 by_day = recurring['by_day']  
-
-                start_date = parse_datetime(start_date_string)
-                end_date = parse_datetime(end_date_string)
-                int_days = days_in_int(by_day)
                 
-                rule_week = rrule(WEEKLY, dtstart=start_date, until=end_date, byweekday=int_days)
-                delivery_dates = list(rule_week)
+                if start_date_string is not None:
+                    start_date = parse_datetime(start_date_string)
+                    end_date = parse_datetime(end_date_string)
+                    int_days = days_in_int(by_day)
+                
+                    rule_week = rrule(WEEKLY, dtstart=start_date, until=end_date, byweekday=int_days)
+                    delivery_dates = list(rule_week)
+
+                # ACCEPTING ADDITIONAL DATES PARAM IN RECURRING =====
+                additional_dates = recurring.get('additional_dates')
+                for additional_date in additional_dates:
+                    delivery_dates.append(parse_datetime(additional_date))
+
+                if len(delivery_dates) <=0:
+                    content = {'error':'Incomplete dates', 'description':'Please check the dates'}
+                    return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
             except:
                 content = {'error':'Incomplete params', 'description':'start_date, end_date, by_day should be mentioned for recurring events'}
                 return Response(content, status = status.HTTP_400_BAD_REQUEST)
@@ -678,10 +689,6 @@ class OrderViewSet(viewsets.ModelViewSet):
             pickedup_datetime = parse_datetime(pickedup_datetime_string) 
         else:
             pickedup_datetime = datetime.now() 
-
-        # order.order_status = constants.ORDER_STATUS_INTRANSIT
-        # order.pickedup_datetime = pickedup_datetime    
-        # order.save()
         
         # POP ===================
         new_pop = None
@@ -698,7 +705,6 @@ class OrderViewSet(viewsets.ModelViewSet):
         except:
             content = {'error':'An error with pod params'}
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
-
 
         #UPDATING THE DELIVERY STATUS OF THE PARTICULAR DAY
         delivery_statuses = order.delivery_status.all()
@@ -732,6 +738,9 @@ class OrderViewSet(viewsets.ModelViewSet):
         longitude = request.data.get('longitude')
         is_cod_collected = request.data.get('cod_collected')        
         pod = request.data.get('pod')
+        
+        cod_collected_amount = request.data.get('cod_collected_amount')
+        cod_remarks = request.data.get('cod_remarks')
             
         # DELIVERED DATE TIME
         delivered_datetime_string = request.data.get('delivered_datetime')
@@ -751,11 +760,6 @@ class OrderViewSet(viewsets.ModelViewSet):
             delivered_at = constants.ORDER_STATUS_NOT_DELIVERED
         else:
             order_status = constants.ORDER_STATUS_DELIVERED
-
-        # order.order_status = order_status
-        # order.delivered_at = delivered_at
-        # order.completed_datetime = delivered_datetime
-        # order.save()
         
         # POD ===================
         new_pod = None
@@ -783,7 +787,13 @@ class OrderViewSet(viewsets.ModelViewSet):
                 if is_cod_collected is not None:
                     delivery_status.is_cod_collected = is_cod_collected
                 if new_pod is not None:
-                    delivery_status.delivery_proof = new_pod    
+                    delivery_status.delivery_proof = new_pod                    
+
+                if cod_remarks is not None:
+                    delivery_status.cod_remarks = cod_remarks
+                if cod_collected_amount is not None:
+                    delivery_status.cod_collected_amount = cod_collected_amount
+
                 delivery_status.save()
 
                 # UPDATE DG STATUS ==========
@@ -854,9 +864,6 @@ class OrderViewSet(viewsets.ModelViewSet):
                         delivery_status.order_status = constants.ORDER_STATUS_QUEUED
                     delivery_status.save()
                                        
-            # order.delivery_guy = dg
-            # order.save()
-
             # SMS to Delivery Guy =======
             try:
                 pickup_date_string = date.strftime("%b%d")
