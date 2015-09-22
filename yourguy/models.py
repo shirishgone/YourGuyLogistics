@@ -380,7 +380,7 @@ class Order(models.Model):
     completed_datetime = models.DateTimeField(blank = True, null = True)
 
     notes = models.CharField(max_length = 500, blank = True)
-    vendor_order_id = models.CharField(max_length = 10, blank = True)
+    vendor_order_id = models.CharField(max_length = 100, blank = True)
 
     delivery_guy = models.ForeignKey(DeliveryGuy, related_name = 'delivery_guy', blank = True, null = True)
     
