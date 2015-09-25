@@ -81,8 +81,19 @@ def order_details(order, date):
             'vendor_phonenumber':order.vendor.phone_number,
             'total_cost':order.total_cost,
             'cod_collected_amount':delivery_status.cod_collected_amount,
-            'cod_remarks':delivery_status.cod_remarks
+            'cod_remarks':delivery_status.cod_remarks,
+            'delivery_charges':order.delivery_charges
         }
+        
+        if order.pickup_address.area is not None:
+            res_order['pickup_area_code'] = order.pickup_address.area.area_code
+        else:
+            res_order['pickup_area_code'] = None
+
+        if order.delivery_address.area is not None:
+            res_order['delivery_area_code'] = order.delivery_address.area.area_code
+        else:
+            res_order['delivery_area_code'] = None
 
         if delivery_status.delivery_guy is not None:
             res_order['deliveryguy_name'] = delivery_status.delivery_guy.user.first_name
