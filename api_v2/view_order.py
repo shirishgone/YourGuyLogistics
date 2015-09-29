@@ -19,6 +19,7 @@ import constants
 from datetime import datetime, timedelta, time
 import math
 import pytz
+from django.db.models import Q
 
 
 def delivery_status_of_the_day(order, date):
@@ -116,7 +117,6 @@ def order_details(order, date):
     else:
         return None 
 
-
 def update_daily_status(order, date):
     delivery_status = delivery_status_of_the_day(order, date)
     if delivery_status is not None:
@@ -209,6 +209,7 @@ class OrderViewSet(viewsets.ViewSet):
         page = request.QUERY_PARAMS.get('page', None)
         date_string = request.QUERY_PARAMS.get('date', None)
         order_id = request.QUERY_PARAMS.get('order_id', None)
+        search_query = request.QUERY_PARAMS.get('search', None)
 
         if date_string is not None:
             date = parse_datetime(date_string)
@@ -226,6 +227,14 @@ class OrderViewSet(viewsets.ViewSet):
             queryset = Order.objects.filter(vendor = vendor, 
                 delivery_status__date__gte = day_start,
                 delivery_status__date__lte = day_end)
+
+            if search_query is not None:
+                if search_query.isdigit():
+                    queryset = queryset.filter(Q(id=search_query) | 
+                        Q(vendor_order_id=search_query) |
+                        Q(consumer__user__username=search_query))
+                else:
+                    queryset = queryset.filter(Q(consumer__user__first_name__icontains=search_query))
         
         elif role == 'deliveryguy':
             delivery_guy = get_object_or_404(DeliveryGuy, user = request.user)
@@ -233,10 +242,8 @@ class OrderViewSet(viewsets.ViewSet):
                 date__gte = day_start,
                 date__lte = day_end)
 
-            queryset = Order.objects.filter(delivery_status__in = delivery_statuses).order_by('pickup_datetime')
-            if order_id is not None:
-                queryset = queryset.filter(id = order_id)
-                
+            queryset = Order.objects.filter(delivery_status__in = delivery_statuses).order_by('pickup_datetime')                
+        
         else:
             queryset = Order.objects.filter(delivery_status__date__gte = day_start,
                 delivery_status__date__lte = day_end)
@@ -253,9 +260,17 @@ class OrderViewSet(viewsets.ViewSet):
             if area_code is not None:
                 area = get_object_or_404(Area, area_code = area_code)
                 queryset = queryset.filter(delivery_address__area=area)
-
+            
             if order_id is not None:
                 queryset = queryset.filter(id = order_id)
+
+            if search_query is not None:
+                if search_query.isdigit():
+                    queryset = queryset.filter(Q(id=search_query) | 
+                        Q(vendor_order_id=search_query) |
+                        Q(consumer__user__username=search_query))
+                else:
+                    queryset = queryset.filter(Q(consumer__user__first_name__icontains=search_query))
 
         total_orders_count = len(queryset)
         total_pages =  int(total_orders_count/constants.PAGINATION_PAGE_SIZE) + 1
