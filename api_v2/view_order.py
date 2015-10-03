@@ -168,6 +168,47 @@ def update_daily_status(order, date):
     else:
         return None 
 
+def deliveryguy_list(order, date):
+    delivery_status = delivery_status_of_the_day(order, date)
+    if delivery_status is not None:
+        
+        if order.pickup_datetime is not None:
+            new_pickup_datetime = datetime.combine(date, order.pickup_datetime.time())
+            new_pickup_datetime = pytz.utc.localize(new_pickup_datetime)
+        else:
+            new_pickup_datetime = None
+
+        if order.delivery_datetime is not None:
+            new_delivery_datetime = datetime.combine(date, order.delivery_datetime.time())
+            new_delivery_datetime = pytz.utc.localize(new_delivery_datetime)
+        else:
+            new_delivery_datetime = None
+
+        res_order = {
+            'id' : order.id,
+            'pickup_datetime' : new_pickup_datetime,
+            'delivery_datetime' : new_delivery_datetime,
+            'pickup_address':address_string(order.pickup_address),
+            'delivery_address':address_string(order.delivery_address),
+            'status' : delivery_status.order_status,
+            'customer_name' : order.consumer.user.first_name,
+            'vendor_name' : order.vendor.store_name
+        }
+
+        if order.pickup_address.area is not None:
+            res_order['pickup_area_code'] = order.pickup_address.area.area_code
+        else:
+            res_order['pickup_area_code'] = None
+
+        if order.delivery_address.area is not None:
+            res_order['delivery_area_code'] = order.delivery_address.area.area_code
+        else:
+            res_order['delivery_area_code'] = None
+
+        return res_order
+    else:
+        return None 
+
 
 class OrderViewSet(viewsets.ViewSet):
     """
@@ -272,6 +313,7 @@ class OrderViewSet(viewsets.ViewSet):
                 else:
                     queryset = queryset.filter(Q(consumer__user__first_name__icontains=search_query))
 
+
         total_orders_count = len(queryset)
         total_pages =  int(total_orders_count/constants.PAGINATION_PAGE_SIZE) + 1
         orders = paginate(queryset, page)
@@ -279,7 +321,11 @@ class OrderViewSet(viewsets.ViewSet):
         # UPDATING DELIVERY STATUS OF THE DAY
         result = []
         for single_order in orders:
-            order = update_daily_status(single_order, date)
+            if role == 'deliveryguy':
+                order = deliveryguy_list(single_order, date)
+            else:
+                order = update_daily_status(single_order, date)
+            
             if order is not None:
                 result.append(order)        
         
