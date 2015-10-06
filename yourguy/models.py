@@ -35,13 +35,15 @@ class Address(models.Model):
     flat_number = models.CharField(max_length = 100) 
     building = models.CharField(max_length = 500)
     street = models.CharField(max_length = 500)
-    area = models.ForeignKey(Area, blank = True, null = True)
-
+    
     # Optional Fields
-    landmark = models.CharField(max_length = 100, blank = True)
+    full_address = models.CharField(max_length = 500, default = '-')
     pin_code = models.CharField(max_length = 25, blank = True)
-    country_code = models.CharField(max_length = 25, default='IN')
+    area = models.ForeignKey(Area, blank = True, null = True)
+    landmark = models.CharField(max_length = 100, blank = True)
+    country_code = models.CharField(max_length = 25, default = 'IN')
 
+    # Location 
     latitude = models.CharField(max_length = 50, blank = True)
     longitude = models.CharField(max_length = 50, blank = True)
 
