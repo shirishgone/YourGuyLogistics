@@ -12,7 +12,6 @@ from yourguy.models import DeliveryGuy, DGAttendance
 from api.serializers import DGSerializer, DGAttendanceSerializer
 
 from datetime import date, datetime, timedelta, time
-from api.views import ist_day_start, ist_day_end, current_ist_datetime
 from api.views import user_role
 from api_v2.views import paginate
 
