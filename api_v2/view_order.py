@@ -437,7 +437,9 @@ class OrderViewSet(viewsets.ViewSet):
                             delivery_address.landmark = delivery_landmark
                         consumer.addresses.add(delivery_address)
                 except:
-                    content = {'error':' Error parsing addresses'}
+                    content = {
+                    'error':' Error parsing addresses'
+                    }
                     return Response(content, status = status.HTTP_400_BAD_REQUEST)
                 # -------------------------------------------------------
 
@@ -459,10 +461,14 @@ class OrderViewSet(viewsets.ViewSet):
                 new_order.delivery_status.add(delivery_status)
                 new_order.save()
             except Exception, e:
-                content = {'error':'Unable to create orders with the given details'}    
+                content = {
+                'error':'Unable to create orders with the given details'
+                }
                 return Response(content, status = status.HTTP_400_BAD_REQUEST)
         
-        content = {'message':'Your Orders has been placed.'}
+        content = {
+        'message':'Your Orders has been placed.'
+        }
         return Response(content, status = status.HTTP_201_CREATED)
     
     @detail_route(methods=['post'])
