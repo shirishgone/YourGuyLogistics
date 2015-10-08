@@ -7,6 +7,7 @@ from api_v2 import utils
 
 urlpatterns = patterns(
 	'',
+	url(r'^notdelivered_to_none/', utils.notdelivered_to_none, name = 'notdelivered_to_none'),
 	url(r'^fill_full_address/', utils.fill_full_address, name = 'fill_full_address'),
 )
 router = DefaultRouter()

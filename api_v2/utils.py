@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from datetime import datetime, timedelta, time
-from yourguy.models import Address, Consumer
+from yourguy.models import Address, Consumer, OrderDeliveryStatus
 
 def is_correct_pincode(pincode):
 	if pincode.isdigit() and len(pincode) == 6:
@@ -17,6 +17,16 @@ def is_pickup_time_acceptable(datetime):
     else:
         return False
 
+def is_vendor_has_same_address_already(vendor, pincode):
+	try:
+		addresses = vendor.addresses.all()
+		for address in addresses:
+			if address.pin_code == pincode:
+				return address
+		return None
+	except:
+		return None
+
 def is_consumer_has_same_address_already(consumer, pincode):
 	try:
 		addresses = consumer.addresses.all()
@@ -26,6 +36,25 @@ def is_consumer_has_same_address_already(consumer, pincode):
 		return None
 	except:
 		return None
+
+@api_view(['GET'])
+def notdelivered_to_none(request):
+	if request.user.is_staff is False:
+		content = {
+		'error':'insufficient permissions', 
+		'description':'Only admin can access this method'
+		}
+		return Response(content, status = status.HTTP_400_BAD_REQUEST)
+	else:
+		all_delivery_statuses = OrderDeliveryStatus.objects.all()
+		for delivery_status in all_delivery_statuses:
+			if delivery_status.delivered_at == 'NOT_DELIVERED':
+				delivery_status.delivered_at = 'NONE'
+				delivery_status.save()
+		
+		content = {'data':'All done'}
+		return Response(content, status = status.HTTP_200_OK)
+
 
 @api_view(['GET'])
 def fill_full_address(request):
