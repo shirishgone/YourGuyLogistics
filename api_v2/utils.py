@@ -67,19 +67,12 @@ def delivery_status_update(request):
 		return Response(content, status = status.HTTP_400_BAD_REQUEST)
 	else:
 		
-		all_delivery_statuses = OrderDeliveryStatus.objects.filter(delivered_at = 'ATTEMPTED')
-		#all_delivery_statuses = OrderDeliveryStatus.objects.all()
-		not_updated_deliverys = []
-		
+		all_delivery_statuses = OrderDeliveryStatus.objects.filter(order_status = 'ATTEMPTED')
+		not_updated_deliverys = []		
 		for delivery_status in all_delivery_statuses:
 			try:
-				if delivery_status.delivered_at == 'ATTEMPTED':
-					delivery_status.delivered_at = 'DELIVERYATTEMPTED'
-					delivery_status.save()
-				elif delivery_status.delivered_at == 'DOOR_STEP' or delivery_status.delivered_at == 'SECURITY' or delivery_status.delivered_at == 'RECEPTION' or delivery_status.delivered_at == 'CUSTOMER':
-					print 'done with delivery_status '+ delivery_status.id
-				else:		
-					delivery_status.delivered_at = 'NONE'
+				if delivery_status.order_status == 'ATTEMPTED':
+					delivery_status.order_status = 'DELIVERYATTEMPTED'
 					delivery_status.save()
 			except Exception, e:
 				not_updated_deliverys.append(delivery_status.id)
