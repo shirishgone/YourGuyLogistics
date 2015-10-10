@@ -76,17 +76,17 @@ def delivery_status_update(request):
 				else:		
 					delivery_status.delivered_at = 'NONE'
 					delivery_status.save()
-				content = {
-				'data':'All done'
-				}
-				return Response(content, status = status.HTTP_200_OK)
 			except Exception, e:
 				content = {
 				'error':e,
 				'delivery_status_id':delivery_status.id
 				}
 				return Response(content, status = status.HTTP_200_OK)
-
+		
+		content = {
+		'data':'All done'
+		}
+		return Response(content, status = status.HTTP_200_OK)
 
 
 @api_view(['GET'])

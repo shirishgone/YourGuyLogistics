@@ -332,7 +332,7 @@ class OrderDeliveryStatus(models.Model):
     cod_remarks = models.CharField(max_length = 500, blank = True)
 
     def __unicode__(self):
-        return u"%s" % (self.id)
+        return u"%s - %s " % (self.id, self.delivered_at)
 
 class Order(models.Model):
 
