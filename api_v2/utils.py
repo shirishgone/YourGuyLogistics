@@ -4,6 +4,7 @@ from rest_framework import status
 
 from datetime import datetime, timedelta, time
 from yourguy.models import Order, Address, Consumer, OrderDeliveryStatus
+import json
 
 def is_correct_pincode(pincode):
 	if pincode.isdigit() and len(pincode) == 6:
@@ -65,31 +66,24 @@ def delivery_status_update(request):
 		}
 		return Response(content, status = status.HTTP_400_BAD_REQUEST)
 	else:
-		all_delivery_statuses = OrderDeliveryStatus.objects.filter(delivery_at = 'NOT_DELIVERED')
-		# all_delivery_statuses = OrderDeliveryStatus.objects.all()
+		all_delivery_statuses = OrderDeliveryStatus.objects.all()
+		not_updated_deliverys = []
 		for delivery_status in all_delivery_statuses:
-
 			try:
-				delivery_status.delivered_at = 'NONE'
-				delivery_status.save()
-
-				# if delivery_status.delivered_at == 'ATTEMPTED':
-				# 	delivery_status.delivered_at = 'DELIVERYATTEMPTED'
-				# 	delivery_status.save()
-				# elif delivery_status.delivered_at == 'DOOR_STEP' or delivery_status.delivered_at == 'SECURITY' or delivery_status.delivered_at == 'RECEPTION' or delivery_status.delivered_at == 'CUSTOMER':
-				# 	print 'done with delivery_status '+ delivery_status.id
-				# else:		
-				# 	delivery_status.delivered_at = 'NONE'
-				# 	delivery_status.save()
+				if delivery_status.delivered_at == 'ATTEMPTED':
+					delivery_status.delivered_at = 'DELIVERYATTEMPTED'
+					delivery_status.save()
+				elif delivery_status.delivered_at == 'DOOR_STEP' or delivery_status.delivered_at == 'SECURITY' or delivery_status.delivered_at == 'RECEPTION' or delivery_status.delivered_at == 'CUSTOMER':
+					print 'done with delivery_status '+ delivery_status.id
+				else:		
+					delivery_status.delivered_at = 'NONE'
+					delivery_status.save()
 			except Exception, e:
-				content = {
-				'error':e,
-				'delivery_status_id':delivery_status.id
-				}
-				return Response(content, status = status.HTTP_200_OK)
-		
+				not_updated_deliverys.append(delivery_status.id)
+				pass		
 		content = {
-		'data':'All done'
+		'data':'All done',
+		'not_updated_deliverys':json.dumps(not_updated_deliverys)
 		}
 		return Response(content, status = status.HTTP_200_OK)
 
