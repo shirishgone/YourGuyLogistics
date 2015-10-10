@@ -65,17 +65,22 @@ def delivery_status_update(request):
 		}
 		return Response(content, status = status.HTTP_400_BAD_REQUEST)
 	else:
-		all_delivery_statuses = OrderDeliveryStatus.objects.all()
+		all_delivery_statuses = OrderDeliveryStatus.objects.filter(delivery_at = 'NOT_DELIVERED')
+		# all_delivery_statuses = OrderDeliveryStatus.objects.all()
 		for delivery_status in all_delivery_statuses:
+
 			try:
-				if delivery_status.delivered_at == 'ATTEMPTED':
-					delivery_status.delivered_at = 'DELIVERYATTEMPTED'
-					delivery_status.save()
-				elif delivery_status.delivered_at == 'DOOR_STEP' or delivery_status.delivered_at == 'SECURITY' or delivery_status.delivered_at == 'RECEPTION' or delivery_status.delivered_at == 'CUSTOMER':
-					print 'done with delivery_status '+ delivery_status.id
-				else:		
-					delivery_status.delivered_at = 'NONE'
-					delivery_status.save()
+				delivery_status.delivered_at = 'NONE'
+				delivery_status.save()
+
+				# if delivery_status.delivered_at == 'ATTEMPTED':
+				# 	delivery_status.delivered_at = 'DELIVERYATTEMPTED'
+				# 	delivery_status.save()
+				# elif delivery_status.delivered_at == 'DOOR_STEP' or delivery_status.delivered_at == 'SECURITY' or delivery_status.delivered_at == 'RECEPTION' or delivery_status.delivered_at == 'CUSTOMER':
+				# 	print 'done with delivery_status '+ delivery_status.id
+				# else:		
+				# 	delivery_status.delivered_at = 'NONE'
+				# 	delivery_status.save()
 			except Exception, e:
 				content = {
 				'error':e,
