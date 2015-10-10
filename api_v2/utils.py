@@ -66,10 +66,11 @@ def delivery_status_update(request):
 		}
 		return Response(content, status = status.HTTP_400_BAD_REQUEST)
 	else:
+		
 		all_delivery_statuses = OrderDeliveryStatus.objects.filter(delivered_at = 'ATTEMPTED')
 		#all_delivery_statuses = OrderDeliveryStatus.objects.all()
-
 		not_updated_deliverys = []
+		
 		for delivery_status in all_delivery_statuses:
 			try:
 				if delivery_status.delivered_at == 'ATTEMPTED':

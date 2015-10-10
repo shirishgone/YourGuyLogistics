@@ -83,7 +83,7 @@ def vendor_dashboard(request):
 		cancelled_queryset = queryset_orders.filter(Q(order_status='CANCELLED') | Q(order_status='REJECTED'))
 		total_orders_cancelled = cancelled_queryset.count()
 
-		delivered_queryset = queryset_orders.filter(Q(order_status='DELIVERED') | Q(order_status='ATTEMPTED'))
+		delivered_queryset = queryset_orders.filter(Q(order_status='DELIVERED') | Q(order_status='DELIVERYATTEMPTED'))
 		total_orders_delivered = delivered_queryset.count()
 
 		new_consumers_count = queryset_consumers.count()
@@ -95,7 +95,7 @@ def vendor_dashboard(request):
 				date__day = date.day)
 			orders_placed_count = delivery_status_per_date.count()
 
-			delivery_status_delivered_queryset = delivery_status_per_date.filter(Q(order_status = 'DELIVERED') | Q(order_status = 'ATTEMPTED'))
+			delivery_status_delivered_queryset = delivery_status_per_date.filter(Q(order_status = 'DELIVERED') | Q(order_status = 'DELIVERYATTEMPTED'))
 			orders_delivered_count = delivery_status_delivered_queryset.count()
 			
 			result = {
