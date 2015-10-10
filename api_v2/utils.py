@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from datetime import datetime, timedelta, time
-from yourguy.models import Address, Consumer, OrderDeliveryStatus
+from yourguy.models import Order, Address, Consumer, OrderDeliveryStatus
 
 def is_correct_pincode(pincode):
 	if pincode.isdigit() and len(pincode) == 6:
@@ -36,6 +36,25 @@ def is_consumer_has_same_address_already(consumer, pincode):
 		return None
 	except:
 		return None
+
+@api_view(['GET'])
+def is_recurring_var_setting(request):
+	if request.user.is_staff is False:
+		content = {
+		'error':'insufficient permissions', 
+		'description':'Only admin can access this method'
+		}
+		return Response(content, status = status.HTTP_400_BAD_REQUEST)
+	else:
+		all_orders = Order.objects.all()
+		for order in all_orders:
+			if len(order.delivery_status.all()) > 1:
+				order.is_recurring = True
+				order.save()
+	
+		content = {'data':'All done'}
+		return Response(content, status = status.HTTP_200_OK)
+
 
 @api_view(['GET'])
 def notdelivered_to_none(request):

@@ -23,6 +23,29 @@ import math
 import pytz
 from django.db.models import Q
 
+def is_recurring_order(order):
+    if len(order.delivery_status.all()) > 1:
+        return True
+    else:
+        return False    
+
+def can_update_delivery_status(delivery_status):
+    if delivery_status.order_status == constants.ORDER_STATUS_PLACED or delivery_status.order_status == constants.ORDER_STATUS_QUEUED:
+        return True
+    else:
+        return False  
+
+def can_user_update_this_order(order, user):
+    can_update_order = False
+    role = user_role(user)
+    if (role == constants.VENDOR):
+        vendor_agent = get_object_or_404(VendorAgent, user = user)
+        vendor = vendor_agent.vendor
+        if order.vendor == vendor:
+            can_update_order = True
+    elif (role == constants.OPERATIONS):
+        can_update_order = True    
+    return can_update_order
 
 def delivery_status_of_the_day(order, date):
     delivery_item = None
@@ -48,23 +71,20 @@ def address_string(address):
         print e
         return ''
     
-def order_details(order, date):
-    delivery_status = delivery_status_of_the_day(order, date)
-    if delivery_status is not None:
+def order_details(order, delivery_status):
+    if order.pickup_datetime is not None:
+        new_pickup_datetime = datetime.combine(delivery_status.date, order.pickup_datetime.time())
+        new_pickup_datetime = pytz.utc.localize(new_pickup_datetime)
+    else:
+        new_pickup_datetime = None
+
+    if order.delivery_datetime is not None:
+        new_delivery_datetime = datetime.combine(delivery_status.date, order.delivery_datetime.time())
+        new_delivery_datetime = pytz.utc.localize(new_delivery_datetime)
+    else:
+        new_delivery_datetime = None
         
-        if order.pickup_datetime is not None:
-            new_pickup_datetime = datetime.combine(date, order.pickup_datetime.time())
-            new_pickup_datetime = pytz.utc.localize(new_pickup_datetime)
-        else:
-            new_pickup_datetime = None
-
-        if order.delivery_datetime is not None:
-            new_delivery_datetime = datetime.combine(date, order.delivery_datetime.time())
-            new_delivery_datetime = pytz.utc.localize(new_delivery_datetime)
-        else:
-            new_delivery_datetime = None
-
-        res_order = {
+    res_order = {
             'id' : order.id,
             'pickup_datetime' : new_pickup_datetime,
             'delivery_datetime' : new_delivery_datetime,
@@ -88,38 +108,26 @@ def order_details(order, date):
             'cod_collected_amount':delivery_status.cod_collected_amount,
             'cod_remarks':delivery_status.cod_remarks,
             'delivery_charges':order.delivery_charges
-        }
+            }
         
-        if order.pickup_address.area is not None:
-            res_order['pickup_area_code'] = order.pickup_address.area.area_code
-        else:
-            res_order['pickup_area_code'] = None
-
-        if order.delivery_address.area is not None:
-            res_order['delivery_area_code'] = order.delivery_address.area.area_code
-        else:
-            res_order['delivery_area_code'] = None
-
-        if delivery_status.delivery_guy is not None:
-            res_order['deliveryguy_name'] = delivery_status.delivery_guy.user.first_name
-            res_order['deliveryguy_phonenumber'] = delivery_status.delivery_guy.user.username
-        else:
-            res_order['deliveryguy_name'] = None
-            res_order['deliveryguy_phonenumber'] = None
-
-        
-        order_items_array = []
-        for order_item in order.order_items.all():
-            order_item_obj = {}
-            order_item_obj['product_name'] = order_item.product.name
-            order_item_obj['quantity'] = order_item.quantity
-            order_item_obj['cost'] = order_item.cost
-            order_items_array.append(order_item_obj)
-
-        res_order['order_items'] = order_items_array
-        return res_order
+    if delivery_status.delivery_guy is not None:
+        res_order['deliveryguy_name'] = delivery_status.delivery_guy.user.first_name
+        res_order['deliveryguy_phonenumber'] = delivery_status.delivery_guy.user.username
     else:
-        return None 
+        res_order['deliveryguy_name'] = None
+        res_order['deliveryguy_phonenumber'] = None
+
+    order_items_array = []
+    for order_item in order.order_items.all():
+        order_item_obj = {}
+        order_item_obj['product_name'] = order_item.product.name
+        order_item_obj['quantity'] = order_item.quantity
+        order_item_obj['cost'] = order_item.cost
+        order_items_array.append(order_item_obj)
+
+    res_order['order_items'] = order_items_array
+    return res_order
+
 
 def update_daily_status(order, date):
     delivery_status = delivery_status_of_the_day(order, date)
@@ -233,15 +241,37 @@ class OrderViewSet(viewsets.ViewSet):
                 content = {'error':'Access privileges', 'description':'You cant access other vendor orders'}
                 return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
+        # FETCH DATE PARAM FROM URL PARAMS, IF ITS RECURRING -------
         date_string = self.request.QUERY_PARAMS.get('date', None)
-        if date_string is None:
-            content = {'error':'Insufficient params', 'description':'For recurring orders, date param in url is compulsory'}
+        if is_recurring_order(order):
+            if date_string is None:
+                content = {'error':'Insufficient params', 'description':'For recurring orders, date parameter in URL is compulsory'}
+                return Response(content, status = status.HTTP_400_BAD_REQUEST)
+            else:
+                date = parse_datetime(date_string)    
+        # -----------------------------------------------------------    
+        
+        # PICK THE APPROPRIATE DELIVERY STATUS OBJECT ---------------
+        final_delivery_status = None
+        if is_recurring_order(order):
+            delivery_statuses = order.delivery_status.all()
+            for delivery_status in delivery_statuses:
+                if delivery_status.date.date() == date.date():
+                    final_delivery_status = delivery_status
+                    break
+        else:
+            final_delivery_status = order.delivery_status.all().latest('date')
+        # -----------------------------------------------------------
+        
+        if final_delivery_status is None:
+            content = {
+            'error':'Insufficient date for recurring order', 
+            'description':'The date you have passed doesnt match with the recurring order'
+            }
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
         else:
-            date = parse_datetime(date_string)   
-        
-        result  = order_details(order, date)
-        return Response(result, status = status.HTTP_200_OK)        
+            result  = order_details(order, final_delivery_status)
+            return Response(result, status = status.HTTP_200_OK)        
 
     def list(self, request):
         """
@@ -664,6 +694,9 @@ class OrderViewSet(viewsets.ViewSet):
                 delivery_status = OrderDeliveryStatus.objects.create(date = date)
                 new_order.delivery_status.add(delivery_status)
 
+            if len(delivery_dates) > 1:
+                new_order.is_recurring = True
+            
             # ORDER ITEMS ----------------------------------------
             try:
                 for item in order_items:
@@ -679,7 +712,7 @@ class OrderViewSet(viewsets.ViewSet):
             new_order.save()
             # ---------------------------------------------------
             
-            # CONFIRMATION MESSAGE TO OPS ------------------
+            # CONFIRMATION MESSAGE TO OPS -------------------------
             message = constants.ORDER_PLACED_MESSAGE_OPS.format(new_order.id, vendor.store_name)
             send_sms(constants.OPS_PHONE_NUMBER, message)
 
@@ -687,11 +720,68 @@ class OrderViewSet(viewsets.ViewSet):
             message_client = constants.ORDER_PLACED_MESSAGE_CLIENT.format(new_order.id)
             send_sms(vendor.phone_number, message_client)
             # ---------------------------------------------------
-            
 
             content = {'data':{'order_id':new_order.id}, 'message':'Your Order has been placed.'}
             return Response(content, status = status.HTTP_201_CREATED)
             
         except Exception, e:
             content = {'error':'Unable to create orders with the given details'}    
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
+    @detail_route(methods=['post'])
+    def cancel(self, request, pk):        
+        order = get_object_or_404(Order, id = pk)
+        if can_user_update_this_order(order, request.user) is False:
+            content = {'error': "You don't have permissions to cancel this order."}
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+        
+        # DATA FILTERING FOR RECURRING ORDERS -----------------------
+        date_string = request.data.get('date')
+        if is_recurring_order(order) and date_string is None:
+            content = {
+            'error':'Incomplete parameters', 
+            'description':'date parameter is mandatory for recurring orders'
+            }
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+        # -----------------------------------------------------------
+
+        try:
+            date = parse_datetime(date_string)
+        except Exception, e:
+            content = {
+            'error':'Incorrect date', 
+            'description':'date format is not appropriate'
+            }
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
+        final_delivery_status = None
+        is_cancelled = False
+
+        # PICK THE APPROPRIATE DELIVERY STATUS OBJECT ----------------
+        if is_recurring_order(order):
+            delivery_statuses = order.delivery_status.all()
+            for delivery_status in delivery_statuses:
+                if delivery_status.date.date() == date.date():
+                    final_delivery_status = delivery_status
+        else:
+            final_delivery_status = order.delivery_status.all().latest('date')
+        # -----------------------------------------------------------
+
+        # UPDATE THE DELIVERY STATUS OBJECT -------------------------
+        if final_delivery_status is not None and can_update_delivery_status(final_delivery_status):
+            final_delivery_status.order_status = constants.ORDER_STATUS_CANCELLED
+            final_delivery_status.save()
+            is_cancelled = True
+        else:
+            content = {'error': "The order has already been processed, now you cant update the status."}
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+        # ------------------------------------------------------------       
+        
+        if is_cancelled:
+            message = constants.ORDER_CANCELLED_MESSAGE_CLIENT.format(order.consumer.user.first_name, order.id)
+            send_sms(order.vendor.phone_number, message)
+            content = {'description':'Order has been canceled'}
+            return Response(content, status = status.HTTP_200_OK)
+        else:
+            content = {'error':'Order cancellation failed'}
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
