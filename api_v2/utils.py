@@ -67,17 +67,26 @@ def delivery_status_update(request):
 	else:
 		all_delivery_statuses = OrderDeliveryStatus.objects.all()
 		for delivery_status in all_delivery_statuses:
-			if delivery_status.delivered_at == 'ATTEMPTED':
-				delivery_status.delivered_at = 'DELIVERYATTEMPTED'
-				delivery_status.save()
-			elif delivery_status.delivered_at == 'DOOR_STEP' or delivery_status.delivered_at == 'SECURITY' or delivery_status.delivered_at == 'RECEPTION' or delivery_status.delivered_at == 'CUSTOMER':
-				print 'dont change'
-			else:		
-				delivery_status.delivered_at = 'NONE'
-				delivery_status.save()
-				
-		content = {'data':'All done'}
-		return Response(content, status = status.HTTP_200_OK)
+			try:
+				if delivery_status.delivered_at == 'ATTEMPTED':
+					delivery_status.delivered_at = 'DELIVERYATTEMPTED'
+					delivery_status.save()
+				elif delivery_status.delivered_at == 'DOOR_STEP' or delivery_status.delivered_at == 'SECURITY' or delivery_status.delivered_at == 'RECEPTION' or delivery_status.delivered_at == 'CUSTOMER':
+					print 'done with delivery_status '+ delivery_status.id
+				else:		
+					delivery_status.delivered_at = 'NONE'
+					delivery_status.save()
+				content = {
+				'data':'All done'
+				}
+				return Response(content, status = status.HTTP_200_OK)
+			except Exception, e:
+				content = {
+				'error':e,
+				'delivery_status_id':delivery_status.id
+				}
+				return Response(content, status = status.HTTP_200_OK)
+
 
 
 @api_view(['GET'])
