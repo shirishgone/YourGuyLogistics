@@ -57,7 +57,7 @@ def is_recurring_var_setting(request):
 
 
 @api_view(['GET'])
-def notdelivered_to_none(request):
+def delivery_status_update(request):
 	if request.user.is_staff is False:
 		content = {
 		'error':'insufficient permissions', 
@@ -67,10 +67,15 @@ def notdelivered_to_none(request):
 	else:
 		all_delivery_statuses = OrderDeliveryStatus.objects.all()
 		for delivery_status in all_delivery_statuses:
-			if delivery_status.delivered_at == 'NOT_DELIVERED':
+			if delivery_status.delivered_at == 'ATTEMPTED':
+				delivery_status.delivered_at = 'DELIVERYATTEMPTED'
+				delivery_status.save()
+			elif delivery_status.delivered_at == 'DOOR_STEP' or delivery_status.delivered_at == 'SECURITY' or delivery_status.delivered_at == 'RECEPTION' or delivery_status.delivered_at == 'CUSTOMER':
+				print 'dont change'
+			else:		
 				delivery_status.delivered_at = 'NONE'
 				delivery_status.save()
-		
+				
 		content = {'data':'All done'}
 		return Response(content, status = status.HTTP_200_OK)
 

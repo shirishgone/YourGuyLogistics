@@ -807,8 +807,8 @@ class OrderViewSet(viewsets.ModelViewSet):
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
         if delivered_at == constants.ORDER_STATUS_ATTEMPTED:
-            order_status = constants.ORDER_STATUS_ATTEMPTED
-            delivered_at = constants.ORDER_STATUS_NOT_DELIVERED
+            order_status = constants.ORDER_STATUS_DELIVERY_ATTEMPTED
+            delivered_at = constants.DELIVERED_AT_NONE
         else:
             order_status = constants.ORDER_STATUS_DELIVERED
         

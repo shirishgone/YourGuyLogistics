@@ -293,21 +293,19 @@ class OrderDeliveryStatus(models.Model):
     ORDER_PLACED = 'ORDER_PLACED'
     QUEUED = 'QUEUED'
     REJECTED = 'REJECTED'
-    OUTFORPICKUP = 'OUTFORPICKUP'
+    PICKUPATTEMPTED = 'PICKUPATTEMPTED'
     INTRANSIT = 'INTRANSIT'
-    OUTFORDELIVERY = 'OUTFORDELIVERY'
-    ATTEMPTED = 'ATTEMPTED'
+    DELIVERYATTEMPTED = 'DELIVERYATTEMPTED'
     DELIVERED = 'DELIVERED'
     CANCELLED = 'CANCELLED'
     
     ORDER_CHOICES = (
         (ORDER_PLACED, 'ORDER_PLACED'),
-        (QUEUED, 'QUEUED'),
         (REJECTED, 'REJECTED'),
-        (OUTFORPICKUP, 'OUTFORPICKUP'),
+        (QUEUED, 'QUEUED'),
+        (PICKUPATTEMPTED, 'PICKUPATTEMPTED'),
         (INTRANSIT, 'INTRANSIT'),
-        (OUTFORDELIVERY, 'OUTFORDELIVERY'),
-        (ATTEMPTED, 'ATTEMPTED'),
+        (DELIVERYATTEMPTED, 'DELIVERYATTEMPTED'),
         (DELIVERED, 'DELIVERED'),
         (CANCELLED, 'CANCELLED'),
     )
@@ -317,15 +315,15 @@ class OrderDeliveryStatus(models.Model):
     SECURITY = 'SECURITY'
     RECEPTION = 'RECEPTION'
     CUSTOMER = 'CUSTOMER'
-    NOT_DELIVERED = 'NOT_DELIVERED'
+    NONE = 'NONE'
     DELIVERED_AT_CHOICES = (
         (DOOR_STEP, 'DOOR_STEP'),
         (SECURITY, 'SECURITY'),
         (RECEPTION, 'RECEPTION'),
         (CUSTOMER, 'CUSTOMER'),
-        (NOT_DELIVERED, 'NOT_DELIVERED'),
+        (NONE, 'NONE'),
     )
-    delivered_at = models.CharField(max_length = 15, choices = DELIVERED_AT_CHOICES, default = NOT_DELIVERED)
+    delivered_at = models.CharField(max_length = 15, choices = DELIVERED_AT_CHOICES, default = NONE)
     
     pickup_proof = models.ForeignKey(ProofOfDelivery, related_name = 'pickup_pod', blank = True, null = True)
     delivery_proof = models.ForeignKey(ProofOfDelivery, related_name = 'delivery_pod', blank = True, null = True)
@@ -334,7 +332,7 @@ class OrderDeliveryStatus(models.Model):
     cod_remarks = models.CharField(max_length = 500, blank = True)
 
     def __unicode__(self):
-        return u"%s - %s" % (self.id, self.delivered_at)
+        return u"%s - %s" % (self.id, self.order_status, self.delivered_at)
 
 class Order(models.Model):
 
@@ -345,21 +343,19 @@ class Order(models.Model):
     ORDER_PLACED = 'ORDER_PLACED'
     QUEUED = 'QUEUED'
     REJECTED = 'REJECTED'
-    OUTFORPICKUP = 'OUTFORPICKUP'
+    PICKUPATTEMPTED = 'PICKUPATTEMPTED'
     INTRANSIT = 'INTRANSIT'
-    OUTFORDELIVERY = 'OUTFORDELIVERY'
-    ATTEMPTED = 'ATTEMPTED'
+    DELIVERYATTEMPTED = 'DELIVERYATTEMPTED'
     DELIVERED = 'DELIVERED'
     CANCELLED = 'CANCELLED'
     
     ORDER_CHOICES = (
         (ORDER_PLACED, 'ORDER_PLACED'),
-        (QUEUED, 'QUEUED'),
         (REJECTED, 'REJECTED'),
-        (OUTFORPICKUP, 'OUTFORPICKUP'),
+        (QUEUED, 'QUEUED'),
+        (PICKUPATTEMPTED, 'PICKUPATTEMPTED'),
         (INTRANSIT, 'INTRANSIT'),
-        (OUTFORDELIVERY, 'OUTFORDELIVERY'),
-        (ATTEMPTED, 'ATTEMPTED'),
+        (DELIVERYATTEMPTED, 'DELIVERYATTEMPTED'),
         (DELIVERED, 'DELIVERED'),
         (CANCELLED, 'CANCELLED'),
     )
@@ -404,23 +400,21 @@ class Order(models.Model):
     cancel_request_by_user = models.ForeignKey(User, blank = True, related_name='cancelled_by_user', null = True)
     cancel_request_time = models.DateTimeField(blank = True, null = True)
 
-
     DOOR_STEP = 'DOOR_STEP'
     SECURITY = 'SECURITY'
     RECEPTION = 'RECEPTION'
     CUSTOMER = 'CUSTOMER'
-    NOT_DELIVERED = 'NOT_DELIVERED'
+    NONE = 'NONE'
     DELIVERED_AT_CHOICES = (
         (DOOR_STEP, 'DOOR_STEP'),
         (SECURITY, 'SECURITY'),
         (RECEPTION, 'RECEPTION'),
         (CUSTOMER, 'CUSTOMER'),
-        (NOT_DELIVERED, 'NOT_DELIVERED'),
+        (NONE, 'NONE'),
     )
-    delivered_at = models.CharField(max_length = 15, choices = DELIVERED_AT_CHOICES, default = NOT_DELIVERED)
+    delivered_at = models.CharField(max_length = 15, choices = DELIVERED_AT_CHOICES, default = NONE)
     is_recurring = models.BooleanField(blank = True, default = False)
     recurrences = RecurrenceField(null = True)
-
 
     BIKE = 'BIKE'
     AC_VEHICLE = 'AC_VEHICLE'
