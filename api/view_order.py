@@ -23,6 +23,12 @@ from api.push import send_push
 from dateutil.rrule import rrule, WEEKLY
 import pytz
 
+def can_deliver_delivery_status(delivery_status):
+    if delivery_status.order_status == constants.ORDER_STATUS_INTRANSIT:
+        return True
+    else:
+        return False  
+
 def can_update_delivery_status(delivery_status):
     if delivery_status.order_status == constants.ORDER_STATUS_PLACED or delivery_status.order_status == constants.ORDER_STATUS_QUEUED:
         return True
@@ -116,14 +122,20 @@ class OrderViewSet(viewsets.ModelViewSet):
             vendor_agent = get_object_or_404(VendorAgent, user = self.request.user)
             vendor = vendor_agent.vendor
             if order.vendor.id != vendor.id:
-                content = {'error':'Access privileges', 'description':'You cant access other vendor orders'}
+                content = {
+                'error':'Access privileges', 
+                'description':'You cant access other vendor orders'
+                }
                 return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
         #TODO: Filter objects according to the permissions e.g VendorA shouldn't see orders of VendorB
         date_string = self.request.QUERY_PARAMS.get('date', None)
         if order.is_recurring is True:
             if date_string is None:
-                content = {'error':'Insufficient params', 'description':'For recurring orders, date param in url is compulsory'}
+                content = {
+                'error':'Insufficient params', 
+                'description':'For recurring orders, date param in url is compulsory'
+                }
                 return Response(content, status = status.HTTP_400_BAD_REQUEST)
             else:
                 date = parse_datetime(date_string)   
@@ -201,7 +213,9 @@ class OrderViewSet(viewsets.ModelViewSet):
             
             consumers = request.data['consumers']
             if len(consumers) > 20:
-                content = {'error':'Placing orders for more than 20 customers at once, is not allowed.'}
+                content = {
+                'error':'Placing orders for more than 20 customers at once, is not allowed.'
+                }
                 return Response(content, status = status.HTTP_400_BAD_REQUEST)
             order_items = request.data['order_items']
 
@@ -224,12 +238,18 @@ class OrderViewSet(viewsets.ModelViewSet):
                 else:
                     pass
             except Exception, e:
-                content = {'error':'Incomplete params', 'description':'start_date, end_date, by_day should be mentioned for recurring events'}
+                content = {
+                'error':'Incomplete params', 
+                'description':'start_date, end_date, by_day should be mentioned for recurring events'
+                }
                 return Response(content, status = status.HTTP_400_BAD_REQUEST)
             
 
         except Exception, e:
-            content = {'error':'Incomplete params', 'description':'pickup_datetime, delivery_datetime, order_items, pickup_address_id, delivery_address_id , vendor_id, consumer_id, product_id, quantity, total_cost'}
+            content = {
+            'error':'Incomplete params', 
+            'description':'pickup_datetime, delivery_datetime, order_items, pickup_address_id, delivery_address_id , vendor_id, consumer_id, product_id, quantity, total_cost'
+            }
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
         
         try:
@@ -239,7 +259,10 @@ class OrderViewSet(viewsets.ModelViewSet):
             pickup_datetime = parse_datetime(pickup_datetime)
             
             if is_pickup_time_acceptable(pickup_datetime) is False:
-                content = {'error':'Pickup time not acceptable', 'description':'Pickup time can only be between 5.30AM to 10.00PM'}
+                content = {
+                'error':'Pickup time not acceptable', 
+                'description':'Pickup time can only be between 5.30AM to 10.00PM'
+                }
                 return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
             delivery_datetime = parse_datetime(delivery_datetime)
@@ -325,11 +348,15 @@ class OrderViewSet(viewsets.ModelViewSet):
             return Response(content, status = status.HTTP_201_CREATED)
             
         except Exception, e:
-            content = {'error':'Unable to create orders with the given details'}    
+            content = {
+            'error':'Unable to create orders with the given details'
+            }    
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
     def destroy(self, request, pk):  
-        content = {'description': "Deleting an order is not allowed."}
+        content = {
+        'description': "Deleting an order is not allowed."
+        }
         return Response(content, status = status.HTTP_400_BAD_REQUEST)
                
     @detail_route(methods=['post'])
@@ -355,7 +382,10 @@ class OrderViewSet(viewsets.ModelViewSet):
             notes = request.data.get('notes')
 
         except Exception, e:
-            content = {'error':'Incomplete params', 'description':'pickup_datetime, delivery_datetime, customer_name, customer_phone_number, pickup_address, delivery_address , product_id, quantity, total_cost, is_reverse_pickup'}
+            content = {
+            'error':'Incomplete params', 
+            'description':'pickup_datetime, delivery_datetime, customer_name, customer_phone_number, pickup_address, delivery_address , product_id, quantity, total_cost, is_reverse_pickup'
+            }
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
         try:
@@ -364,18 +394,26 @@ class OrderViewSet(viewsets.ModelViewSet):
                 vendor_agent = get_object_or_404(VendorAgent, user = self.request.user)
                 vendor = vendor_agent.vendor
             else:
-                content = {'error':'API Access limited.', 'description':'You cant access this api'}
+                content = {
+                'error':'API Access limited.', 
+                'description':'You cant access this api'
+                }
                 return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
             pickup_datetime = parse_datetime(pickup_datetime)
             if is_pickup_time_acceptable(pickup_datetime) is False:
-                content = {'error':'Pickup time not acceptable', 'description':'Pickup time can only be between 5.30AM to 10.00PM'}
+                content = {
+                'error':'Pickup time not acceptable', 
+                'description':'Pickup time can only be between 5.30AM to 10.00PM'
+                }
                 return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
             delivery_datetime = parse_datetime(delivery_datetime)
 
         except Exception, e:
-            content = {'error':'Error parsing dates'}
+            content = {
+            'error':'Error parsing dates'
+            }
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
         try:
@@ -433,11 +471,17 @@ class OrderViewSet(viewsets.ModelViewSet):
                     delivery_dates.append(parse_datetime(additional_date))
 
                 if len(delivery_dates) <=0:
-                    content = {'error':'Incomplete dates', 'description':'Please check the dates'}
+                    content = {
+                    'error':'Incomplete dates', 
+                    'description':'Please check the dates'
+                    }
                     return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
             except:
-                content = {'error':'Incomplete params', 'description':'start_date, end_date, by_day should be mentioned for recurring events'}
+                content = {
+                'error':'Incomplete parameters', 
+                'description':'start_date, end_date, by_day should be mentioned for recurring events'
+                }
                 return Response(content, status = status.HTTP_400_BAD_REQUEST)
         except:
             delivery_dates.append(pickup_datetime)
@@ -554,7 +598,9 @@ class OrderViewSet(viewsets.ModelViewSet):
                 cod_amount = single_order.get('cod_amount')
             
             except Exception, e:
-                content = {'error':'Incomplete params', 'description':'pickup_datetime, delivery_datetime, customer_name, customer_phone_number, pickup address, delivery address , product_id, quantity, total_cost'}
+                content = {'error':'Incomplete parameters', 
+                'description':'pickup_datetime, delivery_datetime, customer_name, customer_phone_number, pickup address, delivery address , product_id, quantity, total_cost'
+                }
                 return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
             try:
@@ -563,7 +609,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                     vendor_agent = get_object_or_404(VendorAgent, user = self.request.user)
                     vendor = vendor_agent.vendor
                 else:
-                    content = {'error':'API Access limited.', 'description':'You cant access this api'}
+                    content = {'error':'API Access limited.', 'description':'You cant access this API'}
                     return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
                 pickup_datetime = parse_datetime(pickup_datetime)
@@ -668,7 +714,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                         is_canceled = True
                         break
                     else:
-                        content = {'description': "The order has already been processed, cant cancel now."}
+                        content = {'description': "The order has already been processed, cant update now."}
                         return Response(content, status = status.HTTP_400_BAD_REQUEST)
         
         if is_canceled is True:
@@ -710,22 +756,27 @@ class OrderViewSet(viewsets.ModelViewSet):
         delivery_statuses = order.delivery_status.all()
         for delivery_status in delivery_statuses:            
             if delivery_status.date.date() == pickedup_datetime.date():
-                delivery_status.order_status = constants.ORDER_STATUS_INTRANSIT
-                delivery_status.pickedup_datetime = pickedup_datetime
-                if new_pop is not None:
-                    delivery_status.pickup_proof = new_pop
-                delivery_status.save()
+                if can_update_delivery_status(delivery_status):
+
+                    delivery_status.order_status = constants.ORDER_STATUS_INTRANSIT
+                    delivery_status.pickedup_datetime = pickedup_datetime
+                    if new_pop is not None:
+                        delivery_status.pickup_proof = new_pop
+                    delivery_status.save()
                 
-                # UPDATE DG STATUS ==========
-                try:
-                    dg = delivery_status.delivery_guy
-                    if dg is not None:
-                        dg.status = constants.DG_STATUS_BUSY
-                        dg.save()
-                        # TODO: update_pending_count(dg)
-                except Exception, e:
-                    pass
-                break
+                    # UPDATE DG STATUS ==========
+                    try:
+                        dg = delivery_status.delivery_guy
+                        if dg is not None:
+                            dg.status = constants.DG_STATUS_BUSY
+                            dg.save()
+                            # TODO: update_pending_count(dg)
+                    except Exception, e:
+                        pass
+                    break
+                else:
+                    content = {'description': "The order has already been processed, cant update now."}
+                    return Response(content, status = status.HTTP_400_BAD_REQUEST)
         
         content = {'description': 'Order updated'}
         return Response(content, status = status.HTTP_200_OK)
@@ -781,31 +832,34 @@ class OrderViewSet(viewsets.ModelViewSet):
         delivery_statuses = order.delivery_status.all()
         for delivery_status in delivery_statuses:
             if delivery_status.date.date() == delivered_datetime.date():
-                delivery_status.order_status = order_status
-                delivery_status.delivered_at = delivered_at
-                delivery_status.completed_datetime = delivered_datetime
-                if is_cod_collected is not None:
-                    delivery_status.is_cod_collected = is_cod_collected
-                if new_pod is not None:
-                    delivery_status.delivery_proof = new_pod                    
+                if can_deliver_delivery_status(delivery_status):
+                    delivery_status.order_status = order_status
+                    delivery_status.delivered_at = delivered_at
+                    delivery_status.completed_datetime = delivered_datetime
+                    if is_cod_collected is not None:
+                        delivery_status.is_cod_collected = is_cod_collected
+                    if new_pod is not None:
+                        delivery_status.delivery_proof = new_pod                    
+                    if cod_remarks is not None:
+                        delivery_status.cod_remarks = cod_remarks
+                    if cod_collected_amount is not None:
+                        delivery_status.cod_collected_amount = cod_collected_amount
+                    delivery_status.save()
+                    
+                    # UPDATE DG STATUS ==========
+                    try:
+                        dg = delivery_status.delivery_guy
+                        if dg is not None:
+                            dg.status = constants.DG_STATUS_AVAILABLE
+                            dg.save()
+                            # TODO: update_pending_count(dg)
+                    except Exception, e:
+                        pass                
+                    break
+                else:
+                    content = {'error': "The order has already been processed, now you cant update the status."}
+                    return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
-                if cod_remarks is not None:
-                    delivery_status.cod_remarks = cod_remarks
-                if cod_collected_amount is not None:
-                    delivery_status.cod_collected_amount = cod_collected_amount
-
-                delivery_status.save()
-
-                # UPDATE DG STATUS ==========
-                try:
-                    dg = delivery_status.delivery_guy
-                    if dg is not None:
-                        dg.status = constants.DG_STATUS_AVAILABLE
-                        dg.save()
-                        # TODO: update_pending_count(dg)
-                except Exception, e:
-                    pass                
-                break
 
         # CONFIRMATION MESSAGE TO CUSTOMER
         message = constants.ORDER_DELIVERED_MESSAGE_CLIENT.format(order_status, order.consumer.user.first_name, delivered_at)
@@ -835,7 +889,9 @@ class OrderViewSet(viewsets.ModelViewSet):
                 date = parse_datetime(date_string)    
 
         except Exception, e:
-            content = {'error':'dg_id and order_ids list are Mandatory'}    
+            content = {
+            'error':'dg_id and order_ids list are Mandatory'
+            }    
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
         
         dg = get_object_or_404(DeliveryGuy, id = dg_id)
@@ -848,7 +904,9 @@ class OrderViewSet(viewsets.ModelViewSet):
 
         order_count = len(order_ids)
         if order_count > 10:
-            content = {'error':'Cant assign more than 10 orders at a time.'}
+            content = {
+            'error':'Cant assign more than 10 orders at a time.'
+            }
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
 
@@ -888,7 +946,13 @@ class OrderViewSet(viewsets.ModelViewSet):
         
         # SEND PUSH NOTIFICATION TO DELIVERYGUY
         try:
-            data = { 'message':'A new order has been assigned to you.', 'type': 'order_assigned', 'data':{'order_id': order_ids}}
+            data = { 
+            'message':'A new order has been assigned to you.', 
+            'type': 'order_assigned', 
+            'data':{
+            'order_id': order_ids
+            }
+            }
             send_push(dg.device_token, data)
         except Exception, e:
             print 'push notification not sent in order assignment'
@@ -902,7 +966,9 @@ class OrderViewSet(viewsets.ModelViewSet):
             print 'assignment message not sent to vendor'
             pass
 
-        content = {'description': 'Order assigned'}
+        content = {
+        'description': 'Order assigned'
+        }
         return Response(content, status = status.HTTP_200_OK)
     
     @detail_route(methods=['post'])
@@ -911,7 +977,10 @@ class OrderViewSet(viewsets.ModelViewSet):
             date_string = request.data['date']
             date = parse_datetime(date_string)
         except Exception, e:
-            content = {'error':'Incomplete params', 'description':'date'}
+            content = {
+            'error':'Incomplete params', 
+            'description':'date'
+            }
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
         order = get_object_or_404(Order, id = pk)
@@ -920,9 +989,15 @@ class OrderViewSet(viewsets.ModelViewSet):
         delivery_statuses = order.delivery_status.all()        
         for delivery_status in delivery_statuses:
             if date.date() == delivery_status.date.date():
-                delivery_status.order_status = constants.ORDER_STATUS_QUEUED
-                delivery_status.save()
-                break
+                if can_update_delivery_status(delivery_status):
+                    delivery_status.order_status = constants.ORDER_STATUS_QUEUED
+                    delivery_status.save()
+                    break
+                else:
+                    content = {
+                    'error': "The order has already been processed, now you cant update the status."
+                    }
+                    return Response(content, status = status.HTTP_400_BAD_REQUEST)
         
         message = constants.ORDER_APPROVED_MESSAGE_CLIENT.format(order.consumer.user.first_name)
         send_sms(order.vendor.phone_number, message)
@@ -935,12 +1010,17 @@ class OrderViewSet(viewsets.ModelViewSet):
             date_string = request.data['date']
             date = parse_datetime(date_string)
         except Exception, e:
-            content = {'error':'Incomplete params', 'description':'date'}
+            content = {
+            'error':'Incomplete parameters', 
+            'description':'date'
+            }
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
         order = get_object_or_404(Order, id = pk)
         if can_user_update_this_order(order, request.user) is False:
-            content = {'error': "You don't have permissions to cancel this order."}
+            content = {
+            'error': "You don't have permissions to cancel this order."
+            }
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
         is_cancelled = False
@@ -954,16 +1034,22 @@ class OrderViewSet(viewsets.ModelViewSet):
                     is_cancelled = True
                     break
                 else:
-                    content = {'error': "The order has already been processed, now you cant update the status."}
+                    content = {
+                    'error': "The order has already been processed, now you cant update the status."
+                    }
                     return Response(content, status = status.HTTP_400_BAD_REQUEST)
         
         if is_cancelled:
             message = constants.ORDER_CANCELLED_MESSAGE_CLIENT.format(order.consumer.user.first_name, order.id)
             send_sms(order.vendor.phone_number, message)
-            content = {'description':'Order has been canceled'}
+            content = {
+            'description':'Order has been canceled'
+            }
             return Response(content, status = status.HTTP_200_OK)
         else:
-            content = {'error':'Order cancellation failed'}
+            content = {
+            'error':'Order cancellation failed'
+            }
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
     @detail_route(methods=['post'])
@@ -972,7 +1058,9 @@ class OrderViewSet(viewsets.ModelViewSet):
             old_date_string = request.data['old_date']
             new_date_string = request.data['new_date']
         except Exception, e:
-            content = {'error':'Incomplete params', 'description':'old_date & new_date'}
+            content = {
+            'error':'Incomplete params', 'description':'old_date & new_date'
+            }
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
         
         old_date = parse_datetime(old_date_string)
@@ -983,20 +1071,29 @@ class OrderViewSet(viewsets.ModelViewSet):
         delivery_statuses = order.delivery_status.all()
         for delivery_status in delivery_statuses:
             if delivery_status.date.date() == old_date.date():
-                delivery_status.date = new_date
-                delivery_status.save()
-                is_rescheduled = True
-                break
-
+                if can_update_delivery_status(delivery_status):
+                    delivery_status.date = new_date
+                    delivery_status.save()
+                    is_rescheduled = True
+                    break
+                else:
+                    content = {
+                    'error': "The order has already been processed, now you cant update the status."
+                    }
+                    return Response(content, status = status.HTTP_400_BAD_REQUEST)
         if is_rescheduled:
             readable_date = new_date.strftime("%B %d, %Y")
             message = constants.ORDER_RESCHEDULED_MESSAGE_CLIENT.format(order.consumer.user.first_name, order.id, readable_date)
             send_sms(order.vendor.phone_number, message)
 
-            content = {'description':'Reschedule successful'}
+            content = {
+            'description':'Reschedule successful'
+            }
             return Response(content, status = status.HTTP_200_OK)
         else:
-            content = {'error':'Reschedule unsuccessful'}
+            content = {
+            'error':'Reschedule unsuccessful'
+            }
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
     @detail_route(methods=['post'])
@@ -1007,7 +1104,10 @@ class OrderViewSet(viewsets.ModelViewSet):
             date = parse_datetime(date_string)
 
         except Exception, e:
-            content = {'error':'Incomplete params', 'description':'rejection_reason, date'}
+            content = {
+            'error':'Incomplete params', 
+            'description':'rejection_reason, date'
+            }
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
         order = get_object_or_404(Order, id = pk)
@@ -1016,10 +1116,17 @@ class OrderViewSet(viewsets.ModelViewSet):
         delivery_statuses = order.delivery_status.all()
         for delivery_status in delivery_statuses:
             if delivery_status.date.date() == date.date():
-                delivery_status.order_status = constants.ORDER_STATUS_REJECTED
-                delivery_status.rejection_reason = reason_message
-                delivery_status.save()
-                break
+                if can_update_delivery_status(delivery_status):
+                    delivery_status.order_status = constants.ORDER_STATUS_REJECTED
+                    delivery_status.rejection_reason = reason_message
+                    delivery_status.save()
+                    break
+                else:
+                    content = {
+                    'error': "The order has already been processed, now you cant update the status."
+                    }
+                    return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
         
         message = constants.ORDER_REJECTED_MESSAGE_CLIENT.format(order.consumer.user.first_name, reason_message)
         send_sms(order.vendor.phone_number, message)
