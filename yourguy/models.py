@@ -332,7 +332,7 @@ class OrderDeliveryStatus(models.Model):
     cod_remarks = models.CharField(max_length = 500, blank = True)
 
     def __unicode__(self):
-        return u"%s - %s" % (self.id, self.order_status, self.delivered_at)
+        return u"%s" % (self.id)
 
 class Order(models.Model):
 
@@ -430,7 +430,8 @@ class Order(models.Model):
     rejection_reason = models.CharField(max_length = 500, blank = True)
     
     def __unicode__(self):
-        return u"%s - %s - %s - %s - %s - %s" % (self.id, self.vendor.store_name, self.consumer.user.first_name, self.order_status, self.delivery_guy, self.delivered_at)
+        return u"%s" % (self.id)
+        # return u"%s - %s - %s - %s - %s - %s" % (self.id, self.vendor.store_name, self.consumer.user.first_name, self.order_status, self.delivery_guy, self.delivered_at)
 
 class Suggestion(models.Model):
 
