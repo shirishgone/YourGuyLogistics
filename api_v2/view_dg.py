@@ -72,6 +72,11 @@ class DGViewSet(viewsets.ModelViewSet):
         page = self.request.QUERY_PARAMS.get('page', None)
         role = user_role(request.user)
         
+        if page is not None:
+            page = int(page)
+        else:
+            page = 1    
+        
         if role == 'vendor':
             content = {'error':'You dont have permissions to view delivery guy info'}
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
@@ -79,9 +84,16 @@ class DGViewSet(viewsets.ModelViewSet):
             all_dgs = DeliveryGuy.objects.all().order_by(Lower('user__first_name'))
             
             # PAGINATE ========
-            dgs = paginate(all_dgs, page)
             total_dg_count = len(all_dgs)
             total_pages =  int(total_dg_count/constants.PAGINATION_PAGE_SIZE) + 1
+
+            if page > total_pages or page<=0:
+                response_content = {
+                "error": "Invalid page number"
+                }
+                return Response(response_content, status = status.HTTP_400_BAD_REQUEST)
+            else:
+                dgs = paginate(all_dgs, page)
 
             result = []
             for delivery_guy in dgs:

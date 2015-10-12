@@ -81,16 +81,28 @@ class ConsumerViewSet(viewsets.ModelViewSet):
     def list(self, request):
         page = self.request.QUERY_PARAMS.get('page', None)
 
+        if page is not None:
+            page = int(page)
+        else:
+            page = 1    
+
         role = user_role(request.user)
         if role == 'vendor':
             vendor_agent = get_object_or_404(VendorAgent, user = request.user)
             total_consumers_of_vendor = Consumer.objects.filter(associated_vendor = vendor_agent.vendor).order_by(Lower('user__first_name'))
         
             # PAGINATE ========
-            customers = paginate(total_consumers_of_vendor, page)
             total_customers_count = len(total_consumers_of_vendor)
             total_pages =  int(total_customers_count/constants.PAGINATION_PAGE_SIZE) + 1
 
+            if page > total_pages or page<=0:
+                response_content = {
+                "error": "Invalid page number"
+                }
+                return Response(response_content, status = status.HTTP_400_BAD_REQUEST)
+            else:
+                customers = paginate(total_consumers_of_vendor, page)
+            
             result = []
             for consumer in customers:
                 consumer_dict = consumer_list_dict(consumer)
