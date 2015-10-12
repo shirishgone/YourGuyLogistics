@@ -857,7 +857,14 @@ class OrderViewSet(viewsets.ModelViewSet):
                         pass                
                     break
                 else:
-                    content = {'error': "The order has already been processed, now you cant update the status."}
+                    if delivery_status.order_status == constants.ORDER_STATUS_PLACED or delivery_status.order_status == constants.ORDER_STATUS_PLACED:
+                        content = {
+                        'error': "The order has not been picked up. Please pickup first to deliver it."
+                        }
+                    else:    
+                        content = {
+                        'error': "The order has already been processed, now you cant update the status."
+                        }
                     return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
 
