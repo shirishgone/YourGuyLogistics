@@ -286,6 +286,11 @@ class OrderViewSet(viewsets.ViewSet):
         order_id = request.QUERY_PARAMS.get('order_id', None)
         search_query = request.QUERY_PARAMS.get('search', None)
 
+        if page is not None:
+            page = int(page)
+        else:
+            page = 1    
+
         if date_string is not None:
             date = parse_datetime(date_string)
         else:
@@ -350,7 +355,14 @@ class OrderViewSet(viewsets.ViewSet):
 
         total_orders_count = len(queryset)
         total_pages =  int(total_orders_count/constants.PAGINATION_PAGE_SIZE) + 1
-        orders = paginate(queryset, page)
+
+        if page > total_pages or page<=0:
+            response_content = {
+            "error": "Invalid page number"
+            }
+            return Response(response_content, status = status.HTTP_400_BAD_REQUEST)
+        else:
+            orders = paginate(queryset, page)
         
         # UPDATING DELIVERY STATUS OF THE DAY
         result = []
@@ -434,7 +446,7 @@ class OrderViewSet(viewsets.ViewSet):
                     }
                     return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
-                delivery_timedelta = timedelta(hours = 3, minutes = 0)
+                delivery_timedelta = timedelta(hours = 4, minutes = 0)
                 delivery_datetime = pickup_datetime + delivery_timedelta
 
             except Exception, e:
@@ -488,6 +500,9 @@ class OrderViewSet(viewsets.ViewSet):
                     new_order.cod_amount = float(cod_amount)
                 
                 delivery_status = OrderDeliveryStatus.objects.create(date = pickup_datetime)
+                if vendor.is_retail is False:
+                    delivery_status.order_status = 'QUEUED'
+                    delivery_status.save()
                 new_order.delivery_status.add(delivery_status)
                 new_order.save()
             except Exception, e:
@@ -517,7 +532,6 @@ class OrderViewSet(viewsets.ViewSet):
         # PARSING REQUEST PARAMS ------------------------
         try:            
             pickup_datetime = request.data['pickup_datetime']
-            delivery_datetime = request.data['delivery_datetime']
             
             consumer_name = request.data['customer_name']
             consumer_phone_number = request.data['customer_phone_number']
@@ -536,8 +550,8 @@ class OrderViewSet(viewsets.ViewSet):
 
         except Exception, e:
             content = {
-            'error':'Incomplete params', 
-            'description':'pickup_datetime, delivery_datetime, customer_name, customer_phone_number, pickup_address, delivery_address , product_id, quantity, total_cost, is_reverse_pickup'
+            'error':'Incomplete parameters', 
+            'description':'pickup_datetime, customer_name, customer_phone_number, pickup_address{pickup_full_address, pickup_pin_code, pickup_landmark(optional)}, delivery_address{delivery_full_address, delivery_pin_code, delivery_landmark(optional)}, is_reverse_pickup, order_items { product_id, quantity }, total_cost, vendor_order_id, cod_amount, notes'
             }
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
         # ---------------------------------------------------
@@ -546,14 +560,14 @@ class OrderViewSet(viewsets.ViewSet):
         try:
             pickup_datetime = parse_datetime(pickup_datetime)
             if is_pickup_time_acceptable(pickup_datetime) is False:
-                content = {'error':'Pickup time not acceptable', 'description':'Pickup time can only be between 5.30AM to 10.00PM'}
+                content = {
+                'error':'Pickup time not acceptable', 
+                'description':'Pickup time can only be between 5.30AM to 10.00PM'
+                }
                 return Response(content, status = status.HTTP_400_BAD_REQUEST)
-
-            delivery_datetime = parse_datetime(delivery_datetime)
-            if is_pickup_time_acceptable(delivery_datetime) is False:
-                content = {'error':'Delivery time not acceptable', 'description':'Delivery time can only be between 5.30AM to 10.00PM'}
-                return Response(content, status = status.HTTP_400_BAD_REQUEST)
-
+            
+            delivery_timedelta = timedelta(hours = 4, minutes = 0)
+            delivery_datetime = pickup_datetime + delivery_timedelta
         except Exception, e:
             content = {'error':'Error parsing dates'}
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
@@ -583,16 +597,22 @@ class OrderViewSet(viewsets.ViewSet):
                 # ---------------------------------------------------
                 
                 if len(delivery_dates) <=0:
-                    content = {'error':'Incomplete dates', 'description':'Please check the dates'}
+                    content = {
+                    'error':'Incomplete dates', 
+                    'description':'Please check the dates'
+                    }
                     return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
             except:
-                content = {'error':'Incomplete params', 'description':'start_date, end_date, by_day should be mentioned for recurring events'}
+                content = {
+                'error':'Incomplete parameters', 
+                'description':'start_date, end_date, by_day should be mentioned for recurring events'
+                }
                 return Response(content, status = status.HTTP_400_BAD_REQUEST)
         except:
             delivery_dates.append(pickup_datetime)
         # ---------------------------------------------------
-        
+
         try:
             # CREATING USER & CONSUMER IF DOESNT EXISTS ------------------------
             if is_userexists(consumer_phone_number) is True:
@@ -620,7 +640,7 @@ class OrderViewSet(viewsets.ViewSet):
             except:
                 content = {
                 'error':' Insufficient or incorrect parameters',
-                'description':'pickup_full_address, pickup_pin_code, pickup_landmark, delivery_full_address, delivery_pin_code, delivery_landmark'
+                'description':'pickup_full_address, pickup_pin_code, pickup_landmark(optional), delivery_full_address, delivery_pin_code, delivery_landmark(optional)'
                 }
                 return Response(content, status = status.HTTP_400_BAD_REQUEST)
             # ---------------------------------------------------
@@ -657,7 +677,9 @@ class OrderViewSet(viewsets.ViewSet):
                         vendor.addresses.add(delivery_adr)
         
             except:
-                content = {'error':' Error parsing addresses'}
+                content = {
+                'error':' Error parsing addresses'
+                }
                 return Response(content, status = status.HTTP_400_BAD_REQUEST)
             # ---------------------------------------------------
             
@@ -672,7 +694,9 @@ class OrderViewSet(viewsets.ViewSet):
                     delivery_datetime = delivery_datetime,
                     is_reverse_pickup = is_reverse_pickup)
             except Exception, e:
-                content = {'error':' Error placing new order'}
+                content = {
+                'error':' Error placing new order'
+                }
                 return Response(content, status = status.HTTP_400_BAD_REQUEST)
             # ---------------------------------------------------
             
@@ -692,11 +716,15 @@ class OrderViewSet(viewsets.ViewSet):
 
             for date in delivery_dates:
                 delivery_status = OrderDeliveryStatus.objects.create(date = date)
+                if vendor.is_retail is False:
+                    delivery_status.order_status = 'QUEUED'
+                    delivery_status.save()
+                
                 new_order.delivery_status.add(delivery_status)
 
             if len(delivery_dates) > 1:
                 new_order.is_recurring = True
-            
+
             # ORDER ITEMS ----------------------------------------
             try:
                 for item in order_items:
@@ -721,7 +749,12 @@ class OrderViewSet(viewsets.ViewSet):
             send_sms(vendor.phone_number, message_client)
             # ---------------------------------------------------
 
-            content = {'data':{'order_id':new_order.id}, 'message':'Your Order has been placed.'}
+            content = {
+            'data':{
+            'order_id':new_order.id
+            }, 
+            'message':'Your Order has been placed.'
+            }
             return Response(content, status = status.HTTP_201_CREATED)
             
         except Exception, e:
@@ -732,7 +765,9 @@ class OrderViewSet(viewsets.ViewSet):
     def cancel(self, request, pk):        
         order = get_object_or_404(Order, id = pk)
         if can_user_update_this_order(order, request.user) is False:
-            content = {'error': "You don't have permissions to cancel this order."}
+            content = {
+            'error': "You don't have permissions to cancel this order."
+            }
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
         
         # DATA FILTERING FOR RECURRING ORDERS -----------------------
@@ -743,16 +778,16 @@ class OrderViewSet(viewsets.ViewSet):
             'description':'date parameter is mandatory for recurring orders'
             }
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
+        elif is_recurring_order(order) and date_string is not None:
+            try:
+                date = parse_datetime(date_string)
+            except Exception, e:
+                content = {
+                'error':'Incorrect date', 
+                'description':'date format is not appropriate'
+                }
+                return Response(content, status = status.HTTP_400_BAD_REQUEST)
         # -----------------------------------------------------------
-
-        try:
-            date = parse_datetime(date_string)
-        except Exception, e:
-            content = {
-            'error':'Incorrect date', 
-            'description':'date format is not appropriate'
-            }
-            return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
         final_delivery_status = None
         is_cancelled = False
@@ -773,15 +808,21 @@ class OrderViewSet(viewsets.ViewSet):
             final_delivery_status.save()
             is_cancelled = True
         else:
-            content = {'error': "The order has already been processed, now you cant update the status."}
+            content = {
+            'error': "The order has already been processed, now you cant update the status."
+            }
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
         # ------------------------------------------------------------       
         
         if is_cancelled:
             message = constants.ORDER_CANCELLED_MESSAGE_CLIENT.format(order.consumer.user.first_name, order.id)
             send_sms(order.vendor.phone_number, message)
-            content = {'description':'Order has been canceled'}
+            content = {
+            'description':'Order has been canceled'
+            }
             return Response(content, status = status.HTTP_200_OK)
         else:
-            content = {'error':'Order cancellation failed'}
+            content = {
+            'error':'Order cancellation failed'
+            }
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
