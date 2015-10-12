@@ -857,7 +857,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                         pass                
                     break
                 else:
-                    if delivery_status.order_status == constants.ORDER_STATUS_PLACED or delivery_status.order_status == constants.ORDER_STATUS_PLACED:
+                    if delivery_status.order_status == constants.ORDER_STATUS_PLACED or delivery_status.order_status == constants.ORDER_STATUS_QUEUED:
                         content = {
                         'error': "The order has not been picked up. Please pickup first to deliver it."
                         }
