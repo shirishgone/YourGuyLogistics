@@ -398,7 +398,7 @@ class OrderViewSet(viewsets.ViewSet):
             content = {'error':'Incomplete params. pickup_address_id, orders'}
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
         
-        # VENDOR ORDER ID Duplication removed.
+        # VENDOR ORDER ID Duplication check removed.
         # for order in orders:
         #     try:
         #         existing_order = get_object_or_404(Order, vendor_order_id = order['vendor_order_id'])
@@ -825,5 +825,111 @@ class OrderViewSet(viewsets.ViewSet):
         else:
             content = {
             'error':'Order cancellation failed'
+            }
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
+    @detail_route(methods=['post'])
+    def picked_up(self, request, pk=None):
+        order = get_object_or_404(Order, pk = pk)
+        pop = request.data.get('pop')
+
+        # INPUT PARAM - ORDER STATUS CHECK --------------------------------------------------------
+        try:
+            order_status = request.data['order_status']    
+            if order_status == constants.ORDER_STATUS_PICKUP_ATTEMPTED or order_status == constants.ORDER_STATUS_INTRANSIT:
+                pass
+            else:
+                content = {
+                'error':'Wrong order_status parameter. Options are INTRANSIT or PICKUPATTEMPTED'
+                }
+                return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
+        except Exception, e:
+            content = {
+            'error':'order_status is a mandatory parameter with options: INTRANSIT or PICKUPATTEMPTED'
+            }
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+        # ----------------------------------------------------------------------------
+        
+        # PICKEDUP DATE TIME --------------------------------------------------------
+        pickedup_datetime_string = request.data.get('pickedup_datetime')
+        if pickedup_datetime_string is not None:
+            pickedup_datetime = parse_datetime(pickedup_datetime_string) 
+        else:
+            pickedup_datetime = datetime.now() 
+        # ----------------------------------------------------------------------------
+        
+        # DATA FILTERING FOR RECURRING ORDERS -----------------------
+        date_string = request.data.get('date')
+        if is_recurring_order(order) and date_string is None:
+            content = {
+            'error':'Incomplete parameters', 
+            'description':'date parameter is mandatory for recurring orders'
+            }
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+        elif is_recurring_order(order) and date_string is not None:
+            try:
+                order_date = parse_datetime(date_string)
+            except Exception, e:
+                content = {
+                'error':'Incorrect date', 
+                'description':'date format is not appropriate'
+                }
+                return Response(content, status = status.HTTP_400_BAD_REQUEST)
+        # -----------------------------------------------------------
+        
+        # POP ------------------------------------------------------------------------
+        new_pop = None
+        try:
+            if pop is not None:
+                receiver_name = pop['receiver_name']
+                signature_name = pop['signature']
+                pictures = pop['image_names']
+                
+                signature = Picture.objects.create(name = signature_name)
+                new_pop = ProofOfDelivery.objects.create(receiver_name = receiver_name, signature = signature)
+                for picture in pictures:
+                    new_pop.pictures.add(Picture.objects.create(name = picture))                       
+        except:
+            content = {
+            'error':'An error with pod parameter'
+            }
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+        # ----------------------------------------------------------------------------
+        
+        # PICK THE APPROPRIATE DELIVERY STATUS OBJECT ----------------
+        if is_recurring_order(order):
+            delivery_statuses = order.delivery_status.all()
+            for delivery_status in delivery_statuses:
+                if delivery_status.date.date() == order_date.date():
+                    final_delivery_status = delivery_status
+        else:
+            final_delivery_status = order.delivery_status.all().latest('date')
+        # -----------------------------------------------------------
+
+        # UPDATING THE DELIVERY STATUS OF THE PARTICULAR DAY -------------------------
+        is_order_updated = False
+        if final_delivery_status is not None and can_update_delivery_status(final_delivery_status):
+            final_delivery_status.order_status = order_status
+            final_delivery_status.pickedup_datetime = pickedup_datetime
+            if new_pop is not None:
+                final_delivery_status.pickup_proof = new_pop
+            final_delivery_status.save()
+            is_order_updated = True
+        else:
+            content = {
+            'error': "The order has already been processed, now you cant update the status."
+            }
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+        # ------------------------------------------------------------       
+        
+        if is_order_updated:
+            content = {
+            'description':'Order has been updated'
+            }
+            return Response(content, status = status.HTTP_200_OK)
+        else:
+            content = {
+            'error':'Order update failed'
             }
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
