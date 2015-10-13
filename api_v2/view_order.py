@@ -398,14 +398,15 @@ class OrderViewSet(viewsets.ViewSet):
             content = {'error':'Incomplete params. pickup_address_id, orders'}
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
         
-        for order in orders:
-            try:
-                existing_order = get_object_or_404(Order, vendor_order_id = order['vendor_order_id'])
-                error_message = 'An order with vendor_order_id:{} already exists'.format(order['vendor_order_id'])
-                content = {'error':error_message}
-                return Response(content, status = status.HTTP_400_BAD_REQUEST)
-            except Exception, e:
-                pass
+        # VENDOR ORDER ID Duplication removed.
+        # for order in orders:
+        #     try:
+        #         existing_order = get_object_or_404(Order, vendor_order_id = order['vendor_order_id'])
+        #         error_message = 'An order with vendor_order_id:{} already exists'.format(order['vendor_order_id'])
+        #         content = {'error':error_message}
+        #         return Response(content, status = status.HTTP_400_BAD_REQUEST)
+        #     except Exception, e:
+        #         pass
                 
         for single_order in orders:
             try:
