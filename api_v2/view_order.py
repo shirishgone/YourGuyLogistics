@@ -204,7 +204,8 @@ def deliveryguy_list(order, date):
             'delivery_address':address_string(order.delivery_address),
             'status' : delivery_status.order_status,
             'customer_name' : order.consumer.user.first_name,
-            'vendor_name' : order.vendor.store_name
+            'vendor_name' : order.vendor.store_name,
+            'vendor_order_id':order.vendor_order_id
         }
 
         if order.pickup_address.area is not None:
