@@ -10,7 +10,7 @@ from rest_framework import viewsets
 from rest_framework.decorators import detail_route, list_route
 from rest_framework.response import Response
 
-from yourguy.models import Order, Vendor, VendorAgent, OrderDeliveryStatus, Area, User, DeliveryGuy, Consumer, Address, Product, OrderItem
+from yourguy.models import Order, Vendor, VendorAgent, OrderDeliveryStatus, Area, User, DeliveryGuy, Consumer, Address, Product, OrderItem, ProofOfDelivery, Picture
 from api.views import user_role, ist_day_start, ist_day_end, is_userexists, is_consumerexists, send_sms
 
 from api_v2.utils import is_pickup_time_acceptable, is_consumer_has_same_address_already, is_correct_pincode, is_vendor_has_same_address_already
@@ -286,12 +286,22 @@ class OrderViewSet(viewsets.ViewSet):
         date_string = request.QUERY_PARAMS.get('date', None)
         order_id = request.QUERY_PARAMS.get('order_id', None)
         search_query = request.QUERY_PARAMS.get('search', None)
+        filter_order_status = request.QUERY_PARAMS.get('order_status', None)
 
-        if page is not None:
-            page = int(page)
-        else:
-            page = 1    
+        # ORDER STATUS CHECK --------------------------------------------------
+        if filter_order_status is not None:
+            if filter_order_status == constants.ORDER_STATUS_PLACED or filter_order_status == constants.ORDER_STATUS_QUEUED or filter_order_status == constants.ORDER_STATUS_INTRANSIT or filter_order_status == constants.ORDER_STATUS_PICKUP_ATTEMPTED or filter_order_status == constants.ORDER_STATUS_DELIVERED or filter_order_status == constants.ORDER_STATUS_DELIVERY_ATTEMPTED or filter_order_status == ORDER_STATUS_CANCELLED or filter_order_status == ORDER_STATUS_REJECTED:
+                pass
+            else:
+                content = {
+                'error':'Incorrect order_status', 
+                'description':'Options: QUEUED, INTRANSIT, PICKUPATTEMPTED, DELIVERED, DELIVERYATTEMPTED, CANCELLED'
+                }
+                return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
+        # -------------------------------------------------------------------------
+
+        # DATE FILTERING ----------------------------------------------------------
         if date_string is not None:
             date = parse_datetime(date_string)
         else:
@@ -300,75 +310,76 @@ class OrderViewSet(viewsets.ViewSet):
         day_start = ist_day_start(date)
         day_end = ist_day_end(date)
 
+        delivery_status_queryset = OrderDeliveryStatus.objects.filter(date__gte = day_start, date__lte = day_end)
+        # --------------------------------------------------------------------------
+
         role = user_role(request.user)
-        if role == 'vendor':
-            vendor_agent = get_object_or_404(VendorAgent, user = request.user)
-            vendor = vendor_agent.vendor
-            
-            queryset = Order.objects.filter(vendor = vendor, 
-                delivery_status__date__gte = day_start,
-                delivery_status__date__lte = day_end)
 
-            if search_query is not None:
-                if search_query.isdigit():
-                    queryset = queryset.filter(Q(id=search_query) | 
-                        Q(vendor_order_id=search_query) |
-                        Q(consumer__user__username=search_query))
-                else:
-                    queryset = queryset.filter(Q(consumer__user__first_name__icontains=search_query))
-        
-        elif role == 'deliveryguy':
+        # DELIVERY GUY FILTERING -----------------------------------------------------
+        delivery_guy = None
+        if role == constants.DELIVERY_GUY:
             delivery_guy = get_object_or_404(DeliveryGuy, user = request.user)
-            delivery_statuses = OrderDeliveryStatus.objects.filter(delivery_guy = delivery_guy, 
-                date__gte = day_start,
-                date__lte = day_end)
-
-            queryset = Order.objects.filter(delivery_status__in = delivery_statuses).order_by('pickup_datetime')                
-        
         else:
-            queryset = Order.objects.filter(delivery_status__date__gte = day_start,
-                delivery_status__date__lte = day_end)
-
-            if vendor_id is not None:
-                vendor = get_object_or_404(Vendor, pk = vendor_id)
-                queryset = queryset.filter(vendor = vendor)
-
             if dg_phone_number is not None:
                 user = get_object_or_404(User, username = dg_phone_number)
-                dg = get_object_or_404(DeliveryGuy, user = user)
-                queryset = queryset.filter(delivery_status__delivery_guy = dg)
+                delivery_guy = get_object_or_404(DeliveryGuy, user = user)
+        
+        if delivery_guy is not None:        
+            delivery_status_queryset = delivery_status_queryset.filter(delivery_guy = delivery_guy)
+        # ---------------------------------------------------------------------------   
 
-            if area_code is not None:
-                area = get_object_or_404(Area, area_code = area_code)
-                queryset = queryset.filter(delivery_address__area=area)
-            
-            if order_id is not None:
-                queryset = queryset.filter(id = order_id)
+        # ORDER STATUS FILTERING ----------------------------------------------------
+        if filter_order_status is not None:
+            delivery_status_queryset = delivery_status_queryset.filter(order_status = filter_order_status)
+        # ----------------------------------------------------------------------------
 
-            if search_query is not None:
-                if search_query.isdigit():
-                    queryset = queryset.filter(Q(id=search_query) | 
-                        Q(vendor_order_id=search_query) |
-                        Q(consumer__user__username=search_query))
-                else:
-                    queryset = queryset.filter(Q(consumer__user__first_name__icontains=search_query))
+        order_queryset = Order.objects.filter(delivery_status__in = delivery_status_queryset)
 
+        # VENDOR FILTERING ---------------------------------------------------------
+        vendor = None
+        if role == constants.VENDOR:
+            vendor_agent = get_object_or_404(VendorAgent, user = request.user)
+            vendor = vendor_agent.vendor
+        else:
+            if vendor_id is not None:
+                vendor = get_object_or_404(Vendor, pk = vendor_id)
 
-        total_orders_count = len(queryset)
+        if vendor is not None:
+            order_queryset = order_queryset.filter(vendor = vendor)
+        # ---------------------------------------------------------------------------
+
+        # SEARCH KEYWORD FILTERING ---------------------------------------------------
+        if search_query is not None:
+            if search_query.isdigit():
+                order_queryset = order_queryset.filter(Q(id=search_query) | 
+                    Q(vendor_order_id=search_query) |
+                    Q(consumer__user__username=search_query))
+            else:
+                order_queryset = order_queryset.filter(Q(consumer__user__first_name__icontains=search_query))
+        # ---------------------------------------------------------------------------  
+        
+        # PAGINATION  ----------------------------------------------------------------
+        if page is not None:
+            page = int(page)
+        else:
+            page = 1    
+
+        total_orders_count = len(order_queryset)
         total_pages =  int(total_orders_count/constants.PAGINATION_PAGE_SIZE) + 1
-
+        
         if page > total_pages or page<=0:
             response_content = {
             "error": "Invalid page number"
             }
             return Response(response_content, status = status.HTTP_400_BAD_REQUEST)
         else:
-            orders = paginate(queryset, page)
+            orders = paginate(order_queryset, page)
+        # ------------------------------------------------------------------------------
         
-        # UPDATING DELIVERY STATUS OF THE DAY
+        # UPDATING DELIVERY STATUS OF THE DAY  -----------------------------------------
         result = []
         for single_order in orders:
-            if role == 'deliveryguy':
+            if role == constants.DELIVERY_GUY:
                 order = deliveryguy_list(single_order, date)
             else:
                 order = update_daily_status(single_order, date)
@@ -833,24 +844,7 @@ class OrderViewSet(viewsets.ViewSet):
     def picked_up(self, request, pk=None):
         order = get_object_or_404(Order, pk = pk)
         pop = request.data.get('pop')
-
-        # INPUT PARAM - ORDER STATUS CHECK --------------------------------------------------------
-        try:
-            order_status = request.data['order_status']    
-            if order_status == constants.ORDER_STATUS_PICKUP_ATTEMPTED or order_status == constants.ORDER_STATUS_INTRANSIT:
-                pass
-            else:
-                content = {
-                'error':'Wrong order_status parameter. Options are INTRANSIT or PICKUPATTEMPTED'
-                }
-                return Response(content, status = status.HTTP_400_BAD_REQUEST)
-
-        except Exception, e:
-            content = {
-            'error':'order_status is a mandatory parameter with options: INTRANSIT or PICKUPATTEMPTED'
-            }
-            return Response(content, status = status.HTTP_400_BAD_REQUEST)
-        # ----------------------------------------------------------------------------
+        pickup_attempted = request.data.get('pickup_attempted')
         
         # PICKEDUP DATE TIME --------------------------------------------------------
         pickedup_datetime_string = request.data.get('pickedup_datetime')
@@ -893,7 +887,7 @@ class OrderViewSet(viewsets.ViewSet):
                     new_pop.pictures.add(Picture.objects.create(name = picture))                       
         except:
             content = {
-            'error':'An error with pod parameter'
+            'error':'An error with pop parameter'
             }
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
         # ----------------------------------------------------------------------------
@@ -910,8 +904,12 @@ class OrderViewSet(viewsets.ViewSet):
 
         # UPDATING THE DELIVERY STATUS OF THE PARTICULAR DAY -------------------------
         is_order_updated = False
-        if final_delivery_status is not None and can_update_delivery_status(final_delivery_status):
-            final_delivery_status.order_status = order_status
+        if final_delivery_status is not None and can_update_delivery_status(final_delivery_status):            
+            if pickup_attempted is not None and pickup_attempted == True:
+                final_delivery_status.order_status = constants.ORDER_STATUS_PICKUP_ATTEMPTED
+            else:
+                final_delivery_status.order_status = constants.ORDER_STATUS_INTRANSIT
+            
             final_delivery_status.pickedup_datetime = pickedup_datetime
             if new_pop is not None:
                 final_delivery_status.pickup_proof = new_pop
