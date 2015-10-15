@@ -290,7 +290,7 @@ class OrderViewSet(viewsets.ViewSet):
 
         # ORDER STATUS CHECK --------------------------------------------------
         if filter_order_status is not None:
-            if filter_order_status == constants.ORDER_STATUS_PLACED or filter_order_status == constants.ORDER_STATUS_QUEUED or filter_order_status == constants.ORDER_STATUS_INTRANSIT or filter_order_status == constants.ORDER_STATUS_PICKUP_ATTEMPTED or filter_order_status == constants.ORDER_STATUS_DELIVERED or filter_order_status == constants.ORDER_STATUS_DELIVERY_ATTEMPTED or filter_order_status == ORDER_STATUS_CANCELLED or filter_order_status == ORDER_STATUS_REJECTED:
+            if filter_order_status == constants.ORDER_STATUS_PLACED or filter_order_status == constants.ORDER_STATUS_QUEUED or filter_order_status == constants.ORDER_STATUS_INTRANSIT or filter_order_status == constants.ORDER_STATUS_PICKUP_ATTEMPTED or filter_order_status == constants.ORDER_STATUS_DELIVERED or filter_order_status == constants.ORDER_STATUS_DELIVERY_ATTEMPTED or filter_order_status == constants.ORDER_STATUS_CANCELLED or filter_order_status == constants.ORDER_STATUS_REJECTED:
                 pass
             else:
                 content = {
