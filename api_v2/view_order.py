@@ -319,13 +319,15 @@ class OrderViewSet(viewsets.ViewSet):
         delivery_guy = None
         if role == constants.DELIVERY_GUY:
             delivery_guy = get_object_or_404(DeliveryGuy, user = request.user)
+            delivery_status_queryset = delivery_status_queryset.filter(delivery_guy = delivery_guy)
         else:
             if dg_phone_number is not None:
-                user = get_object_or_404(User, username = dg_phone_number)
-                delivery_guy = get_object_or_404(DeliveryGuy, user = user)
-        
-        if delivery_guy is not None:        
-            delivery_status_queryset = delivery_status_queryset.filter(delivery_guy = delivery_guy)
+                if dg_phone_number.isdigit():
+                    user = get_object_or_404(User, username = dg_phone_number)
+                    delivery_guy = get_object_or_404(DeliveryGuy, user = user)
+                    delivery_status_queryset = delivery_status_queryset.filter(delivery_guy = delivery_guy)
+                elif dg_phone_number == 'UNASSIGNED':
+                    delivery_status_queryset = delivery_status_queryset.filter(delivery_guy = None)
         # ---------------------------------------------------------------------------   
 
         # ORDER STATUS FILTERING ----------------------------------------------------
