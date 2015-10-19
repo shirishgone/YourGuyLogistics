@@ -158,6 +158,8 @@ class DGViewSet(viewsets.ModelViewSet):
                                 final_dgs.append(delivery_guy)
                             elif attendance_status == 'ONLY_CHECKEDIN' and attendance is not None and attendance.logout_time == None:
                                 final_dgs.append(delivery_guy)
+                    elif attendance_status == 'ALL':
+                        final_dgs = all_dgs    
                 else:
                     final_dgs = all_dgs
                 dgs = paginate(final_dgs, page)
