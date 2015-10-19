@@ -429,7 +429,8 @@ class OrderViewSet(viewsets.ViewSet):
 
                 # Optional =======
                 cod_amount = single_order.get('cod_amount')
-                
+                notes = single_order.get('notes')
+
                 # Customer details =======
                 consumer_name = single_order['customer_name']
                 consumer_phone_number = single_order['customer_phone_number']
@@ -513,7 +514,10 @@ class OrderViewSet(viewsets.ViewSet):
                 if cod_amount is not None and float(cod_amount) > 0:
                     new_order.is_cod = True
                     new_order.cod_amount = float(cod_amount)
-                
+                                
+                if notes is not None:
+                    new_order.notes = notes
+
                 delivery_status = OrderDeliveryStatus.objects.create(date = pickup_datetime)
                 if vendor.is_retail is False:
                     delivery_status.order_status = 'QUEUED'
