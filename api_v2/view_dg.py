@@ -94,15 +94,30 @@ class DGViewSet(viewsets.ModelViewSet):
         role = user_role(request.user)
         search_query = request.QUERY_PARAMS.get('search', None)
         date_string = self.request.QUERY_PARAMS.get('date', None)
+        attendance_status = self.request.QUERY_PARAMS.get('attendance_status', None)
+
+        # SEARCH KEYWORD FILTERING ---------------------------------------------------
         if date_string is not None:
             date = parse_datetime(date_string)
         else:
             date = datetime.today()
-
+        # ---------------------------------------------------------------------------  
+        
         if page is not None:
             page = int(page)
         else:
             page = 1    
+        
+        # ATTENDANCE FILTERING ------------------------------------------------------
+        if attendance_status is not None:
+            if attendance_status =='ALL' or attendance_status == 'ONLY_CHECKEDIN' or attendance_status == 'NOT_CHECKEDIN':
+                pass
+            else:
+                content = {
+                'error':"Wrong attendance_status. Options: ALL or ONLY_CHECKEDIN or NOT_CHECKEDIN"
+                }
+                return Response(content, status = status.HTTP_400_BAD_REQUEST)
+        # ---------------------------------------------------------------------------  
         
         if role == 'vendor':
             content = {'error':"You don't have permissions to view delivery guy info"}
@@ -120,7 +135,7 @@ class DGViewSet(viewsets.ModelViewSet):
                         Q(app_version=search_query))
             # ---------------------------------------------------------------------------  
 
-            # PAGINATE ========
+            # PAGINATE ---------------------------------------------------------------------------  
             total_dg_count = len(all_dgs)
             total_pages =  int(total_dg_count/constants.PAGINATION_PAGE_SIZE) + 1
 
@@ -130,7 +145,22 @@ class DGViewSet(viewsets.ModelViewSet):
                 }
                 return Response(response_content, status = status.HTTP_400_BAD_REQUEST)
             else:
-                dgs = paginate(all_dgs, page)
+                final_dgs = []
+                if attendance_status is not None:
+                    if attendance_status == 'ONLY_CHECKEDIN' or 'NOT_CHECKEDIN':
+                        for delivery_guy in all_dgs:
+                            try:
+                                attendance = DGAttendance.objects.filter(dg = delivery_guy, date__year = date.year, date__month = date.month, date__day = date.day).latest('date')
+                            except Exception, e:
+                                attendance = None
+                            
+                            if attendance_status == 'NOT_CHECKEDIN' and attendance == None:
+                                final_dgs.append(delivery_guy)
+                            elif attendance_status == 'ONLY_CHECKEDIN' and attendance is not None and attendance.logout_time == None:
+                                final_dgs.append(delivery_guy)
+                else:
+                    final_dgs = all_dgs
+                dgs = paginate(final_dgs, page)
 
             # Attendance for the DG of the day -----------------------------------------------------
             result = []
