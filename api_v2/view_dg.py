@@ -14,23 +14,33 @@ from api.serializers import DGSerializer, DGAttendanceSerializer
 from datetime import date, datetime, timedelta, time
 from api.views import user_role
 from api_v2.views import paginate
+from django.db.models import Q
 
 import constants
 
 
-def dg_list_dict(delivery_guy):
+def dg_list_dict(delivery_guy, attendance):
     dg_list_dict = {
             'id' : delivery_guy.id,
             'name':delivery_guy.user.first_name,
             'phone_number':delivery_guy.user.username,
             'app_version':delivery_guy.app_version,
-            'status': delivery_guy.status
+            'status': delivery_guy.status,
+            'employee_code':delivery_guy.employee_code
             }
+    if attendance is not None:
+        dg_list_dict['check_in'] = attendance.login_time
+        dg_list_dict['check_out'] = attendance.logout_time
+    else:
+        dg_list_dict['check_in'] = None
+        dg_list_dict['check_out'] = None
+
     return dg_list_dict
 
 def dg_details_dict(delivery_guy):
     dg_detail_dict = {
             'id' : delivery_guy.id,
+            'employee_code':delivery_guy.employee_code,
             'name':delivery_guy.user.first_name,
             'phone_number':delivery_guy.user.username,
             'app_version':delivery_guy.app_version,
@@ -57,12 +67,23 @@ class DGViewSet(viewsets.ModelViewSet):
     queryset = DeliveryGuy.objects.all()
     serializer_class = DGSerializer
     
+    def destroy(self, request, pk= None):
+        role = user_role(request.user)
+        if role == constants.OPERATIONS:            
+            delivery_guy = get_object_or_404(DeliveryGuy, pk = pk)
+            delivery_guy.delete()
+            return Response(status=status.HTTP_200_OK)
+        else:
+            return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
     def retrieve(self, request, pk = None):        
         delivery_guy = get_object_or_404(DeliveryGuy, id = pk)
         role = user_role(request.user)
         if role == 'vendor':
-            content = {'error':'You dont have permissions to view delivery guy info'}
-            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+            content = {
+            'error':'You dont have permissions to view delivery guy info'
+            }
+            return Response(content, status = status.HTTP_405_METHOD_NOT_ALLOWED)
         else:
             detail_dict = dg_details_dict(delivery_guy)
             response_content = { "data": detail_dict}
@@ -71,18 +92,34 @@ class DGViewSet(viewsets.ModelViewSet):
     def list(self, request):
         page = self.request.QUERY_PARAMS.get('page', None)
         role = user_role(request.user)
-        
+        search_query = request.QUERY_PARAMS.get('search', None)
+        date_string = self.request.QUERY_PARAMS.get('date', None)
+        if date_string is not None:
+            date = parse_datetime(date_string)
+        else:
+            date = datetime.today()
+
         if page is not None:
             page = int(page)
         else:
             page = 1    
         
         if role == 'vendor':
-            content = {'error':'You dont have permissions to view delivery guy info'}
+            content = {'error':"You don't have permissions to view delivery guy info"}
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
         else:
-            all_dgs = DeliveryGuy.objects.all().order_by(Lower('user__first_name'))
+            all_dgs = DeliveryGuy.objects.all()
             
+            # SEARCH KEYWORD FILTERING ---------------------------------------------------
+            if search_query is not None:
+                if search_query.isdigit():
+                    all_dgs = all_dgs.filter(Q(user__username__icontains=search_query))
+                else:
+                    all_dgs = all_dgs.filter(Q(user__first_name__icontains=search_query)|
+                        Q(employee_code=search_query) |
+                        Q(app_version=search_query))
+            # ---------------------------------------------------------------------------  
+
             # PAGINATE ========
             total_dg_count = len(all_dgs)
             total_pages =  int(total_dg_count/constants.PAGINATION_PAGE_SIZE) + 1
@@ -95,9 +132,15 @@ class DGViewSet(viewsets.ModelViewSet):
             else:
                 dgs = paginate(all_dgs, page)
 
+            # Attendance for the DG of the day -----------------------------------------------------
             result = []
             for delivery_guy in dgs:
-                result.append(dg_list_dict(delivery_guy))
+                try:
+                    attendance = DGAttendance.objects.filter(dg = delivery_guy, date__year = date.year, date__month = date.month, date__day = date.day).latest('date')
+                except Exception, e:
+                    attendance = None
+                
+                result.append(dg_list_dict(delivery_guy, attendance))
         
             response_content = { "data": result, "total_pages": total_pages }
             return Response(response_content, status = status.HTTP_200_OK)
