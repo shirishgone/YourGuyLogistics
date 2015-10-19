@@ -59,6 +59,7 @@ class YGUser(models.Model):
 
 class DeliveryGuy(YGUser):
     # Mandatory Fields
+    employee_code = models.CharField(max_length = 200, blank = True , null = True)
     UN_AVAILABLE = 'UN_AVAILABLE'
     AVAILABLE = 'AVAILABLE'
     BUSY = 'BUSY'
