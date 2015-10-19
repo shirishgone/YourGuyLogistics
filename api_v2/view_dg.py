@@ -135,8 +135,28 @@ class DGViewSet(viewsets.ModelViewSet):
                         Q(app_version=search_query))
             # ---------------------------------------------------------------------------  
 
+            # FILTERING BY ATTENDANCE STATUS ---------------------------------------------------
+            final_dgs = []
+            if attendance_status is not None:
+                if attendance_status == 'ONLY_CHECKEDIN' or 'NOT_CHECKEDIN':
+                    for delivery_guy in all_dgs:
+                        try:
+                            attendance = DGAttendance.objects.filter(dg = delivery_guy, date__year = date.year, date__month = date.month, date__day = date.day).latest('date')
+                        except Exception, e:
+                            attendance = None
+                            
+                        if attendance_status == 'NOT_CHECKEDIN' and attendance == None:
+                            final_dgs.append(delivery_guy)
+                        elif attendance_status == 'ONLY_CHECKEDIN' and attendance is not None and attendance.logout_time == None:
+                            final_dgs.append(delivery_guy)
+                else:
+                    final_dgs = all_dgs    
+            else:
+                final_dgs = all_dgs
+            # ---------------------------------------------------------------------------  
+
             # PAGINATE ---------------------------------------------------------------------------  
-            total_dg_count = len(all_dgs)
+            total_dg_count = len(final_dgs)
             total_pages =  int(total_dg_count/constants.PAGINATION_PAGE_SIZE) + 1
 
             if page > total_pages or page<=0:
@@ -145,28 +165,11 @@ class DGViewSet(viewsets.ModelViewSet):
                 }
                 return Response(response_content, status = status.HTTP_400_BAD_REQUEST)
             else:
-                final_dgs = []
-                if attendance_status is not None:
-                    if attendance_status == 'ONLY_CHECKEDIN' or 'NOT_CHECKEDIN':
-                        for delivery_guy in all_dgs:
-                            try:
-                                attendance = DGAttendance.objects.filter(dg = delivery_guy, date__year = date.year, date__month = date.month, date__day = date.day).latest('date')
-                            except Exception, e:
-                                attendance = None
-                            
-                            if attendance_status == 'NOT_CHECKEDIN' and attendance == None:
-                                final_dgs.append(delivery_guy)
-                            elif attendance_status == 'ONLY_CHECKEDIN' and attendance is not None and attendance.logout_time == None:
-                                final_dgs.append(delivery_guy)
-                    else:
-                        final_dgs = all_dgs    
-                else:
-                    final_dgs = all_dgs
-                dgs = paginate(final_dgs, page)
+                result_dgs = paginate(final_dgs, page)
 
             # Attendance for the DG of the day -----------------------------------------------------
             result = []
-            for delivery_guy in dgs:
+            for delivery_guy in result_dgs:
                 try:
                     attendance = DGAttendance.objects.filter(dg = delivery_guy, date__year = date.year, date__month = date.month, date__day = date.day).latest('date')
                 except Exception, e:
