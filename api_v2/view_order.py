@@ -230,6 +230,9 @@ class OrderViewSet(viewsets.ViewSet):
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
+    def destroy(self, request):
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
     def retrieve(self, request, pk=None):
         order = get_object_or_404(Order, id = pk)
 
@@ -430,7 +433,7 @@ class OrderViewSet(viewsets.ViewSet):
                 # Optional =======
                 cod_amount = single_order.get('cod_amount')
                 notes = single_order.get('notes')
-
+                
                 # Customer details =======
                 consumer_name = single_order['customer_name']
                 consumer_phone_number = single_order['customer_phone_number']
@@ -514,7 +517,7 @@ class OrderViewSet(viewsets.ViewSet):
                 if cod_amount is not None and float(cod_amount) > 0:
                     new_order.is_cod = True
                     new_order.cod_amount = float(cod_amount)
-                                
+                
                 if notes is not None:
                     new_order.notes = notes
 
