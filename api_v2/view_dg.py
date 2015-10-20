@@ -110,7 +110,7 @@ class DGViewSet(viewsets.ModelViewSet):
         
         # ATTENDANCE FILTERING ------------------------------------------------------
         if attendance_status is not None:
-            if attendance_status =='ALL' or attendance_status == 'ONLY_CHECKEDIN' or attendance_status == 'NOT_CHECKEDIN' or attendance_status = 'CHECKEDIN_AND_CHECKEDOUT':
+            if attendance_status =='ALL' or attendance_status == 'ONLY_CHECKEDIN' or attendance_status == 'NOT_CHECKEDIN' or attendance_status == 'CHECKEDIN_AND_CHECKEDOUT':
                 pass
             else:
                 content = {
@@ -138,7 +138,7 @@ class DGViewSet(viewsets.ModelViewSet):
             # FILTERING BY ATTENDANCE STATUS ---------------------------------------------------
             final_dgs = []
             if attendance_status is not None:
-                if attendance_status == 'ONLY_CHECKEDIN' or attendance_status == 'NOT_CHECKEDIN' or attendance_status = 'CHECKEDIN_AND_CHECKEDOUT':
+                if attendance_status == 'ONLY_CHECKEDIN' or attendance_status == 'NOT_CHECKEDIN' or attendance_status == 'CHECKEDIN_AND_CHECKEDOUT':
                     for delivery_guy in all_dgs:
                         try:
                             attendance = DGAttendance.objects.filter(dg = delivery_guy, date__year = date.year, date__month = date.month, date__day = date.day).latest('date')
