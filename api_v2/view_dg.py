@@ -110,7 +110,7 @@ class DGViewSet(viewsets.ModelViewSet):
         
         # ATTENDANCE FILTERING ------------------------------------------------------
         if attendance_status is not None:
-            if attendance_status =='ALL' or attendance_status == 'ONLY_CHECKEDIN' or attendance_status == 'NOT_CHECKEDIN':
+            if attendance_status =='ALL' or attendance_status == 'ONLY_CHECKEDIN' or attendance_status == 'NOT_CHECKEDIN' or attendance_status = 'CHECKEDIN_AND_CHECKEDOUT':
                 pass
             else:
                 content = {
@@ -138,7 +138,7 @@ class DGViewSet(viewsets.ModelViewSet):
             # FILTERING BY ATTENDANCE STATUS ---------------------------------------------------
             final_dgs = []
             if attendance_status is not None:
-                if attendance_status == 'ONLY_CHECKEDIN' or attendance_status == 'NOT_CHECKEDIN':
+                if attendance_status == 'ONLY_CHECKEDIN' or attendance_status == 'NOT_CHECKEDIN' or attendance_status = 'CHECKEDIN_AND_CHECKEDOUT':
                     for delivery_guy in all_dgs:
                         try:
                             attendance = DGAttendance.objects.filter(dg = delivery_guy, date__year = date.year, date__month = date.month, date__day = date.day).latest('date')
@@ -148,6 +148,8 @@ class DGViewSet(viewsets.ModelViewSet):
                         if attendance_status == 'NOT_CHECKEDIN' and attendance == None:
                             final_dgs.append(delivery_guy)
                         elif attendance_status == 'ONLY_CHECKEDIN' and attendance is not None and attendance.logout_time == None:
+                            final_dgs.append(delivery_guy)
+                        else:
                             final_dgs.append(delivery_guy)
                 else:
                     final_dgs = all_dgs    
@@ -177,5 +179,9 @@ class DGViewSet(viewsets.ModelViewSet):
                 
                 result.append(dg_list_dict(delivery_guy, attendance))
         
-            response_content = { "data": result, "total_pages": total_pages }
+            response_content = { 
+            "data": result, 
+            "total_pages": total_pages, 
+            "total_dg_count": total_dg_count
+            }
             return Response(response_content, status = status.HTTP_200_OK)
