@@ -156,7 +156,8 @@ def update_daily_status(order, date):
             'cod_amount' : order.cod_amount,
             'customer_name' : order.consumer.user.first_name,
             'vendor_name' : order.vendor.store_name,
-            'delivered_at' : delivery_status.delivered_at
+            'delivered_at' : delivery_status.delivered_at,
+            'is_reverse_pickup':order.is_reverse_pickup
         }
 
         if delivery_status.delivery_guy is not None:
