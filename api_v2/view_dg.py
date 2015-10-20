@@ -149,7 +149,7 @@ class DGViewSet(viewsets.ModelViewSet):
                             final_dgs.append(delivery_guy)
                         elif attendance_status == 'ONLY_CHECKEDIN' and attendance is not None and attendance.logout_time == None:
                             final_dgs.append(delivery_guy)
-                        else:
+                        elif attendance_status == 'CHECKEDIN_AND_CHECKEDOUT' and attendance is not None and attendance.logout_time is not None and attendance.login_time is not None:
                             final_dgs.append(delivery_guy)
                 else:
                     final_dgs = all_dgs    
