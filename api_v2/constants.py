@@ -8,7 +8,11 @@ DELIVERY_GUY = 'deliveryguy'
 
 OPS_PHONE_NUMBER = '+919820252216'
 FROM_MAIL_ID = 'hi@yourguy.in'
+
 TO_EMAIL_IDS = ['tech@yourguy.in','alay@yourguy.in', 'sameet@yourguy.in', 'winston@yourguy.in']
+OPS_EMAIL_IDS = ['tech@yourguy.in','alay@yourguy.in', 'rakesh@yourguy.in', 'santosh@yourguy.in']
+EVERYBODY_EMAIL_IDS = TO_EMAIL_IDS + OPS_EMAIL_IDS
+
 
 GCM_PUSH_API_KEY = 'AIzaSyCmXulcUBViokrkYZ9Z9bWJgEWgXyeNh1U'
 GCM_SENDER_ID = '559449819463'
@@ -36,18 +40,19 @@ VENDOR_ACCOUNT_APPROVED_MESSAGE = 'Your account has been approved. \n http://app
 VENDOR_ACCOUNT_APPROVED_MESSAGE_SALES = 'YourGuy: An account has been created for {} and credentials are sent via SMS and Email.'
 
 # ORDER STATUS --------------------------
+ORDER_STATUS_PLACED = 'ORDER_PLACED'
 ORDER_STATUS_QUEUED = 'QUEUED'
 ORDER_STATUS_INTRANSIT = 'INTRANSIT'
 ORDER_STATUS_PICKUP_ATTEMPTED = 'PICKUPATTEMPTED'
 ORDER_STATUS_DELIVERED = 'DELIVERED'
 ORDER_STATUS_DELIVERY_ATTEMPTED = 'DELIVERYATTEMPTED'
 ORDER_STATUS_CANCELLED = 'CANCELLED'
+ORDER_STATUS_REJECTED = 'REJECTED'
 # ----------------------------------------
 
 
 # TOBE REMOVED --------------------------
-ORDER_STATUS_PLACED = 'ORDER_PLACED'
-ORDER_STATUS_REJECTED = 'REJECTED'
+
 ORDER_STATUS_OUTFORPICKUP = 'OUTFORPICKUP'
 ORDER_STATUS_OUTFORDELIVERY = 'OUTFORDELIVERY'
 ORDER_STATUS_ATTEMPTED = 'ATTEMPTED'

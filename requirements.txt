@@ -18,3 +18,4 @@ requests==2.7.0
 python-gcm
 boto
 python-dateutil
+APScheduler==3.0.0
