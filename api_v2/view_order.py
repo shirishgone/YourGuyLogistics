@@ -29,6 +29,12 @@ def is_recurring_order(order):
     else:
         return False    
 
+def can_deliver_delivery_status(delivery_status):
+    if delivery_status.order_status == constants.ORDER_STATUS_INTRANSIT:
+        return True
+    else:
+        return False  
+
 def can_update_delivery_status(delivery_status):
     if delivery_status.order_status == constants.ORDER_STATUS_PLACED or delivery_status.order_status == constants.ORDER_STATUS_QUEUED:
         return True
@@ -942,3 +948,151 @@ class OrderViewSet(viewsets.ViewSet):
             'error':'Order update failed'
             }
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
+    @detail_route(methods=['post'])
+    def delivered(self, request, pk=None):   
+
+        order = get_object_or_404(Order, pk = pk)        
+        
+        latitude = request.data.get('latitude')
+        longitude = request.data.get('longitude')
+
+        # REQUEST PARAMETERS ---------------------------------------------
+        is_cod_collected = request.data.get('cod_collected')        
+        cod_collected_amount = request.data.get('cod_collected_amount')
+        cod_remarks = request.data.get('cod_remarks')
+        # ----------------------------------------------------------------
+        
+        # DELIVERED DATE TIME ---------------------------------------------
+        delivered_datetime_string = request.data.get('delivered_datetime')
+        if delivered_datetime_string is not None:
+            delivered_datetime = parse_datetime(delivered_datetime_string) 
+        else:
+            delivered_datetime = datetime.now()
+        # ----------------------------------------------------------------
+                
+        # DELIVERY ATTEMPTED CASE HANDLED --------------------------------
+        delivery_attempted = request.data.get('delivery_attempted')
+        if delivery_attempted is not None and delivery_attempted is True:
+            order_status = constants.ORDER_STATUS_DELIVERY_ATTEMPTED
+            delivered_at = constants.DELIVERED_AT_NONE
+        else:
+            order_status = constants.ORDER_STATUS_DELIVERED
+            delivered_at = request.data.get('delivered_at')
+               
+            try:
+                if delivered_at == 'DOOR_STEP' or delivered_at == 'SECURITY' or delivered_at == 'RECEPTION' or delivered_at == 'CUSTOMER':
+                    pass
+                else:
+                    content = {
+                    'error':' delivered_at value is missing or wrong. Options: DOOR_STEP, SECURITY, RECEPTION, CUSTOMER'
+                    }
+                    return Response(content, status = status.HTTP_400_BAD_REQUEST)
+            except Exception, e:
+                content = {
+                'error':' delivered_at value is missing or wrong. Options: DOOR_STEP, SECURITY, RECEPTION, CUSTOMER'
+                }
+                return Response(content, status = status.HTTP_400_BAD_REQUEST)
+        # ----------------------------------------------------------------
+        
+        # POD -------------------------------------------------------------
+        pod = request.data.get('pod')
+        new_pod = None
+        try:
+            if pod is not None:
+                receiver_name = pod['receiver_name']
+                signature_name = pod['signature']
+                pictures = pod['image_names']
+                
+                signature = Picture.objects.create(name = signature_name)
+                new_pod = ProofOfDelivery.objects.create(receiver_name = receiver_name, signature = signature)
+                for picture in pictures:
+                    new_pod.pictures.add(Picture.objects.create(name = picture))                       
+        except:
+            content = {
+            'error':'An error with pod parameters'
+            }
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+        # ----------------------------------------------------------------
+        
+        # UPDATE THE DELIVERY STATUS OF THE PARTICULAR DAY ----------------------
+        date_string = request.data.get('date')
+        if is_recurring_order(order) and date_string is None:
+            content = {
+            'error':'Incomplete parameters', 
+            'description':'date parameter is mandatory for recurring orders'
+            }
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+        elif is_recurring_order(order) and date_string is not None:
+            try:
+                order_date = parse_datetime(date_string)
+            except Exception, e:
+                content = {
+                'error':'Incorrect date', 
+                'description':'date format is not appropriate'
+                }
+                return Response(content, status = status.HTTP_400_BAD_REQUEST)
+        else:
+             order_date = None
+        # ------------------------------------------------------------------------
+
+        # PICK THE APPROPRIATE DELIVERY STATUS OBJECT -----------------------------
+        if is_recurring_order(order):
+            delivery_statuses = order.delivery_status.all()
+            for delivery_status in delivery_statuses:
+                if delivery_status.date.date() == order_date.date():
+                    final_delivery_status = delivery_status
+        else:
+            final_delivery_status = order.delivery_status.all().latest('date')
+        # -------------------------------------------------------------------------
+       
+        # UPDATING THE DELIVERY STATUS OF THE PARTICULAR DAY -----------------------
+        is_order_updated = False
+        if final_delivery_status is not None and can_deliver_delivery_status(final_delivery_status):
+            final_delivery_status.order_status = order_status
+            final_delivery_status.delivered_at = delivered_at
+            final_delivery_status.completed_datetime = delivered_datetime
+            if is_cod_collected is not None:
+                final_delivery_status.is_cod_collected = is_cod_collected
+            if new_pod is not None:
+                final_delivery_status.delivery_proof = new_pod                    
+            if cod_remarks is not None:
+                final_delivery_status.cod_remarks = cod_remarks
+            if cod_collected_amount is not None:
+                final_delivery_status.cod_collected_amount = cod_collected_amount
+            final_delivery_status.save()
+            is_order_updated = True
+        else:
+            content = {
+            'error': "The order has already been processed, now you cant update the status."
+            }
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+        # -----------------------------------------------------------------------       
+        
+        # Final Response ---------------------------------------------------------
+        if is_order_updated:
+            
+            # CONFIRMATION MESSAGE TO CUSTOMER --------------------------------------
+            message = constants.ORDER_DELIVERED_MESSAGE_CLIENT.format(order_status, order.consumer.user.first_name, delivered_at)
+            send_sms(order.vendor.phone_number, message)
+            # -----------------------------------------------------------------------
+            
+            # UPDATE CUSTOMER LOCATION ----------------------------------------------
+            if order_status == constants.ORDER_STATUS_DELIVERED and latitude is not None and longitude is not None:            
+                address_id = order.delivery_address.id
+                address = get_object_or_404(Address, pk = address_id)        
+                address.latitude = latitude
+                address.longitude = longitude
+                address.save()
+            # -----------------------------------------------------------------------
+
+            content = {
+            'description':'Order has been updated'
+            }
+            return Response(content, status = status.HTTP_200_OK)
+        else:
+            content = {
+            'error':'Order update failed'
+            }
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+        # -----------------------------------------------------------------------
