@@ -12,6 +12,7 @@ urlpatterns = patterns(
 	url(r'^delivery_status_update/', utils.delivery_status_update, name = 'delivery_status_update'),
 	url(r'^fill_full_address/', utils.fill_full_address, name = 'fill_full_address'),
 	url(r'^cron/', views.cron_trial, name = 'cron_trial'),
+	url(r'^daily_report/', views.daily_report, name = 'daily_report'),
 )
 router = DefaultRouter()
 router.register(r'consumer', ConsumerViewSet)

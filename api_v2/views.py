@@ -15,7 +15,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import permissions
 
-from yourguy.models import Vendor, Consumer, DeliveryGuy, VendorAgent, Address, OrderDeliveryStatus, Order
+from yourguy.models import Vendor, Consumer, DeliveryGuy, VendorAgent, Address, OrderDeliveryStatus, Order, DGAttendance
 from api.serializers import UserSerializer, OrderSerializer, ConsumerSerializer
 
 import dateutil.relativedelta
@@ -33,6 +33,7 @@ import os
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from api.views import send_email, ist_day_start, ist_day_end
 from django.db.models import Q
+from django.db.models import Sum
 
 def assign_dg():
     
@@ -92,13 +93,94 @@ def assign_dg():
     email_subject = 'Unassigned orders for %s' % (today_string) 
     
     email_body = "Good Morning Guys, \nAssigned orders: %s \nUnassigned Orders: %s \nPlease assign manually. \n\n- Team YourGuy" % (assigned_orders, unassigned_order_ids)
-    send_email(constants.OPS_EMAIL_IDS, email_subject, email_body)
+    send_email(['tech@yourguy.in'], email_subject, email_body)
     # ------------------------------------------------------------------------------------------------  
 
     # TODO
-    #inform_dgs_about_orders_assigned()
-    
+    #inform_dgs_about_orders_assigned()    
     return
+    
+
+@api_view(['GET'])
+def daily_report(request):
+    
+    date = datetime.today()
+    day_start = ist_day_start(date)
+    day_end = ist_day_end(date)
+    
+    # TOTAL ORDERS ----------------------------------------------------------------------
+    delivery_statuses_today = OrderDeliveryStatus.objects.filter(date__gte = day_start, date__lte = day_end)            
+    orders_total_count = len(delivery_statuses_today)
+    # -----------------------------------------------------------------------------------
+    
+    # TOTAL ORDERS ASSIGNED vs UNASSIGNED ORDERS ----------------------------------------
+    orders_unassigned_count = delivery_statuses_today.filter(delivery_guy = None).count()
+    orders_assigned_count = orders_total_count - orders_unassigned_count
+
+    orders_unassigned_percentage = (float(orders_unassigned_count) / float(orders_total_count)) * 100
+    orders_assigned_percentage = (float(orders_assigned_count) / float(orders_total_count)) * 100
+    # -----------------------------------------------------------------------------------
+    
+    # ORDERS ACC TO ORDER_STATUS --------------------------------------------------------
+    orders_placed_count               = delivery_statuses_today.filter(order_status = constants.ORDER_STATUS_PLACED).count()
+    orders_queued_count               = delivery_statuses_today.filter(order_status = constants.ORDER_STATUS_QUEUED).count()
+    orders_intransit_count            = delivery_statuses_today.filter(order_status = constants.ORDER_STATUS_INTRANSIT).count()
+    orders_delivered_count            = delivery_statuses_today.filter(order_status = constants.ORDER_STATUS_DELIVERED).count()
+    orders_pickup_attempted_count     = delivery_statuses_today.filter(order_status = constants.ORDER_STATUS_PICKUP_ATTEMPTED).count()
+    orders_delivery_attempted_count   = delivery_statuses_today.filter(order_status = constants.ORDER_STATUS_DELIVERY_ATTEMPTED).count()
+    orders_rejected_count             = delivery_statuses_today.filter(order_status = constants.ORDER_STATUS_REJECTED).count()
+    orders_canceled_count             = delivery_statuses_today.filter(order_status = constants.ORDER_STATUS_CANCELLED).count()
+    # -----------------------------------------------------------------------------------
+
+    # DG ATTENDANCE DETAILS -------------------------------------------------------------
+    total_dg_count = DeliveryGuy.objects.all().count()
+    total_dg_checked_in_count = DGAttendance.objects.filter(date__year = date.year, date__month = date.month, date__day = date.day).count()
+    dg_checkin_percentage = (float(total_dg_checked_in_count) / float(total_dg_count)) * 100
+    # -----------------------------------------------------------------------------------
+    
+    # TOTAL COD COLLECTED Vs SUPPOSSED TO BE COLLECTED ----------------------------------
+    total_cod_collected = delivery_statuses_today.aggregate(Sum('cod_collected_amount'))
+    total_cod_collected = total_cod_collected['cod_collected_amount__sum']
+
+    orders = Order.objects.filter(delivery_status = delivery_statuses_today)
+    total_cod_to_be_collected = orders.aggregate(Sum('cod_amount'))
+    total_cod_to_be_collected = total_cod_to_be_collected['cod_amount__sum']
+
+    # -----------------------------------------------------------------------------------
+
+    # SEND AN EMAIL SAYING CANT FIND APPROPRAITE DELIVERY GUY FOR THIS ORDER. PLEASE ASSIGN MANUALLY
+    today_string = datetime.now().strftime("%Y %b %d")
+    email_subject = 'Daily Report : %s' % (today_string) 
+    
+    email_body = "Good Evening Guys, \n\nPlease find the report of the day. \n"
+    email_body = email_body + "\nTotal orders = %s" % (orders_total_count)
+    email_body = email_body + "\nOrders assigned vs Orders unassigned = %s[%s percent] vs %s[%s percent]" % (orders_assigned_count, orders_assigned_percentage, orders_unassigned_count, orders_unassigned_percentage)
+    
+    email_body = email_body + "\n\nOrders by order status -------- "
+    email_body = email_body + "\nQueued : %s" % orders_queued_count
+    email_body = email_body + "\nOrder placed : %s" % orders_placed_count
+    email_body = email_body + "\nInTransit : %s" % orders_intransit_count
+    email_body = email_body + "\ndelivered : %s" % orders_delivered_count
+    email_body = email_body + "\nPickup Attempted : %s" % orders_pickup_attempted_count
+    email_body = email_body + "\nDelivery Attempted : %s" % orders_delivery_attempted_count
+    email_body = email_body + "\nRejected : %s" % orders_rejected_count
+    email_body = email_body + "\nCanceled : %s" % orders_canceled_count
+
+    email_body = email_body + "\n \nDeliveryBoy Attendance -------"
+    email_body = email_body + "\nTotal DGs on the app = %s" % total_dg_count  
+    email_body = email_body + "\nTotal DGs CheckIn = %s[%s percent]" % (total_dg_checked_in_count, dg_checkin_percentage)
+
+    email_body = email_body + "\n \nCOD Details -------"
+    email_body = email_body + "\nTotal COD to be collected = %s" % total_cod_to_be_collected  
+    email_body = email_body + "\nTotal COD collected = %s" % total_cod_collected
+    
+    email_body = email_body + "\n\n- Team YourGuy"
+    
+    send_email(['tech@yourguy.in'], email_subject, email_body)
+    # ------------------------------------------------------------------------------------------------  
+    
+    return Response(status = status.HTTP_200_OK)
+
 
 def inform_dgs_about_orders_assigned():
     
