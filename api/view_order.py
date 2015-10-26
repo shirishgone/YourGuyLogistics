@@ -333,8 +333,8 @@ class OrderViewSet(viewsets.ModelViewSet):
                 new_order_ids.append(new_order.id)
 
             # CONFIRMATION MESSAGE TO OPS
-            message = constants.ORDER_PLACED_MESSAGE_OPS.format(new_order.id, vendor.store_name)
-            send_sms(constants.OPS_PHONE_NUMBER, message)
+            # message = constants.ORDER_PLACED_MESSAGE_OPS.format(new_order.id, vendor.store_name)
+            # send_sms(constants.OPS_PHONE_NUMBER, message)
 
             # CONFIRMATION MESSAGE TO CUSTOMER
             message_client = constants.ORDER_PLACED_MESSAGE_CLIENT.format(new_order.id)
@@ -547,8 +547,8 @@ class OrderViewSet(viewsets.ModelViewSet):
             new_order.save()
 
             # CONFIRMATION MESSAGE TO OPS
-            message = constants.ORDER_PLACED_MESSAGE_OPS.format(new_order.id, vendor.store_name)
-            send_sms(constants.OPS_PHONE_NUMBER, message)
+            # message = constants.ORDER_PLACED_MESSAGE_OPS.format(new_order.id, vendor.store_name)
+            # send_sms(constants.OPS_PHONE_NUMBER, message)
 
             # CONFIRMATION MESSAGE TO CUSTOMER
             message_client = constants.ORDER_PLACED_MESSAGE_CLIENT.format(new_order.id)
@@ -966,12 +966,12 @@ class OrderViewSet(viewsets.ModelViewSet):
             pass
         
         # CONFIRMATION MESSAGE TO VENDOR =======
-        try:
-            message = 'A DeliveryGuy has been assigned for your orders {} . Please get your products ready, he will be there soon - Team YourGuy'.format(order_ids)
-            send_sms(order.vendor.phone_number, message)
-        except Exception, e:
-            print 'assignment message not sent to vendor'
-            pass
+        # try:
+        #     message = 'A DeliveryGuy has been assigned for your orders {} . Please get your products ready, he will be there soon - Team YourGuy'.format(order_ids)
+        #     send_sms(order.vendor.phone_number, message)
+        # except Exception, e:
+        #     print 'assignment message not sent to vendor'
+        #     pass
 
         content = {
         'description': 'Order assigned'
