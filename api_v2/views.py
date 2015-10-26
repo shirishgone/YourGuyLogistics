@@ -177,7 +177,7 @@ def daily_report(request):
     
     email_body = email_body + "\n\n- Team YourGuy"
     
-    send_email(['tech@yourguy.in'], email_subject, email_body)
+    send_email(constants.EMAIL_IDS_EVERYBODY, email_subject, email_body)
     # ------------------------------------------------------------------------------------------------  
     
     return Response(status = status.HTTP_200_OK)

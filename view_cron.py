@@ -20,8 +20,6 @@ def run_cron_assign_dg():
 	except:
 		print "Calling CRON JOB except case"
 
-
-
 @scheduler.scheduled_job('cron', hour = 0)
 def scheduled_job():
 	print('Scheduled job.')
@@ -32,11 +30,12 @@ def scheduled_job():
 def send_daily_report():
 	url = 'http://yourguy.herokuapp.com/api/v2/daily_report/'
 	try:
+		print "Running daily reporting."
 		result = requests.get(url)
 	except:
 		print "Error running CRON JOB Daily report"
 
-@scheduler.scheduled_job('reporting_cron', hour = 16)
+@scheduler.scheduled_job('reporting_cron', hour = 17)
 def scheduled_job_reporting():
 	send_daily_report()
 # ----------------------------------------------------------------

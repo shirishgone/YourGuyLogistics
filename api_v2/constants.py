@@ -11,7 +11,7 @@ FROM_MAIL_ID = 'hi@yourguy.in'
 
 TO_EMAIL_IDS = ['tech@yourguy.in','alay@yourguy.in', 'sameet@yourguy.in', 'winston@yourguy.in']
 OPS_EMAIL_IDS = ['tech@yourguy.in','alay@yourguy.in', 'rakesh@yourguy.in', 'santosh@yourguy.in']
-EVERYBODY_EMAIL_IDS = TO_EMAIL_IDS + OPS_EMAIL_IDS
+EMAIL_IDS_EVERYBODY = ['tech@yourguy.in', 'alay@yourguy.in', 'sameet@yourguy.in', 'winston@yourguy.in', 'rakesh@yourguy.in', 'santosh@yourguy.in', 'vinit@yourguy.in', 'aquid@yourguy.in', 'saurabh@yourguy.in', 'smit@yourguy.in', 'kenneth@yourguy.in']
 
 
 GCM_PUSH_API_KEY = 'AIzaSyCmXulcUBViokrkYZ9Z9bWJgEWgXyeNh1U'
