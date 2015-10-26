@@ -117,8 +117,8 @@ def daily_report(request):
     orders_unassigned_count = delivery_statuses_today.filter(delivery_guy = None).count()
     orders_assigned_count = orders_total_count - orders_unassigned_count
 
-    orders_unassigned_percentage = (float(orders_unassigned_count) / float(orders_total_count)) * 100
-    orders_assigned_percentage = (float(orders_assigned_count) / float(orders_total_count)) * 100
+    orders_unassigned_percentage = "{0:.0f}%".format(float(orders_unassigned_count)/float(orders_total_count) * 100)
+    orders_assigned_percentage = "{0:.0f}%".format(float(orders_assigned_count)/float(orders_total_count) * 100)
     # -----------------------------------------------------------------------------------
     
     # ORDERS ACC TO ORDER_STATUS --------------------------------------------------------
@@ -135,7 +135,7 @@ def daily_report(request):
     # DG ATTENDANCE DETAILS -------------------------------------------------------------
     total_dg_count = DeliveryGuy.objects.all().count()
     total_dg_checked_in_count = DGAttendance.objects.filter(date__year = date.year, date__month = date.month, date__day = date.day).count()
-    dg_checkin_percentage = (float(total_dg_checked_in_count) / float(total_dg_count)) * 100
+    dg_checkin_percentage = "{0:.0f}%".format(float(total_dg_checked_in_count)/float(total_dg_count) * 100)
     # -----------------------------------------------------------------------------------
     
     # TOTAL COD COLLECTED Vs SUPPOSSED TO BE COLLECTED ----------------------------------
@@ -154,7 +154,7 @@ def daily_report(request):
     
     email_body = "Good Evening Guys, \n\nPlease find the report of the day. \n"
     email_body = email_body + "\nTotal orders = %s" % (orders_total_count)
-    email_body = email_body + "\nOrders assigned vs Orders unassigned = %s[%s percent] vs %s[%s percent]" % (orders_assigned_count, orders_assigned_percentage, orders_unassigned_count, orders_unassigned_percentage)
+    email_body = email_body + "\nOrders assigned vs Orders unassigned = %s [%s percent] vs %s [%s percent]" % (orders_assigned_count, orders_assigned_percentage, orders_unassigned_count, orders_unassigned_percentage)
     
     email_body = email_body + "\n\nOrders by order status -------- "
     email_body = email_body + "\nQueued : %s" % orders_queued_count
@@ -168,7 +168,7 @@ def daily_report(request):
 
     email_body = email_body + "\n \nDeliveryBoy Attendance -------"
     email_body = email_body + "\nTotal DGs on the app = %s" % total_dg_count  
-    email_body = email_body + "\nTotal DGs CheckIn = %s[%s percent]" % (total_dg_checked_in_count, dg_checkin_percentage)
+    email_body = email_body + "\nTotal DGs CheckIn = %s [%s percent]" % (total_dg_checked_in_count, dg_checkin_percentage)
 
     email_body = email_body + "\n \nCOD Details -------"
     email_body = email_body + "\nTotal COD to be collected = %s" % total_cod_to_be_collected  
