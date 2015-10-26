@@ -75,7 +75,7 @@ def assign_dg():
                     delivery_status.save()                   
                     assigned_orders = assigned_orders + "\n %s - %s - %s - %s" % (vendor.store_name, order.id, consumer.user.first_name, delivery_guy.user.first_name)
             except Exception, e:                
-                unassigned_order_ids = unassigned_order_ids + "\n %s" % (order.id)
+                unassigned_order_ids = unassigned_order_ids + "\n %s - %s - %s" % (vendor.store_name, order.id, consumer.user.first_name)
                 pass
                 
         except Exception, e:
@@ -87,8 +87,7 @@ def assign_dg():
     
     email_body = "Good Morning Guys, \nAssigned orders: %s \nUnassigned Orders: %s \nPlease assign manually. \n\n- Team YourGuy" % (assigned_orders, unassigned_order_ids)
     send_email(constants.OPS_EMAIL_IDS, email_subject, email_body)
-    # ------------------------------------------------------------------------------------------------
-    
+    # ------------------------------------------------------------------------------------------------  
     return
 
 
