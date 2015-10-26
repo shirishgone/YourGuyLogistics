@@ -145,6 +145,7 @@ def daily_report(request):
     orders = Order.objects.filter(delivery_status = delivery_statuses_today)
     total_cod_to_be_collected = orders.aggregate(Sum('cod_amount'))
     total_cod_to_be_collected = total_cod_to_be_collected['cod_amount__sum']
+    cod_collected_percentage = "{0:.0f}%".format(float(total_cod_collected)/float(total_cod_to_be_collected) * 100)
 
     # -----------------------------------------------------------------------------------
 
@@ -172,7 +173,7 @@ def daily_report(request):
 
     email_body = email_body + "\n \nCOD Details -------"
     email_body = email_body + "\nTotal COD to be collected = %s" % total_cod_to_be_collected  
-    email_body = email_body + "\nTotal COD collected = %s" % total_cod_collected
+    email_body = email_body + "\nTotal COD collected = %s [%s percent]" % (total_cod_collected, cod_collected_percentage)
     
     email_body = email_body + "\n\n- Team YourGuy"
     
