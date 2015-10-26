@@ -42,6 +42,7 @@ def assign_dg():
     day_end = ist_day_end(date)
     
     unassigned_order_ids = ''
+    assigned_orders = ''
     delivery_status_queryset = OrderDeliveryStatus.objects.filter(date__gte = day_start, date__lte = day_end, delivery_guy = None)
     
     # --------------------------------------------------------------------
@@ -52,7 +53,7 @@ def assign_dg():
             # CUSTOMER AND VENDOR FILTERING -----------------------------------------------------------------
             vendor = order.vendor
             consumer = order.consumer
-
+            
             previous_delivery_statuses = OrderDeliveryStatus.objects.filter(delivery_guy__isnull = False, order__consumer = consumer, order__vendor = vendor)
             # ------------------------------------------------------------------------------------------------
         
@@ -71,7 +72,8 @@ def assign_dg():
                 latest_assigned_delivery = previous_delivery_statuses.latest('date')            
                 if latest_assigned_delivery is not None:
                     delivery_status.delivery_guy = latest_assigned_delivery.delivery_guy
-                    delivery_status.save()
+                    delivery_status.save()                   
+                    assigned_orders = assigned_orders + "\n %s - %s - %s - %s" % (vendor.store_name, order.id, consumer.user.first_name, delivery_guy.user.first_name)
             except Exception, e:                
                 unassigned_order_ids = unassigned_order_ids + "\n %s" % (order.id)
                 pass
@@ -83,7 +85,7 @@ def assign_dg():
     today_string = datetime.now().strftime("%Y %b %d")
     email_subject = 'Unassigned orders for %s' % (today_string) 
     
-    email_body = "Good Morning Guys, \nBelow are the unassigned orders for today.\nPlease assign manually. \n %s \n\n- Team YourGuy" % (unassigned_order_ids)
+    email_body = "Good Morning Guys, \nAssigned orders: %s \nUnassigned Orders: %s \nPlease assign manually. \n\n- Team YourGuy" % (assigned_orders, unassigned_order_ids)
     send_email(constants.OPS_EMAIL_IDS, email_subject, email_body)
     # ------------------------------------------------------------------------------------------------
     
