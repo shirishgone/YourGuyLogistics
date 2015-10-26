@@ -43,8 +43,12 @@ def assign_dg():
     
     unassigned_order_ids = ''
     assigned_orders = ''
-    delivery_status_queryset = OrderDeliveryStatus.objects.filter(date__gte = day_start, date__lte = day_end, delivery_guy = None)
-    
+
+    delivery_status_queryset = OrderDeliveryStatus.objects.filter(date__gte = day_start, date__lte = day_end, delivery_guy = None)            
+    # FILTER BY ORDER STATUS --------------------------------------------------------------------
+    delivery_status_queryset = delivery_status_queryset.filter(Q(order_status = constants.ORDER_STATUS_PLACED ) | Q(order_status = constants.ORDER_STATUS_QUEUED) | Q(order_status = constants.ORDER_STATUS_INTRANSIT)) 
+    # ------------------------------------------------------------------------------------------------
+
     # --------------------------------------------------------------------
     for delivery_status in delivery_status_queryset.all():
         try:
@@ -56,7 +60,7 @@ def assign_dg():
             
             previous_delivery_statuses = OrderDeliveryStatus.objects.filter(delivery_guy__isnull = False, order__consumer = consumer, order__vendor = vendor)
             # ------------------------------------------------------------------------------------------------
-        
+
             # FILTER LAST 2 MONTHS ORDERS --------------------------------------------------------------------
             two_months_previous_date = day_start - dateutil.relativedelta.relativedelta(months = 1)
             previous_delivery_statuses = previous_delivery_statuses.filter(date__gte = two_months_previous_date, date__lte = day_start)
@@ -81,6 +85,8 @@ def assign_dg():
         except Exception, e:
             pass
     
+    
+    
     # SEND AN EMAIL SAYING CANT FIND APPROPRAITE DELIVERY GUY FOR THIS ORDER. PLEASE ASSIGN MANUALLY
     today_string = datetime.now().strftime("%Y %b %d")
     email_subject = 'Unassigned orders for %s' % (today_string) 
@@ -88,7 +94,23 @@ def assign_dg():
     email_body = "Good Morning Guys, \nAssigned orders: %s \nUnassigned Orders: %s \nPlease assign manually. \n\n- Team YourGuy" % (assigned_orders, unassigned_order_ids)
     send_email(constants.OPS_EMAIL_IDS, email_subject, email_body)
     # ------------------------------------------------------------------------------------------------  
+
+    # TODO
+    #inform_dgs_about_orders_assigned()
+    
     return
+
+def inform_dgs_about_orders_assigned():
+    
+    # FETCH ALL ORDERS ASSIGNED TO DGs --------------------------------------------
+    date = datetime.today()
+    day_start = ist_day_start(date)
+    day_end = ist_day_end(date)
+    try:
+        delivery_status_queryset = OrderDeliveryStatus.objects.filter(delivery_guy__isnull = False, date__gte = day_start, date__lte = day_end).annotate('delivery_guy')
+    except Exception, e:
+        print e
+    # --------------------------------------------------------------------
 
 
 @api_view(['GET'])
