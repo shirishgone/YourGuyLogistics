@@ -22,6 +22,7 @@ from datetime import datetime, timedelta, time
 import math
 import pytz
 from django.db.models import Q
+from itertools import chain
 
 def is_recurring_order(order):
     if len(order.delivery_status.all()) > 1:
@@ -298,9 +299,13 @@ class OrderViewSet(viewsets.ViewSet):
         search_query = request.QUERY_PARAMS.get('search', None)
         filter_order_status = request.QUERY_PARAMS.get('order_status', None)
 
-        # ORDER STATUS CHECK --------------------------------------------------
+        # ORDER STATUS CHECK --------------------------------------------------        
+        order_statuses = []
         if filter_order_status is not None:
-            if filter_order_status == constants.ORDER_STATUS_PLACED or filter_order_status == constants.ORDER_STATUS_QUEUED or filter_order_status == constants.ORDER_STATUS_INTRANSIT or filter_order_status == constants.ORDER_STATUS_PICKUP_ATTEMPTED or filter_order_status == constants.ORDER_STATUS_DELIVERED or filter_order_status == constants.ORDER_STATUS_DELIVERY_ATTEMPTED or filter_order_status == constants.ORDER_STATUS_CANCELLED or filter_order_status == constants.ORDER_STATUS_REJECTED:
+            order_statuses = filter_order_status.split(',')
+        
+        for order_status in order_statuses:
+            if order_status == constants.ORDER_STATUS_PLACED or order_status == constants.ORDER_STATUS_QUEUED or order_status == constants.ORDER_STATUS_INTRANSIT or order_status == constants.ORDER_STATUS_PICKUP_ATTEMPTED or order_status == constants.ORDER_STATUS_DELIVERED or order_status == constants.ORDER_STATUS_DELIVERY_ATTEMPTED or order_status == constants.ORDER_STATUS_CANCELLED or order_status == constants.ORDER_STATUS_REJECTED:
                 pass
             else:
                 content = {
@@ -308,7 +313,6 @@ class OrderViewSet(viewsets.ViewSet):
                 'description':'Options: QUEUED, INTRANSIT, PICKUPATTEMPTED, DELIVERED, DELIVERYATTEMPTED, CANCELLED'
                 }
                 return Response(content, status = status.HTTP_400_BAD_REQUEST)
-
         # -------------------------------------------------------------------------
 
         # DATE FILTERING ----------------------------------------------------------
@@ -341,8 +345,12 @@ class OrderViewSet(viewsets.ViewSet):
         # ---------------------------------------------------------------------------   
 
         # ORDER STATUS FILTERING ----------------------------------------------------
-        if filter_order_status is not None:
-            delivery_status_queryset = delivery_status_queryset.filter(order_status = filter_order_status)
+        if len(order_statuses) > 0:
+            order_filter_queryset = []
+            for order_status in order_statuses:
+                order_filter_queryset.append(delivery_status_queryset.filter(order_status = order_status))
+            
+            delivery_status_queryset = list(chain(*order_filter_queryset))
         # ----------------------------------------------------------------------------
 
         order_queryset = Order.objects.filter(delivery_status__in = delivery_status_queryset)
