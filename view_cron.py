@@ -22,7 +22,7 @@ def auto_assign():
 # ----------------------------------------------------------------
 
 # REPORTING SCHEDULER --------------------------------------------
-@scheduler.scheduled_job('cron', hour=17, minute=25)
+@scheduler.scheduled_job('cron', hour=17, minute=30)
 def daily_report():
 	print 'send_daily_report'
 	url = 'http://yourguy.herokuapp.com/api/v2/daily_report/'
