@@ -86,13 +86,12 @@ def assign_dg():
         except Exception, e:
             pass
     
-    
-    
     # SEND AN EMAIL SAYING CANT FIND APPROPRAITE DELIVERY GUY FOR THIS ORDER. PLEASE ASSIGN MANUALLY
     today_string = datetime.now().strftime("%Y %b %d")
     email_subject = 'Unassigned orders for %s' % (today_string) 
     
     email_body = "Good Morning Guys, \nAssigned orders: %s \nUnassigned Orders: %s \nPlease assign manually. \n\n- Team YourGuy" % (assigned_orders, unassigned_order_ids)
+    #send_email(constants.OPS_EMAIL_IDS, email_subject, email_body)
     send_email(['tech@yourguy.in'], email_subject, email_body)
     # ------------------------------------------------------------------------------------------------  
 
@@ -177,7 +176,8 @@ def daily_report(request):
     
     email_body = email_body + "\n\n- Team YourGuy"
     
-    send_email(constants.EMAIL_IDS_EVERYBODY, email_subject, email_body)
+    #send_email(constants.EMAIL_IDS_EVERYBODY, email_subject, email_body)
+    send_email(['tech@yourguy.in'], email_subject, email_body)
     # ------------------------------------------------------------------------------------------------  
     
     return Response(status = status.HTTP_200_OK)

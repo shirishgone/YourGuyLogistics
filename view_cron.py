@@ -29,13 +29,14 @@ def scheduled_job():
 # REPORTING SCHEDULER --------------------------------------------
 def send_daily_report():
 	url = 'http://yourguy.herokuapp.com/api/v2/daily_report/'
+	print "Calling CRON send_daily_report"
 	try:
 		print "Running daily reporting."
 		result = requests.get(url)
 	except:
 		print "Error running CRON JOB Daily report"
 
-@scheduler.scheduled_job('reporting_cron', hour = 17)
+@scheduler.scheduled_job('reporting_cron', hour = 10)
 def scheduled_job_reporting():
 	send_daily_report()
 # ----------------------------------------------------------------
