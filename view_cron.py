@@ -33,7 +33,7 @@ def send_daily_report():
 		print 'send_daily_report : ERROR'
 		# REPORT ERROR
 
-@scheduler.scheduled_job('cron', id = 'daily_report', hour = 11)
+@scheduler.scheduled_job('cron', id = 'daily_report', hour = 12)
 def daily_report():
 	print 'daily_report'
 	send_daily_report()
