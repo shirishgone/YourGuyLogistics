@@ -177,6 +177,7 @@ def daily_report(request):
     email_body = email_body + "\n\n- Team YourGuy"
     
     #send_email(constants.EMAIL_IDS_EVERYBODY, email_subject, email_body)
+    print 'daily_report method called before sending the email'
     send_email(['tech@yourguy.in'], email_subject, email_body)
     # ------------------------------------------------------------------------------------------------  
     
