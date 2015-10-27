@@ -25,14 +25,17 @@ def auto_assign():
 
 # REPORTING SCHEDULER --------------------------------------------
 def send_daily_report():
+	print 'send_daily_report'
 	url = 'http://yourguy.herokuapp.com/api/v2/daily_report/'
 	try:
 		result = requests.get(url)
 	except:
+		print 'send_daily_report : ERROR'
 		# REPORT ERROR
 
-@scheduler.scheduled_job('cron', id = 'daily_report', hour = 10)
-def dialy_report():
+@scheduler.scheduled_job('cron', id = 'daily_report', hour = 11)
+def daily_report():
+	print 'daily_report'
 	send_daily_report()
 # ----------------------------------------------------------------
 
