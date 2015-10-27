@@ -11,38 +11,32 @@ from pytz import utc
 scheduler = BackgroundScheduler(timezone=utc)
 
 # AUTO ASSIGNED SCHEDULER ----------------------------------------
-def run_cron_assign_dg():
-	print('run_cron_assign_dg method is called.')
+def auto_assign_dgs():
 	url = 'http://yourguy.herokuapp.com/api/v2/cron/'
 	try:
 		result = requests.get(url)
-		print "Calling CRON JOB"
 	except:
-		print "Calling CRON JOB except case"
+		# REPORT ERROR 
 
-@scheduler.scheduled_job('cron', hour = 0)
-def scheduled_job():
-	print('Scheduled job.')
-	run_cron_assign_dg()
+@scheduler.scheduled_job('cron', id = 'auto_assign', hour = 0)
+def auto_assign():
+	auto_assign_dgs()
 # ----------------------------------------------------------------
 
 # REPORTING SCHEDULER --------------------------------------------
 def send_daily_report():
 	url = 'http://yourguy.herokuapp.com/api/v2/daily_report/'
-	print "Calling CRON send_daily_report"
 	try:
-		print "Running daily reporting."
 		result = requests.get(url)
 	except:
-		print "Error running CRON JOB Daily report"
+		# REPORT ERROR
 
-@scheduler.scheduled_job('reporting_cron', hour = 10)
-def scheduled_job_reporting():
+@scheduler.scheduled_job('cron', id = 'daily_report', hour = 10)
+def dialy_report():
 	send_daily_report()
 # ----------------------------------------------------------------
 
 scheduler.start()
-print('Scheduler started.')
 
 while True:
     pass
