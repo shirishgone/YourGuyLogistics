@@ -91,8 +91,7 @@ def assign_dg():
     email_subject = 'Unassigned orders for %s' % (today_string) 
     
     email_body = "Good Morning Guys, \nAssigned orders: %s \nUnassigned Orders: %s \nPlease assign manually. \n\n- Team YourGuy" % (assigned_orders, unassigned_order_ids)
-    #send_email(constants.OPS_EMAIL_IDS, email_subject, email_body)
-    send_email(['tech@yourguy.in'], email_subject, email_body)
+    send_email(constants.OPS_EMAIL_IDS, email_subject, email_body) 
     # ------------------------------------------------------------------------------------------------  
 
     # TODO
@@ -176,9 +175,8 @@ def daily_report(request):
     
     email_body = email_body + "\n\n- Team YourGuy"
     
-    #send_email(constants.EMAIL_IDS_EVERYBODY, email_subject, email_body)
-    print 'daily_report method called before sending the email'
-    send_email(['tech@yourguy.in'], email_subject, email_body)
+    send_email(constants.EMAIL_IDS_EVERYBODY, email_subject, email_body)
+    print 'daily_report method called before sending the email' 
     # ------------------------------------------------------------------------------------------------  
     
     return Response(status = status.HTTP_200_OK)
@@ -200,7 +198,7 @@ def inform_dgs_about_orders_assigned():
 @api_view(['GET'])
 def cron_trial(request):
     print('Scheduled job trial method is called.')
-    send_email(['tech@yourguy.in'],'Scheduled test CRON at 5.30 IST','Scheduled testing CRON details')
+    send_email(['tech@yourguy.in'],'Production Scheduled test CRON at 5.30 IST','Scheduled testing CRON details')
     assign_dg()
     
     return Response(status = status.HTTP_200_OK)
