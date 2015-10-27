@@ -1,14 +1,16 @@
 import os
 os.environ['DJANGO_SETTINGS_MODULE'] = 'server.settings'
 
-from apscheduler.schedulers.background import BackgroundScheduler
+#from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.schedulers.blocking import BlockingScheduler
 
 import requests
 import base64
 import json
 from pytz import utc
 
-scheduler = BackgroundScheduler(timezone=utc)
+#scheduler = BackgroundScheduler(timezone=utc)
+scheduler = BlockingScheduler()
 
 # AUTO ASSIGNED SCHEDULER ----------------------------------------
 @scheduler.scheduled_job('cron', id='auto_assign_job_id', hour=0)
