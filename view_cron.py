@@ -11,20 +11,18 @@ from pytz import utc
 scheduler = BackgroundScheduler(timezone=utc)
 
 # AUTO ASSIGNED SCHEDULER ----------------------------------------
-def auto_assign_dgs():
+@scheduler.scheduled_job('cron', id = 'auto_assign', hour = 0)
+def auto_assign():
 	url = 'http://yourguy.herokuapp.com/api/v2/cron/'
 	try:
 		result = requests.get(url)
 	except:
 		# REPORT ERROR 
-
-@scheduler.scheduled_job('cron', id = 'auto_assign', hour = 0)
-def auto_assign():
-	auto_assign_dgs()
 # ----------------------------------------------------------------
 
 # REPORTING SCHEDULER --------------------------------------------
-def send_daily_report():
+@scheduler.scheduled_job('cron', id = 'daily_report', hour = 12)
+def daily_report():
 	print 'send_daily_report'
 	url = 'http://yourguy.herokuapp.com/api/v2/daily_report/'
 	try:
@@ -32,11 +30,6 @@ def send_daily_report():
 	except:
 		print 'send_daily_report : ERROR'
 		# REPORT ERROR
-
-@scheduler.scheduled_job('cron', id = 'daily_report', hour = 12)
-def daily_report():
-	print 'daily_report'
-	send_daily_report()
 # ----------------------------------------------------------------
 
 scheduler.start()
