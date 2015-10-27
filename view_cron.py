@@ -11,7 +11,7 @@ from pytz import utc
 scheduler = BackgroundScheduler(timezone=utc)
 
 # AUTO ASSIGNED SCHEDULER ----------------------------------------
-@scheduler.scheduled_job('cron', hour=0)
+@scheduler.scheduled_job('cron', id='auto_assign_job_id', hour=0)
 def auto_assign():
 	url = 'http://yourguy.herokuapp.com/api/v2/cron/'
 	try:
@@ -22,7 +22,7 @@ def auto_assign():
 # ----------------------------------------------------------------
 
 # REPORTING SCHEDULER --------------------------------------------
-@scheduler.scheduled_job('cron', hour=17, minute=30)
+@scheduler.scheduled_job('cron', id='daily_report_job_id', hour=17, minute=40)
 def daily_report():
 	print 'send_daily_report'
 	url = 'http://yourguy.herokuapp.com/api/v2/daily_report/'
@@ -35,7 +35,6 @@ def daily_report():
 # ----------------------------------------------------------------
 
 scheduler.start()
-scheduler.wakeup()
 
 while True:
 	pass
