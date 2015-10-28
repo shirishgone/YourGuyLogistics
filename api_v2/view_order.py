@@ -869,6 +869,7 @@ class OrderViewSet(viewsets.ViewSet):
         order = get_object_or_404(Order, pk = pk)
         pop = request.data.get('pop')
         pickup_attempted = request.data.get('pickup_attempted')
+        delivery_remarks = request.data.get('delivery_remarks')
         
         # PICKEDUP DATE TIME --------------------------------------------------------
         pickedup_datetime_string = request.data.get('pickedup_datetime')
@@ -931,6 +932,8 @@ class OrderViewSet(viewsets.ViewSet):
         if final_delivery_status is not None and can_update_delivery_status(final_delivery_status):            
             if pickup_attempted is not None and pickup_attempted == True:
                 final_delivery_status.order_status = constants.ORDER_STATUS_PICKUP_ATTEMPTED
+                if dg_remarks is not None:
+                    final_delivery_status.cod_remarks = delivery_remarks
             else:
                 final_delivery_status.order_status = constants.ORDER_STATUS_INTRANSIT
             
@@ -980,6 +983,7 @@ class OrderViewSet(viewsets.ViewSet):
         # ----------------------------------------------------------------
                 
         # DELIVERY ATTEMPTED CASE HANDLED --------------------------------
+        cod_remarks = request.data.get('delivery_remarks')
         delivery_attempted = request.data.get('delivery_attempted')
         if delivery_attempted is not None and delivery_attempted is True:
             order_status = constants.ORDER_STATUS_DELIVERY_ATTEMPTED
