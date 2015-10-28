@@ -932,7 +932,7 @@ class OrderViewSet(viewsets.ViewSet):
         if final_delivery_status is not None and can_update_delivery_status(final_delivery_status):            
             if pickup_attempted is not None and pickup_attempted == True:
                 final_delivery_status.order_status = constants.ORDER_STATUS_PICKUP_ATTEMPTED
-                if dg_remarks is not None:
+                if delivery_remarks is not None:
                     final_delivery_status.cod_remarks = delivery_remarks
             else:
                 final_delivery_status.order_status = constants.ORDER_STATUS_INTRANSIT
