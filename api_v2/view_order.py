@@ -778,12 +778,12 @@ class OrderViewSet(viewsets.ViewSet):
             # ---------------------------------------------------
             
             # CONFIRMATION MESSAGE TO OPS -------------------------
-            message = constants.ORDER_PLACED_MESSAGE_OPS.format(new_order.id, vendor.store_name)
-            send_sms(constants.OPS_PHONE_NUMBER, message)
+            # message = constants.ORDER_PLACED_MESSAGE_OPS.format(new_order.id, vendor.store_name)
+            # send_sms(constants.OPS_PHONE_NUMBER, message)
 
             # CONFIRMATION MESSAGE TO CUSTOMER ------------------
-            message_client = constants.ORDER_PLACED_MESSAGE_CLIENT.format(new_order.id)
-            send_sms(vendor.phone_number, message_client)
+            # message_client = constants.ORDER_PLACED_MESSAGE_CLIENT.format(new_order.id)
+            # send_sms(vendor.phone_number, message_client)
             # ---------------------------------------------------
 
             content = {
@@ -852,8 +852,8 @@ class OrderViewSet(viewsets.ViewSet):
         # ------------------------------------------------------------       
         
         if is_cancelled:
-            message = constants.ORDER_CANCELLED_MESSAGE_CLIENT.format(order.consumer.user.first_name, order.id)
-            send_sms(order.vendor.phone_number, message)
+            # message = constants.ORDER_CANCELLED_MESSAGE_CLIENT.format(order.consumer.user.first_name, order.id)
+            # send_sms(order.vendor.phone_number, message)
             content = {
             'description':'Order has been canceled'
             }
@@ -1142,8 +1142,8 @@ class OrderViewSet(viewsets.ViewSet):
         if is_order_updated:
             
             # CONFIRMATION MESSAGE TO CUSTOMER --------------------------------------
-            message = constants.ORDER_DELIVERED_MESSAGE_CLIENT.format(order_status, order.consumer.user.first_name, delivered_at)
-            send_sms(order.vendor.phone_number, message)
+            # message = constants.ORDER_DELIVERED_MESSAGE_CLIENT.format(order_status, order.consumer.user.first_name, delivered_at)
+            # send_sms(order.vendor.phone_number, message)
             # -----------------------------------------------------------------------
             
             # UPDATE CUSTOMER LOCATION ----------------------------------------------
