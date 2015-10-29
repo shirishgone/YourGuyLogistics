@@ -36,7 +36,7 @@ def can_deliver_delivery_status(delivery_status):
     else:
         return False  
 
-def can_update_delivery_status(delivery_status):
+def can_update_pickup_status(delivery_status):
     if delivery_status.order_status == constants.ORDER_STATUS_PLACED or delivery_status.order_status == constants.ORDER_STATUS_QUEUED:
         return True
     else:
@@ -840,7 +840,7 @@ class OrderViewSet(viewsets.ViewSet):
         # -----------------------------------------------------------
 
         # UPDATE THE DELIVERY STATUS OBJECT -------------------------
-        if final_delivery_status is not None and can_update_delivery_status(final_delivery_status):
+        if final_delivery_status is not None and can_update_pickup_status(final_delivery_status):
             final_delivery_status.order_status = constants.ORDER_STATUS_CANCELLED
             final_delivery_status.save()
             is_cancelled = True
@@ -863,6 +863,63 @@ class OrderViewSet(viewsets.ViewSet):
             'error':'Order cancellation failed'
             }
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
+    @detail_route(methods=['post'])
+    def multiple_pickups(self, request, pk=None):        
+        try:
+            order_ids   = request.data['order_ids']
+            date_string = request.data['date']
+            order_date  = parse_datetime(date_string)
+        except Exception, e:
+            content = {
+            'error':'order_ids, date are mandatory parameters'
+            }
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+        
+        # PICKEDUP DATE TIME --------------------------------------------------------
+        pickedup_datetime_string = request.data.get('pickedup_datetime')
+        if pickedup_datetime_string is not None:
+            pickedup_datetime = parse_datetime(pickedup_datetime_string) 
+        else:
+            pickedup_datetime = datetime.now() 
+        # ----------------------------------------------------------------------------
+        updated_orders = []
+        not_updated_orders = []
+        
+        # UPDATE EACH ORDER --------------------------------------------------------
+        for order_id in order_ids:
+            try:
+                order = get_object_or_404(Order, pk = order_id)
+                
+                # PICK THE APPROPRIATE DELIVERY STATUS OBJECT ----------------
+                if is_recurring_order(order):
+                    delivery_statuses = order.delivery_status.all()
+                    for delivery_status in delivery_statuses:
+                        if delivery_status.date.date() == order_date.date():
+                            final_delivery_status = delivery_status
+                else:
+                    final_delivery_status = order.delivery_status.all().latest('date')
+                # -----------------------------------------------------------
+
+                # UPDATING THE DELIVERY STATUS OF THE PARTICULAR DAY -------------------------
+                if final_delivery_status is not None and can_update_pickup_status(final_delivery_status): 
+                    final_delivery_status.order_status = constants.ORDER_STATUS_INTRANSIT
+                    final_delivery_status.pickedup_datetime = pickedup_datetime
+                    final_delivery_status.save()
+                    updated_orders.append(order_id)
+                else:
+                    not_updated_orders.append(order_id)
+            except Exception, e:
+                not_updated_orders.append(order_id)
+                pass
+        # -------------------------------------------------------------------------------
+
+        content = {
+        "updated_orders": updated_orders,
+        "un_updated_orders": not_updated_orders
+        }
+        return Response(content, status = status.HTTP_200_OK)
+        
 
     @detail_route(methods=['post'])
     def picked_up(self, request, pk=None):
@@ -929,7 +986,7 @@ class OrderViewSet(viewsets.ViewSet):
 
         # UPDATING THE DELIVERY STATUS OF THE PARTICULAR DAY -------------------------
         is_order_updated = False
-        if final_delivery_status is not None and can_update_delivery_status(final_delivery_status):            
+        if final_delivery_status is not None and can_update_pickup_status(final_delivery_status):
             if pickup_attempted is not None and pickup_attempted == True:
                 final_delivery_status.order_status = constants.ORDER_STATUS_PICKUP_ATTEMPTED
                 if delivery_remarks is not None:
