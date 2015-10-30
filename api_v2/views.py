@@ -91,7 +91,7 @@ def assign_dg():
     email_subject = 'Unassigned orders for %s' % (today_string) 
     
     email_body = "Good Morning Guys, \nAssigned orders: %s \nUnassigned Orders: %s \nPlease assign manually. \n\n- Team YourGuy" % (assigned_orders, unassigned_order_ids)
-    send_email(constants.OPS_EMAIL_IDS, email_subject, email_body) 
+    send_email(constants.EMAIL_IDS_EVERYBODY, email_subject, email_body) 
     # ------------------------------------------------------------------------------------------------  
 
     # TODO
