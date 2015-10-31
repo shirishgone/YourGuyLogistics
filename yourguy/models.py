@@ -60,6 +60,7 @@ class YGUser(models.Model):
 class DeliveryGuy(YGUser):
     # Mandatory Fields
     employee_code = models.CharField(max_length = 200, blank = True , null = True)
+    
     UN_AVAILABLE = 'UN_AVAILABLE'
     AVAILABLE = 'AVAILABLE'
     BUSY = 'BUSY'
@@ -310,7 +311,7 @@ class OrderDeliveryStatus(models.Model):
         (DELIVERED, 'DELIVERED'),
         (CANCELLED, 'CANCELLED'),
     )
-    order_status = models.CharField(max_length = 50, choices = ORDER_CHOICES, default = ORDER_PLACED)
+    order_status = models.CharField(max_length = 50, choices = ORDER_CHOICES, default = QUEUED)
 
     DOOR_STEP = 'DOOR_STEP'
     SECURITY = 'SECURITY'
@@ -331,9 +332,10 @@ class OrderDeliveryStatus(models.Model):
 
     cod_collected_amount = models.FloatField(default = 0.0)
     cod_remarks = models.CharField(max_length = 500, blank = True)
-
+    
     def __unicode__(self):
-        return u"%s - %s " % (self.id, self.delivered_at)
+        return u"%s - %s" % (self.id, self.delivered_at)
+        
 
 class Order(models.Model):
 
@@ -360,7 +362,7 @@ class Order(models.Model):
         (DELIVERED, 'DELIVERED'),
         (CANCELLED, 'CANCELLED'),
     )
-    order_status = models.CharField(max_length = 50, choices = ORDER_CHOICES, default = ORDER_PLACED)
+    order_status = models.CharField(max_length = 50, choices = ORDER_CHOICES, default = QUEUED)
 
     order_items = models.ManyToManyField(OrderItem)
     total_cost = models.FloatField(default = 0.0)
@@ -431,8 +433,7 @@ class Order(models.Model):
     rejection_reason = models.CharField(max_length = 500, blank = True)
     
     def __unicode__(self):
-        return u"%s" % (self.id)
-        # return u"%s - %s - %s - %s - %s - %s" % (self.id, self.vendor.store_name, self.consumer.user.first_name, self.order_status, self.delivery_guy, self.delivered_at)
+        return u"%s - %s - %s - %s - %s - %s" % (self.id, self.vendor.store_name, self.consumer.user.first_name, self.order_status, self.delivery_guy, self.delivered_at)
 
 class Suggestion(models.Model):
 
