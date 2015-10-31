@@ -299,6 +299,8 @@ class OrderViewSet(viewsets.ViewSet):
         order_id = request.QUERY_PARAMS.get('order_id', None)
         search_query = request.QUERY_PARAMS.get('search', None)
         filter_order_status = request.QUERY_PARAMS.get('order_status', None)
+        filter_time_start = request.QUERY_PARAMS.get('time_start', None)
+        filter_time_end = request.QUERY_PARAMS.get('time_end', None)
 
         # ORDER STATUS CHECK --------------------------------------------------        
         order_statuses = []
@@ -327,10 +329,10 @@ class OrderViewSet(viewsets.ViewSet):
 
         delivery_status_queryset = OrderDeliveryStatus.objects.filter(date__gte = day_start, date__lte = day_end)
         # --------------------------------------------------------------------------
-
+        
         role = user_role(request.user)
 
-        # DELIVERY GUY FILTERING -----------------------------------------------------
+        # DELIVERY GUY FILTERING ---------------------------------------------------
         delivery_guy = None
         if role == constants.DELIVERY_GUY:
             delivery_guy = get_object_or_404(DeliveryGuy, user = request.user)
@@ -343,16 +345,16 @@ class OrderViewSet(viewsets.ViewSet):
                     delivery_status_queryset = delivery_status_queryset.filter(delivery_guy = delivery_guy)
                 elif dg_phone_number == 'UNASSIGNED':
                     delivery_status_queryset = delivery_status_queryset.filter(delivery_guy = None)
-        # ---------------------------------------------------------------------------   
+        # --------------------------------------------------------------------------
 
-        # ORDER STATUS FILTERING ----------------------------------------------------
+        # ORDER STATUS FILTERING ---------------------------------------------------
         if len(order_statuses) > 0:
             order_filter_queryset = []
             for order_status in order_statuses:
                 order_filter_queryset.append(delivery_status_queryset.filter(order_status = order_status))
             
             delivery_status_queryset = list(chain(*order_filter_queryset))
-        # ----------------------------------------------------------------------------
+        # --------------------------------------------------------------------------
 
         order_queryset = Order.objects.filter(delivery_status__in = delivery_status_queryset)
 
@@ -367,7 +369,14 @@ class OrderViewSet(viewsets.ViewSet):
 
         if vendor is not None:
             order_queryset = order_queryset.filter(vendor = vendor)
-        # ---------------------------------------------------------------------------
+        # ----------------------------------------------------------------------------
+
+        # TIME SLOT FILTERING --------------------------------------------------------
+        if filter_time_end is not None and filter_time_start is not None:
+            filter_time_start = parse_datetime(filter_time_start)
+            filter_time_end = parse_datetime(filter_time_end)
+            order_queryset = order_queryset.filter(pickup_datetime__gte = filter_time_start, pickup_datetime__lte = filter_time_end)
+        # ----------------------------------------------------------------------------
 
         # SEARCH KEYWORD FILTERING ---------------------------------------------------
         if search_query is not None:
@@ -377,7 +386,7 @@ class OrderViewSet(viewsets.ViewSet):
                     Q(consumer__user__username=search_query))
             else:
                 order_queryset = order_queryset.filter(Q(consumer__user__first_name__icontains=search_query))
-        # ---------------------------------------------------------------------------  
+        # ---------------------------------------------------------------------------- 
         
         # PAGINATION  ----------------------------------------------------------------
         if page is not None:
@@ -395,9 +404,9 @@ class OrderViewSet(viewsets.ViewSet):
             return Response(response_content, status = status.HTTP_400_BAD_REQUEST)
         else:
             orders = paginate(order_queryset, page)
-        # ------------------------------------------------------------------------------
+        # ----------------------------------------------------------------------------
         
-        # UPDATING DELIVERY STATUS OF THE DAY  -----------------------------------------
+        # UPDATING DELIVERY STATUS OF THE DAY  ---------------------------------------
         result = []
         for single_order in orders:
             if role == constants.DELIVERY_GUY:
