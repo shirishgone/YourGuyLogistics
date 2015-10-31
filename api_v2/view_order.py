@@ -11,7 +11,7 @@ from rest_framework.decorators import detail_route, list_route
 from rest_framework.response import Response
 
 from yourguy.models import Order, Vendor, VendorAgent, OrderDeliveryStatus, Area, User, DeliveryGuy, Consumer, Address, Product, OrderItem, ProofOfDelivery, Picture
-from api.views import user_role, ist_day_start, ist_day_end, is_userexists, is_consumerexists, send_sms
+from api.views import user_role, ist_day_start, ist_day_end, is_userexists, is_consumerexists, send_sms, days_in_int
 
 from api_v2.utils import is_pickup_time_acceptable, is_consumer_has_same_address_already, is_correct_pincode, is_vendor_has_same_address_already
 from api_v2.views import paginate
@@ -23,6 +23,7 @@ import math
 import pytz
 from django.db.models import Q
 from itertools import chain
+from dateutil.rrule import rrule, WEEKLY
 
 def is_recurring_order(order):
     if len(order.delivery_status.all()) > 1:
@@ -629,8 +630,9 @@ class OrderViewSet(viewsets.ViewSet):
 
                 # ACCEPTING ADDITIONAL DATES PARAM IN RECURRING ----------------
                 additional_dates = recurring.get('additional_dates')
-                for additional_date in additional_dates:
-                    delivery_dates.append(parse_datetime(additional_date))
+                if additional_dates is not None:
+                    for additional_date in additional_dates:
+                        delivery_dates.append(parse_datetime(additional_date))
                 # ---------------------------------------------------
                 
                 if len(delivery_dates) <=0:
