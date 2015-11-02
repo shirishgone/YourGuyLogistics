@@ -3,6 +3,8 @@ from rest_framework.routers import DefaultRouter
 from api_v2.view_consumers import ConsumerViewSet
 from api_v2.view_order import OrderViewSet
 from api_v2.view_dg import DGViewSet
+
+from api_v2 import view_dashboard
 from api_v2 import utils
 from api_v2 import views
 
@@ -13,6 +15,7 @@ urlpatterns = patterns(
 	url(r'^fill_full_address/', utils.fill_full_address, name = 'fill_full_address'),
 	url(r'^cron/', views.cron_trial, name = 'cron_trial'),
 	url(r'^daily_report/', views.daily_report, name = 'daily_report'),
+	url(r'^dashboard_report/', view_dashboard.report, name = 'dashboard_report'),
 )
 router = DefaultRouter()
 router.register(r'consumer', ConsumerViewSet)
