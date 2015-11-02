@@ -76,9 +76,10 @@ def assign_dg():
             try:
                 latest_assigned_delivery = previous_delivery_statuses.latest('date')            
                 if latest_assigned_delivery is not None:
-                    delivery_status.delivery_guy = latest_assigned_delivery.delivery_guy
+                    req_delivery_guy = latest_assigned_delivery.delivery_guy
+                    delivery_status.delivery_guy = req_delivery_guy
                     delivery_status.save()                   
-                    assigned_orders = assigned_orders + "\n %s - %s - %s - %s" % (vendor.store_name, order.id, consumer.user.first_name, delivery_guy.user.first_name)
+                    assigned_orders = assigned_orders + "\n %s - %s - %s - %s" % (vendor.store_name, order.id, consumer.user.first_name, req_delivery_guy.user.first_name)
             except Exception, e:                
                 unassigned_order_ids = unassigned_order_ids + "\n %s - %s - %s" % (vendor.store_name, order.id, consumer.user.first_name)
                 pass
