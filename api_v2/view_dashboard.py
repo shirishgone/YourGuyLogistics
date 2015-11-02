@@ -61,6 +61,8 @@ def report(request):
 
 	if vendor is not None:
 		delivery_status_queryset = OrderDeliveryStatus.objects.filter(order__vendor = vendor)
+	else:
+		delivery_status_queryset = OrderDeliveryStatus.objects.all()
 	# # ------------------------------------------------------------------------------
 
 	# TOTAL COD COLLECTED ------------------------------------------------------------
