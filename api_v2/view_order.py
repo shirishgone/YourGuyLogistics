@@ -373,8 +373,8 @@ class OrderViewSet(viewsets.ViewSet):
 
         # TIME SLOT FILTERING --------------------------------------------------------
         if filter_time_end is not None and filter_time_start is not None:
-            filter_time_start = parse_datetime(filter_time_start) - time_delta()
-            filter_time_end = parse_datetime(filter_time_end) - time_delta()
+            filter_time_start = parse_datetime(filter_time_start)
+            filter_time_end = parse_datetime(filter_time_end)
             order_queryset = order_queryset.filter(pickup_datetime__gte = filter_time_start, pickup_datetime__lte = filter_time_end)
         # ----------------------------------------------------------------------------
 
