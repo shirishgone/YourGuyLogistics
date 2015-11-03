@@ -375,7 +375,10 @@ class OrderViewSet(viewsets.ViewSet):
         if filter_time_end is not None and filter_time_start is not None:
             filter_time_start = parse_datetime(filter_time_start)
             filter_time_end = parse_datetime(filter_time_end)
-            order_queryset = order_queryset.filter(pickup_datetime__gte = filter_time_start, pickup_datetime__lte = filter_time_end)
+            filter_day_start = ist_day_start(filter_time_start)
+            filter_day_end = ist_day_end(filter_time_end)
+
+            order_queryset = order_queryset.filter(pickup_datetime__gte = filter_day_start, pickup_datetime__lte = filter_day_end)
         # ----------------------------------------------------------------------------
 
         # SEARCH KEYWORD FILTERING ---------------------------------------------------
