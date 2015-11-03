@@ -115,19 +115,21 @@ def report(request):
 	# EXCEL DOWNLOAD FOR ALL ORDERS -------------------------------------------------
 	excel_order_details = []
 	for delivery_status in delivery_status_queryset:
-		order = delivery_status.order_set.all().latest('pickup_datetime')
-		
-		excel_order = {
-		'date':delivery_status.date,
-		'order_id':order.id,
-		'customer_name':order.consumer.user.first_name,
-		'customer_phone_number':order.consumer.user.username,
-		'cod_amount':order.cod_amount,
-		'cod_collected':delivery_status.cod_collected_amount,
-		'cod_reason':delivery_status.cod_remarks,
-		'status':delivery_status.order_status
-		}
-		excel_order_details.append(excel_order)
+		try:
+			order = delivery_status.order_set.all().latest('pickup_datetime')
+			excel_order = {
+			'date':delivery_status.date,
+			'order_id':order.id,
+			'customer_name':order.consumer.user.first_name,
+			'customer_phone_number':order.consumer.user.username,
+			'cod_amount':order.cod_amount,
+			'cod_collected':delivery_status.cod_collected_amount,
+			'cod_reason':delivery_status.cod_remarks,
+			'status':delivery_status.order_status
+			}
+			excel_order_details.append(excel_order)
+		except Exception, e:
+			pass
 	# ------------------------------------------------------------------------------
 	
 	content = {
