@@ -21,6 +21,7 @@ import recurrence
 from datetime import datetime
 from dateutil.rrule import rrule, DAILY
 from django.db.models import Sum
+from django.db.models import Prefetch
 
 
 @api_view(['POST'])
@@ -62,15 +63,15 @@ def excel_download(request):
 	# # ------------------------------------------------------------------------------
 	
 	# DATE FILTERING ---------------------------------------------------------------
-	delivery_status_queryset = delivery_status_queryset.filter(date__gte = start_date, date__lte = end_date)
+	delivery_status_queryset = delivery_status_queryset.filter(date__gte = start_date, date__lte = end_date).prefetch_related(Prefetch('order_set', to_attr='orders'))
 	# ------------------------------------------------------------------------------
-
-
-	# EXCEL DOWNLOAD FOR ALL ORDERS -------------------------------------------------
+	
+	# CONSTRUCTING RESPONSE ---------------------------------------------------------------
 	excel_order_details = []
 	for delivery_status in delivery_status_queryset:
 		try:
-			order = delivery_status.order_set.all().latest('pickup_datetime')
+			order = delivery_status.orders.pop()
+			
 			excel_order = {
 			'date':delivery_status.date,
 			'order_id':order.id,
@@ -84,7 +85,7 @@ def excel_download(request):
 			excel_order_details.append(excel_order)
 		except Exception, e:
 			pass
-	# ------------------------------------------------------------------------------
+	# # ------------------------------------------------------------------------------
 	content = {
 	'orders':excel_order_details
 	}
