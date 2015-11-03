@@ -16,6 +16,7 @@ urlpatterns = patterns(
 	url(r'^cron/', views.cron_trial, name = 'cron_trial'),
 	url(r'^daily_report/', views.daily_report, name = 'daily_report'),
 	url(r'^dashboard_report/', view_dashboard.report, name = 'dashboard_report'),
+	url(r'^excel_download/', view_dashboard.excel_download, name = 'excel_download'),
 )
 router = DefaultRouter()
 router.register(r'consumer', ConsumerViewSet)
