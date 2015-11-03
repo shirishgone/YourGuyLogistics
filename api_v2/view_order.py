@@ -11,7 +11,7 @@ from rest_framework.decorators import detail_route, list_route
 from rest_framework.response import Response
 
 from yourguy.models import Order, Vendor, VendorAgent, OrderDeliveryStatus, Area, User, DeliveryGuy, Consumer, Address, Product, OrderItem, ProofOfDelivery, Picture
-from api.views import user_role, ist_day_start, ist_day_end, is_userexists, is_consumerexists, send_sms, days_in_int
+from api.views import user_role, ist_day_start, ist_day_end, is_userexists, is_consumerexists, send_sms, days_in_int, time_delta
 
 from api_v2.utils import is_pickup_time_acceptable, is_consumer_has_same_address_already, is_correct_pincode, is_vendor_has_same_address_already
 from api_v2.views import paginate
@@ -373,12 +373,9 @@ class OrderViewSet(viewsets.ViewSet):
 
         # TIME SLOT FILTERING --------------------------------------------------------
         if filter_time_end is not None and filter_time_start is not None:
-            filter_time_start = parse_datetime(filter_time_start)
-            filter_time_end = parse_datetime(filter_time_end)
-            filter_day_start = ist_day_start(filter_time_start)
-            filter_day_end = ist_day_end(filter_time_end)
-
-            order_queryset = order_queryset.filter(pickup_datetime__gte = filter_day_start, pickup_datetime__lte = filter_day_end)
+            filter_time_start = parse_datetime(filter_time_start) - time_delta()
+            filter_time_end = parse_datetime(filter_time_end) - time_delta()
+            order_queryset = order_queryset.filter(pickup_datetime__gte = filter_time_start, pickup_datetime__lte = filter_time_end)
         # ----------------------------------------------------------------------------
 
         # SEARCH KEYWORD FILTERING ---------------------------------------------------
