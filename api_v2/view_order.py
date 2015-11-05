@@ -162,6 +162,7 @@ def update_daily_status(order, date):
             'status' : delivery_status.order_status,
             'is_recurring' : order.is_recurring,
             'cod_amount' : order.cod_amount,
+            'cod_collected':delivery_status.cod_collected_amount,
             'customer_name' : order.consumer.user.first_name,
             'vendor_name' : order.vendor.store_name,
             'delivered_at' : delivery_status.delivered_at,
