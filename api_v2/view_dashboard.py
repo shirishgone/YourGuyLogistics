@@ -66,6 +66,10 @@ def excel_download(request):
 	delivery_status_queryset = delivery_status_queryset.filter(date__gte = start_date, date__lte = end_date).prefetch_related(
 		Prefetch('order_set', queryset = Order.objects.select_related('consumer__user') , to_attr='orders'))
 	# ------------------------------------------------------------------------------
+	
+	if len(delivery_status_queryset) > 5000:
+		content = {'error':'Too many records. Please check lesser dates'}
+		return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
 	# CONSTRUCTING RESPONSE ---------------------------------------------------------------
 	excel_order_details = []
