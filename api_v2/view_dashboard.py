@@ -66,13 +66,12 @@ def excel_download(request):
 	delivery_status_queryset = delivery_status_queryset.filter(date__gte = start_date, date__lte = end_date).prefetch_related(
 		Prefetch('order_set', queryset = Order.objects.select_related('consumer__user') , to_attr='orders'))
 	# ------------------------------------------------------------------------------
-	
+
 	# CONSTRUCTING RESPONSE ---------------------------------------------------------------
 	excel_order_details = []
 	for delivery_status in delivery_status_queryset:
 		try:
 			order = delivery_status.orders.pop()
-			
 			excel_order = {
 			'date':delivery_status.date,
 			'order_id':order.id,
@@ -81,9 +80,14 @@ def excel_download(request):
 			'cod_amount':order.cod_amount,
 			'cod_collected':delivery_status.cod_collected_amount,
 			'cod_reason':delivery_status.cod_remarks,
-			'status':delivery_status.order_status,
-			'delivery_guy':delivery_status.delivery_guy.user.first_name
+			'status':delivery_status.order_status
 			}
+			if role == constants.OPERATIONS:
+				if delivery_status.delivery_guy is not None:
+					excel_order['delivery_guy'] = delivery_status.delivery_guy.user.first_name
+				else: 	
+					excel_order['delivery_guy'] = None
+			
 			excel_order_details.append(excel_order)
 		except Exception, e:
 			pass
