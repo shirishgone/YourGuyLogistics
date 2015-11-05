@@ -302,6 +302,7 @@ class OrderViewSet(viewsets.ViewSet):
         filter_order_status = request.QUERY_PARAMS.get('order_status', None)
         filter_time_start = request.QUERY_PARAMS.get('time_start', None)
         filter_time_end = request.QUERY_PARAMS.get('time_end', None)
+        is_cod = request.QUERY_PARAMS.get('is_cod', None)
 
         # ORDER STATUS CHECK --------------------------------------------------        
         order_statuses = []
@@ -370,6 +371,15 @@ class OrderViewSet(viewsets.ViewSet):
 
         if vendor is not None:
             order_queryset = order_queryset.filter(vendor = vendor)
+        # ----------------------------------------------------------------------------
+
+        # COD FILTERING --------------------------------------------------------------
+        if is_cod is not None:
+            is_cod_bool = json.loads(is_cod.lower())
+            if is_cod_bool is True:
+                order_queryset = order_queryset.filter(cod_amount__gt = 0)
+            else:
+                order_queryset = order_queryset.filter(cod_amount = 0)
         # ----------------------------------------------------------------------------
 
         # TIME SLOT FILTERING --------------------------------------------------------
