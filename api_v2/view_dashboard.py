@@ -57,9 +57,9 @@ def excel_download(request):
 			pass	
 
 	if vendor is not None:
-		delivery_status_queryset = OrderDeliveryStatus.objects.filter(order__vendor = vendor)
+		delivery_status_queryset = OrderDeliveryStatus.objects.filter(order__vendor = vendor).select_related('delivery_guy__user')
 	else:
-		delivery_status_queryset = OrderDeliveryStatus.objects.all()
+		delivery_status_queryset = OrderDeliveryStatus.objects.all().select_related('delivery_guy__user')
 	# # ------------------------------------------------------------------------------
 	
 	# DATE FILTERING ---------------------------------------------------------------
@@ -81,7 +81,8 @@ def excel_download(request):
 			'cod_amount':order.cod_amount,
 			'cod_collected':delivery_status.cod_collected_amount,
 			'cod_reason':delivery_status.cod_remarks,
-			'status':delivery_status.order_status
+			'status':delivery_status.order_status,
+			'delivery_guy':delivery_status.delivery_guy.user.first_name
 			}
 			excel_order_details.append(excel_order)
 		except Exception, e:
