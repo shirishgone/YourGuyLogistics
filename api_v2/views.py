@@ -43,7 +43,6 @@ def assign_dg():
     day_end = ist_day_end(date)
     
     unassigned_order_ids = ''
-    assigned_orders = ''
 
     delivery_status_queryset = OrderDeliveryStatus.objects.filter(date__gte = day_start, date__lte = day_end, delivery_guy = None)            
     # FILTER BY ORDER STATUS --------------------------------------------------------------------
@@ -79,7 +78,6 @@ def assign_dg():
                     req_delivery_guy = latest_assigned_delivery.delivery_guy
                     delivery_status.delivery_guy = req_delivery_guy
                     delivery_status.save()                   
-                    assigned_orders = assigned_orders + "\n %s - %s - %s - %s" % (vendor.store_name, order.id, consumer.user.first_name, req_delivery_guy.user.first_name)
             except Exception, e:                
                 unassigned_order_ids = unassigned_order_ids + "\n %s - %s - %s" % (vendor.store_name, order.id, consumer.user.first_name)
                 pass
@@ -92,7 +90,7 @@ def assign_dg():
     today_string = datetime.now().strftime("%Y %b %d")
     email_subject = 'Unassigned orders for %s' % (today_string) 
     
-    email_body = "Good Morning Guys, \nAssigned orders: %s \nUnassigned Orders: %s \nPlease assign manually. \n\n- Team YourGuy" % (assigned_orders, unassigned_order_ids)
+    email_body = "Good Morning Guys, \nUnassigned Orders: %s \nPlease assign manually. \n\n- Team YourGuy" % (unassigned_order_ids)
     send_email(constants.EMAIL_IDS_EVERYBODY, email_subject, email_body)
     # ------------------------------------------------------------------------------------------------  
 
