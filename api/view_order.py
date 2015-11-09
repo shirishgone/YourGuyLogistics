@@ -865,6 +865,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                 final_delivery_status.cod_collected_amount = cod_collected_amount
             final_delivery_status.save()
             is_order_updated = True
+
         else:
             content = {
             'error': "The order has already been processed, now you cant update the status."
@@ -876,8 +877,10 @@ class OrderViewSet(viewsets.ModelViewSet):
         if is_order_updated:
             
             # CONFIRMATION MESSAGE TO CUSTOMER --------------------------------------
-            # message = constants.ORDER_DELIVERED_MESSAGE_CLIENT.format(order_status, order.consumer.user.first_name, delivered_at)
-            # send_sms(order.vendor.phone_number, message)
+            if float(cod_collected_amount) > 0:
+                end_consumer_phone_number = order.consumer.user.username
+                message = 'Dear %s, we have received the payment of %srs behalf of %s - Team YourGuy' % (order.consumer.user.first_name, cod_collected_amount, order.vendor.store_name)
+                send_sms(end_consumer_phone_number, message)
             # -----------------------------------------------------------------------
             
             # UPDATE CUSTOMER LOCATION ----------------------------------------------
