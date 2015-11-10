@@ -17,6 +17,7 @@ from api_v2.views import paginate
 import datetime
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 import constants
+from django.db.models import Q
         
 def consumer_list_dict(consumer):
     consumer_dict = {
@@ -80,7 +81,8 @@ class ConsumerViewSet(viewsets.ModelViewSet):
 
     def list(self, request):
         page = self.request.QUERY_PARAMS.get('page', None)
-
+        search_query = request.QUERY_PARAMS.get('search', None)
+        
         if page is not None:
             page = int(page)
         else:
@@ -91,7 +93,12 @@ class ConsumerViewSet(viewsets.ModelViewSet):
             vendor_agent = get_object_or_404(VendorAgent, user = request.user)
             total_consumers_of_vendor = Consumer.objects.filter(associated_vendor = vendor_agent.vendor).order_by(Lower('user__first_name'))
         
-            # PAGINATE ========
+            # SEARCH KEYWORD FILTERING -------------------------------------------------
+            if search_query is not None:
+                total_consumers_of_vendor = total_consumers_of_vendor.filter(Q(user__first_name__icontains=search_query))
+            # --------------------------------------------------------------------------
+
+            # PAGINATE -----------------------------------------------------------------
             total_customers_count = len(total_consumers_of_vendor)
             total_pages =  int(total_customers_count/constants.PAGINATION_PAGE_SIZE) + 1
 
