@@ -44,7 +44,7 @@ def assign_dg():
     
     unassigned_order_ids = ''
 
-    delivery_status_queryset = OrderDeliveryStatus.objects.filter(date__gte = day_start, date__lte = day_end, delivery_guy = None)            
+    delivery_status_queryset = OrderDeliveryStatus.objects.filter(date__gte = day_start, delivery_guy = None)            
     # FILTER BY ORDER STATUS --------------------------------------------------------------------
     delivery_status_queryset = delivery_status_queryset.filter(Q(order_status = constants.ORDER_STATUS_PLACED ) | Q(order_status = constants.ORDER_STATUS_QUEUED) | Q(order_status = constants.ORDER_STATUS_INTRANSIT)) 
     # ------------------------------------------------------------------------------------------------
@@ -216,7 +216,7 @@ def daily_report(request):
         email_body = email_body + "\n-----------------------------------"    
         email_body = email_body + "\n\n- YourGuy BOT"
     
-        send_email(constants.EMAIL_IDS_EVERYBODY, email_subject, email_body)
+        #send_email(constants.EMAIL_IDS_EVERYBODY, email_subject, email_body)
         # ------------------------------------------------------------------------------------------------  
     
     return Response(status = status.HTTP_200_OK)
