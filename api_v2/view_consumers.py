@@ -82,6 +82,7 @@ class ConsumerViewSet(viewsets.ModelViewSet):
     def list(self, request):
         page = self.request.QUERY_PARAMS.get('page', None)
         search_query = request.QUERY_PARAMS.get('search', None)
+        addresses_required = False
         
         if page is not None:
             page = int(page)
@@ -95,9 +96,15 @@ class ConsumerViewSet(viewsets.ModelViewSet):
         
             # SEARCH KEYWORD FILTERING -------------------------------------------------
             if search_query is not None:
-                total_consumers_of_vendor = total_consumers_of_vendor.filter(Q(user__first_name__icontains=search_query))
+                total_consumers_of_vendor = total_consumers_of_vendor.filter(Q(user__first_name__icontains=search_query) | Q(user__username=search_query))
+                addresses_required = True
             # --------------------------------------------------------------------------
 
+            # FETCH ADDRESSES OF CUSTOMER ----------------------------------------------
+            if addresses_required:
+                total_consumers_of_vendor = total_consumers_of_vendor.prefetch_related('addresses')
+            # --------------------------------------------------------------------------            
+            
             # PAGINATE -----------------------------------------------------------------
             total_customers_count = len(total_consumers_of_vendor)
             total_pages =  int(total_customers_count/constants.PAGINATION_PAGE_SIZE) + 1
@@ -112,7 +119,10 @@ class ConsumerViewSet(viewsets.ModelViewSet):
             
             result = []
             for consumer in customers:
-                consumer_dict = consumer_list_dict(consumer)
+                if addresses_required:
+                    consumer_dict = consumer_detail_dict(consumer)
+                else:    
+                    consumer_dict = consumer_list_dict(consumer)
                 result.append(consumer_dict)
         
             response_content = { "data": result, "total_pages": total_pages }

@@ -573,7 +573,195 @@ class OrderViewSet(viewsets.ViewSet):
         'message':'Your Orders has been placed.'
         }
         return Response(content, status = status.HTTP_201_CREATED)
+        
+    def create(self, request):
+        role = user_role(self.request.user)
+        if role == 'vendor':
+            vendor_agent = get_object_or_404(VendorAgent, user = self.request.user)
+            vendor = vendor_agent.vendor
+        else:   
+            content = {
+            'error':'API Access limited.', 
+            'description':'You cant access this API'
+            }
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+        
+        # PARSING REQUEST PARAMS ------------------------
+        try:            
+            pickup_datetime = request.data['pickup_datetime']
+            consumers = request.data['customers']
+            
+            vendor_address_id = request.data['vendor_address_id']
+            vendor_address = get_object_or_404(Address, pk = vendor_address_id)
+            
+            is_reverse_pickup = request.data['is_reverse_pickup']            
+            
+            order_items = request.data['order_items']
+            cod_amount = request.data.get('cod_amount')
+            notes = request.data.get('notes')
+            vendor_order_id = request.data.get('vendor_order_id')
+            total_cost = request.data.get('total_cost')
+
+        except Exception, e:
+            content = {
+            'error':'Incomplete parameters', 
+            'description':'pickup_datetime, customers, recurring, vendor_address_id, is_reverse_pickup, order_items { product_id, quantity }, cod_amount, notes'
+            }
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+        # ---------------------------------------------------
+        
+        # PICKUP AND DELIVERY DATES PARSING ------------------------
+        try:
+            pickup_datetime = parse_datetime(pickup_datetime)
+            if is_pickup_time_acceptable(pickup_datetime) is False:
+                content = {
+                'error':'Pickup time not acceptable', 
+                'description':'Pickup time can only be between 5.30AM to 10.00PM'
+                }
+                return Response(content, status = status.HTTP_400_BAD_REQUEST)
+            
+            delivery_timedelta = timedelta(hours = 4, minutes = 0)
+            delivery_datetime = pickup_datetime + delivery_timedelta
+        except Exception, e:
+            content = {'error':'Error parsing dates'}
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+        # ---------------------------------------------------
+        
+
+        # CREATING DATES OF DELIVERY ------------------------
+        delivery_dates = []
+        try:
+            recurring = request.data['recurring']
+            try:
+                start_date_string = recurring['start_date']
+                end_date_string = recurring['end_date']
+                by_day = recurring['by_day']  
+                
+                if start_date_string is not None:
+                    start_date = parse_datetime(start_date_string)
+                    end_date = parse_datetime(end_date_string)
+                    int_days = days_in_int(by_day)
+                
+                    rule_week = rrule(WEEKLY, dtstart=start_date, until=end_date, byweekday=int_days)
+                    delivery_dates = list(rule_week)
+
+                # ACCEPTING ADDITIONAL DATES PARAM IN RECURRING ----------------
+                additional_dates = recurring.get('additional_dates')
+                if additional_dates is not None:
+                    for additional_date in additional_dates:
+                        delivery_dates.append(parse_datetime(additional_date))
+                # ---------------------------------------------------
+                
+                if len(delivery_dates) <=0:
+                    content = {
+                    'error':'Incomplete dates', 
+                    'description':'Please check the dates'
+                    }
+                    return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
+            except:
+                content = {
+                'error':'Incomplete parameters', 
+                'description':'start_date, end_date, by_day should be mentioned for recurring events'
+                }
+                return Response(content, status = status.HTTP_400_BAD_REQUEST)
+        except:
+            delivery_dates.append(pickup_datetime)
+        # ---------------------------------------------------
+        
+        # CREATING NEW ORDER FOR EACH CUSTOMER -------------------------------
+        if len(consumers) == 0:
+            content = {
+            'status':'No customers. Please provide customer details [id, address_id]'
+            }
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)    
+
+        new_order_ids = []
+        for cons in consumers:
+            
+            consumer_id = cons['id']
+            consumer_address_id = cons['address_id']
+            
+            consumer = get_object_or_404(Consumer, pk = consumer_id)
+            consumer_address = get_object_or_404(Address, pk = consumer_address_id)
+            
+            if is_reverse_pickup:
+                pickup_adr = consumer_address
+                delivery_adr = vendor_address
+            else:
+                pickup_adr = vendor_address
+                delivery_adr = consumer_address
+                
+            try:
+                new_order = Order.objects.create(created_by_user = request.user,
+                    vendor = vendor, 
+                    consumer = consumer, 
+                    pickup_address = pickup_adr, 
+                    delivery_address = delivery_adr, 
+                    pickup_datetime = pickup_datetime, 
+                    delivery_datetime = delivery_datetime,
+                    is_reverse_pickup = is_reverse_pickup)
+            except Exception, e:
+                print e
+                content = {
+                'error':' Error placing new order'
+                }
+                return Response(content, status = status.HTTP_400_BAD_REQUEST)
+            # ---------------------------------------------------
+            
+            # ADDING OPTIONAL ATTRIBUTES TO NEW ORDER CREATED ------------------
+            if notes is not None:
+                new_order.notes = notes
+            
+            if cod_amount is not None and float(cod_amount) > 0:
+                new_order.is_cod = True
+                new_order.cod_amount = float(cod_amount)
+            
+            if vendor_order_id is not None:
+                new_order.vendor_order_id = vendor_order_id
+
+            if total_cost is not None:
+                new_order.total_cost = total_cost
+
+            for date in delivery_dates:
+                delivery_status = OrderDeliveryStatus.objects.create(date = date)
+                new_order.delivery_status.add(delivery_status)
+
+            if len(delivery_dates) > 1:
+                new_order.is_recurring = True
+
+            # ORDER ITEMS ----------------------------------------
+            try:
+                for item in order_items:
+                    product_id = item['product_id']
+                    quantity = item ['quantity']
+                    product = get_object_or_404(Product, pk = product_id)
+                    order_item = OrderItem.objects.create(product = product, quantity = quantity)
+                    new_order.order_items.add(order_item)
+            except Exception, e:
+                print 'product_id is incorrect'
+                pass
+            
+            new_order.save()
+            new_order_ids.append(new_order.id)
+        
+        # -------------------------------------------------------------       
+        
+        # FINAL RESPONSE ----------------------------------------------
+        if len(new_order_ids) > 0:
+            content = {
+            'status':'orders added',
+            'order_ids':new_order_ids
+            }
+            return Response(content, status = status.HTTP_201_CREATED)    
+        else:
+            content = {
+            'status':'There is some problem adding orders, please try again.'
+            }
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)    
+        # -------------------------------------------------------------
     
+
     @detail_route(methods=['post'])
     def place_order(self, request, pk): 
         role = user_role(self.request.user)
