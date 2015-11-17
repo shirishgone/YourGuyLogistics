@@ -64,7 +64,7 @@ def excel_download(request):
 	
 	# DATE FILTERING ---------------------------------------------------------------
 	delivery_status_queryset = delivery_status_queryset.filter(date__gte = start_date, date__lte = end_date).prefetch_related(
-		Prefetch('order_set', queryset = Order.objects.select_related('consumer__user') , to_attr='orders'))
+		Prefetch('order_set', queryset = Order.objects.select_related('consumer__user','vendor') , to_attr='orders'))
 	# ------------------------------------------------------------------------------
 	
 	if len(delivery_status_queryset) > 5000:
