@@ -130,3 +130,57 @@ class ConsumerViewSet(viewsets.ModelViewSet):
         else:
             content = {'error':'You dont have permissions to view all Consumers'}
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
+    @detail_route(methods=['post'])
+    def add_address(self, request, pk):
+        try:
+            full_address = request.data['full_address']
+            pin_code = request.data['pin_code']
+            landmark = request.data.get('landmark')
+        except:
+            content = {
+            'error':'Incomplete parameters', 
+            'description':'full_address, pin_code, landmark [optional]'
+            }
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
+        role = user_role(request.user)
+        if role == constants.VENDOR:
+            consumer = get_object_or_404(Consumer, pk = pk)
+            
+            # CREATE NEW ADDRESS OBJECT ------------------------------------------
+            new_address = Address.objects.create(full_address = full_address, pin_code = pin_code)
+            if landmark is not None:
+                new_address.landmark = landmark
+                new_address.save()
+            # --------------------------------------------------------
+            
+            consumer.addresses.add(new_address)
+            content = {'description': 'Address added successfully'}
+            return Response(content, status = status.HTTP_200_OK)
+        else:
+            content = {'description': 'You dont have permissions to add address.'}
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+    
+    @detail_route(methods=['post'])
+    def remove_address(self, request, pk):
+        try:
+            address_id = request.data['address_id']
+        except:
+            content = {
+            'error':'Incomplete parameters', 
+            'description':'address_id'
+            }
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+        
+        role = user_role(request.user)
+        if role == constants.VENDOR:
+            address = get_object_or_404(Address, pk = address_id)
+            consumer = get_object_or_404(Consumer, pk = pk)                        
+            consumer.addresses.remove(address)
+            
+            content = {'description': 'Address removed successfully'}
+            return Response(content, status = status.HTTP_200_OK)
+        else:
+            content = {'description': 'You dont have permissions to add address.'}
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
