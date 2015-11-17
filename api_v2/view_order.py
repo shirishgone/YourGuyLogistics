@@ -1130,7 +1130,6 @@ class OrderViewSet(viewsets.ViewSet):
         }
         return Response(content, status = status.HTTP_200_OK)
         
-
     @detail_route(methods=['post'])
     def picked_up(self, request, pk=None):
         order = get_object_or_404(Order, pk = pk)
@@ -1196,12 +1195,14 @@ class OrderViewSet(viewsets.ViewSet):
 
         # UPDATING THE DELIVERY STATUS OF THE PARTICULAR DAY -------------------------
         is_order_updated = False
+        is_order_picked_up = False
         if final_delivery_status is not None and can_update_pickup_status(final_delivery_status):
             if pickup_attempted is not None and pickup_attempted == True:
                 final_delivery_status.order_status = constants.ORDER_STATUS_PICKUP_ATTEMPTED
                 if delivery_remarks is not None:
                     final_delivery_status.cod_remarks = delivery_remarks
             else:
+                is_order_picked_up = True
                 final_delivery_status.order_status = constants.ORDER_STATUS_INTRANSIT
             
             final_delivery_status.pickedup_datetime = pickedup_datetime
@@ -1215,8 +1216,14 @@ class OrderViewSet(viewsets.ViewSet):
             }
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
         # ------------------------------------------------------------       
-        
+                
         if is_order_updated:
+            if is_order_picked_up is True and order.is_reverse_pickup is True:
+                # SEND A CONFIRMATION MESSAGE TO THE CUSTOMER
+                end_consumer_phone_number = order.consumer.user.username
+                message = 'Dear %s, we have picked your order behalf of %s - Team YourGuy' % (order.consumer.user.first_name, order.vendor.store_name)
+                send_sms(end_consumer_phone_number, message)
+
             content = {
             'description':'Order has been updated'
             }
