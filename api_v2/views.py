@@ -120,7 +120,7 @@ def daily_report(request):
         email_body = email_body + "\n\n Chill out!"
         email_body = email_body + "\n\n- YourGuy BOT"
 
-        send_email(['tech@yourguy.in'], email_subject, email_body)
+        send_email(constants.EMAIL_IDS_EVERYBODY, email_subject, email_body)
         return Response(status = status.HTTP_200_OK)
     
     else:
@@ -133,19 +133,33 @@ def daily_report(request):
         # -----------------------------------------------------------------------------------
     
         # ORDERS ACC TO ORDER_STATUS --------------------------------------------------------
-        orders_placed_count               = delivery_statuses_today.filter(order_status = constants.ORDER_STATUS_PLACED).count()
-        orders_queued_count               = delivery_statuses_today.filter(order_status = constants.ORDER_STATUS_QUEUED).count()
-        orders_intransit_count            = delivery_statuses_today.filter(order_status = constants.ORDER_STATUS_INTRANSIT).count()
-        orders_delivered_count            = delivery_statuses_today.filter(order_status = constants.ORDER_STATUS_DELIVERED).count()
-        orders_pickup_attempted_count     = delivery_statuses_today.filter(order_status = constants.ORDER_STATUS_PICKUP_ATTEMPTED).count()
-        orders_delivery_attempted_count   = delivery_statuses_today.filter(order_status = constants.ORDER_STATUS_DELIVERY_ATTEMPTED).count()
-        orders_rejected_count             = delivery_statuses_today.filter(order_status = constants.ORDER_STATUS_REJECTED).count()
-        orders_canceled_count             = delivery_statuses_today.filter(order_status = constants.ORDER_STATUS_CANCELLED).count()
-    
-        pending_orders_count = orders_queued_count + orders_placed_count + orders_intransit_count
-        pending_orders_percentage = "{0:.0f}%".format(float(pending_orders_count)/float(orders_total_count) * 100)
+        orders_placed_count                 = delivery_statuses_today.filter(order_status = constants.ORDER_STATUS_PLACED).count()
+        
+        orders_queued_count                 = delivery_statuses_today.filter(order_status = constants.ORDER_STATUS_QUEUED).count()
+        orders_queued_percentage            = "{0:.0f}%".format(float(orders_queued_count)/float(orders_total_count) * 100)
+        
+        orders_intransit_count              = delivery_statuses_today.filter(order_status = constants.ORDER_STATUS_INTRANSIT).count()
+        orders_intransit_percentage         = "{0:.0f}%".format(float(orders_intransit_count)/float(orders_total_count) * 100)
 
-        completed_orders_count = orders_delivered_count + orders_pickup_attempted_count + orders_delivery_attempted_count + orders_rejected_count + orders_canceled_count
+        orders_delivered_count              = delivery_statuses_today.filter(order_status = constants.ORDER_STATUS_DELIVERED).count()
+        orders_delivered_percentage         = "{0:.0f}%".format(float(orders_delivered_count)/float(orders_total_count) * 100)
+
+        orders_pickup_attempted_count       = delivery_statuses_today.filter(order_status = constants.ORDER_STATUS_PICKUP_ATTEMPTED).count()
+        orders_pickup_attempted_percentage  = "{0:.0f}%".format(float(orders_pickup_attempted_count)/float(orders_total_count) * 100)
+
+        orders_delivery_attempted_count     = delivery_statuses_today.filter(order_status = constants.ORDER_STATUS_DELIVERY_ATTEMPTED).count()
+        orders_delivert_attempted_percentage= "{0:.0f}%".format(float(orders_delivery_attempted_count)/float(orders_total_count) * 100)
+
+        orders_rejected_count               = delivery_statuses_today.filter(order_status = constants.ORDER_STATUS_REJECTED).count()
+        orders_rejected_percentage          = "{0:.0f}%".format(float(orders_rejected_count)/float(orders_total_count) * 100)
+
+        orders_canceled_count               = delivery_statuses_today.filter(order_status = constants.ORDER_STATUS_CANCELLED).count()
+        orders_canceled_percentage          = "{0:.0f}%".format(float(orders_canceled_count)/float(orders_total_count) * 100)
+    
+        pending_orders_count        = orders_queued_count + orders_placed_count + orders_intransit_count
+        pending_orders_percentage   = "{0:.0f}%".format(float(pending_orders_count)/float(orders_total_count) * 100)
+
+        completed_orders_count      = orders_delivered_count + orders_pickup_attempted_count + orders_delivery_attempted_count + orders_rejected_count + orders_canceled_count
         completed_orders_percentage = "{0:.0f}%".format(float(completed_orders_count)/float(orders_total_count) * 100)    
         # -----------------------------------------------------------------------------------
 
@@ -190,14 +204,13 @@ def daily_report(request):
         email_body = email_body + "\n\nSTATUS WISE BIFURGATION ------------"
         email_body = email_body + "\nOrders assigned    = %s [%s percent]" % (orders_assigned_count, orders_assigned_percentage)    
         email_body = email_body + "\nOrders unassigned  = %s [%s percent]" % (orders_unassigned_count, orders_unassigned_percentage)
-        email_body = email_body + "\nQueued         = %s" % orders_queued_count
-        email_body = email_body + "\nOrder placed   = %s" % orders_placed_count
-        email_body = email_body + "\nInTransit      = %s" % orders_intransit_count
-        email_body = email_body + "\ndelivered      = %s" % orders_delivered_count
-        email_body = email_body + "\nPickup Attempted   = %s" % orders_pickup_attempted_count
-        email_body = email_body + "\nDelivery Attempted = %s" % orders_delivery_attempted_count
-        email_body = email_body + "\nRejected       = %s" % orders_rejected_count
-        email_body = email_body + "\nCanceled       = %s" % orders_canceled_count
+        email_body = email_body + "\nQueued         = %s [%s percent]" % (orders_queued_count, orders_queued_percentage)
+        email_body = email_body + "\nInTransit      = %s [%s percent]" % (orders_intransit_count, orders_intransit_percentage)
+        email_body = email_body + "\ndelivered      = %s [%s percent]" % (orders_delivered_count, orders_delivered_percentage)
+        email_body = email_body + "\nPickup Attempted   = %s [%s percent]" % (orders_pickup_attempted_count, orders_pickup_attempted_percentage)
+        email_body = email_body + "\nDelivery Attempted = %s [%s percent]" % (orders_delivery_attempted_count, orders_delivered_percentage)
+        email_body = email_body + "\nRejected       = %s [%s percent]" % (orders_rejected_count, orders_rejected_percentage)
+        email_body = email_body + "\nCanceled       = %s [%s percent]" % (orders_canceled_count, orders_canceled_percentage)
         email_body = email_body + "\n------------------------------------"
     
         email_body = email_body + "\n\nDELIVERY BOY ATTENDANCE -------"
@@ -215,7 +228,7 @@ def daily_report(request):
         email_body = email_body + cod_with_dg_string
         email_body = email_body + "\n-----------------------------------"    
         email_body = email_body + "\n\n- YourGuy BOT"
-    
+
         send_email(constants.EMAIL_IDS_EVERYBODY, email_subject, email_body)
         # ------------------------------------------------------------------------------------------------  
     
