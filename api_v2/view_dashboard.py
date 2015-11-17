@@ -77,7 +77,7 @@ def excel_download(request):
 		try:
 			order = delivery_status.orders.pop()
 			excel_order = {
-			'date':delivery_status.date,
+			'date':delivery_status.date.strftime('%d-%m-%Y'),
 			'order_id':order.id,
 			'customer_name':order.consumer.user.first_name,
 			'customer_phone_number':order.consumer.user.username,
@@ -87,6 +87,7 @@ def excel_download(request):
 			'status':delivery_status.order_status
 			}
 			if role == constants.OPERATIONS:
+				excel_order['vendor_name'] = order.vendor.store_name
 				if delivery_status.delivery_guy is not None:
 					excel_order['delivery_guy'] = delivery_status.delivery_guy.user.first_name
 				else: 	
