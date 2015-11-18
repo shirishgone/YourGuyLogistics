@@ -26,7 +26,7 @@ def create_address(full_address, pin_code, landmark):
         new_address.save()
     return new_address    
 
-def create_consumer(username, phone_number, full_address, pin_code, landmark):
+def create_consumer(username, phone_number, address):
 
     # FETCH USER WITH PHONE NUMBER -------------------------------
     if is_userexists(phone_number) is False:
@@ -37,8 +37,7 @@ def create_consumer(username, phone_number, full_address, pin_code, landmark):
 
     if is_consumerexists(user) is False:
         consumer = Consumer.objects.create(user = user)
-        new_address = create_address(full_address, pin_code, landmark)
-        consumer.addresses.add(new_address)
+        consumer.addresses.add(address)
         consumer.save()
     else:
         consumer = get_object_or_404(Consumer, user = user)
@@ -176,21 +175,23 @@ class ConsumerViewSet(viewsets.ModelViewSet):
                 return Response(content, status = status.HTTP_400_BAD_REQUEST)
             # -------------------------------------------------------------
             
-            consumer = create_consumer(name, phone_number, full_address, pin_code, landmark)
+            new_address = create_address(full_address, pin_code, landmark)
+            new_consumer = create_consumer(name, phone_number, new_address)
 
             # SETTING USER GROUP -------------------------------------------
             group = get_object_or_404(Group, name=constants.CONSUMER)
-            group.user_set.add(consumer.user)
+            group.user_set.add(new_consumer.user)
             # --------------------------------------------------------------
             
             # SETTING ASSOCIATED VENDOR ------------------------------------
             vendor_agent = VendorAgent.objects.get(user = request.user)
-            consumer.associated_vendor.add(vendor_agent.vendor)
-            consumer.save()
+            new_consumer.associated_vendor.add(vendor_agent.vendor)
+            new_consumer.save()
             # ---------------------------------------------------------------
 
             content = {
-            'consumer_id': consumer.id
+            'consumer_id': new_consumer.id,
+            'new_address_id':new_address.id
             }
             return Response(content, status = status.HTTP_200_OK)
         else:
