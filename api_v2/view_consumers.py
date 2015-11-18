@@ -10,7 +10,7 @@ from rest_framework.decorators import detail_route, list_route
 from rest_framework.response import Response
 
 from yourguy.models import Consumer, Vendor, VendorAgent, Address, Area
-from api.views import user_role
+from api.views import user_role, is_userexists, is_consumerexists
 
 from api_v2.views import paginate
 
@@ -18,7 +18,34 @@ import datetime
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 import constants
 from django.db.models import Q
-        
+    
+def create_address(full_address, pin_code, landmark):
+    new_address = Address.objects.create(full_address = full_address, pin_code = pin_code)
+    if landmark is not None:
+        new_address.landmark = landmark
+        new_address.save()
+    return new_address    
+
+def create_consumer(username, phone_number, full_address, pin_code, landmark):
+
+    # FETCH USER WITH PHONE NUMBER -------------------------------
+    if is_userexists(phone_number) is False:
+        user = User.objects.create(username = phone_number, first_name = username, password = '')
+    else:
+        user = get_object_or_404(User, username = phone_number)
+    # -------------------------------------------------------------
+
+    if is_consumerexists(user) is False:
+        consumer = Consumer.objects.create(user = user)
+        new_address = create_address(full_address, pin_code, landmark)
+        consumer.addresses.add(new_address)
+        consumer.save()
+    else:
+        consumer = get_object_or_404(Consumer, user = user)
+         
+    return consumer
+
+
 def consumer_list_dict(consumer):
     consumer_dict = {
             'id' : consumer.id,
@@ -129,6 +156,45 @@ class ConsumerViewSet(viewsets.ModelViewSet):
             return Response(response_content, status = status.HTTP_200_OK)
         else:
             content = {'error':'You dont have permissions to view all Consumers'}
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+    
+    def create(self, request):
+        role = user_role(request.user)
+        if (role == constants.VENDOR):
+            # REQUEST PARAM CHECK --------------------------------------------
+            try:
+                phone_number = request.data['phone_number']
+                name = request.data['name']
+                full_address = request.data['full_address']
+                pin_code = request.data['pin_code']
+                landmark = request.data.get('landmark')
+            except Exception, e:
+                content = {
+                        'error':'Incomplete parameters',
+                        'description':'Mandatory Fields: phone_number, name, full_address, pin_code, landmark [Optional]'
+                    }   
+                return Response(content, status = status.HTTP_400_BAD_REQUEST)
+            # -------------------------------------------------------------
+            
+            consumer = create_consumer(name, phone_number, full_address, pin_code, landmark)
+
+            # SETTING USER GROUP -------------------------------------------
+            group = get_object_or_404(Group, name=constants.CONSUMER)
+            group.user_set.add(consumer.user)
+            # --------------------------------------------------------------
+            
+            # SETTING ASSOCIATED VENDOR ------------------------------------
+            vendor_agent = VendorAgent.objects.get(user = request.user)
+            consumer.associated_vendor.add(vendor_agent.vendor)
+            consumer.save()
+            # ---------------------------------------------------------------
+
+            content = {
+            'consumer_id': consumer.id
+            }
+            return Response(content, status = status.HTTP_200_OK)
+        else:
+            content = {'error':'No permissions to create consumer'}   
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
     @detail_route(methods=['post'])
