@@ -223,7 +223,9 @@ class ConsumerViewSet(viewsets.ModelViewSet):
             # --------------------------------------------------------
             
             consumer.addresses.add(new_address)
-            content = {'description': 'Address added successfully'}
+            content = {
+            'address_id': new_address.id
+            }
             return Response(content, status = status.HTTP_200_OK)
         else:
             content = {'description': 'You dont have permissions to add address.'}
