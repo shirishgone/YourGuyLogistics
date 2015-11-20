@@ -3,6 +3,9 @@ from django.contrib import admin
 # Register your models here.
 from models import Address, Area, OrderItem, Order, OrderDeliveryStatus, DeliveryGuy, DGAttendance, Employee, Industry, Vendor, VendorAgent, VendorAccount, Consumer, Group, UserGroup, Suggestion, Message, Account, Product, ProductCategory
 from models import ProofOfDelivery, Picture
+from models import TimeSlot
+
+admin.site.register(TimeSlot)
 
 admin.site.register(Address)
 admin.site.register(Area)
