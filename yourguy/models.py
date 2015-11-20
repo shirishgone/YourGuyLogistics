@@ -11,6 +11,13 @@ from rest_framework.authtoken.models import Token
 import datetime
 from recurrence.fields import RecurrenceField
 
+class TimeSlot(models.Model):
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+
+    def __unicode__(self):
+        return u"%s - %s" % (self.start_time, self.end_time)
+
 class Area(models.Model):
 
     # Mandatory Fields
@@ -250,6 +257,7 @@ class Product(models.Model):
     description = models.CharField(max_length = 500, blank = True, null = True)
     cost = models.FloatField(default = 0.0)
     vendor = models.ForeignKey(Vendor, blank = True, null = True)
+    timeslots = models.ManyToManyField(TimeSlot)
 
     # Optional Fields
     category = models.CharField(max_length = 50, blank = True, null = True)
@@ -272,6 +280,7 @@ class OrderItem(models.Model):
     product = models.ForeignKey(Product, blank = True, null = True)
     quantity = models.FloatField(default = 1.0)
     cost = models.FloatField(default = 0.0)
+
     def __unicode__(self):
         return u"%s" % self.id
         
@@ -288,6 +297,7 @@ class OrderDeliveryStatus(models.Model):
     date = models.DateTimeField()
     pickedup_datetime = models.DateTimeField(blank = True, null = True)
     completed_datetime = models.DateTimeField(blank = True, null = True)
+    pickup_guy = models.ForeignKey(DeliveryGuy, related_name = 'pickup_dg', blank = True, null = True)
     delivery_guy = models.ForeignKey(DeliveryGuy, related_name = 'assigned_dg', blank = True, null = True)
     rejection_reason = models.CharField(max_length = 500, blank = True)
     is_cod_collected = models.BooleanField(default = False)
