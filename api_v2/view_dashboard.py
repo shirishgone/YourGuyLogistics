@@ -161,7 +161,7 @@ def report(request):
 
 	# ORDER STATUS FILTERING -------------------------------------------------------
 	total_orders = delivery_status_queryset.count()
-	total_orders_delivered = delivery_status_queryset.filter(Q(order_status = 'DELIVERED') | Q(order_status = 'DELIVERYATTEMPTED') | Q(order_status = 'PICKUPATTEMPTED')).count()
+	total_orders_executed = delivery_status_queryset.filter(Q(order_status = 'DELIVERED') | Q(order_status = 'DELIVERYATTEMPTED') | Q(order_status = 'PICKUPATTEMPTED')).count()
 	# ------------------------------------------------------------------------------
 
 	# FOR ORDER COUNT FOR INDIVIDUAL DATES -----------------------------------------
@@ -194,7 +194,7 @@ def report(request):
 	
 	content = {
 	'total_orders':total_orders,
-	'total_orders_delivered':total_orders_delivered,
+	'total_orders_executed':total_orders_executed,
 	'total_cod':total_cod,
 	'cod_collected':cod_collected,
 	'orders':orders_graph 
