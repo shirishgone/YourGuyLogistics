@@ -18,7 +18,9 @@ from api_v2.views import paginate
 
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 import constants
-from datetime import datetime, timedelta, time
+from datetime import datetime, timedelta
+import time
+
 import math
 import pytz
 from django.db.models import Q
@@ -176,6 +178,8 @@ def update_daily_status(order, date):
             res_order['deliveryguy_name'] = None
             res_order['deliveryguy_phonenumber'] = None
         
+
+
         order_items_array = []
         for order_item in order.order_items.all():
             order_item_obj = {}
@@ -587,16 +591,19 @@ class OrderViewSet(viewsets.ViewSet):
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
         
         # PARSING REQUEST PARAMS ------------------------
-        try:            
-            pickup_datetime = request.data['pickup_datetime']
-            consumers = request.data['customers']
+        try:
+            order_date = request.data['order_date']
+            timeslots = request.data['timeslots']
+
+            product_id = request.data['product_id']
+            product = get_object_or_404(Product, pk = product_id)
+            
+            consumers = request.data['consumers']            
             
             vendor_address_id = request.data['vendor_address_id']
             vendor_address = get_object_or_404(Address, pk = vendor_address_id)
-            
-            is_reverse_pickup = request.data['is_reverse_pickup']            
-            
-            order_items = request.data['order_items']
+            is_reverse_pickup = request.data['is_reverse_pickup']
+                        
             cod_amount = request.data.get('cod_amount')
             notes = request.data.get('notes')
             vendor_order_id = request.data.get('vendor_order_id')
@@ -605,28 +612,23 @@ class OrderViewSet(viewsets.ViewSet):
         except Exception, e:
             content = {
             'error':'Incomplete parameters', 
-            'description':'pickup_datetime, customers, recurring, vendor_address_id, is_reverse_pickup, order_items { product_id, quantity }, cod_amount, notes'
+            'description':'order_date, timeslots, customers, product_id, recurring, vendor_address_id, is_reverse_pickup. Optional: cod_amount, notes, total_cost, vendor_order_id'
             }
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
         # ---------------------------------------------------
         
-        # PICKUP AND DELIVERY DATES PARSING ------------------------
+        # TIMESLOT PARSING -----------------------------------
+        order_datetime = parse_datetime(order_date)
         try:
-            pickup_datetime = parse_datetime(pickup_datetime)
-            if is_pickup_time_acceptable(pickup_datetime) is False:
-                content = {
-                'error':'Pickup time not acceptable', 
-                'description':'Pickup time can only be between 5.30AM to 10.00PM'
-                }
-                return Response(content, status = status.HTTP_400_BAD_REQUEST)
-            
-            delivery_timedelta = timedelta(hours = 4, minutes = 0)
-            delivery_datetime = pickup_datetime + delivery_timedelta
+            timeslot_start = timeslots['timeslot_start']
+            timeslot_end = timeslots['timeslot_end']
         except Exception, e:
-            content = {'error':'Error parsing dates'}
+            content = {
+            'error':'Incomplete parameters', 
+            'description':'timeslot_start, timeslot_start are mandatory parameters'
+            }
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
         # ---------------------------------------------------
-        
 
         # CREATING DATES OF DELIVERY ------------------------
         delivery_dates = []
@@ -666,15 +668,25 @@ class OrderViewSet(viewsets.ViewSet):
                 }
                 return Response(content, status = status.HTTP_400_BAD_REQUEST)
         except:
-            delivery_dates.append(pickup_datetime)
-        # ---------------------------------------------------
+            delivery_dates.append(order_datetime)
+        # --------------------------------------------------------------
         
-        # CREATING NEW ORDER FOR EACH CUSTOMER -------------------------------
+        # CREATING NEW ORDER FOR EACH CUSTOMER -------------------------
         if len(consumers) == 0:
             content = {
             'status':'No customers. Please provide customer details [id, address_id]'
             }
             return Response(content, status = status.HTTP_400_BAD_REQUEST)    
+        # --------------------------------------------------------------
+        
+        # CREATING NEW ORDER FOR EACH CUSTOMER -------------------------
+        time_obj = time.strptime(timeslot_start,"%H:%M:%S")
+        pickup_timedelta = timedelta(hours = time_obj.tm_hour, minutes = time_obj.tm_min)
+        pickup_datetime = order_datetime + pickup_timedelta
+
+        delivery_timedelta = timedelta(hours = 4, minutes = 0)
+        delivery_datetime = pickup_datetime + delivery_timedelta
+        # --------------------------------------------------------------
 
         new_order_ids = []
         for cons in consumers:
@@ -691,7 +703,7 @@ class OrderViewSet(viewsets.ViewSet):
             else:
                 pickup_adr = vendor_address
                 delivery_adr = consumer_address
-                
+            
             try:
                 new_order = Order.objects.create(created_by_user = request.user,
                     vendor = vendor, 
@@ -731,20 +743,12 @@ class OrderViewSet(viewsets.ViewSet):
                 new_order.is_recurring = True
 
             # ORDER ITEMS ----------------------------------------
-            try:
-                for item in order_items:
-                    product_id = item['product_id']
-                    quantity = item ['quantity']
-                    product = get_object_or_404(Product, pk = product_id)
-                    order_item = OrderItem.objects.create(product = product, quantity = quantity)
-                    new_order.order_items.add(order_item)
-            except Exception, e:
-                print 'product_id is incorrect'
-                pass
+            order_item = OrderItem.objects.create(product = product, quantity = 1)
+            new_order.order_items.add(order_item)            
+            # -------------------------------------------------------------           
             
             new_order.save()
             new_order_ids.append(new_order.id)
-        
         # -------------------------------------------------------------       
         
         # FINAL RESPONSE ----------------------------------------------
@@ -1384,3 +1388,101 @@ class OrderViewSet(viewsets.ViewSet):
             }
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
         # -----------------------------------------------------------------------
+
+    @detail_route(methods=['post'])
+    def assign_order(self, request, pk = None):
+        # INPUT PARAM CHECK ---------------------------------------------
+        try:
+            dg_id = request.data['dg_id']
+            order_ids = request.data['order_ids']    
+            date_string = request.data['date']
+            assignment_type = request.data['assignment_type']
+        except Exception, e:
+            content = {
+            'error':'dg_id, order_ids, date, assignment_type are Mandatory'
+            }    
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+        # ---------------------------------------------------------------
+       
+        # MAX ORDERS PER DG CHECK -------------------------------------
+        order_count = len(order_ids)
+        if order_count > 30:
+            content = {
+            'error':'Cant assign more than 30 orders at a time.'
+            }
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+        # ---------------------------------------------------------------
+
+        # ASSIGNMENT TYPE CHECK -------------------------------------
+        if assignment_type == 'pickup' or assignment_type == 'delivery':
+            pass
+        else:
+            content = {
+            'error':'assignment_type can only be either pickup or delivery'
+            }    
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+        # ---------------------------------------------------------------
+       
+        date = parse_datetime(date_string)
+        dg = get_object_or_404(DeliveryGuy, id = dg_id)
+        for order_id in order_ids:
+            order = get_object_or_404(Order, id = order_id)
+
+            # PICK THE APPROPRIATE DELIVERY STATUS OBJECT ---------------
+            final_delivery_status = None
+            if is_recurring_order(order):
+                delivery_statuses = order.delivery_status.all()
+                for delivery_status in delivery_statuses:
+                    if delivery_status.date.date() == order_date.date():
+                        final_delivery_status = delivery_status
+            else:
+                final_delivery_status = order.delivery_status.all().latest('date')
+            # -------------------------------------------------------------
+
+            # Final Assignment -------------------------------------------
+            if final_delivery_status is not None:
+                if assignment_type == 'pickup':
+                    final_delivery_status.pickup_guy = dg
+                else:
+                    final_delivery_status.delivery_guy = dg
+                final_delivery_status.save()
+            # -------------------------------------------------------------
+                                      
+
+        # SEND SMS TO DG ----------------------------------------
+        try:
+            pickup_date_string = date.strftime("%b%d")
+            ist_date_time = ist_datetime(order.pickup_datetime)
+            pickup_time_string = ist_date_time.time().strftime("%I:%M%p")
+            pickup_total_string = "%s,%s" % (pickup_date_string, pickup_time_string)
+            message = 'New Order:{},Pickup:{},Client:{},Cust:{},{},{},COD:{}'.format(order.id, 
+                pickup_total_string,
+                order.vendor.store_name, 
+                order.consumer.user.first_name,
+                order.consumer.user.username,
+                order.delivery_address,
+                order.cod_amount)
+            send_sms(dg.user.username, message)
+        except Exception, e:
+            print 'Order assigned to DG error.'
+            pass
+        # -------------------------------------------------------------
+       
+        # SEND PUSH NOTIFICATION TO DELIVERYGUY
+        try:
+            data = { 
+            'message':'A new order has been assigned to you.', 
+            'type': 'order_assigned', 
+            'data':{
+            'order_id': order_ids
+            }
+            }
+            send_push(dg.device_token, data)
+        except Exception, e:
+            print 'push notification not sent in order assignment'
+            pass
+       
+        content = {
+        'description': 'Order assigned'
+        }
+        return Response(content, status = status.HTTP_200_OK)          
