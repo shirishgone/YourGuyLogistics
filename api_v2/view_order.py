@@ -1388,6 +1388,38 @@ class OrderViewSet(viewsets.ViewSet):
             }
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
         # -----------------------------------------------------------------------
+    
+    @detail_route(methods=['post'])    
+    def delivery_status_id(self, request, pk):
+
+        # INPUT PARAM CHECK ---------------------------------------------
+        try:
+            date_string = request.data['order_date']
+            order_date = parse_datetime(date_string)
+        except Exception, e:
+            content = {
+            'error':'order_date is Mandatory'
+            }    
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+        # ---------------------------------------------------------------
+        
+        order = get_object_or_404(Order, id = pk)
+        
+        # PICK THE APPROPRIATE DELIVERY STATUS OBJECT ---------------
+        final_delivery_status = None
+        if is_recurring_order(order):
+            delivery_statuses = order.delivery_status.all()
+            for delivery_status in delivery_statuses:
+                if delivery_status.date.date() == order_date.date():
+                    final_delivery_status = delivery_status
+        else:
+            final_delivery_status = order.delivery_status.all().latest('date')
+        # -------------------------------------------------------------
+
+        content = {
+        'delivery_status_id': final_delivery_status.id
+        }
+        return Response(content, status = status.HTTP_200_OK)          
 
     @detail_route(methods=['post'])
     def assign_order(self, request, pk = None):
