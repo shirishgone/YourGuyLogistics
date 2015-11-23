@@ -72,12 +72,14 @@ def excel_download(request):
 		return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
 	# CONSTRUCTING RESPONSE ---------------------------------------------------------------
+	ist_timedelta = timedelta(hours=5, minutes=30)
 	excel_order_details = []
 	for delivery_status in delivery_status_queryset:
 		try:
+			date = delivery_status.date + ist_timedelta
 			order = delivery_status.orders.pop()
 			excel_order = {
-			'date':delivery_status.date.strftime('%d-%m-%Y'),
+			'date':date.strftime('%d-%m-%Y'),
 			'order_id':order.id,
 			'customer_name':order.consumer.user.first_name,
 			'customer_phone_number':order.consumer.user.username,
@@ -165,10 +167,11 @@ def report(request):
 	# ------------------------------------------------------------------------------
 
 	# FOR ORDER COUNT FOR INDIVIDUAL DATES -----------------------------------------
+	fullday_timedelta = timedelta(hours=23, minutes=59)
 	orders_graph = []
 	for date in alldates:
-		day_start = ist_day_start(date)
-		day_end = ist_day_end(date)
+		day_start = date
+		day_end = day_start + fullday_timedelta
 		delivery_status_per_date = delivery_status_queryset.filter(date__gte = day_start, date__lte = day_end)
 		
 		total_orders_per_day = delivery_status_per_date.count()
