@@ -11,6 +11,14 @@ from api.views import user_role, IsAuthenticatedOrWriteOnly, send_email, is_user
 
 import constants
 
+def create_address(full_address, pin_code, landmark):
+    new_address = Address.objects.create(full_address = full_address, pin_code = pin_code)
+    if landmark is not None:
+        new_address.landmark = landmark
+        new_address.save()
+    return new_address
+
+
 class VendorViewSet(viewsets.ModelViewSet):
     """
     Vendor viewset that provides the standard actions 
@@ -21,11 +29,51 @@ class VendorViewSet(viewsets.ModelViewSet):
     serializer_class = VendorSerializer
 
     @detail_route(methods=['post'])
+    def request_vendor_account(self, request, pk = None):
+        # INPUT PARAMETER CHECK ----------------------------------------------------------
+        try:
+            store_name = request.data['store_name']
+            phone_number = request.data['phone_number']
+            email = request.data['email']
+
+            full_address = request.data['full_address']
+            pin_code = request.data['pin_code']
+            landmark = request.data.get('landmark')
+        except:
+            content = {'error':'Incomplete parameters', 'description':'store_name, phone_number, email, full_address, pin_code, landmark[optional]'}
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+        # ----------------------------------------------------------------------------------
+        
+        # CHECK IF THE VENDOR HAS ALREADY REQUESTED FOR AN ACCOUNT ------------------------
+        existing_vendors = Vendor.objects.filter(phone_number=phone_number)
+        if len(existing_vendors) > 0:
+            content = {'error':'Already exists', 'description':'Vendor with similar details already exists'}
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+        # ----------------------------------------------------------------------------------
+
+        # CREATING NEW VENDOR --------------------------------------------------------------
+        new_vendor = Vendor.objects.create(store_name = store_name, email = email, phone_number = phone_number)
+        new_address = create_address(full_address, pin_code, landmark)
+        new_vendor.addresses.add(new_address)
+        new_vendor.save()
+        # ----------------------------------------------------------------------------------
+        
+        # SEND EMAIL TO SALES ---------------------------------------------------------------
+        approval_link = 'http://app.yourguy.in/#/home/vendor/{}'.format(new_address.id)
+        subject = 'YourGuy: New Vendor Account Request'
+        body = constants.VENDOR_ACCOUNT_REQUESTED_MESSAGE_SALES.format(store_name, phone_number, email, full_address, pin_code, landmark, approval_link)
+        send_email(constants.SALES_EMAIL, subject, body)
+        # ----------------------------------------------------------------------------------
+
+        content = {'status':'Thank you! We have received your request. Our sales team will contact you soon.'}
+        return Response(content, status = status.HTTP_201_CREATED)
+
+    @detail_route(methods=['post'])
     def add_address(self, request, pk):
         try:
             full_address = request.data['full_address']
             pin_code = request.data['pin_code']
-            landmark = request.data.get('street')
+            landmark = request.data.get('landmark')
         except:
             content = {'error':'Incomplete parameters', 'description':'full_address, pin_code, landmark'}
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
@@ -34,12 +82,8 @@ class VendorViewSet(viewsets.ModelViewSet):
         if role == constants.VENDOR:
             vendor_agent = get_object_or_404(VendorAgent, user = request.user)
             vendor = vendor_agent.vendor
-
-            new_address = Address.objects.create(full_address = full_address, pin_code = pin_code)
-            if landmark is not None:
-                new_address.landmark = landmark
-                new_address.save()
-
+            
+            new_address = create_address(full_address, pin_code, landmark)
             vendor.addresses.add(new_address)
 
             content = {'description': 'Address added successfully'}
