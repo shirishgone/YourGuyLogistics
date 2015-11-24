@@ -263,7 +263,7 @@ class Product(models.Model):
     category = models.CharField(max_length = 50, blank = True, null = True)
 
     def __unicode__(self):
-        return u"%s" % self.name
+        return u"%s - %s" % (self.name, self.vendor)
 
 class ProductCategory(models.Model):
 
