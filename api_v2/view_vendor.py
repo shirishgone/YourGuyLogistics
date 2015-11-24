@@ -4,12 +4,46 @@ from rest_framework import status, authentication
 from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework.decorators import detail_route, list_route
+from django.db.models.functions import Lower
 
 from yourguy.models import Vendor, Address, VendorAgent, Area, User, Industry
 from api.serializers import VendorSerializer
 from api.views import user_role, IsAuthenticatedOrWriteOnly, send_email, is_userexists, send_sms, create_token
 
 import constants
+
+def vendor_detail_dict(vendor):
+    vendor_dict = {
+            'id' : vendor.id,
+            'name':vendor.store_name,
+            'email':vendor.email,
+            'phone_number':vendor.phone_number,
+            'alternate_phone_number':vendor.alternate_phone_number,
+            'is_retail':vendor.is_retail,
+            'website_url':vendor.website_url,
+            'notes':vendor.notes,
+            "addresses":[]
+            }
+    
+    all_addresses = vendor.addresses.all()
+    for address in all_addresses:
+        adr_dict = {
+        "id":address.id,
+        "full_address":address.full_address,
+        "pin_code":address.pin_code
+        }   
+        if address.landmark is not None:
+            adr_dict['landmark'] = address.landmark
+        vendor_dict['addresses'].append(adr_dict)
+
+    return vendor_dict
+
+def vendor_list_dict(vendor):
+    vendor_dict = {
+            'id' : vendor.id,
+            'name':vendor.store_name,
+            }
+    return vendor_dict
 
 def create_address(full_address, pin_code, landmark):
     new_address = Address.objects.create(full_address = full_address, pin_code = pin_code)
@@ -27,6 +61,60 @@ class VendorViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticatedOrWriteOnly]
     queryset = Vendor.objects.all()
     serializer_class = VendorSerializer
+
+    def destroy(self, request):
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def retrieve(self, request, pk = None):        
+        vendor = get_object_or_404(Vendor, id = pk)
+        role = user_role(request.user)
+        can_respond = False
+        
+        if role == 'vendor':
+            vendor_agent = get_object_or_404(VendorAgent, user = request.user)
+            if vendor.id == vendor_agent.vendor.id:
+                can_respond = True
+            else:
+                can_respond = False
+        else:
+            can_respond = True
+            
+        if can_respond:
+            vendor_detail = vendor_detail_dict(vendor)
+            response_content = { 
+            "data": vendor_detail
+            }
+            return Response(response_content, status = status.HTTP_200_OK)
+        else:
+            content = {
+            'error':'You dont have permissions to view this vendor details.'
+            }
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
+    def list(self, request):
+        role = user_role(request.user)
+        if (role == constants.SALES) or (role == constants.OPERATIONS):
+            all_vendors = Vendor.objects.filter(verified=True).order_by(Lower('store_name'))
+
+            all_vendors_array = []
+            for vendor in all_vendors:
+                vendor_dict = vendor_list_dict(vendor)
+                all_vendors_array.append(vendor_dict)
+            
+            response_content = { 
+            "data": all_vendors_array
+            }
+            return Response(response_content, status = status.HTTP_200_OK)
+        elif role == constants.VENDOR:
+            vendor_agent = get_object_or_404(VendorAgent, user = request.user)
+            vendor_detail = vendor_detail_dict(vendor_agent.vendor)
+            response_content = { 
+            "data": vendor_detail
+            }
+            return Response(response_content, status = status.HTTP_200_OK)
+        else:
+            content = {'error':'You dont have permissions to view all vendors'}
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
     @detail_route(methods=['post'])
     def request_vendor_account(self, request, pk = None):

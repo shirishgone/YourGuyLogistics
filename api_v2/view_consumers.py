@@ -83,6 +83,9 @@ class ConsumerViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     queryset = Consumer.objects.all()
 
+    def destroy(self, request):
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
     def retrieve(self, request, pk = None):        
         consumer = get_object_or_404(Consumer, id = pk)
         role = user_role(request.user)
