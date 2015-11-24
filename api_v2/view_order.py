@@ -681,10 +681,9 @@ class OrderViewSet(viewsets.ViewSet):
         
         # CREATING NEW ORDER FOR EACH CUSTOMER -------------------------
         time_obj = time.strptime(timeslot_start,"%H:%M:%S")
-        pickup_timedelta = timedelta(hours = time_obj.tm_hour, minutes = time_obj.tm_min)
-        pickup_datetime = order_datetime + pickup_timedelta
-
-        delivery_timedelta = timedelta(hours = 4, minutes = 0)
+        pickup_datetime = order_datetime.replace(hour = time_obj.tm_hour, minute = time_obj.tm_min)
+        
+        delivery_timedelta = timedelta(hours = 4, minutes = 0) # DELIVERY IS 4 HOURS FROM PICKUP
         delivery_datetime = pickup_datetime + delivery_timedelta
         # --------------------------------------------------------------
 
