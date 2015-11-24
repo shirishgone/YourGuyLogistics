@@ -22,6 +22,7 @@ def vendor_detail_dict(vendor):
             'is_retail':vendor.is_retail,
             'website_url':vendor.website_url,
             'notes':vendor.notes,
+            'is_verified':vendor.verified,
             "addresses":[]
             }
     
