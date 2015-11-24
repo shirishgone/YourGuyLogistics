@@ -12,6 +12,23 @@ from api.serializers import ProductSerializer
 from api.views import user_role
 import constants
 
+def product_list_dict(product):
+    product_dict = {
+            'id' : product.id,
+            'name':product.name,
+            'description':product.description,
+            'cost':product.cost,
+            }
+    product_dict['timeslots'] = []
+    
+    for timeslot in product.timeslots.all():
+        timeslot_dict = {
+        'timeslot_start':timeslot.start_time,
+        'timeslot_end':timeslot.end_time
+        }
+        product_dict['timeslots'].append(timeslot_dict)
+        
+    return product_dict
 
 class ProductViewSet(viewsets.ModelViewSet):
     """
@@ -27,9 +44,17 @@ class ProductViewSet(viewsets.ModelViewSet):
         role = user_role(request.user)
         if role == constants.VENDOR:
             vendor_agent = VendorAgent.objects.get(user = self.request.user)
-            products_of_vendor = Product.objects.filter(vendor = vendor_agent.vendor).order_by(Lower('name'))
-            serializer = ProductSerializer(products_of_vendor, many=True)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            products_of_vendor = Product.objects.filter(vendor = vendor_agent.vendor).order_by(Lower('name')).prefetch_related('timeslots')
+
+            result = []
+            for product in products_of_vendor:
+                product_dict = product_list_dict(product)
+                result.append(product_dict)
+        
+            response_content = { 
+            "products": result
+            }
+            return Response(response_content, status = status.HTTP_200_OK)
         else:
             content = {'error':'You dont have permissions to view products'}
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
@@ -53,9 +78,12 @@ class ProductViewSet(viewsets.ModelViewSet):
                 name = name, 
                 description = description, 
                 cost = cost)
-
-            serializer = ProductSerializer(new_product)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            
+            product_dict = product_list_dict(new_product)
+            response_content = { 
+            "product": product_dict
+            }
+            return Response(response_content, status = status.HTTP_201_CREATED)
         else:
             content = {'error':'You dont have permissions to add a product'}
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
@@ -79,4 +107,3 @@ class ProductViewSet(viewsets.ModelViewSet):
         else:
             content = {'description': 'You dont have permissions to delete this order.'}
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
-
