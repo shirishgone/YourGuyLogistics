@@ -116,6 +116,24 @@ class VendorViewSet(viewsets.ModelViewSet):
             content = {'error':'You dont have permissions to view all vendors'}
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
+    @list_route()
+    def requestedvendors(self, request):
+        role = user_role(request.user)
+        if (role == constants.SALES) or (role == constants.OPERATIONS):
+            all_vendors = Vendor.objects.filter(verified=False).order_by(Lower('store_name'))
+            all_vendors_array = []
+            for vendor in all_vendors:
+                vendor_dict = vendor_list_dict(vendor)
+                all_vendors_array.append(vendor_dict)
+            
+            response_content = { 
+            "data": all_vendors_array
+            }
+            return Response(response_content, status = status.HTTP_200_OK)
+        else:
+            content = {'error':'You dont have permissions to view all vendors'}
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
     @detail_route(methods=['post'])
     def request_vendor_account(self, request, pk = None):
         # INPUT PARAMETER CHECK ----------------------------------------------------------
