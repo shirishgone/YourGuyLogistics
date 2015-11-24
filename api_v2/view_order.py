@@ -119,6 +119,13 @@ def order_details(order, delivery_status):
             'cod_remarks':delivery_status.cod_remarks,
             'delivery_charges':order.delivery_charges
             }
+
+    if delivery_status.pickup_guy is not None:
+        res_order['pickup_guy_name'] = delivery_status.pickup_guy.user.first_name
+        res_order['pickup_guy_phonenumber'] = delivery_status.pickup_guy.user.username
+    else:
+        res_order['pickup_guy_name'] = None
+        res_order['pickup_guy_phonenumber'] = None
         
     if delivery_status.delivery_guy is not None:
         res_order['deliveryguy_name'] = delivery_status.delivery_guy.user.first_name
@@ -178,7 +185,12 @@ def update_daily_status(order, date):
             res_order['deliveryguy_name'] = None
             res_order['deliveryguy_phonenumber'] = None
         
-
+        if delivery_status.pickup_guy is not None:
+            res_order['pickup_guy_name'] = delivery_status.pickup_guy.user.first_name
+            res_order['pickup_guy_phonenumber'] = delivery_status.pickup_guy.user.username
+        else:
+            res_order['pickup_guy_name'] = None
+            res_order['pickup_guy_phonenumber'] = None
 
         order_items_array = []
         for order_item in order.order_items.all():
@@ -342,15 +354,16 @@ class OrderViewSet(viewsets.ViewSet):
         delivery_guy = None
         if role == constants.DELIVERY_GUY:
             delivery_guy = get_object_or_404(DeliveryGuy, user = request.user)
-            delivery_status_queryset = delivery_status_queryset.filter(delivery_guy = delivery_guy)
+            delivery_status_queryset = delivery_status_queryset.filter(Q(delivery_guy=delivery_guy) | Q(pickup_guy=delivery_guy))
+
         else:
             if dg_phone_number is not None:
                 if dg_phone_number.isdigit():
                     user = get_object_or_404(User, username = dg_phone_number)
                     delivery_guy = get_object_or_404(DeliveryGuy, user = user)
-                    delivery_status_queryset = delivery_status_queryset.filter(delivery_guy = delivery_guy)
+                    delivery_status_queryset = delivery_status_queryset.filter(Q(delivery_guy=delivery_guy) | Q(pickup_guy=delivery_guy))
                 elif dg_phone_number == 'UNASSIGNED':
-                    delivery_status_queryset = delivery_status_queryset.filter(delivery_guy = None)
+                    delivery_status_queryset = delivery_status_queryset.filter(Q(delivery_guy = None) | Q(pickup_guy = None))
         # --------------------------------------------------------------------------
 
         # ORDER STATUS FILTERING ---------------------------------------------------
@@ -1387,7 +1400,7 @@ class OrderViewSet(viewsets.ViewSet):
             }
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
         # -----------------------------------------------------------------------
-    
+
     @detail_route(methods=['post'])    
     def delivery_status_id(self, request, pk):
 
