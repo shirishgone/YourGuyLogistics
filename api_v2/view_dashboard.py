@@ -182,6 +182,9 @@ def report(request):
 		orders_undelivered_count = delivery_status_per_date.filter(Q(order_status = 'ORDER_PLACED') | Q(order_status = 'QUEUED')).count()
 		orders_intransit_count = delivery_status_per_date.filter(Q(order_status = 'INTRANSIT')).count()
 
+		ist_timedelta = timedelta(hours=5, minutes=30)
+		display_date = date + ist_timedelta
+
 		result = {
 		'total_orders_count':total_orders_per_day, 
 		'delivered_count':orders_delivered_count,
@@ -190,7 +193,7 @@ def report(request):
 		'cancelled_count':orders_cancelled_count,
 		'queued_count':orders_undelivered_count,
 		'intransit_count':orders_intransit_count,
-		'date': date.date()
+		'date': display_date.date()
 		}
 		orders_graph.append(result)
 	# ------------------------------------------------------------------------------
