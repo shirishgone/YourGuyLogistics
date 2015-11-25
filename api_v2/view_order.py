@@ -363,7 +363,7 @@ class OrderViewSet(viewsets.ViewSet):
                     delivery_guy = get_object_or_404(DeliveryGuy, user = user)
                     delivery_status_queryset = delivery_status_queryset.filter(Q(delivery_guy=delivery_guy) | Q(pickup_guy=delivery_guy))
                 elif dg_phone_number == 'UNASSIGNED':
-                    delivery_status_queryset = delivery_status_queryset.filter(Q(delivery_guy = None) | Q(pickup_guy = None))
+                    delivery_status_queryset = delivery_status_queryset.filter(Q(delivery_guy = None))
         # --------------------------------------------------------------------------
 
         # ORDER STATUS FILTERING ---------------------------------------------------
