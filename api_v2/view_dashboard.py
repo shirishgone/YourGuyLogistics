@@ -86,7 +86,9 @@ def excel_download(request):
 			'cod_amount':order.cod_amount,
 			'cod_collected':delivery_status.cod_collected_amount,
 			'cod_reason':delivery_status.cod_remarks,
-			'status':delivery_status.order_status
+			'status':delivery_status.order_status,
+			'vendor_notes':order.notes,
+			'vendor_order_id':order.vendor_order_id
 			}
 			if role == constants.OPERATIONS:
 				excel_order['vendor_name'] = order.vendor.store_name
