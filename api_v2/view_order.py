@@ -1450,9 +1450,9 @@ class OrderViewSet(viewsets.ViewSet):
        
         # MAX ORDERS PER DG CHECK -------------------------------------
         order_count = len(order_ids)
-        if order_count > 30:
+        if order_count > 50:
             content = {
-            'error':'Cant assign more than 30 orders at a time.'
+            'error':'Cant assign more than 50 orders at a time.'
             }
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
         # ---------------------------------------------------------------
@@ -1477,7 +1477,7 @@ class OrderViewSet(viewsets.ViewSet):
             if is_recurring_order(order):
                 delivery_statuses = order.delivery_status.all()
                 for delivery_status in delivery_statuses:
-                    if delivery_status.date.date() == order_date.date():
+                    if delivery_status.date.date() == date.date():
                         final_delivery_status = delivery_status
             else:
                 final_delivery_status = order.delivery_status.all().latest('date')
