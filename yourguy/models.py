@@ -55,7 +55,7 @@ class Address(models.Model):
     longitude = models.CharField(max_length = 50, blank = True)
 
     def __unicode__(self):
-        return u"%s - %s - %s" % (self.flat_number, self.building, self.street)                
+        return u"%s - %s" % (self.full_address, self.pin_code)                
 
 class YGUser(models.Model):
     user = models.OneToOneField(User)
