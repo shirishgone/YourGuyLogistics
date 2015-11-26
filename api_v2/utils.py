@@ -5,6 +5,7 @@ from rest_framework import status
 from datetime import datetime, timedelta, time
 from yourguy.models import Order, Address, Consumer, OrderDeliveryStatus
 import json
+from django.db.models import Q
 
 def is_correct_pincode(pincode):
 	if pincode.isdigit() and len(pincode) == 6:
@@ -86,8 +87,8 @@ def delivery_status_update(request):
 
 @api_view(['GET'])
 def fill_full_address(request):
-	all_addresses = Address.objects.all()
-
+	all_addresses = Address.objects.filter(Q(full_address = '-') | Q(full_address = '')| Q(full_address = None))
+	
 	if request.user.is_staff is False:
 		content = {
 		'error':'insufficient permissions', 
