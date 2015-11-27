@@ -167,7 +167,7 @@ class VendorViewSet(viewsets.ModelViewSet):
         
         # SEND EMAIL TO SALES ---------------------------------------------------------------
         try:
-            approval_link = 'http://app.yourguy.in/#/home/vendor/{}'.format(new_address.id)
+            approval_link = 'http://app.yourguy.in/#/home/vendor/{}'.format(new_vendor.id)
             subject = 'YourGuy: New Vendor Account Request'
             body = constants.VENDOR_ACCOUNT_REQUESTED_MESSAGE_SALES.format(store_name, phone_number, email, full_address, pin_code, approval_link)
             send_email(constants.SALES_EMAIL, subject, body)
