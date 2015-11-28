@@ -123,7 +123,7 @@ class DGViewSet(viewsets.ModelViewSet):
             content = {'error':"You don't have permissions to view delivery guy info"}
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
         else:
-            all_dgs = DeliveryGuy.objects.all()
+            all_dgs = DeliveryGuy.objects.order_by('user__first_name')
             
             # SEARCH KEYWORD FILTERING ---------------------------------------------------
             if search_query is not None:
