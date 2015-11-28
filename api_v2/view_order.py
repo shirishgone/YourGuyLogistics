@@ -12,6 +12,7 @@ from rest_framework.response import Response
 
 from yourguy.models import Order, Vendor, VendorAgent, OrderDeliveryStatus, Area, User, DeliveryGuy, Consumer, Address, Product, OrderItem, ProofOfDelivery, Picture
 from api.views import user_role, ist_day_start, ist_day_end, is_userexists, is_consumerexists, send_sms, days_in_int, time_delta
+from api.views import is_today_date, log_exception, ist_datetime
 
 from api_v2.utils import is_pickup_time_acceptable, is_consumer_has_same_address_already, is_correct_pincode, is_vendor_has_same_address_already
 from api_v2.views import paginate
@@ -26,7 +27,49 @@ import pytz
 from django.db.models import Q
 from itertools import chain
 from dateutil.rrule import rrule, WEEKLY
+from api.push import send_push
+from django.db.models import Prefetch
 
+def send_dg_notification(dg, order_ids):
+    try:
+        data = { 
+        'message':'A new order has been assigned to you.', 
+        'type': 'order_assigned', 
+        'data':{
+        'order_id': order_ids
+        }
+        }
+        send_push(dg.device_token, data)
+    except Exception, e:
+        log_exception(e, 'Push notification not sent in order assignment')
+        pass
+
+def send_sms_to_dg_about_mass_orders(dg, order_ids):
+    try:
+        message = 'New Orders are assigned to you. Order IDs: {}'.format(order_ids)
+        send_sms(dg.user.username, message)
+    except Exception, e:
+        log_exception(e, 'Order assignment mass SMS')
+        pass
+
+def send_sms_to_dg_about_order(date, dg, order):
+    try:
+        pickup_date_string = date.strftime("%b%d")
+        ist_date_time = ist_datetime(order.pickup_datetime)
+        pickup_time_string = ist_date_time.time().strftime("%I:%M%p")
+        pickup_total_string = "%s,%s" % (pickup_date_string, pickup_time_string)
+        message = 'New Order:{},Pickup:{},Client:{},Cust:{},{},{},COD:{}'.format(order.id, 
+            pickup_total_string,
+            order.vendor.store_name, 
+            order.consumer.user.first_name,
+            order.consumer.user.username,
+            order.delivery_address,
+            order.cod_amount)
+        send_sms(dg.user.username, message)
+    except Exception, e:
+        log_exception(e, 'Order assignment Single SMS')
+        pass
+    
 def is_recurring_order(order):
     if len(order.delivery_status.all()) > 1:
         return True
@@ -121,16 +164,20 @@ def order_details(order, delivery_status):
             }
 
     if delivery_status.pickup_guy is not None:
-        res_order['pickup_guy_name'] = delivery_status.pickup_guy.user.first_name
-        res_order['pickup_guy_phonenumber'] = delivery_status.pickup_guy.user.username
+        res_order['pickupguy_id'] = delivery_status.pickup_guy.id
+        res_order['pickupguy_name'] = delivery_status.pickup_guy.user.first_name
+        res_order['pickupguy_phonenumber'] = delivery_status.pickup_guy.user.username
     else:
-        res_order['pickup_guy_name'] = None
-        res_order['pickup_guy_phonenumber'] = None
+        res_order['pickupguy_id'] = None
+        res_order['pickupguy_name'] = None
+        res_order['pickupguy_phonenumber'] = None
         
     if delivery_status.delivery_guy is not None:
+        res_order['deliveryguy_id'] = delivery_status.delivery_guy.id
         res_order['deliveryguy_name'] = delivery_status.delivery_guy.user.first_name
         res_order['deliveryguy_phonenumber'] = delivery_status.delivery_guy.user.username
     else:
+        res_order['deliveryguy_id'] = None
         res_order['deliveryguy_name'] = None
         res_order['deliveryguy_phonenumber'] = None
 
@@ -179,18 +226,22 @@ def update_daily_status(order, date):
         }
 
         if delivery_status.delivery_guy is not None:
+            res_order['deliveryguy_id'] = delivery_status.delivery_guy.id
             res_order['deliveryguy_name'] = delivery_status.delivery_guy.user.first_name
             res_order['deliveryguy_phonenumber'] = delivery_status.delivery_guy.user.username
         else:
+            res_order['deliveryguy_id'] = None
             res_order['deliveryguy_name'] = None
             res_order['deliveryguy_phonenumber'] = None
         
         if delivery_status.pickup_guy is not None:
-            res_order['pickup_guy_name'] = delivery_status.pickup_guy.user.first_name
-            res_order['pickup_guy_phonenumber'] = delivery_status.pickup_guy.user.username
+            res_order['pickupguy_id'] = delivery_status.pickup_guy.id
+            res_order['pickupguy_name'] = delivery_status.pickup_guy.user.first_name
+            res_order['pickupguy_phonenumber'] = delivery_status.pickup_guy.user.username
         else:
-            res_order['pickup_guy_name'] = None
-            res_order['pickup_guy_phonenumber'] = None
+            res_order['pickupguy_id'] = None
+            res_order['pickupguy_name'] = None
+            res_order['pickupguy_phonenumber'] = None
 
         order_items_array = []
         for order_item in order.order_items.all():
@@ -244,6 +295,42 @@ def deliveryguy_list(order, date):
         else:
             res_order['delivery_area_code'] = None
 
+        return res_order
+    else:
+        return None 
+
+def order_dict_dg(order, date):
+    delivery_status = delivery_status_of_the_day(order, date)
+    if delivery_status is not None:    
+        
+        if order.pickup_datetime is not None:
+            new_pickup_datetime = datetime.combine(date, order.pickup_datetime.time())
+            new_pickup_datetime = pytz.utc.localize(new_pickup_datetime)
+        else:
+            new_pickup_datetime = None
+
+        if order.delivery_datetime is not None:
+            new_delivery_datetime = datetime.combine(date, order.delivery_datetime.time())
+            new_delivery_datetime = pytz.utc.localize(new_delivery_datetime)
+        else:
+            new_delivery_datetime = None
+
+        res_order = {
+            'id' : order.id,
+            'pickup_datetime' : new_pickup_datetime,
+            'delivery_datetime' : new_delivery_datetime,
+            'pickup_address':address_string(order.pickup_address),
+            'delivery_address':address_string(order.delivery_address),
+            'status' : delivery_status.order_status,
+            'customer_name' : order.consumer.user.first_name,
+            'vendor_name' : order.vendor.store_name,
+            'vendor_order_id':order.vendor_order_id,
+            'cod_amount' : order.cod_amount,
+            'customer_phonenumber' : order.consumer.user.username,
+            'notes':order.notes,
+            'vendor_order_id':order.vendor_order_id,
+            'total_cost':order.total_cost,
+        }
         return res_order
     else:
         return None 
@@ -362,8 +449,10 @@ class OrderViewSet(viewsets.ViewSet):
                     user = get_object_or_404(User, username = dg_phone_number)
                     delivery_guy = get_object_or_404(DeliveryGuy, user = user)
                     delivery_status_queryset = delivery_status_queryset.filter(Q(delivery_guy=delivery_guy) | Q(pickup_guy=delivery_guy))
-                elif dg_phone_number == 'UNASSIGNED':
+                elif dg_phone_number == 'UNASSIGNED_DELIVERY' or dg_phone_number == 'UNASSIGNED':
                     delivery_status_queryset = delivery_status_queryset.filter(Q(delivery_guy = None))
+                elif dg_phone_number == 'UNASSIGNED_PICKUP':
+                    delivery_status_queryset = delivery_status_queryset.filter(Q(pickup_guy = None))
         # --------------------------------------------------------------------------
 
         # ORDER STATUS FILTERING ---------------------------------------------------
@@ -414,39 +503,55 @@ class OrderViewSet(viewsets.ViewSet):
                     Q(consumer__user__username=search_query))
             else:
                 order_queryset = order_queryset.filter(Q(consumer__user__first_name__icontains=search_query))
-        # ---------------------------------------------------------------------------- 
+        # ----------------------------------------------------------------------------             
         
-        # PAGINATION  ----------------------------------------------------------------
-        if page is not None:
-            page = int(page)
-        else:
-            page = 1    
-
         total_orders_count = len(order_queryset)
-        total_pages =  int(total_orders_count/constants.PAGINATION_PAGE_SIZE) + 1
-        
-        if page > total_pages or page<=0:
-            response_content = {
-            "error": "Invalid page number"
-            }
-            return Response(response_content, status = status.HTTP_400_BAD_REQUEST)
-        else:
-            orders = paginate(order_queryset, page)
-        # ----------------------------------------------------------------------------
-        
-        # UPDATING DELIVERY STATUS OF THE DAY  ---------------------------------------
-        result = []
-        for single_order in orders:
-            if role == constants.DELIVERY_GUY:
-                order = deliveryguy_list(single_order, date)
-            else:
-                order = update_daily_status(single_order, date)
+        if role == constants.DELIVERY_GUY:
+            orders = order_queryset
+            result = []
+            for single_order in orders:
+                order_dict = order_dict_dg(single_order, date)
+                if order_dict is not None:
+                    result.append(order_dict)
             
-            if order is not None:
-                result.append(order)        
+            response_content = { 
+            "data": result, 
+            "total_pages": 1, 
+            "total_orders":total_orders_count
+            }
+            return Response(response_content, status = status.HTTP_200_OK)
         
-        response_content = { "data": result, "total_pages": total_pages, "total_orders" : total_orders_count}
-        return Response(response_content, status = status.HTTP_200_OK)
+        else:
+            # PAGINATION  ----------------------------------------------------------------
+            if page is not None:
+                page = int(page)
+            else:
+                page = 1    
+            
+            total_pages =  int(total_orders_count/constants.PAGINATION_PAGE_SIZE) + 1
+            if page > total_pages or page<=0:
+                response_content = {
+                "error": "Invalid page number"
+                }
+                return Response(response_content, status = status.HTTP_400_BAD_REQUEST)
+            else:
+                orders = paginate(order_queryset, page)
+            # ----------------------------------------------------------------------------
+        
+            # UPDATING DELIVERY STATUS OF THE DAY  ---------------------------------------
+            result = []
+            for single_order in orders:
+                order = update_daily_status(single_order, date)
+                if order is not None:
+                    result.append(order)
+            
+            response_content = {
+            "data": result, 
+            "total_pages": total_pages, 
+            "total_orders" : total_orders_count
+            }
+
+            return Response(response_content, status = status.HTTP_200_OK)
 
     @detail_route(methods=['post'])
     def upload_excel(self, request, pk):
@@ -467,17 +572,7 @@ class OrderViewSet(viewsets.ViewSet):
         except Exception, e:
             content = {'error':'Incomplete params. pickup_address_id, orders'}
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
-        
-        # VENDOR ORDER ID Duplication check removed.
-        # for order in orders:
-        #     try:
-        #         existing_order = get_object_or_404(Order, vendor_order_id = order['vendor_order_id'])
-        #         error_message = 'An order with vendor_order_id:{} already exists'.format(order['vendor_order_id'])
-        #         content = {'error':error_message}
-        #         return Response(content, status = status.HTTP_400_BAD_REQUEST)
-        #     except Exception, e:
-        #         pass
-                
+                        
         for single_order in orders:
             try:
                 pickup_datetime = single_order['pickup_datetime']
@@ -486,7 +581,7 @@ class OrderViewSet(viewsets.ViewSet):
                 # Optional =======
                 cod_amount = single_order.get('cod_amount')
                 notes = single_order.get('notes')
-                
+                        
                 # Customer details =======
                 consumer_name = single_order['customer_name']
                 consumer_phone_number = single_order['customer_phone_number']
@@ -1435,6 +1530,7 @@ class OrderViewSet(viewsets.ViewSet):
 
     @detail_route(methods=['post'])
     def assign_order(self, request, pk = None):
+        
         # INPUT PARAM CHECK ---------------------------------------------
         try:
             dg_id = request.data['dg_id']
@@ -1448,7 +1544,7 @@ class OrderViewSet(viewsets.ViewSet):
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
         # ---------------------------------------------------------------
        
-        # MAX ORDERS PER DG CHECK -------------------------------------
+        # MAX ORDERS PER DG CHECK ---------------------------------------
         order_count = len(order_ids)
         if order_count > 50:
             content = {
@@ -1457,7 +1553,7 @@ class OrderViewSet(viewsets.ViewSet):
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
         # ---------------------------------------------------------------
 
-        # ASSIGNMENT TYPE CHECK -------------------------------------
+        # ASSIGNMENT TYPE CHECK -----------------------------------------
         if assignment_type == 'pickup' or assignment_type == 'delivery':
             pass
         else:
@@ -1467,6 +1563,7 @@ class OrderViewSet(viewsets.ViewSet):
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
         # ---------------------------------------------------------------
        
+        is_orders_assigned = False       
         date = parse_datetime(date_string)
         dg = get_object_or_404(DeliveryGuy, id = dg_id)
         for order_id in order_ids:
@@ -1490,43 +1587,27 @@ class OrderViewSet(viewsets.ViewSet):
                 else:
                     final_delivery_status.delivery_guy = dg
                 final_delivery_status.save()
+                is_orders_assigned = True
             # -------------------------------------------------------------
-                                      
+        
+        # INFORM DG THROUGH SMS AND NOTIF IF ITS TODAYS DELIVERY ----------
+        if is_orders_assigned is True:
+            try:
+                if is_today_date(date):
+                    send_dg_notification(dg, order_ids)
+                    if order_count == 1:
+                        send_sms_to_dg_about_order(date, dg, order)
+                    else:
+                        send_sms_to_dg_about_mass_orders(dg, order_ids)
+            except Exception, e:
+                log_exception(e, 'assign_order_notify_dg')                        
 
-        # SEND SMS TO DG ----------------------------------------
-        try:
-            pickup_date_string = date.strftime("%b%d")
-            ist_date_time = ist_datetime(order.pickup_datetime)
-            pickup_time_string = ist_date_time.time().strftime("%I:%M%p")
-            pickup_total_string = "%s,%s" % (pickup_date_string, pickup_time_string)
-            message = 'New Order:{},Pickup:{},Client:{},Cust:{},{},{},COD:{}'.format(order.id, 
-                pickup_total_string,
-                order.vendor.store_name, 
-                order.consumer.user.first_name,
-                order.consumer.user.username,
-                order.delivery_address,
-                order.cod_amount)
-            send_sms(dg.user.username, message)
-        except Exception, e:
-            print 'Order assigned to DG error.'
-            pass
-        # -------------------------------------------------------------
-       
-        # SEND PUSH NOTIFICATION TO DELIVERYGUY
-        try:
-            data = { 
-            'message':'A new order has been assigned to you.', 
-            'type': 'order_assigned', 
-            'data':{
-            'order_id': order_ids
+            content = {
+            'description': 'Order assigned'
             }
-            }
-            send_push(dg.device_token, data)
-        except Exception, e:
-            print 'push notification not sent in order assignment'
-            pass
-       
-        content = {
-        'description': 'Order assigned'
-        }
-        return Response(content, status = status.HTTP_200_OK)          
+            return Response(content, status = status.HTTP_200_OK)          
+        else:
+            content = {
+            'error':'Few orders arent updated'
+            }    
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)

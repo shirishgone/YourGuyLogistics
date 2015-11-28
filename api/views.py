@@ -148,7 +148,18 @@ def is_address_exists(flat_number, building, street, landmark, pin_code):
 	except:
 		return None
 
+def log_exception(e, message):
+	print e
+	# SEND AN EMAIL OR LOG IT SOMEWHERE
+	# TODO
+
 # TIME ZONE ISSUES =============
+def is_today_date(date):
+	today = datetime.now()
+	if today.date() == date.date():
+		return True
+	else:
+		return False
 
 def time_delta():
     return timedelta(hours=5, minutes=30)
