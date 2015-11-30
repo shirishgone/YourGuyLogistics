@@ -501,10 +501,10 @@ class OrderViewSet(viewsets.ViewSet):
         if search_query is not None:
             if search_query.isdigit():
                 order_queryset = order_queryset.filter(Q(id=search_query) | 
-                    Q(vendor_order_id=search_query) |
                     Q(consumer__user__username=search_query))
             else:
-                order_queryset = order_queryset.filter(Q(consumer__user__first_name__icontains=search_query))
+                order_queryset = order_queryset.filter(Q(consumer__user__first_name__icontains=search_query) |
+                    Q(vendor_order_id=search_query))
         # ----------------------------------------------------------------------------             
         
         total_orders_count = len(order_queryset)
