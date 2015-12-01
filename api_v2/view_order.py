@@ -11,7 +11,7 @@ from rest_framework.decorators import detail_route, list_route
 from rest_framework.response import Response
 
 from yourguy.models import Order, Vendor, VendorAgent, OrderDeliveryStatus, Area, User, DeliveryGuy, Consumer, Address, Product, OrderItem, ProofOfDelivery, Picture
-from api.views import user_role, ist_day_start, ist_day_end, is_userexists, is_consumerexists, send_sms, days_in_int, time_delta
+from api.views import user_role, ist_day_start, ist_day_end, is_userexists, is_consumerexists, send_sms, send_email, days_in_int, time_delta
 from api.views import is_today_date, log_exception, ist_datetime
 
 from api_v2.utils import is_pickup_time_acceptable, is_consumer_has_same_address_already, is_correct_pincode, is_vendor_has_same_address_already
@@ -76,40 +76,109 @@ def is_recurring_order(order):
     else:
         return False    
 
-def can_deliver_delivery_status(delivery_status):
-    if delivery_status.order_status == constants.ORDER_STATUS_INTRANSIT:
-        return True
-    else:
-        return False  
-
-def can_update_pickup_status(delivery_status):
-    if delivery_status.order_status == constants.ORDER_STATUS_PLACED or delivery_status.order_status == constants.ORDER_STATUS_QUEUED:
-        return True
-    else:
-        return False  
-
-def can_user_update_this_order(order, user):
-    can_update_order = False
+def is_user_permitted_to_update_order(user, order):
+    is_permissible = False
     role = user_role(user)
     if (role == constants.VENDOR):
         vendor_agent = get_object_or_404(VendorAgent, user = user)
         vendor = vendor_agent.vendor
         if order.vendor == vendor:
-            can_update_order = True
-    elif (role == constants.OPERATIONS):
-        can_update_order = True    
-    return can_update_order
+            is_permissible = True
+    elif (role == constants.OPERATIONS) or (role == constants.DELIVERY_GUY):
+        is_permissible = True    
+    return is_permissible
+
+def can_updated_order(delivery_status, status):
+    if status == constants.ORDER_STATUS_INTRANSIT:
+        if delivery_status.order_status == constants.ORDER_STATUS_QUEUED:
+            return True
+        else:
+            return False  
+    elif status == constants.ORDER_STATUS_DELIVERED:
+        if delivery_status.order_status == constants.ORDER_STATUS_INTRANSIT:
+            return True
+        else:
+            return False  
+    elif status == constants.ORDER_STATUS_PICKUP_ATTEMPTED:
+        if delivery_status.order_status == constants.ORDER_STATUS_QUEUED:
+            return True
+        else:
+            return False
+    elif status == constants.ORDER_STATUS_CANCELLED:
+        if delivery_status.order_status == constants.ORDER_STATUS_QUEUED:
+            return True
+        else:
+            return False
+    elif status == constants.ORDER_STATUS_DELIVERY_ATTEMPTED:
+        if delivery_status.order_status == constants.ORDER_STATUS_INTRANSIT:
+            return True
+        else:
+            return False
+    else:
+        return False
 
 def delivery_status_of_the_day(order, date):
     delivery_item = None
-    
     for delivery_status in order.delivery_status.all():
         if date.date() == delivery_status.date.date():
             delivery_item = delivery_status
-            break            
-    
+            break                
     return delivery_item    
 
+def create_proof(proof_dict):
+    try:
+        if proof_dict is not None:
+            receiver_name = proof_dict['receiver_name']
+            signature_name = proof_dict['signature']
+            pictures = proof_dict['image_names']
+        
+            signature = Picture.objects.create(name = signature_name)
+            proof = ProofOfDelivery.objects.create(receiver_name = receiver_name, signature = signature)
+            for picture in pictures:
+                proof.pictures.add(Picture.objects.create(name = picture))                       
+                proof.save()        
+    except Exception, e:
+        log_exception(e, 'create_proof')
+    return proof
+
+# UPDATE DELIVERY STATUS -----------------------------------------------------------
+def update_delivery_status_delivery_attempted(delivery_status, dg_remarks, attempted_datetime):
+    delivery_status.order_status = constants.ORDER_STATUS_DELIVERY_ATTEMPTED
+    delivery_status.completed_datetime = attempted_datetime
+    if dg_remarks is not None:
+        delivery_status.cod_remarks = dg_remarks
+    delivery_status.save()
+
+def update_delivery_status_pickup_attempted(delivery_status, dg_remarks, attempted_datetime):
+    delivery_status.order_status = constants.ORDER_STATUS_PICKUP_ATTEMPTED
+    delivery_status.pickedup_datetime = attempted_datetime
+    if dg_remarks is not None:
+        delivery_status.cod_remarks = dg_remarks
+    delivery_status.save()
+
+def update_delivery_status_pickedup(delivery_status, pickedup_datetime, proof, dg_remarks):
+    delivery_status.order_status = constants.ORDER_STATUS_INTRANSIT
+    delivery_status.pickedup_datetime = pickedup_datetime
+    if proof is not None:
+        delivery_status.pickup_proof = proof
+    if dg_remarks is not None:
+        delivery_status.cod_remarks = dg_remarks
+    delivery_status.save()
+
+def update_delivery_status_delivered(delivery_status, delivered_at, delivered_datetime, is_cod_collected, proof, delivery_remarks, cod_collected_amount):
+    delivery_status.order_status = constants.ORDER_STATUS_DELIVERED
+    delivery_status.delivered_at = delivered_at
+    delivery_status.completed_datetime = delivered_datetime
+    if is_cod_collected is not None:
+        delivery_status.is_cod_collected = is_cod_collected
+    if proof is not None:
+        delivery_status.delivery_proof = proof                    
+    if delivery_remarks is not None:
+        delivery_status.cod_remarks = delivery_remarks
+    if cod_collected_amount is not None:
+        delivery_status.cod_collected_amount = float(cod_collected_amount)
+    delivery_status.save()
+# ---------------------------------------------------------------------------
 
 def address_string(address):
     try:
@@ -1125,13 +1194,13 @@ class OrderViewSet(viewsets.ViewSet):
     @detail_route(methods=['post'])
     def cancel(self, request, pk):        
         order = get_object_or_404(Order, id = pk)
-        if can_user_update_this_order(order, request.user) is False:
+        if is_user_permitted_to_update_order(request.user, order) is False:
             content = {
             'error': "You don't have permissions to cancel this order."
             }
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
         
-        # DATA FILTERING FOR RECURRING ORDERS -----------------------
+        # DATA FILTERING FOR RECURRING ORDERS ----------------------------
         date_string = request.data.get('date')
         if is_recurring_order(order) and date_string is None:
             content = {
@@ -1152,19 +1221,10 @@ class OrderViewSet(viewsets.ViewSet):
 
         final_delivery_status = None
         is_cancelled = False
-
-        # PICK THE APPROPRIATE DELIVERY STATUS OBJECT ----------------
-        if is_recurring_order(order):
-            delivery_statuses = order.delivery_status.all()
-            for delivery_status in delivery_statuses:
-                if delivery_status.date.date() == date.date():
-                    final_delivery_status = delivery_status
-        else:
-            final_delivery_status = order.delivery_status.all().latest('date')
-        # -----------------------------------------------------------
-
+        
+        final_delivery_status = delivery_status_of_the_day(order, date)
         # UPDATE THE DELIVERY STATUS OBJECT -------------------------
-        if final_delivery_status is not None and can_update_pickup_status(final_delivery_status):
+        if final_delivery_status is not None and can_updated_order(final_delivery_status, constants.ORDER_STATUS_CANCELLED):
             final_delivery_status.order_status = constants.ORDER_STATUS_CANCELLED
             final_delivery_status.save()
             is_cancelled = True
@@ -1188,66 +1248,158 @@ class OrderViewSet(viewsets.ViewSet):
             }
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
-    @detail_route(methods=['post'])
-    def multiple_pickups(self, request, pk=None):        
+    @list_route(methods=['put'])
+    def report(self, request, pk=None):
+        try:
+            order_ids   = request.data['order_ids']
+        except Exception, e:
+            content = {
+            'error':'order_ids are mandatory parameters'
+            }
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+        
+        role = user_role(request.user)
+        if role == constants.DELIVERY_GUY:
+            delivery_guy = get_object_or_404(DeliveryGuy, user = request.user)
+            subject = 'DeliveryBoy Reported Issue'
+            body = 'Hello, \nDelivery Boy %s has reported some issue about the following orders. \nOrder nos:%s \nPlease check \n\n-Team YourGuy' % (delivery_guy.user.first_name, order_ids)
+            send_email(constants.OPS_EMAIL_IDS, subject, body)
+            return Response(status = status.HTTP_200_OK)
+        else:
+            content = {
+            'error':'You dont have permissions to report about the orders'
+            }
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
+    @list_route(methods=['put'])
+    def multiple_pickup_attempted(self, request, pk=None):         
         try:
             order_ids   = request.data['order_ids']
             date_string = request.data['date']
             order_date  = parse_datetime(date_string)
+            delivery_remarks = request.data['delivery_remarks']
+            pickedup_datetime_string = request.data['pick_attempted_datetime']
         except Exception, e:
             content = {
-            'error':'order_ids, date are mandatory parameters'
+            'error':'order_ids, date, delivery_remarks, pick_attempted_datetime are mandatory parameters'
             }
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
         
-        # PICKEDUP DATE TIME --------------------------------------------------------
-        pickedup_datetime_string = request.data.get('pickedup_datetime')
-        if pickedup_datetime_string is not None:
-            pickedup_datetime = parse_datetime(pickedup_datetime_string) 
-        else:
-            pickedup_datetime = datetime.now() 
-        # ----------------------------------------------------------------------------
-        updated_orders = []
-        not_updated_orders = []
-        
-        # UPDATE EACH ORDER --------------------------------------------------------
+        try:
+            pickedup_datetime = parse_datetime(pickedup_datetime_string)            
+        except Exception, e:
+            log_exception(e, 'parsing date in multiple_pickup_attempted')
+            content = {
+            'error':'Parsing error for pickedup_datetime'
+            }
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+            
         for order_id in order_ids:
             try:
                 order = get_object_or_404(Order, pk = order_id)
-                
-                # PICK THE APPROPRIATE DELIVERY STATUS OBJECT ----------------
-                if is_recurring_order(order):
-                    delivery_statuses = order.delivery_status.all()
-                    for delivery_status in delivery_statuses:
-                        if delivery_status.date.date() == order_date.date():
-                            final_delivery_status = delivery_status
-                else:
-                    final_delivery_status = order.delivery_status.all().latest('date')
-                # -----------------------------------------------------------
+                if is_user_permitted_to_update_order(request.user, order) is False:
+                    content = {
+                    'error': "You don't have permissions to update this order."
+                    }
+                    return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
-                # UPDATING THE DELIVERY STATUS OF THE PARTICULAR DAY -------------------------
-                if final_delivery_status is not None and can_update_pickup_status(final_delivery_status): 
-                    final_delivery_status.order_status = constants.ORDER_STATUS_INTRANSIT
-                    final_delivery_status.pickedup_datetime = pickedup_datetime
-                    final_delivery_status.save()
-                    updated_orders.append(order_id)
+                final_delivery_status = delivery_status_of_the_day(order , order_date)
+                if can_updated_order(final_delivery_status, constants.ORDER_STATUS_PICKUP_ATTEMPTED):
+                    update_delivery_status_pickup_attempted(final_delivery_status, delivery_remarks, pickedup_datetime)
                 else:
-                    not_updated_orders.append(order_id)
+                    content = {
+                    'error': "Order already processed cant attempt the pickup now"
+                    }
+                    return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
             except Exception, e:
-                not_updated_orders.append(order_id)
-                pass
-        # -------------------------------------------------------------------------------
-
+                log_exception(e, 'multiple_pickup_attempted')
+                content = {
+                'error':'Order update failed',
+                'data':{'order_id':order_id}
+                }
+                return Response(content, status = status.HTTP_400_BAD_REQUEST)
+        
         content = {
-        "updated_orders": updated_orders,
-        "un_updated_orders": not_updated_orders
+        "data": 'Orders attempted',
+        }
+        return Response(content, status = status.HTTP_200_OK)
+
+    @detail_route(methods=['post'])
+    def multiple_pickups(self, request, pk=None):        
+        
+        # INPUT PARAM CHECK -------------------------------------------------
+        try:
+            order_ids   = request.data['order_ids']
+            date_string = request.data['date'] 
+            pickedup_datetime_string = request.data['pickedup_datetime']
+            pop_dict = request.data['pop']
+            delivery_remarks = request.data['delivery_remarks']
+        except Exception, e:
+            content = {
+            'error':'order_ids, date, pickedup_datetime, delivery_remarks, pop are mandatory parameters'
+            }
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+        # -------------------------------------------------------------------
+        
+        # DATE FORMAT CHECK -------------------------------------------------
+        try:
+            order_date  = parse_datetime(date_string)
+            pickedup_datetime = parse_datetime(pickedup_datetime_string) 
+        except Exception, e:
+            content = {
+            'error':'date format error'
+            }
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+        # -------------------------------------------------------------------                    
+        
+        new_pop = None
+        for order_id in order_ids:
+            try:
+                order = get_object_or_404(Order, pk = order_id)
+                if is_user_permitted_to_update_order(request.user, order) is False:
+                    content = {
+                    'error': "You don't have permissions to update this order."
+                    }
+                    return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
+                final_delivery_status = delivery_status_of_the_day(order, order_date)
+                if can_updated_order(final_delivery_status, constants.ORDER_STATUS_INTRANSIT):
+                    
+                    # POP ------------------------------------------------------------------------
+                    if new_pop is None and pop_dict is not None:
+                        new_pop = create_proof(pop_dict)                    
+                    # ----------------------------------------------------------------------------
+
+                    update_delivery_status_pickedup(final_delivery_status, pickedup_datetime, new_pop, delivery_remarks)
+                else:
+                    content = {
+                    'error': "Cant update as the order is not queued"
+                    }
+                    return Response(content, status = status.HTTP_400_BAD_REQUEST)
+                    
+            except Exception, e:
+                log_exception(e, 'multiple_pickup_attempted')
+                content = {
+                'error':'Order update failed',
+                'data':{'order_id':order_id}
+                }
+                return Response(content, status = status.HTTP_400_BAD_REQUEST)        
+        content = {
+        "data": 'Orders pickedup',
         }
         return Response(content, status = status.HTTP_200_OK)
         
     @detail_route(methods=['post'])
     def picked_up(self, request, pk=None):
         order = get_object_or_404(Order, pk = pk)
-        pop = request.data.get('pop')
+        if is_user_permitted_to_update_order(request.user, order) is False:
+            content = {
+            'error': "You don't have permissions to update this order."
+            }
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
+        pop_dict = request.data.get('pop')
         pickup_attempted = request.data.get('pickup_attempted')
         delivery_remarks = request.data.get('delivery_remarks')
         
@@ -1277,60 +1429,30 @@ class OrderViewSet(viewsets.ViewSet):
                 }
                 return Response(content, status = status.HTTP_400_BAD_REQUEST)
         # -----------------------------------------------------------
-        
-        # POP ------------------------------------------------------------------------
-        new_pop = None
-        try:
-            if pop is not None:
-                receiver_name = pop['receiver_name']
-                signature_name = pop['signature']
-                pictures = pop['image_names']
-                
-                signature = Picture.objects.create(name = signature_name)
-                new_pop = ProofOfDelivery.objects.create(receiver_name = receiver_name, signature = signature)
-                for picture in pictures:
-                    new_pop.pictures.add(Picture.objects.create(name = picture))                       
-        except:
-            content = {
-            'error':'An error with pop parameter'
-            }
-            return Response(content, status = status.HTTP_400_BAD_REQUEST)
-        # ----------------------------------------------------------------------------
-        
-        # PICK THE APPROPRIATE DELIVERY STATUS OBJECT ----------------
-        if is_recurring_order(order):
-            delivery_statuses = order.delivery_status.all()
-            for delivery_status in delivery_statuses:
-                if delivery_status.date.date() == order_date.date():
-                    final_delivery_status = delivery_status
-        else:
-            final_delivery_status = order.delivery_status.all().latest('date')
-        # -----------------------------------------------------------
-
-        # UPDATING THE DELIVERY STATUS OF THE PARTICULAR DAY -------------------------
         is_order_updated = False
         is_order_picked_up = False
-        if final_delivery_status is not None and can_update_pickup_status(final_delivery_status):
+        final_delivery_status = delivery_status_of_the_day(order , order_date)
+        
+        if can_updated_order(final_delivery_status, constants.ORDER_STATUS_INTRANSIT):
             if pickup_attempted is not None and pickup_attempted == True:
-                final_delivery_status.order_status = constants.ORDER_STATUS_PICKUP_ATTEMPTED
-                if delivery_remarks is not None:
-                    final_delivery_status.cod_remarks = delivery_remarks
+                update_delivery_status_pickup_attempted(final_delivery_status, delivery_remarks, pickedup_datetime)
+                is_order_updated = True
+                is_order_picked_up = False
             else:
+                # POP ------------------------------------------------------------------------
+                new_pop = None
+                if pop_dict is not None:
+                    new_pop = create_proof(pop_dict)
+                # ----------------------------------------------------------------------------
+                update_delivery_status_pickedup(final_delivery_status, pickedup_datetime, new_pop, delivery_remarks)
+                is_order_updated = True
                 is_order_picked_up = True
-                final_delivery_status.order_status = constants.ORDER_STATUS_INTRANSIT
-            
-            final_delivery_status.pickedup_datetime = pickedup_datetime
-            if new_pop is not None:
-                final_delivery_status.pickup_proof = new_pop
-            final_delivery_status.save()
-            is_order_updated = True
         else:
             content = {
-            'error': "The order has already been processed, now you cant update the status."
+            'error': "Cant update as the order is not queued"
             }
-            return Response(content, status = status.HTTP_400_BAD_REQUEST)
-        # ------------------------------------------------------------       
-                
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)        
+        
         if is_order_updated:
             if is_order_picked_up is True and order.is_reverse_pickup is True:
                 # SEND A CONFIRMATION MESSAGE TO THE CUSTOMER
@@ -1350,16 +1472,20 @@ class OrderViewSet(viewsets.ViewSet):
 
     @detail_route(methods=['post'])
     def delivered(self, request, pk=None):   
-
-        order = get_object_or_404(Order, pk = pk)        
-        
-        latitude = request.data.get('latitude')
-        longitude = request.data.get('longitude')
-
+        order = get_object_or_404(Order, pk = pk)
+        if is_user_permitted_to_update_order(request.user, order) is False:
+            content = {
+            'error': "You don't have permissions to update this order."
+            }
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+                
         # REQUEST PARAMETERS ---------------------------------------------
         is_cod_collected = request.data.get('cod_collected')        
         cod_collected_amount = request.data.get('cod_collected_amount')
-        cod_remarks = request.data.get('cod_remarks')
+        delivery_remarks = request.data.get('cod_remarks')
+        delivery_remarks = request.data.get('delivery_remarks')
+        latitude = request.data.get('latitude')
+        longitude = request.data.get('longitude')
         # ----------------------------------------------------------------
         
         # DELIVERED DATE TIME ---------------------------------------------
@@ -1370,16 +1496,14 @@ class OrderViewSet(viewsets.ViewSet):
             delivered_datetime = datetime.now()
         # ----------------------------------------------------------------
                 
-        # DELIVERY ATTEMPTED CASE HANDLED --------------------------------
-        cod_remarks = request.data.get('delivery_remarks')
+        # DELIVERY ATTEMPTED CASE HANDLED --------------------------------        
         delivery_attempted = request.data.get('delivery_attempted')
         if delivery_attempted is not None and delivery_attempted is True:
             order_status = constants.ORDER_STATUS_DELIVERY_ATTEMPTED
             delivered_at = constants.DELIVERED_AT_NONE
         else:
             order_status = constants.ORDER_STATUS_DELIVERED
-            delivered_at = request.data.get('delivered_at')
-               
+            delivered_at = request.data.get('delivered_at')               
             try:
                 if delivered_at == 'DOOR_STEP' or delivered_at == 'SECURITY' or delivered_at == 'RECEPTION' or delivered_at == 'CUSTOMER':
                     pass
@@ -1394,27 +1518,7 @@ class OrderViewSet(viewsets.ViewSet):
                 }
                 return Response(content, status = status.HTTP_400_BAD_REQUEST)
         # ----------------------------------------------------------------
-        
-        # POD -------------------------------------------------------------
-        pod = request.data.get('pod')
-        new_pod = None
-        try:
-            if pod is not None:
-                receiver_name = pod['receiver_name']
-                signature_name = pod['signature']
-                pictures = pod['image_names']
                 
-                signature = Picture.objects.create(name = signature_name)
-                new_pod = ProofOfDelivery.objects.create(receiver_name = receiver_name, signature = signature)
-                for picture in pictures:
-                    new_pod.pictures.add(Picture.objects.create(name = picture))                       
-        except:
-            content = {
-            'error':'An error with pod parameters'
-            }
-            return Response(content, status = status.HTTP_400_BAD_REQUEST)
-        # ----------------------------------------------------------------
-        
         # UPDATE THE DELIVERY STATUS OF THE PARTICULAR DAY ----------------------
         date_string = request.data.get('date')
         if is_recurring_order(order) and date_string is None:
@@ -1435,33 +1539,25 @@ class OrderViewSet(viewsets.ViewSet):
         else:
              order_date = None
         # ------------------------------------------------------------------------
-
-        # PICK THE APPROPRIATE DELIVERY STATUS OBJECT -----------------------------
-        if is_recurring_order(order):
-            delivery_statuses = order.delivery_status.all()
-            for delivery_status in delivery_statuses:
-                if delivery_status.date.date() == order_date.date():
-                    final_delivery_status = delivery_status
-        else:
-            final_delivery_status = order.delivery_status.all().latest('date')
-        # -------------------------------------------------------------------------
-       
+        final_delivery_status = delivery_status_of_the_day(order, order_date)        
+        
         # UPDATING THE DELIVERY STATUS OF THE PARTICULAR DAY -----------------------
         is_order_updated = False
-        if final_delivery_status is not None and can_deliver_delivery_status(final_delivery_status):
-            final_delivery_status.order_status = order_status
-            final_delivery_status.delivered_at = delivered_at
-            final_delivery_status.completed_datetime = delivered_datetime
-            if is_cod_collected is not None:
-                final_delivery_status.is_cod_collected = is_cod_collected
-            if new_pod is not None:
-                final_delivery_status.delivery_proof = new_pod                    
-            if cod_remarks is not None:
-                final_delivery_status.cod_remarks = cod_remarks
-            if cod_collected_amount is not None:
-                final_delivery_status.cod_collected_amount = cod_collected_amount
-            final_delivery_status.save()
-            is_order_updated = True
+        if can_updated_order(final_delivery_status, constants.ORDER_STATUS_DELIVERED):
+            try:
+                # POD -------------------------------------------------------------
+                pod_dict = request.data.get('pod')
+                new_pod = None
+                if pod_dict is not None:
+                    new_pod = create_proof(pod_dict)
+                # ----------------------------------------------------------------
+                if order_status == constants.ORDER_STATUS_DELIVERY_ATTEMPTED:
+                    update_delivery_status_delivery_attempted(final_delivery_status, delivery_remarks, delivered_datetime)
+                else:    
+                    update_delivery_status_delivered(final_delivery_status, delivered_at, delivered_datetime, is_cod_collected, new_pod, delivery_remarks, cod_collected_amount)
+                is_order_updated = True
+            except Exception, e:
+                log_exception(e, 'order_delivered')
         else:
             content = {
             'error': "The order has already been processed, now you cant update the status."
@@ -1470,8 +1566,7 @@ class OrderViewSet(viewsets.ViewSet):
         # -----------------------------------------------------------------------       
         
         # Final Response ---------------------------------------------------------
-        if is_order_updated:
-            
+        if is_order_updated:            
             # CONFIRMATION MESSAGE TO CUSTOMER --------------------------------------
             if cod_collected_amount is not None and float(cod_collected_amount) > 0:
                 end_consumer_phone_number = order.consumer.user.username
@@ -1571,18 +1666,14 @@ class OrderViewSet(viewsets.ViewSet):
         dg = get_object_or_404(DeliveryGuy, id = dg_id)
         for order_id in order_ids:
             order = get_object_or_404(Order, id = order_id)
+            if is_user_permitted_to_update_order(request.user, order) is False:
+                content = {
+                'error': "You don't have permissions to update this order."
+                }
+                return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
-            # PICK THE APPROPRIATE DELIVERY STATUS OBJECT ---------------
-            final_delivery_status = None
-            if is_recurring_order(order):
-                delivery_statuses = order.delivery_status.all()
-                for delivery_status in delivery_statuses:
-                    if delivery_status.date.date() == date.date():
-                        final_delivery_status = delivery_status
-            else:
-                final_delivery_status = order.delivery_status.all().latest('date')
-            # -------------------------------------------------------------
-
+            final_delivery_status = delivery_status_of_the_day(order, date)
+            
             # Final Assignment -------------------------------------------
             if final_delivery_status is not None:
                 if assignment_type == 'pickup':
