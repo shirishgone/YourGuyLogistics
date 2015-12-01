@@ -1601,18 +1601,8 @@ class OrderViewSet(viewsets.ViewSet):
         # ---------------------------------------------------------------
         
         order = get_object_or_404(Order, id = pk)
+        final_delivery_status = delivery_status_of_the_day(order, order_date)
         
-        # PICK THE APPROPRIATE DELIVERY STATUS OBJECT ---------------
-        final_delivery_status = None
-        if is_recurring_order(order):
-            delivery_statuses = order.delivery_status.all()
-            for delivery_status in delivery_statuses:
-                if delivery_status.date.date() == order_date.date():
-                    final_delivery_status = delivery_status
-        else:
-            final_delivery_status = order.delivery_status.all().latest('date')
-        # -------------------------------------------------------------
-
         content = {
         'delivery_status_id': final_delivery_status.id
         }
@@ -1676,7 +1666,7 @@ class OrderViewSet(viewsets.ViewSet):
                 is_orders_assigned = True
             # -------------------------------------------------------------
         
-        # INFORM DG THROUGH SMS AND NOTIF IF ITS TODAYS DELIVERY ----------
+        # INFORM DG THROUGH SMS AND NOTIF IF ITS ONLY TODAYS DELIVERY -----
         if is_orders_assigned is True:
             try:
                 if is_today_date(date):
