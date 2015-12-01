@@ -1276,7 +1276,6 @@ class OrderViewSet(viewsets.ViewSet):
         try:
             order_ids   = request.data['order_ids']
             date_string = request.data['date']
-            order_date  = parse_datetime(date_string)
             delivery_remarks = request.data['delivery_remarks']
             pickedup_datetime_string = request.data['pick_attempted_datetime']
         except Exception, e:
@@ -1286,11 +1285,12 @@ class OrderViewSet(viewsets.ViewSet):
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
         
         try:
+            order_date  = parse_datetime(date_string)
             pickedup_datetime = parse_datetime(pickedup_datetime_string)            
         except Exception, e:
             log_exception(e, 'parsing date in multiple_pickup_attempted')
             content = {
-            'error':'Parsing error for pickedup_datetime'
+            'error':'Parsing error for pickedup_datetime or date'
             }
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
             
@@ -1412,26 +1412,20 @@ class OrderViewSet(viewsets.ViewSet):
         # ----------------------------------------------------------------------------
         
         # DATA FILTERING FOR RECURRING ORDERS -----------------------
-        date_string = request.data.get('date')
-        if is_recurring_order(order) and date_string is None:
+        date_string = request.data['date']
+        try:
+            order_date = parse_datetime(date_string)
+        except Exception, e:
             content = {
-            'error':'Incomplete parameters', 
-            'description':'date parameter is mandatory for recurring orders'
+            'error':'Incorrect date', 
+            'description':'date format is not appropriate'
             }
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
-        elif is_recurring_order(order) and date_string is not None:
-            try:
-                order_date = parse_datetime(date_string)
-            except Exception, e:
-                content = {
-                'error':'Incorrect date', 
-                'description':'date format is not appropriate'
-                }
-                return Response(content, status = status.HTTP_400_BAD_REQUEST)
-        # -----------------------------------------------------------
+        # ----------------------------------------------------------------------------
+        
         is_order_updated = False
         is_order_picked_up = False
-        final_delivery_status = delivery_status_of_the_day(order , order_date)
+        final_delivery_status = delivery_status_of_the_day(order, order_date)
         
         if can_updated_order(final_delivery_status, constants.ORDER_STATUS_INTRANSIT):
             if pickup_attempted is not None and pickup_attempted == True:
