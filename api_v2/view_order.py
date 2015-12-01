@@ -1480,6 +1480,7 @@ class OrderViewSet(viewsets.ViewSet):
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
                 
         # REQUEST PARAMETERS ---------------------------------------------
+        date_string = request.data['date']
         is_cod_collected = request.data.get('cod_collected')        
         cod_collected_amount = request.data.get('cod_collected_amount')
         delivery_remarks = request.data.get('cod_remarks')
@@ -1519,26 +1520,17 @@ class OrderViewSet(viewsets.ViewSet):
                 return Response(content, status = status.HTTP_400_BAD_REQUEST)
         # ----------------------------------------------------------------
                 
-        # UPDATE THE DELIVERY STATUS OF THE PARTICULAR DAY ----------------------
-        date_string = request.data.get('date')
-        if is_recurring_order(order) and date_string is None:
+        # UPDATE THE DELIVERY STATUS OF THE PARTICULAR DAY ----------------------        
+        try:
+            order_date = parse_datetime(date_string)
+        except Exception, e:
             content = {
-            'error':'Incomplete parameters', 
-            'description':'date parameter is mandatory for recurring orders'
+            'error':'Incorrect date', 
+            'description':'date format is not appropriate'
             }
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
-        elif is_recurring_order(order) and date_string is not None:
-            try:
-                order_date = parse_datetime(date_string)
-            except Exception, e:
-                content = {
-                'error':'Incorrect date', 
-                'description':'date format is not appropriate'
-                }
-                return Response(content, status = status.HTTP_400_BAD_REQUEST)
-        else:
-             order_date = None
         # ------------------------------------------------------------------------
+        
         final_delivery_status = delivery_status_of_the_day(order, order_date)        
         
         # UPDATING THE DELIVERY STATUS OF THE PARTICULAR DAY -----------------------
