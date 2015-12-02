@@ -1332,12 +1332,13 @@ class OrderViewSet(viewsets.ViewSet):
         try:
             order_ids   = request.data['order_ids']
             date_string = request.data['date'] 
-            pickedup_datetime_string = request.data['pickedup_datetime']
-            pop_dict = request.data['pop']
-            delivery_remarks = request.data['delivery_remarks']
+            
+            pickedup_datetime_string = request.data.get('pickedup_datetime')
+            pop_dict = request.data.get('pop')
+            delivery_remarks = request.data.get('delivery_remarks')
         except Exception, e:
             content = {
-            'error':'order_ids, date, pickedup_datetime, delivery_remarks, pop are mandatory parameters'
+            'error':'order_ids, date, pickedup_datetime are mandatory parameters and pop, delivery_remarks are optional'
             }
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
         # -------------------------------------------------------------------
@@ -1345,7 +1346,10 @@ class OrderViewSet(viewsets.ViewSet):
         # DATE FORMAT CHECK -------------------------------------------------
         try:
             order_date  = parse_datetime(date_string)
-            pickedup_datetime = parse_datetime(pickedup_datetime_string) 
+            if pickedup_datetime_string is not None:
+                pickedup_datetime = parse_datetime(pickedup_datetime_string) 
+            else: 
+                pickedup_datetime = datetime.now() 
         except Exception, e:
             content = {
             'error':'date format error'
