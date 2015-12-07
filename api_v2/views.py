@@ -168,15 +168,22 @@ def daily_report(request):
         total_dg_checked_in_count = DGAttendance.objects.filter(date__year = date.year, date__month = date.month, date__day = date.day).count()
         dg_checkin_percentage = "{0:.0f}%".format(float(total_dg_checked_in_count)/float(total_dg_count) * 100)
         # -----------------------------------------------------------------------------------
-    
+        
         # TOTAL COD COLLECTED Vs SUPPOSSED TO BE COLLECTED ----------------------------------
         total_cod_collected = delivery_statuses_today.aggregate(Sum('cod_collected_amount'))
         total_cod_collected = total_cod_collected['cod_collected_amount__sum']
 
+        executable_deliveries = delivery_statuses_today.filter(Q(order_status = 'QUEUED') | Q(order_status = 'INTRANSIT') | Q(order_status = 'DELIVERED') |  Q(order_status = 'DELIVERYATTEMPTED') | Q(order_status = 'PICKUPATTEMPTED'))
         orders = Order.objects.filter(delivery_status = delivery_statuses_today)
-        total_cod_to_be_collected = orders.aggregate(Sum('cod_amount'))
+        executable_orders = Order.objects.filter(delivery_status = executable_deliveries)
+
+        total_cod_to_be_collected = executable_orders.aggregate(Sum('cod_amount'))
         total_cod_to_be_collected = total_cod_to_be_collected['cod_amount__sum']
-        cod_collected_percentage = "{0:.0f}%".format(float(total_cod_collected)/float(total_cod_to_be_collected) * 100)
+        
+        if total_cod_to_be_collected > 0:
+            cod_collected_percentage = "{0:.0f}%".format(float(total_cod_collected)/float(total_cod_to_be_collected) * 100)
+        else:
+            cod_collected_percentage = "100%"    
         # -----------------------------------------------------------------------------------
 
         # DELIVERY BOY WHO HAVE COD --------------------------------------------------------    
@@ -189,7 +196,6 @@ def daily_report(request):
             total = item['total']
             cod_with_dg_string = cod_with_dg_string + "\n%s = %s" % (delivery_guy, total)
         # -----------------------------------------------------------------------------------
-
 
         # SEND AN EMAIL SAYING CANT FIND APPROPRAITE DELIVERY GUY FOR THIS ORDER. PLEASE ASSIGN MANUALLY
         today_string = datetime.now().strftime("%Y %b %d")
