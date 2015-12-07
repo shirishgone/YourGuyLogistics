@@ -15,7 +15,7 @@ def is_correct_pincode(pincode):
 
 def is_pickup_time_acceptable(pickup_datetime):		
 	current_datetime = datetime.now()
-	if time(0, 0) <= current_datetime.time() <= time(16, 30) and pickup_datetime.date() >= current_datetime.date():
+	if time(0, 0) <= pickup_datetime.time() <= time(16, 30) and pickup_datetime.date() >= current_datetime.date():
 		return True
 	else:
 		return False
