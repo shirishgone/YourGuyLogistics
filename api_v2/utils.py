@@ -13,11 +13,12 @@ def is_correct_pincode(pincode):
 	else: 	
 		return False
 
-def is_pickup_time_acceptable(datetime):
-    if time(0, 0) <= datetime.time() <= time(16, 30):
-        return True
-    else:
-        return False
+def is_pickup_time_acceptable(pickup_datetime):		
+	current_datetime = datetime.now()
+	if time(0, 0) <= current_datetime.time() <= time(16, 30) and pickup_datetime.date() >= current_datetime.date():
+		return True
+	else:
+		return False
 
 def is_vendor_has_same_address_already(vendor, pincode):
 	try:

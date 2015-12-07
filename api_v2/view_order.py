@@ -680,8 +680,8 @@ class OrderViewSet(viewsets.ViewSet):
                 pickup_datetime = parse_datetime(pickup_datetime)
                 if is_pickup_time_acceptable(pickup_datetime) is False:
                     content = {
-                    'error':'Pickup time not acceptable', 
-                    'description':'Pickup time can only be between 5.30AM to 10.00PM'
+                    'error':'Pickup date or time not acceptable', 
+                    'description':'Pickup time can only be between 5.30AM to 10.00PM and past dates are not allowed'
                     }
                     return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
@@ -859,9 +859,16 @@ class OrderViewSet(viewsets.ViewSet):
             return Response(content, status = status.HTTP_400_BAD_REQUEST)    
         # --------------------------------------------------------------
         
-        # CREATING NEW ORDER FOR EACH CUSTOMER -------------------------
+        # DATE TIMES  -------------------------------------------------
         time_obj = time.strptime(timeslot_start,"%H:%M:%S")
         pickup_datetime = order_datetime.replace(hour = time_obj.tm_hour, minute = time_obj.tm_min)
+        
+        if is_pickup_time_acceptable(pickup_datetime) is False:
+        	content = {
+        	'error':'Pickup date or time not acceptable', 
+        	'description':'Pickup time can only be between 5.30AM to 10.00PM and past dates are not allowed'
+        	}
+        	return Response(content, status = status.HTTP_400_BAD_REQUEST)
         
         delivery_timedelta = timedelta(hours = 4, minutes = 0) # DELIVERY IS 4 HOURS FROM PICKUP
         delivery_datetime = pickup_datetime + delivery_timedelta
@@ -959,28 +966,27 @@ class OrderViewSet(viewsets.ViewSet):
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
         # PARSING REQUEST PARAMS ------------------------
-        try:            
-            pickup_datetime = request.data['pickup_datetime']
-            
-            consumer_name = request.data['customer_name']
-            consumer_phone_number = request.data['customer_phone_number']
-    
-            pickup_address = request.data['pickup_address']
-            delivery_address = request.data['delivery_address']
-            is_reverse_pickup = request.data['is_reverse_pickup']            
-            
-            order_items = request.data['order_items']
+        try:
+        	pickup_datetime = request.data['pickup_datetime']
+        	consumer_name = request.data['customer_name']
+        	consumer_phone_number = request.data['customer_phone_number']
 
-            total_cost = request.data.get('total_cost')
-            vendor_order_id = request.data.get('vendor_order_id')
-            
-            cod_amount = request.data.get('cod_amount')
-            notes = request.data.get('notes')
+        	pickup_address = request.data['pickup_address']
+        	delivery_address = request.data['delivery_address']
+        	is_reverse_pickup = request.data['is_reverse_pickup']            
+
+        	order_items = request.data.get('order_items')
+
+        	total_cost = request.data.get('total_cost')
+        	vendor_order_id = request.data.get('vendor_order_id')
+
+        	cod_amount = request.data.get('cod_amount')
+        	notes = request.data.get('notes')
 
         except Exception, e:
             content = {
             'error':'Incomplete parameters', 
-            'description':'pickup_datetime, customer_name, customer_phone_number, pickup_address{pickup_full_address, pickup_pin_code, pickup_landmark(optional)}, delivery_address{delivery_full_address, delivery_pin_code, delivery_landmark(optional)}, is_reverse_pickup, order_items { product_id, quantity }, total_cost, vendor_order_id, cod_amount, notes'
+            'description':'pickup_datetime, customer_name, customer_phone_number, pickup_address{full_address, pin_code, landmark(optional)}, delivery_address{full_address, pin_code, landmark(optional)}, is_reverse_pickup, order_items { product_id, quantity } (optional), total_cost(optional), vendor_order_id(optional), cod_amount(optional), notes(optional)'
             }
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
         # ---------------------------------------------------
@@ -989,11 +995,11 @@ class OrderViewSet(viewsets.ViewSet):
         try:
             pickup_datetime = parse_datetime(pickup_datetime)
             if is_pickup_time_acceptable(pickup_datetime) is False:
-                content = {
-                'error':'Pickup time not acceptable', 
-                'description':'Pickup time can only be between 5.30AM to 10.00PM'
-                }
-                return Response(content, status = status.HTTP_400_BAD_REQUEST)
+            	content = {
+            	'error':'Pickup date or time not acceptable',
+            	'description':'Pickup time can only be between 5.30AM to 10.00PM and past dates are not allowed'
+            	}
+            	return Response(content, status = status.HTTP_400_BAD_REQUEST)            
             
             delivery_timedelta = timedelta(hours = 4, minutes = 0)
             delivery_datetime = pickup_datetime + delivery_timedelta
@@ -1069,8 +1075,8 @@ class OrderViewSet(viewsets.ViewSet):
                 delivery_landmark = delivery_address.get('landmark')
             except:
                 content = {
-                'error':' Insufficient or incorrect parameters',
-                'description':'pickup_full_address, pickup_pin_code, pickup_landmark(optional), delivery_full_address, delivery_pin_code, delivery_landmark(optional)'
+                'error':' Address issue',
+                'description':'full_address, pincode, landmark [optional]'
                 }
                 return Response(content, status = status.HTTP_400_BAD_REQUEST)
             # ---------------------------------------------------
@@ -1170,15 +1176,6 @@ class OrderViewSet(viewsets.ViewSet):
             new_order.save()
             # ---------------------------------------------------
             
-            # CONFIRMATION MESSAGE TO OPS -------------------------
-            # message = constants.ORDER_PLACED_MESSAGE_OPS.format(new_order.id, vendor.store_name)
-            # send_sms(constants.OPS_PHONE_NUMBER, message)
-
-            # CONFIRMATION MESSAGE TO CUSTOMER ------------------
-            # message_client = constants.ORDER_PLACED_MESSAGE_CLIENT.format(new_order.id)
-            # send_sms(vendor.phone_number, message_client)
-            # ---------------------------------------------------
-
             content = {
             'data':{
             'order_id':new_order.id
@@ -1251,7 +1248,7 @@ class OrderViewSet(viewsets.ViewSet):
     @list_route(methods=['put'])
     def report(self, request, pk=None):
         try:
-            order_ids   = request.data['order_ids']
+            order_ids = request.data['order_ids']
         except Exception, e:
             content = {
             'error':'order_ids are mandatory parameters'
@@ -1264,7 +1261,8 @@ class OrderViewSet(viewsets.ViewSet):
             subject = 'DeliveryBoy Reported Issue'
             body = 'Hello, \nDelivery Boy %s has reported some issue about the following orders. \nOrder nos:%s \nPlease check \n\n-Team YourGuy' % (delivery_guy.user.first_name, order_ids)
             send_email(constants.OPS_EMAIL_IDS, subject, body)
-            return Response(status = status.HTTP_200_OK)
+            content = 'Successfully Reported'
+            return Response(content, status = status.HTTP_200_OK)
         else:
             content = {
             'error':'You dont have permissions to report about the orders'
