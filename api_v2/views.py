@@ -91,7 +91,7 @@ def assign_dg():
     email_subject = 'Unassigned orders for %s' % (today_string) 
     
     email_body = "Good Morning Guys, \nUnassigned Orders: %s \nPlease assign manually. \n\n- Team YourGuy" % (unassigned_order_ids)
-    send_email(constants.EMAIL_IDS_EVERYBODY, email_subject, email_body)
+    send_email(constants.EMAIL_UNASSIGNED_ORDERS, email_subject, email_body)
     # ------------------------------------------------------------------------------------------------  
 
     # TODO
@@ -229,7 +229,7 @@ def daily_report(request):
         email_body = email_body + "\n-----------------------------------"    
         email_body = email_body + "\n\n- YourGuy BOT"
 
-        send_email(constants.EMAIL_IDS_EVERYBODY, email_subject, email_body)
+        send_email(constants.EMAIL_DAILY_REPORT, email_subject, email_body)
         # ------------------------------------------------------------------------------------------------  
     
     return Response(status = status.HTTP_200_OK)

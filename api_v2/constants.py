@@ -9,10 +9,12 @@ DELIVERY_GUY = 'deliveryguy'
 OPS_PHONE_NUMBER = '+919820252216'
 FROM_MAIL_ID = 'hi@yourguy.in'
 
+EMAIL_UNASSIGNED_ORDERS = ['tech@yourguy.in', 'alay@yourguy.in','ops@yourguy.in']
+EMAIL_DAILY_REPORT = ['tech@yourguy.in', 'alay@yourguy.in', 'ops@yourguy.in', 'bd@yourguy.in']
+
 TO_EMAIL_IDS = ['tech@yourguy.in','alay@yourguy.in', 'sameet@yourguy.in', 'winston@yourguy.in']
 OPS_EMAIL_IDS = ['tech@yourguy.in','alay@yourguy.in', 'rakesh@yourguy.in', 'santosh@yourguy.in', 'sameet@yourguy.in']
 EMAIL_IDS_EVERYBODY = ['tech@yourguy.in', 'alay@yourguy.in', 'sameet@yourguy.in', 'winston@yourguy.in', 'rakesh@yourguy.in', 'santosh@yourguy.in', 'vinit@yourguy.in', 'aquid@yourguy.in', 'saurabh@yourguy.in', 'smit@yourguy.in', 'kenneth@yourguy.in', 'bhawna.yourguy@gmail.com', 'sonali.a@yourguy.in', 'bernard.d@yourguy.in', 'sandesh.b@yourguy.in']
-
 
 GCM_PUSH_API_KEY = 'AIzaSyCmXulcUBViokrkYZ9Z9bWJgEWgXyeNh1U'
 GCM_SENDER_ID = '559449819463'
