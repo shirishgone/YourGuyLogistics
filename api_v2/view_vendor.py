@@ -153,7 +153,8 @@ class VendorViewSet(viewsets.ModelViewSet):
         
         # CHECK IF THE VENDOR HAS ALREADY REQUESTED FOR AN ACCOUNT ------------------------
         existing_vendors = Vendor.objects.filter(phone_number=phone_number)
-        if len(existing_vendors) > 0:
+        existing_users = User.objects.filter(username = phone_number)
+        if len(existing_vendors) > 0 or len(existing_users) > 0:
             content = {'error':'Already exists', 'description':'Vendor with similar details already exists'}
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
         # ----------------------------------------------------------------------------------
