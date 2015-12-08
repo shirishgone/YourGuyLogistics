@@ -114,10 +114,7 @@ def fill_order_ids(request):
 		'description':'Only admin can access this method'
 		}
 		return Response(content, status = status.HTTP_400_BAD_REQUEST)
-	else:
-		import pdb
-		pdb.set_trace()
-		
+	else:		
 		all_orders = Order.objects.filter(delivery_status__order_id_in_order_table = 0).prefetch_related('delivery_status')
 		for order in all_orders:
 			all_deliveries = order.delivery_status.all()
