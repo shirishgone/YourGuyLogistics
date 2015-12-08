@@ -126,7 +126,7 @@ def attach_order_to_deliverystatus(request):
 		return Response(content, status = status.HTTP_400_BAD_REQUEST)
 	else:
 		all_delivery_status = OrderDeliveryStatus.objects.filter(order = None, order_id_in_order_table__gt = 0)
-		mini_delivery_statuses = all_delivery_status[0:3000]
+		mini_delivery_statuses = all_delivery_status[0:2000]
 		for delivery_status in mini_delivery_statuses:
 			try:
 				order = get_object_or_404(Order, pk = delivery_status.order_id_in_order_table)
