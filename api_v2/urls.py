@@ -12,18 +12,18 @@ from api_v2 import views
 
 urlpatterns = patterns(
 	'',
-	url(r'^is_recurring_var_setting/', utils.is_recurring_var_setting, name = 'is_recurring_var_setting'),
-	url(r'^delivery_status_update/', utils.delivery_status_update, name = 'delivery_status_update'),
-	url(r'^fill_full_address/', utils.fill_full_address, name = 'fill_full_address'),
 	url(r'^cron/', views.cron_trial, name = 'cron_trial'),
 	url(r'^daily_report/', views.daily_report, name = 'daily_report'),
 	url(r'^dashboard_report/', view_dashboard.report, name = 'dashboard_report'),
 	url(r'^excel_download/', view_dashboard.excel_download, name = 'excel_download'),
-	url(r'^fill_order_ids/', utils.fill_order_ids, name = 'fill_order_ids'),
-	url(r'^attach_order_to_deliverystatus/', utils.attach_order_to_deliverystatus, name = 'attach_order_to_deliverystatus'),
-	url(r'^delivery_status_without_order_id/', utils.delivery_status_without_order_id, name = 'delivery_status_without_order_id'),
-	url(r'^delivery_status_without_order/', utils.delivery_status_without_order, name = 'delivery_status_without_order'),
-	url(r'^remove_delivery_status_without_order_ids/', utils.remove_delivery_status_without_order_ids, name = 'remove_delivery_status_without_order_ids'),	
+	#url(r'^is_recurring_var_setting/', utils.is_recurring_var_setting, name = 'is_recurring_var_setting'),
+	#url(r'^delivery_status_update/', utils.delivery_status_update, name = 'delivery_status_update'),
+	#url(r'^fill_full_address/', utils.fill_full_address, name = 'fill_full_address'),
+	# url(r'^fill_order_ids/', utils.fill_order_ids, name = 'fill_order_ids'),
+	# url(r'^attach_order_to_deliverystatus/', utils.attach_order_to_deliverystatus, name = 'attach_order_to_deliverystatus'),
+	# url(r'^delivery_status_without_order_id/', utils.delivery_status_without_order_id, name = 'delivery_status_without_order_id'),
+	# url(r'^delivery_status_without_order/', utils.delivery_status_without_order, name = 'delivery_status_without_order'),
+	# url(r'^remove_delivery_status_without_order_ids/', utils.remove_delivery_status_without_order_ids, name = 'remove_delivery_status_without_order_ids'),	
 )
 router = DefaultRouter()
 router.register(r'consumer', ConsumerViewSet)
