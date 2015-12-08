@@ -116,7 +116,7 @@ def fill_order_ids(request):
 		return Response(content, status = status.HTTP_400_BAD_REQUEST)
 	else:		
 		all_orders = Order.objects.filter(delivery_status__order_id_in_order_table = 0).prefetch_related('delivery_status')
-		updating_orders = all_orders[0:5000]
+		updating_orders = all_orders[0:2000]
 		for order in updating_orders:
 			all_deliveries = order.delivery_status.all()
 			for delivery_status in all_deliveries:
