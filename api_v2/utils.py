@@ -138,6 +138,23 @@ def attach_order_to_deliverystatus(request):
 		return Response(content, status = status.HTTP_200_OK)
 
 @api_view(['GET'])
+def remove_delivery_status_without_order_ids(request):
+	if request.user.is_staff is False:
+		content = {
+		'error':'insufficient permissions', 
+		'description':'Only admin can access this method'
+		}
+		return Response(content, status = status.HTTP_400_BAD_REQUEST)
+	else:
+		all_delivery_status = OrderDeliveryStatus.objects.filter(order_id_in_order_table__gt = 0)		
+		updating_delivery_statuses = all_delivery_status[0:1000]
+		for delivery_status in updating_delivery_statuses:
+			delivery_status.delete()
+		content = {'data':'Done saving order ids'}
+		return Response(content, status = status.HTTP_200_OK)
+
+
+@api_view(['GET'])
 def fill_order_ids(request):
 	if request.user.is_staff is False:
 		content = {
