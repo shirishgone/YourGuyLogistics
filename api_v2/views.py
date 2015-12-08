@@ -52,7 +52,7 @@ def assign_dg():
     # --------------------------------------------------------------------
     for delivery_status in delivery_status_queryset.all():
         try:
-            order = get_object_or_404(Order, delivery_status = delivery_status)
+            order = delivery_status.order
             
             # CUSTOMER AND VENDOR FILTERING -----------------------------------------------------------------
             vendor = order.vendor
@@ -101,7 +101,6 @@ def assign_dg():
 
 @api_view(['GET'])
 def daily_report(request):
-    
     date = datetime.today()
     day_start = ist_day_start(date)
     day_end = ist_day_end(date)
@@ -168,17 +167,14 @@ def daily_report(request):
         total_dg_checked_in_count = DGAttendance.objects.filter(date__year = date.year, date__month = date.month, date__day = date.day).count()
         dg_checkin_percentage = "{0:.0f}%".format(float(total_dg_checked_in_count)/float(total_dg_count) * 100)
         # -----------------------------------------------------------------------------------
-        
+
         # TOTAL COD COLLECTED Vs SUPPOSSED TO BE COLLECTED ----------------------------------
         total_cod_collected = delivery_statuses_today.aggregate(Sum('cod_collected_amount'))
         total_cod_collected = total_cod_collected['cod_collected_amount__sum']
 
         executable_deliveries = delivery_statuses_today.filter(Q(order_status = 'QUEUED') | Q(order_status = 'INTRANSIT') | Q(order_status = 'DELIVERED') |  Q(order_status = 'DELIVERYATTEMPTED') | Q(order_status = 'PICKUPATTEMPTED'))
-        orders = Order.objects.filter(delivery_status = delivery_statuses_today)
-        executable_orders = Order.objects.filter(delivery_status = executable_deliveries)
-
-        total_cod_to_be_collected = executable_orders.aggregate(Sum('cod_amount'))
-        total_cod_to_be_collected = total_cod_to_be_collected['cod_amount__sum']
+        total_cod_dict = executable_deliveries.aggregate(total_cod = Sum('order__cod_amount'))
+        total_cod_to_be_collected = total_cod_dict['total_cod']
         
         if total_cod_to_be_collected > 0:
             cod_collected_percentage = "{0:.0f}%".format(float(total_cod_collected)/float(total_cod_to_be_collected) * 100)
