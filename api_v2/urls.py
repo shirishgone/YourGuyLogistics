@@ -23,6 +23,7 @@ urlpatterns = patterns(
 	url(r'^attach_order_to_deliverystatus/', utils.attach_order_to_deliverystatus, name = 'attach_order_to_deliverystatus'),
 	url(r'^delivery_status_without_order_id/', utils.delivery_status_without_order_id, name = 'delivery_status_without_order_id'),
 	url(r'^delivery_status_without_order/', utils.delivery_status_without_order, name = 'delivery_status_without_order'),
+	url(r'^remove_delivery_status_without_order_ids/', utils.remove_delivery_status_without_order_ids, name = 'remove_delivery_status_without_order_ids'),	
 )
 router = DefaultRouter()
 router.register(r'consumer', ConsumerViewSet)
