@@ -342,7 +342,8 @@ class OrderDeliveryStatus(models.Model):
 
     cod_collected_amount = models.FloatField(default = 0.0)
     cod_remarks = models.CharField(max_length = 500, blank = True)
-    
+    order_id_in_order_table = models.IntegerField(default = 0)
+
     def __unicode__(self):
         return u"%s - %s" % (self.id, self.delivered_at)
         
