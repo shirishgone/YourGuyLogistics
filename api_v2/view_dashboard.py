@@ -79,7 +79,7 @@ def excel_download(request):
 			order = delivery_status.order
 			excel_order = {
 			'date':date.strftime('%d-%m-%Y'),
-			'order_id':order.id,
+			'order_id':delivery_status.id,
 			'customer_name':order.consumer.user.first_name,
 			'customer_phone_number':order.consumer.user.username,
 			'cod_amount':order.cod_amount,
