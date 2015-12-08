@@ -858,6 +858,7 @@ class OrderViewSet(viewsets.ViewSet):
 
             for date in delivery_dates:
                 delivery_status = OrderDeliveryStatus.objects.create(date = date, order = new_order)
+                new_order_ids.append(delivery_status.id)
 
             if len(delivery_dates) > 1:
                 new_order.is_recurring = True
@@ -868,7 +869,6 @@ class OrderViewSet(viewsets.ViewSet):
             # -------------------------------------------------------------           
             
             new_order.save()
-            new_order_ids.append(new_order.id)
         # -------------------------------------------------------------       
         
         # FINAL RESPONSE ----------------------------------------------
