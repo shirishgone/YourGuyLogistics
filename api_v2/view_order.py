@@ -117,14 +117,6 @@ def can_updated_order(delivery_status, status):
     else:
         return False
 
-def delivery_status_of_the_day(order, date):
-    delivery_item = None
-    for delivery_status in order.delivery_status.all():
-        if date.date() == delivery_status.date.date():
-            delivery_item = delivery_status
-            break                
-    return delivery_item    
-
 def create_proof(proof_dict):
     try:
         if proof_dict is not None:
@@ -193,43 +185,43 @@ def address_string(address):
         print e
         return ''
     
-def order_details(order, delivery_status):
-    if order.pickup_datetime is not None:
-        new_pickup_datetime = datetime.combine(delivery_status.date, order.pickup_datetime.time())
+def order_details(delivery_status):
+    if delivery_status.order.pickup_datetime is not None:
+        new_pickup_datetime = datetime.combine(delivery_status.date, delivery_status.order.pickup_datetime.time())
         new_pickup_datetime = pytz.utc.localize(new_pickup_datetime)
     else:
         new_pickup_datetime = None
 
-    if order.delivery_datetime is not None:
-        new_delivery_datetime = datetime.combine(delivery_status.date, order.delivery_datetime.time())
+    if delivery_status.order.delivery_datetime is not None:
+        new_delivery_datetime = datetime.combine(delivery_status.date, delivery_status.order.delivery_datetime.time())
         new_delivery_datetime = pytz.utc.localize(new_delivery_datetime)
     else:
         new_delivery_datetime = None
         
     res_order = {
-            'id' : order.id,
+            'id' : delivery_status.id,
             'pickup_datetime' : new_pickup_datetime,
             'delivery_datetime' : new_delivery_datetime,
-            'pickup_address':address_string(order.pickup_address),
-            'delivery_address':address_string(order.delivery_address),
+            'pickup_address':address_string(delivery_status.order.pickup_address),
+            'delivery_address':address_string(delivery_status.order.delivery_address),
             'status' : delivery_status.order_status,
-            'is_recurring' : order.is_recurring,
-            'cod_amount' : order.cod_amount,
-            'customer_name' : order.consumer.user.first_name,
-            'customer_phonenumber' : order.consumer.user.username,
-            'vendor_name' : order.vendor.store_name,
+            'is_recurring' : delivery_status.order.is_recurring,
+            'cod_amount' : delivery_status.order.cod_amount,
+            'customer_name' : delivery_status.order.consumer.user.first_name,
+            'customer_phonenumber' : delivery_status.order.consumer.user.username,
+            'vendor_name' : delivery_status.order.vendor.store_name,
             'delivered_at' : delivery_status.delivered_at,
             
-            'order_placed_datetime': order.created_date_time,
+            'order_placed_datetime': delivery_status.order.created_date_time,
             'pickedup_datetime' : delivery_status.pickedup_datetime,
             'completed_datetime' : delivery_status.completed_datetime,
-            'notes':order.notes,
-            'vendor_order_id':order.vendor_order_id,
-            'vendor_phonenumber':order.vendor.phone_number,
-            'total_cost':order.total_cost,
+            'notes':delivery_status.order.notes,
+            'vendor_order_id':delivery_status.order.vendor_order_id,
+            'vendor_phonenumber':delivery_status.order.vendor.phone_number,
+            'total_cost':delivery_status.order.total_cost,
             'cod_collected_amount':delivery_status.cod_collected_amount,
             'cod_remarks':delivery_status.cod_remarks,
-            'delivery_charges':order.delivery_charges
+            'delivery_charges':delivery_status.order.delivery_charges
             }
 
     if delivery_status.pickup_guy is not None:
@@ -251,7 +243,7 @@ def order_details(order, delivery_status):
         res_order['deliveryguy_phonenumber'] = None
 
     order_items_array = []
-    for order_item in order.order_items.all():
+    for order_item in delivery_status.order.order_items.all():
         order_item_obj = {}
         order_item_obj['product_name'] = order_item.product.name
         order_item_obj['quantity'] = order_item.quantity
@@ -262,36 +254,34 @@ def order_details(order, delivery_status):
     return res_order
 
 
-def update_daily_status(order, date):
-    delivery_status = delivery_status_of_the_day(order, date)
+def update_daily_status(delivery_status):
     if delivery_status is not None:
-        
-        if order.pickup_datetime is not None:
-            new_pickup_datetime = datetime.combine(date, order.pickup_datetime.time())
+        if delivery_status.order.pickup_datetime is not None:
+            new_pickup_datetime = datetime.combine(delivery_status.date, delivery_status.order.pickup_datetime.time())
             new_pickup_datetime = pytz.utc.localize(new_pickup_datetime)
         else:
             new_pickup_datetime = None
 
-        if order.delivery_datetime is not None:
-            new_delivery_datetime = datetime.combine(date, order.delivery_datetime.time())
+        if delivery_status.order.delivery_datetime is not None:
+            new_delivery_datetime = datetime.combine(delivery_status.date, delivery_status.order.delivery_datetime.time())
             new_delivery_datetime = pytz.utc.localize(new_delivery_datetime)
         else:
             new_delivery_datetime = None
 
         res_order = {
-            'id' : order.id,
+            'id' : delivery_status.id,
             'pickup_datetime' : new_pickup_datetime,
             'delivery_datetime' : new_delivery_datetime,
-            'pickup_address':address_string(order.pickup_address),
-            'delivery_address':address_string(order.delivery_address),
+            'pickup_address':address_string(delivery_status.order.pickup_address),
+            'delivery_address':address_string(delivery_status.order.delivery_address),
             'status' : delivery_status.order_status,
-            'is_recurring' : order.is_recurring,
-            'cod_amount' : order.cod_amount,
+            'is_recurring' : delivery_status.order.is_recurring,
+            'cod_amount' : delivery_status.order.cod_amount,
             'cod_collected':delivery_status.cod_collected_amount,
-            'customer_name' : order.consumer.user.first_name,
-            'vendor_name' : order.vendor.store_name,
+            'customer_name' : delivery_status.order.consumer.user.first_name,
+            'vendor_name' : delivery_status.order.vendor.store_name,
             'delivered_at' : delivery_status.delivered_at,
-            'is_reverse_pickup':order.is_reverse_pickup
+            'is_reverse_pickup':delivery_status.order.is_reverse_pickup
         }
 
         if delivery_status.delivery_guy is not None:
@@ -313,7 +303,7 @@ def update_daily_status(order, date):
             res_order['pickupguy_phonenumber'] = None
 
         order_items_array = []
-        for order_item in order.order_items.all():
+        for order_item in delivery_status.order.order_items.all():
             order_item_obj = {}
             order_item_obj['product_name'] = order_item.product.name
             order_item_obj['quantity'] = order_item.quantity
@@ -326,84 +316,63 @@ def update_daily_status(order, date):
     else:
         return None 
 
-def deliveryguy_list(order, date):
-    delivery_status = delivery_status_of_the_day(order, date)
-    if delivery_status is not None:
-        
-        if order.pickup_datetime is not None:
-            new_pickup_datetime = datetime.combine(date, order.pickup_datetime.time())
-            new_pickup_datetime = pytz.utc.localize(new_pickup_datetime)
-        else:
-            new_pickup_datetime = None
-
-        if order.delivery_datetime is not None:
-            new_delivery_datetime = datetime.combine(date, order.delivery_datetime.time())
-            new_delivery_datetime = pytz.utc.localize(new_delivery_datetime)
-        else:
-            new_delivery_datetime = None
-
-        res_order = {
-            'id' : order.id,
-            'pickup_datetime' : new_pickup_datetime,
-            'delivery_datetime' : new_delivery_datetime,
-            'pickup_address':address_string(order.pickup_address),
-            'delivery_address':address_string(order.delivery_address),
-            'status' : delivery_status.order_status,
-            'customer_name' : order.consumer.user.first_name,
-            'vendor_name' : order.vendor.store_name,
-            'vendor_order_id':order.vendor_order_id
-        }
-
-        if order.pickup_address.area is not None:
-            res_order['pickup_area_code'] = order.pickup_address.area.area_code
-        else:
-            res_order['pickup_area_code'] = None
-
-        if order.delivery_address.area is not None:
-            res_order['delivery_area_code'] = order.delivery_address.area.area_code
-        else:
-            res_order['delivery_area_code'] = None
-
-        return res_order
+def deliveryguy_list(delivery_status):
+    if delivery_status.order.pickup_datetime is not None:
+        new_pickup_datetime = datetime.combine(delivery_status.date, delivery_status.order.pickup_datetime.time())
+        new_pickup_datetime = pytz.utc.localize(new_pickup_datetime)
     else:
-        return None 
+        new_pickup_datetime = None
 
-def order_dict_dg(order, date):
-    delivery_status = delivery_status_of_the_day(order, date)
-    if delivery_status is not None:    
-        
-        if order.pickup_datetime is not None:
-            new_pickup_datetime = datetime.combine(date, order.pickup_datetime.time())
-            new_pickup_datetime = pytz.utc.localize(new_pickup_datetime)
-        else:
-            new_pickup_datetime = None
-
-        if order.delivery_datetime is not None:
-            new_delivery_datetime = datetime.combine(date, order.delivery_datetime.time())
-            new_delivery_datetime = pytz.utc.localize(new_delivery_datetime)
-        else:
-            new_delivery_datetime = None
-
-        res_order = {
-            'id' : order.id,
-            'pickup_datetime' : new_pickup_datetime,
-            'delivery_datetime' : new_delivery_datetime,
-            'pickup_address':address_string(order.pickup_address),
-            'delivery_address':address_string(order.delivery_address),
-            'status' : delivery_status.order_status,
-            'customer_name' : order.consumer.user.first_name,
-            'vendor_name' : order.vendor.store_name,
-            'vendor_order_id':order.vendor_order_id,
-            'cod_amount' : order.cod_amount,
-            'customer_phonenumber' : order.consumer.user.username,
-            'notes':order.notes,
-            'vendor_order_id':order.vendor_order_id,
-            'total_cost':order.total_cost,
-        }
-        return res_order
+    if delivery_status.order.delivery_datetime is not None:
+        new_delivery_datetime = datetime.combine(delivery_status.date, delivery_status.order.delivery_datetime.time())
+        new_delivery_datetime = pytz.utc.localize(new_delivery_datetime)
     else:
-        return None 
+        new_delivery_datetime = None
 
+    res_order = {
+        'id' : delivery_status.id,
+        'pickup_datetime' : new_pickup_datetime,
+        'delivery_datetime' : new_delivery_datetime,
+        'pickup_address':address_string(delivery_status.order.pickup_address),
+        'delivery_address':address_string(delivery_status.order.delivery_address),
+        'status' : delivery_status.order_status,
+        'customer_name' : delivery_status.order.consumer.user.first_name,
+        'vendor_name' : delivery_status.order.vendor.store_name,
+        'vendor_order_id':delivery_status.order.vendor_order_id
+    }
+    return res_order
+        
+
+def order_dict_dg(delivery_status):
+    if delivery_status.order.pickup_datetime is not None:
+        new_pickup_datetime = datetime.combine(delivery_status.date, delivery_status.order.pickup_datetime.time())
+        new_pickup_datetime = pytz.utc.localize(new_pickup_datetime)
+    else:
+        new_pickup_datetime = None
+
+    if delivery_status.order.delivery_datetime is not None:
+        new_delivery_datetime = datetime.combine(delivery_status.date, delivery_status.order.delivery_datetime.time())
+        new_delivery_datetime = pytz.utc.localize(new_delivery_datetime)
+    else:
+        new_delivery_datetime = None
+
+    res_order = {
+        'id' : delivery_status.id,
+        'pickup_datetime' : new_pickup_datetime,
+        'delivery_datetime' : new_delivery_datetime,
+        'pickup_address':address_string(delivery_status.order.pickup_address),
+        'delivery_address':address_string(delivery_status.order.delivery_address),
+        'status' : delivery_status.order_status,
+        'customer_name' : delivery_status.order.consumer.user.first_name,
+        'vendor_name' : delivery_status.order.vendor.store_name,
+        'vendor_order_id':delivery_status.order.vendor_order_id,
+        'cod_amount' : delivery_status.order.cod_amount,
+        'customer_phonenumber' : delivery_status.order.consumer.user.username,
+        'notes':delivery_status.order.notes,
+        'vendor_order_id':delivery_status.order.vendor_order_id,
+        'total_cost':delivery_status.order.total_cost,
+    }
+    return res_order
 
 class OrderViewSet(viewsets.ViewSet):
     """
@@ -416,48 +385,19 @@ class OrderViewSet(viewsets.ViewSet):
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
     def retrieve(self, request, pk=None):
-        order = get_object_or_404(Order, id = pk)
+        delivery_status = get_object_or_404(OrderDeliveryStatus, id = pk)
 
         # VENDOR PERMISSION CHECK ==============
         role = user_role(request.user)
         if role == 'vendor':
             vendor_agent = get_object_or_404(VendorAgent, user = request.user)
             vendor = vendor_agent.vendor
-            if order.vendor.id != vendor.id:
+            if delivery_status.order.vendor.id != vendor.id:
                 content = {'error':'Access privileges', 'description':'You cant access other vendor orders'}
                 return Response(content, status = status.HTTP_400_BAD_REQUEST)
-
-        # FETCH DATE PARAM FROM URL PARAMS, IF ITS RECURRING -------
-        date_string = self.request.QUERY_PARAMS.get('date', None)
-        if is_recurring_order(order):
-            if date_string is None:
-                content = {'error':'Insufficient params', 'description':'For recurring orders, date parameter in URL is compulsory'}
-                return Response(content, status = status.HTTP_400_BAD_REQUEST)
-            else:
-                date = parse_datetime(date_string)    
-        # -----------------------------------------------------------    
         
-        # PICK THE APPROPRIATE DELIVERY STATUS OBJECT ---------------
-        final_delivery_status = None
-        if is_recurring_order(order):
-            delivery_statuses = order.delivery_status.all()
-            for delivery_status in delivery_statuses:
-                if delivery_status.date.date() == date.date():
-                    final_delivery_status = delivery_status
-                    break
-        else:
-            final_delivery_status = order.delivery_status.all().latest('date')
-        # -----------------------------------------------------------
-        
-        if final_delivery_status is None:
-            content = {
-            'error':'Insufficient date for recurring order', 
-            'description':'The date you have passed doesnt match with the recurring order'
-            }
-            return Response(content, status = status.HTTP_400_BAD_REQUEST)
-        else:
-            result  = order_details(order, final_delivery_status)
-            return Response(result, status = status.HTTP_200_OK)        
+        result  = order_details(delivery_status)
+        return Response(result, status = status.HTTP_200_OK)        
 
     def list(self, request):
         """
@@ -535,8 +475,6 @@ class OrderViewSet(viewsets.ViewSet):
             delivery_status_queryset = list(chain(*order_filter_queryset))
         # --------------------------------------------------------------------------
 
-        order_queryset = Order.objects.filter(delivery_status__in = delivery_status_queryset)
-
         # VENDOR FILTERING ---------------------------------------------------------
         vendor = None
         if role == constants.VENDOR:
@@ -547,44 +485,44 @@ class OrderViewSet(viewsets.ViewSet):
                 vendor = get_object_or_404(Vendor, pk = vendor_id)
 
         if vendor is not None:
-            order_queryset = order_queryset.filter(vendor = vendor)
+            delivery_status_queryset = delivery_status_queryset.filter(order__vendor = vendor)
         # ----------------------------------------------------------------------------
 
         # COD FILTERING --------------------------------------------------------------
         if is_cod is not None:
             is_cod_bool = json.loads(is_cod.lower())
             if is_cod_bool is True:
-                order_queryset = order_queryset.filter(cod_amount__gt = 0)
+                delivery_status_queryset = delivery_status_queryset.filter(order__cod_amount__gt = 0)
             else:
-                order_queryset = order_queryset.filter(cod_amount = 0)
+                delivery_status_queryset = delivery_status_queryset.filter(order__cod_amount = 0)
         # ----------------------------------------------------------------------------
 
         # TIME SLOT FILTERING --------------------------------------------------------
         if filter_time_end is not None and filter_time_start is not None:
             filter_time_start = parse_datetime(filter_time_start)
             filter_time_end = parse_datetime(filter_time_end)
-            order_queryset = order_queryset.filter(pickup_datetime__gte = filter_time_start, pickup_datetime__lte = filter_time_end)
+            delivery_status_queryset = delivery_status_queryset.filter(order__pickup_datetime__gte = filter_time_start, order__pickup_datetime__lte = filter_time_end)
         # ----------------------------------------------------------------------------
 
         # SEARCH KEYWORD FILTERING ---------------------------------------------------
         if search_query is not None:
             if search_query.isdigit():
-                order_queryset = order_queryset.filter(Q(id=search_query) | 
-                    Q(consumer__user__username=search_query) |
-                    Q(vendor_order_id=search_query))
+                delivery_status_queryset = delivery_status_queryset.filter(Q(id=search_query) | 
+                    Q(order__consumer__user__username=search_query) |
+                    Q(order__vendor_order_id=search_query))
             else:
-                order_queryset = order_queryset.filter(Q(consumer__user__first_name__icontains=search_query) |
-                    Q(vendor_order_id=search_query))
+                delivery_status_queryset = delivery_status_queryset.filter(Q(order__consumer__user__first_name__icontains=search_query) |
+                    Q(order__vendor_order_id=search_query))
         # ----------------------------------------------------------------------------             
         
-        total_orders_count = len(order_queryset)
+        total_orders_count = len(delivery_status_queryset)
         if role == constants.DELIVERY_GUY:
-            orders = order_queryset
+            delivery_statuses = delivery_status_queryset
             result = []
-            for single_order in orders:
-                order_dict = order_dict_dg(single_order, date)
-                if order_dict is not None:
-                    result.append(order_dict)
+            for single_delivery in delivery_statuses:
+                delivery_status_dict = order_dict_dg(single_delivery)
+                if delivery_status_dict is not None:
+                    result.append(delivery_status_dict)
             
             response_content = { 
             "data": result, 
@@ -607,15 +545,15 @@ class OrderViewSet(viewsets.ViewSet):
                 }
                 return Response(response_content, status = status.HTTP_400_BAD_REQUEST)
             else:
-                orders = paginate(order_queryset, page)
+                delivery_statuses = paginate(delivery_status_queryset, page)
             # ----------------------------------------------------------------------------
         
             # UPDATING DELIVERY STATUS OF THE DAY  ---------------------------------------
             result = []
-            for single_order in orders:
-                order = update_daily_status(single_order, date)
-                if order is not None:
-                    result.append(order)
+            for single_delivery_status in delivery_statuses:
+                delivery_status = update_daily_status(single_delivery_status)
+                if delivery_status is not None:
+                    result.append(delivery_status)
             
             response_content = {
             "data": result, 
@@ -740,13 +678,9 @@ class OrderViewSet(viewsets.ViewSet):
                 
                 if notes is not None:
                     new_order.notes = notes
-
-                delivery_status = OrderDeliveryStatus.objects.create(date = pickup_datetime)
-                if vendor.is_retail is False:
-                    delivery_status.order_status = 'QUEUED'
-                    delivery_status.save()
-                new_order.delivery_status.add(delivery_status)
                 new_order.save()
+                
+                delivery_status = OrderDeliveryStatus.objects.create(date = pickup_datetime, order = new_order)
             except Exception, e:
                 content = {
                 'error':'Unable to create orders with the given details'
@@ -859,17 +793,17 @@ class OrderViewSet(viewsets.ViewSet):
             return Response(content, status = status.HTTP_400_BAD_REQUEST)    
         # --------------------------------------------------------------
         
-        # DATE TIMES  -------------------------------------------------
+        # CREATING NEW ORDER FOR EACH CUSTOMER -------------------------
         time_obj = time.strptime(timeslot_start,"%H:%M:%S")
         pickup_datetime = order_datetime.replace(hour = time_obj.tm_hour, minute = time_obj.tm_min)
         
         if is_pickup_time_acceptable(pickup_datetime) is False:
-        	content = {
-        	'error':'Pickup date or time not acceptable', 
-        	'description':'Pickup time can only be between 5.30AM to 10.00PM and past dates are not allowed'
-        	}
-        	return Response(content, status = status.HTTP_400_BAD_REQUEST)
-        
+            content = {
+            'error':'Pickup date or time not acceptable', 
+            'description':'Pickup time can only be between 5.30AM to 10.00PM and past dates are not allowed'
+            }
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
         delivery_timedelta = timedelta(hours = 4, minutes = 0) # DELIVERY IS 4 HOURS FROM PICKUP
         delivery_datetime = pickup_datetime + delivery_timedelta
         # --------------------------------------------------------------
@@ -899,6 +833,7 @@ class OrderViewSet(viewsets.ViewSet):
                     pickup_datetime = pickup_datetime, 
                     delivery_datetime = delivery_datetime,
                     is_reverse_pickup = is_reverse_pickup)
+            
             except Exception, e:
                 print e
                 content = {
@@ -922,8 +857,7 @@ class OrderViewSet(viewsets.ViewSet):
                 new_order.total_cost = total_cost
 
             for date in delivery_dates:
-                delivery_status = OrderDeliveryStatus.objects.create(date = date)
-                new_order.delivery_status.add(delivery_status)
+                delivery_status = OrderDeliveryStatus.objects.create(date = date, order = new_order)
 
             if len(delivery_dates) > 1:
                 new_order.is_recurring = True
@@ -966,27 +900,28 @@ class OrderViewSet(viewsets.ViewSet):
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
         # PARSING REQUEST PARAMS ------------------------
-        try:
-        	pickup_datetime = request.data['pickup_datetime']
-        	consumer_name = request.data['customer_name']
-        	consumer_phone_number = request.data['customer_phone_number']
+        try:            
+            pickup_datetime = request.data['pickup_datetime']
+            
+            consumer_name = request.data['customer_name']
+            consumer_phone_number = request.data['customer_phone_number']
+    
+            pickup_address = request.data['pickup_address']
+            delivery_address = request.data['delivery_address']
+            is_reverse_pickup = request.data['is_reverse_pickup']            
+            
+            order_items = request.data['order_items']
 
-        	pickup_address = request.data['pickup_address']
-        	delivery_address = request.data['delivery_address']
-        	is_reverse_pickup = request.data['is_reverse_pickup']            
-
-        	order_items = request.data.get('order_items')
-
-        	total_cost = request.data.get('total_cost')
-        	vendor_order_id = request.data.get('vendor_order_id')
-
-        	cod_amount = request.data.get('cod_amount')
-        	notes = request.data.get('notes')
+            total_cost = request.data.get('total_cost')
+            vendor_order_id = request.data.get('vendor_order_id')
+            
+            cod_amount = request.data.get('cod_amount')
+            notes = request.data.get('notes')
 
         except Exception, e:
             content = {
             'error':'Incomplete parameters', 
-            'description':'pickup_datetime, customer_name, customer_phone_number, pickup_address{full_address, pin_code, landmark(optional)}, delivery_address{full_address, pin_code, landmark(optional)}, is_reverse_pickup, order_items { product_id, quantity } (optional), total_cost(optional), vendor_order_id(optional), cod_amount(optional), notes(optional)'
+            'description':'pickup_datetime, customer_name, customer_phone_number, pickup_address{pickup_full_address, pickup_pin_code, pickup_landmark(optional)}, delivery_address{delivery_full_address, delivery_pin_code, delivery_landmark(optional)}, is_reverse_pickup, order_items { product_id, quantity }, total_cost, vendor_order_id, cod_amount, notes'
             }
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
         # ---------------------------------------------------
@@ -995,12 +930,11 @@ class OrderViewSet(viewsets.ViewSet):
         try:
             pickup_datetime = parse_datetime(pickup_datetime)
             if is_pickup_time_acceptable(pickup_datetime) is False:
-            	content = {
-            	'error':'Pickup date or time not acceptable',
-            	'description':'Pickup time can only be between 5.30AM to 10.00PM and past dates are not allowed'
-            	}
-            	return Response(content, status = status.HTTP_400_BAD_REQUEST)            
-            
+                    content = {
+                    'error':'Pickup date or time not acceptable', 
+                    'description':'Pickup time can only be between 5.30AM to 10.00PM and past dates are not allowed'
+                    }
+                    return Response(content, status = status.HTTP_400_BAD_REQUEST)            
             delivery_timedelta = timedelta(hours = 4, minutes = 0)
             delivery_datetime = pickup_datetime + delivery_timedelta
         except Exception, e:
@@ -1150,14 +1084,11 @@ class OrderViewSet(viewsets.ViewSet):
             if total_cost is not None:
                 new_order.total_cost = total_cost
 
+            delivery_ids = []
             for date in delivery_dates:
-                delivery_status = OrderDeliveryStatus.objects.create(date = date)
-                if vendor.is_retail is False:
-                    delivery_status.order_status = 'QUEUED'
-                    delivery_status.save()
+                delivery_status = OrderDeliveryStatus.objects.create(date = date, order =new_order)
+                delivery_ids.append(delivery_status.id)
                 
-                new_order.delivery_status.add(delivery_status)
-
             if len(delivery_dates) > 1:
                 new_order.is_recurring = True
 
@@ -1176,9 +1107,18 @@ class OrderViewSet(viewsets.ViewSet):
             new_order.save()
             # ---------------------------------------------------
             
+            # CONFIRMATION MESSAGE TO OPS -------------------------
+            # message = constants.ORDER_PLACED_MESSAGE_OPS.format(new_order.id, vendor.store_name)
+            # send_sms(constants.OPS_PHONE_NUMBER, message)
+
+            # CONFIRMATION MESSAGE TO CUSTOMER ------------------
+            # message_client = constants.ORDER_PLACED_MESSAGE_CLIENT.format(new_order.id)
+            # send_sms(vendor.phone_number, message_client)
+            # ---------------------------------------------------
+
             content = {
             'data':{
-            'order_id':new_order.id
+            'order_id':delivery_ids
             }, 
             'message':'Your Order has been placed.'
             }
@@ -1190,40 +1130,19 @@ class OrderViewSet(viewsets.ViewSet):
 
     @detail_route(methods=['post'])
     def cancel(self, request, pk):        
-        order = get_object_or_404(Order, id = pk)
-        if is_user_permitted_to_update_order(request.user, order) is False:
+        delivery_status = get_object_or_404(OrderDeliveryStatus, id = pk)
+        if is_user_permitted_to_update_order(request.user, delivery_status.order) is False:
             content = {
             'error': "You don't have permissions to cancel this order."
             }
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
+                
         
-        # DATA FILTERING FOR RECURRING ORDERS ----------------------------
-        date_string = request.data.get('date')
-        if is_recurring_order(order) and date_string is None:
-            content = {
-            'error':'Incomplete parameters', 
-            'description':'date parameter is mandatory for recurring orders'
-            }
-            return Response(content, status = status.HTTP_400_BAD_REQUEST)
-        elif is_recurring_order(order) and date_string is not None:
-            try:
-                date = parse_datetime(date_string)
-            except Exception, e:
-                content = {
-                'error':'Incorrect date', 
-                'description':'date format is not appropriate'
-                }
-                return Response(content, status = status.HTTP_400_BAD_REQUEST)
-        # -----------------------------------------------------------
-
-        final_delivery_status = None
-        is_cancelled = False
-        
-        final_delivery_status = delivery_status_of_the_day(order, date)
         # UPDATE THE DELIVERY STATUS OBJECT -------------------------
-        if final_delivery_status is not None and can_updated_order(final_delivery_status, constants.ORDER_STATUS_CANCELLED):
-            final_delivery_status.order_status = constants.ORDER_STATUS_CANCELLED
-            final_delivery_status.save()
+        is_cancelled = False        
+        if can_updated_order(delivery_status, constants.ORDER_STATUS_CANCELLED):
+            delivery_status.order_status = constants.ORDER_STATUS_CANCELLED
+            delivery_status.save()
             is_cancelled = True
         else:
             content = {
@@ -1233,7 +1152,7 @@ class OrderViewSet(viewsets.ViewSet):
         # ------------------------------------------------------------       
         
         if is_cancelled:
-            # message = constants.ORDER_CANCELLED_MESSAGE_CLIENT.format(order.consumer.user.first_name, order.id)
+            # message = constants.ORDER_CANCELLED_MESSAGE_CLIENT.format(delivery_status.order.consumer.user.first_name, delivery_status.id)
             # send_sms(order.vendor.phone_number, message)
             content = {
             'description':'Order has been canceled'
@@ -1272,7 +1191,7 @@ class OrderViewSet(viewsets.ViewSet):
     @list_route(methods=['put'])
     def multiple_pickup_attempted(self, request, pk=None):         
         try:
-            order_ids   = request.data['order_ids']
+            order_ids = request.data['order_ids']
             date_string = request.data['date']
             delivery_remarks = request.data['delivery_remarks']
             pickedup_datetime_string = request.data['pick_attempted_datetime']
@@ -1294,16 +1213,15 @@ class OrderViewSet(viewsets.ViewSet):
             
         for order_id in order_ids:
             try:
-                order = get_object_or_404(Order, pk = order_id)
-                if is_user_permitted_to_update_order(request.user, order) is False:
+                delivery_status = get_object_or_404(OrderDeliveryStatus, pk = order_id)
+                if is_user_permitted_to_update_order(request.user, delivery_status.order) is False:
                     content = {
                     'error': "You don't have permissions to update this order."
                     }
                     return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
-                final_delivery_status = delivery_status_of_the_day(order , order_date)
-                if can_updated_order(final_delivery_status, constants.ORDER_STATUS_PICKUP_ATTEMPTED):
-                    update_delivery_status_pickup_attempted(final_delivery_status, delivery_remarks, pickedup_datetime)
+                if can_updated_order(delivery_status, constants.ORDER_STATUS_PICKUP_ATTEMPTED):
+                    update_delivery_status_pickup_attempted(delivery_status, delivery_remarks, pickedup_datetime)
                 else:
                     content = {
                     'error': "Order already processed cant attempt the pickup now"
@@ -1358,22 +1276,19 @@ class OrderViewSet(viewsets.ViewSet):
         new_pop = None
         for order_id in order_ids:
             try:
-                order = get_object_or_404(Order, pk = order_id)
-                if is_user_permitted_to_update_order(request.user, order) is False:
+                delivery_status = get_object_or_404(OrderDeliveryStatus, pk = order_id)
+                if is_user_permitted_to_update_order(request.user, delivery_status.order) is False:
                     content = {
                     'error': "You don't have permissions to update this order."
                     }
                     return Response(content, status = status.HTTP_400_BAD_REQUEST)
-
-                final_delivery_status = delivery_status_of_the_day(order, order_date)
-                if can_updated_order(final_delivery_status, constants.ORDER_STATUS_INTRANSIT):
-                    
+                
+                if can_updated_order(delivery_status, constants.ORDER_STATUS_INTRANSIT):
                     # POP ------------------------------------------------------------------------
                     if new_pop is None and pop_dict is not None:
                         new_pop = create_proof(pop_dict)                    
                     # ----------------------------------------------------------------------------
-
-                    update_delivery_status_pickedup(final_delivery_status, pickedup_datetime, new_pop, delivery_remarks)
+                    update_delivery_status_pickedup(delivery_status, pickedup_datetime, new_pop, delivery_remarks)
                 else:
                     content = {
                     'error': "Cant update as the order is not queued"
@@ -1394,8 +1309,8 @@ class OrderViewSet(viewsets.ViewSet):
         
     @detail_route(methods=['post'])
     def picked_up(self, request, pk=None):
-        order = get_object_or_404(Order, pk = pk)
-        if is_user_permitted_to_update_order(request.user, order) is False:
+        delivery_status = get_object_or_404(OrderDeliveryStatus, pk = pk)
+        if is_user_permitted_to_update_order(request.user, delivery_status.order) is False:
             content = {
             'error': "You don't have permissions to update this order."
             }
@@ -1426,12 +1341,11 @@ class OrderViewSet(viewsets.ViewSet):
         # ----------------------------------------------------------------------------
         
         is_order_updated = False
-        is_order_picked_up = False
-        final_delivery_status = delivery_status_of_the_day(order, order_date)
+        is_order_picked_up = False        
         
-        if can_updated_order(final_delivery_status, constants.ORDER_STATUS_INTRANSIT):
+        if can_updated_order(delivery_status, constants.ORDER_STATUS_INTRANSIT):
             if pickup_attempted is not None and pickup_attempted == True:
-                update_delivery_status_pickup_attempted(final_delivery_status, delivery_remarks, pickedup_datetime)
+                update_delivery_status_pickup_attempted(delivery_status, delivery_remarks, pickedup_datetime)
                 is_order_updated = True
                 is_order_picked_up = False
             else:
@@ -1440,7 +1354,7 @@ class OrderViewSet(viewsets.ViewSet):
                 if pop_dict is not None:
                     new_pop = create_proof(pop_dict)
                 # ----------------------------------------------------------------------------
-                update_delivery_status_pickedup(final_delivery_status, pickedup_datetime, new_pop, delivery_remarks)
+                update_delivery_status_pickedup(delivery_status, pickedup_datetime, new_pop, delivery_remarks)
                 is_order_updated = True
                 is_order_picked_up = True
         else:
@@ -1450,10 +1364,10 @@ class OrderViewSet(viewsets.ViewSet):
             return Response(content, status = status.HTTP_400_BAD_REQUEST)        
         
         if is_order_updated:
-            if is_order_picked_up is True and order.is_reverse_pickup is True:
+            if is_order_picked_up is True and delivery_status.order.is_reverse_pickup is True:
                 # SEND A CONFIRMATION MESSAGE TO THE CUSTOMER
-                end_consumer_phone_number = order.consumer.user.username
-                message = 'Dear %s, we have picked your order behalf of %s - Team YourGuy' % (order.consumer.user.first_name, order.vendor.store_name)
+                end_consumer_phone_number = delivery_status.order.consumer.user.username
+                message = 'Dear %s, we have picked your order behalf of %s - Team YourGuy' % (delivery_status.order.consumer.user.first_name, delivery_status.order.vendor.store_name)
                 send_sms(end_consumer_phone_number, message)
 
             content = {
@@ -1468,8 +1382,8 @@ class OrderViewSet(viewsets.ViewSet):
 
     @detail_route(methods=['post'])
     def delivered(self, request, pk=None):   
-        order = get_object_or_404(Order, pk = pk)
-        if is_user_permitted_to_update_order(request.user, order) is False:
+        delivery_status = get_object_or_404(OrderDeliveryStatus, pk = pk)
+        if is_user_permitted_to_update_order(request.user, delivery_status.order) is False:
             content = {
             'error': "You don't have permissions to update this order."
             }
@@ -1526,12 +1440,10 @@ class OrderViewSet(viewsets.ViewSet):
             }
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
         # ------------------------------------------------------------------------
-        
-        final_delivery_status = delivery_status_of_the_day(order, order_date)        
-        
+                
         # UPDATING THE DELIVERY STATUS OF THE PARTICULAR DAY -----------------------
         is_order_updated = False
-        if can_updated_order(final_delivery_status, constants.ORDER_STATUS_DELIVERED):
+        if can_updated_order(delivery_status, constants.ORDER_STATUS_DELIVERED):
             try:
                 # POD -------------------------------------------------------------
                 pod_dict = request.data.get('pod')
@@ -1540,9 +1452,9 @@ class OrderViewSet(viewsets.ViewSet):
                     new_pod = create_proof(pod_dict)
                 # ----------------------------------------------------------------
                 if order_status == constants.ORDER_STATUS_DELIVERY_ATTEMPTED:
-                    update_delivery_status_delivery_attempted(final_delivery_status, delivery_remarks, delivered_datetime)
+                    update_delivery_status_delivery_attempted(delivery_status, delivery_remarks, delivered_datetime)
                 else:    
-                    update_delivery_status_delivered(final_delivery_status, delivered_at, delivered_datetime, is_cod_collected, new_pod, delivery_remarks, cod_collected_amount)
+                    update_delivery_status_delivered(delivery_status, delivered_at, delivered_datetime, is_cod_collected, new_pod, delivery_remarks, cod_collected_amount)
                 is_order_updated = True
             except Exception, e:
                 log_exception(e, 'order_delivered')
@@ -1557,14 +1469,14 @@ class OrderViewSet(viewsets.ViewSet):
         if is_order_updated:            
             # CONFIRMATION MESSAGE TO CUSTOMER --------------------------------------
             if cod_collected_amount is not None and float(cod_collected_amount) > 0:
-                end_consumer_phone_number = order.consumer.user.username
-                message = 'Dear %s, we have received the payment of %srs behalf of %s - Team YourGuy' % (order.consumer.user.first_name, cod_collected_amount, order.vendor.store_name)
+                end_consumer_phone_number = delivery_status.order.consumer.user.username
+                message = 'Dear %s, we have received the payment of %srs behalf of %s - Team YourGuy' % (delivery_status.order.consumer.user.first_name, cod_collected_amount, delivery_status.order.vendor.store_name)
                 send_sms(end_consumer_phone_number, message)
             # -----------------------------------------------------------------------
             
             # UPDATE CUSTOMER LOCATION ----------------------------------------------
             if order_status == constants.ORDER_STATUS_DELIVERED and latitude is not None and longitude is not None:            
-                address_id = order.delivery_address.id
+                address_id = delivery_status.order.delivery_address.id
                 address = get_object_or_404(Address, pk = address_id)        
                 address.latitude = latitude
                 address.longitude = longitude
@@ -1581,28 +1493,6 @@ class OrderViewSet(viewsets.ViewSet):
             }
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
         # -----------------------------------------------------------------------
-
-    @detail_route(methods=['post'])    
-    def delivery_status_id(self, request, pk):
-
-        # INPUT PARAM CHECK ---------------------------------------------
-        try:
-            date_string = request.data['order_date']
-            order_date = parse_datetime(date_string)
-        except Exception, e:
-            content = {
-            'error':'order_date is Mandatory'
-            }    
-            return Response(content, status = status.HTTP_400_BAD_REQUEST)
-        # ---------------------------------------------------------------
-        
-        order = get_object_or_404(Order, id = pk)
-        final_delivery_status = delivery_status_of_the_day(order, order_date)
-        
-        content = {
-        'delivery_status_id': final_delivery_status.id
-        }
-        return Response(content, status = status.HTTP_200_OK)          
 
     @detail_route(methods=['post'])
     def assign_order(self, request, pk = None):
@@ -1643,32 +1533,29 @@ class OrderViewSet(viewsets.ViewSet):
         date = parse_datetime(date_string)
         dg = get_object_or_404(DeliveryGuy, id = dg_id)
         for order_id in order_ids:
-            order = get_object_or_404(Order, id = order_id)
-            if is_user_permitted_to_update_order(request.user, order) is False:
+            delivery_status = get_object_or_404(OrderDeliveryStatus, id = order_id)
+            if is_user_permitted_to_update_order(request.user, delivery_status.order) is False:
                 content = {
                 'error': "You don't have permissions to update this order."
                 }
                 return Response(content, status = status.HTTP_400_BAD_REQUEST)
-
-            final_delivery_status = delivery_status_of_the_day(order, date)
             
             # Final Assignment -------------------------------------------
-            if final_delivery_status is not None:
-                if assignment_type == 'pickup':
-                    final_delivery_status.pickup_guy = dg
-                else:
-                    final_delivery_status.delivery_guy = dg
-                final_delivery_status.save()
-                is_orders_assigned = True
+            if assignment_type == 'pickup':
+                delivery_status.pickup_guy = dg
+            else:
+                delivery_status.delivery_guy = dg
+            delivery_status.save()
+            is_orders_assigned = True
             # -------------------------------------------------------------
-        
+                        
         # INFORM DG THROUGH SMS AND NOTIF IF ITS ONLY TODAYS DELIVERY -----
         if is_orders_assigned is True:
             try:
                 if is_today_date(date):
                     send_dg_notification(dg, order_ids)
                     if order_count == 1:
-                        send_sms_to_dg_about_order(date, dg, order)
+                        send_sms_to_dg_about_order(date, dg, delivery_status.order)
                     else:
                         send_sms_to_dg_about_mass_orders(dg, order_ids)
             except Exception, e:

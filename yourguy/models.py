@@ -293,61 +293,6 @@ class ProofOfDelivery(models.Model):
     def __unicode__(self):
         return u"%s" % self.id
         
-class OrderDeliveryStatus(models.Model):
-    date = models.DateTimeField()
-    pickedup_datetime = models.DateTimeField(blank = True, null = True)
-    completed_datetime = models.DateTimeField(blank = True, null = True)
-    pickup_guy = models.ForeignKey(DeliveryGuy, related_name = 'pickup_dg', blank = True, null = True)
-    delivery_guy = models.ForeignKey(DeliveryGuy, related_name = 'assigned_dg', blank = True, null = True)
-    rejection_reason = models.CharField(max_length = 500, blank = True)
-    is_cod_collected = models.BooleanField(default = False)
-    
-    ORDER_PLACED = 'ORDER_PLACED'
-    QUEUED = 'QUEUED'
-    REJECTED = 'REJECTED'
-    PICKUPATTEMPTED = 'PICKUPATTEMPTED'
-    INTRANSIT = 'INTRANSIT'
-    DELIVERYATTEMPTED = 'DELIVERYATTEMPTED'
-    DELIVERED = 'DELIVERED'
-    CANCELLED = 'CANCELLED'
-    
-    ORDER_CHOICES = (
-        (ORDER_PLACED, 'ORDER_PLACED'),
-        (REJECTED, 'REJECTED'),
-        (QUEUED, 'QUEUED'),
-        (PICKUPATTEMPTED, 'PICKUPATTEMPTED'),
-        (INTRANSIT, 'INTRANSIT'),
-        (DELIVERYATTEMPTED, 'DELIVERYATTEMPTED'),
-        (DELIVERED, 'DELIVERED'),
-        (CANCELLED, 'CANCELLED'),
-    )
-    order_status = models.CharField(max_length = 50, choices = ORDER_CHOICES, default = QUEUED)
-
-    DOOR_STEP = 'DOOR_STEP'
-    SECURITY = 'SECURITY'
-    RECEPTION = 'RECEPTION'
-    CUSTOMER = 'CUSTOMER'
-    NONE = 'NONE'
-    DELIVERED_AT_CHOICES = (
-        (DOOR_STEP, 'DOOR_STEP'),
-        (SECURITY, 'SECURITY'),
-        (RECEPTION, 'RECEPTION'),
-        (CUSTOMER, 'CUSTOMER'),
-        (NONE, 'NONE'),
-    )
-    delivered_at = models.CharField(max_length = 15, choices = DELIVERED_AT_CHOICES, default = NONE)
-    
-    pickup_proof = models.ForeignKey(ProofOfDelivery, related_name = 'pickup_pod', blank = True, null = True)
-    delivery_proof = models.ForeignKey(ProofOfDelivery, related_name = 'delivery_pod', blank = True, null = True)
-
-    cod_collected_amount = models.FloatField(default = 0.0)
-    cod_remarks = models.CharField(max_length = 500, blank = True)
-    order_id_in_order_table = models.IntegerField(default = 0)
-
-    def __unicode__(self):
-        return u"%s - %s" % (self.id, self.delivered_at)
-        
-
 class Order(models.Model):
 
     # Mandatory Fields =====
@@ -383,8 +328,6 @@ class Order(models.Model):
     
     pickup_address = models.ForeignKey(Address, related_name='pickup_address', on_delete = models.CASCADE)
     delivery_address = models.ForeignKey(Address, related_name='delivery_address', on_delete = models.CASCADE)
-
-    delivery_status = models.ManyToManyField(OrderDeliveryStatus)
 
     # Auto Generated Fields =====
     created_date_time = models.DateTimeField(auto_now_add = True)
@@ -445,6 +388,63 @@ class Order(models.Model):
     
     def __unicode__(self):
         return u"%s - %s - %s - %s - %s - %s" % (self.id, self.vendor.store_name, self.consumer.user.first_name, self.order_status, self.delivery_guy, self.delivered_at)
+
+class OrderDeliveryStatus(models.Model):
+    date = models.DateTimeField()
+    order = models.ForeignKey(Order, related_name = 'order', blank = True, null = True)
+    
+    pickedup_datetime = models.DateTimeField(blank = True, null = True)
+    completed_datetime = models.DateTimeField(blank = True, null = True)
+    pickup_guy = models.ForeignKey(DeliveryGuy, related_name = 'pickup_dg', blank = True, null = True)
+    delivery_guy = models.ForeignKey(DeliveryGuy, related_name = 'assigned_dg', blank = True, null = True)
+    rejection_reason = models.CharField(max_length = 500, blank = True)
+    is_cod_collected = models.BooleanField(default = False)
+    
+    ORDER_PLACED = 'ORDER_PLACED'
+    QUEUED = 'QUEUED'
+    REJECTED = 'REJECTED'
+    PICKUPATTEMPTED = 'PICKUPATTEMPTED'
+    INTRANSIT = 'INTRANSIT'
+    DELIVERYATTEMPTED = 'DELIVERYATTEMPTED'
+    DELIVERED = 'DELIVERED'
+    CANCELLED = 'CANCELLED'
+    
+    ORDER_CHOICES = (
+        (ORDER_PLACED, 'ORDER_PLACED'),
+        (REJECTED, 'REJECTED'),
+        (QUEUED, 'QUEUED'),
+        (PICKUPATTEMPTED, 'PICKUPATTEMPTED'),
+        (INTRANSIT, 'INTRANSIT'),
+        (DELIVERYATTEMPTED, 'DELIVERYATTEMPTED'),
+        (DELIVERED, 'DELIVERED'),
+        (CANCELLED, 'CANCELLED'),
+    )
+    order_status = models.CharField(max_length = 50, choices = ORDER_CHOICES, default = QUEUED)
+
+    DOOR_STEP = 'DOOR_STEP'
+    SECURITY = 'SECURITY'
+    RECEPTION = 'RECEPTION'
+    CUSTOMER = 'CUSTOMER'
+    NONE = 'NONE'
+    DELIVERED_AT_CHOICES = (
+        (DOOR_STEP, 'DOOR_STEP'),
+        (SECURITY, 'SECURITY'),
+        (RECEPTION, 'RECEPTION'),
+        (CUSTOMER, 'CUSTOMER'),
+        (NONE, 'NONE'),
+    )
+    delivered_at = models.CharField(max_length = 15, choices = DELIVERED_AT_CHOICES, default = NONE)
+    
+    pickup_proof = models.ForeignKey(ProofOfDelivery, related_name = 'pickup_pod', blank = True, null = True)
+    delivery_proof = models.ForeignKey(ProofOfDelivery, related_name = 'delivery_pod', blank = True, null = True)
+
+    cod_collected_amount = models.FloatField(default = 0.0)
+    cod_remarks = models.CharField(max_length = 500, blank = True)
+    order_id_in_order_table = models.IntegerField(default = 0)
+
+    def __unicode__(self):
+        return u"%s - %s" % (self.id, self.delivered_at)
+        
 
 class Suggestion(models.Model):
 

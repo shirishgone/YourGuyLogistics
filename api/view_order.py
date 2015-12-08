@@ -931,9 +931,9 @@ class OrderViewSet(viewsets.ModelViewSet):
             pass
 
         order_count = len(order_ids)
-        if order_count > 10:
+        if order_count > 50:
             content = {
-            'error':'Cant assign more than 10 orders at a time.'
+            'error':'Cant assign more than 50 orders at a time.'
             }
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
@@ -1083,36 +1083,31 @@ class OrderViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['post'])
     def reschedule(self, request, pk):
         try:
-            old_date_string = request.data['old_date']
             new_date_string = request.data['new_date']
+            new_date = parse_datetime(new_date_string)
         except Exception, e:
             content = {
-            'error':'Incomplete params', 'description':'old_date & new_date'
+            'error':'Incomplete params', 
+            'description':'new_date'
             }
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
         
-        old_date = parse_datetime(old_date_string)
-        new_date = parse_datetime(new_date_string)
-
         is_rescheduled = False
-        order = get_object_or_404(Order, id = pk)
-        delivery_statuses = order.delivery_status.all()
-        for delivery_status in delivery_statuses:
-            if delivery_status.date.date() == old_date.date():
-                if can_update_delivery_status(delivery_status):
-                    delivery_status.date = new_date
-                    delivery_status.save()
-                    is_rescheduled = True
-                    break
-                else:
-                    content = {
-                    'error': "The order has already been processed, now you cant update the status."
-                    }
-                    return Response(content, status = status.HTTP_400_BAD_REQUEST)
+        delivery_status = get_object_or_404(OrderDeliveryStatus, id = pk)
+        if can_update_delivery_status(delivery_status):
+            delivery_status.date = new_date            
+            delivery_status.save()
+            is_rescheduled = True
+        else:
+            content = {
+            'error': "The order has already been processed, now you cant update the status."
+            }
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
         if is_rescheduled:
             readable_date = new_date.strftime("%B %d, %Y")
-            message = constants.ORDER_RESCHEDULED_MESSAGE_CLIENT.format(order.consumer.user.first_name, order.id, readable_date)
-            send_sms(order.vendor.phone_number, message)
+            message = constants.ORDER_RESCHEDULED_MESSAGE_CLIENT.format(delivery_status.order.consumer.user.first_name, delivery_status.id, readable_date)
+            send_sms(delivery_status.order.vendor.phone_number, message)
 
             content = {
             'description':'Reschedule successful'
@@ -1128,37 +1123,26 @@ class OrderViewSet(viewsets.ModelViewSet):
     def reject(self, request, pk ):
         try:
             reason_message = request.data['rejection_reason']
-            date_string = request.data['date']
-            date = parse_datetime(date_string)
-
         except Exception, e:
             content = {
             'error':'Incomplete params', 
-            'description':'rejection_reason, date'
+            'description':'rejection_reason'
             }
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
-        order = get_object_or_404(Order, id = pk)
-
-        #UPDATING THE DELIVERY STATUS OF THE PARTICULAR DAY
-        delivery_statuses = order.delivery_status.all()
-        for delivery_status in delivery_statuses:
-            if delivery_status.date.date() == date.date():
-                if can_update_delivery_status(delivery_status):
-                    delivery_status.order_status = constants.ORDER_STATUS_REJECTED
-                    delivery_status.rejection_reason = reason_message
-                    delivery_status.save()
-                    break
-                else:
-                    content = {
-                    'error': "The order has already been processed, now you cant update the status."
-                    }
-                    return Response(content, status = status.HTTP_400_BAD_REQUEST)
-
+        delivery_status = get_object_or_404(OrderDeliveryStatus, id = pk)
+        if can_update_delivery_status(delivery_status):
+            delivery_status.order_status = constants.ORDER_STATUS_REJECTED
+            delivery_status.rejection_reason = reason_message
+            delivery_status.save()
+        else:
+            content = {
+            'error': "The order has already been processed, now you cant update the status."
+            }
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
         
-        message = constants.ORDER_REJECTED_MESSAGE_CLIENT.format(order.consumer.user.first_name, reason_message)
+        message = constants.ORDER_REJECTED_MESSAGE_CLIENT.format(delivery_status.order.consumer.user.first_name, reason_message)
         send_sms(order.vendor.phone_number, message)
-
         return Response(status = status.HTTP_200_OK)
 
     @list_route()

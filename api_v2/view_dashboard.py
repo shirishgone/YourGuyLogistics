@@ -63,8 +63,7 @@ def excel_download(request):
 	# # ------------------------------------------------------------------------------
 	
 	# DATE FILTERING ---------------------------------------------------------------
-	delivery_status_queryset = delivery_status_queryset.filter(date__gte = start_date, date__lte = end_date).prefetch_related(
-		Prefetch('order_set', queryset = Order.objects.select_related('consumer__user','vendor') , to_attr='orders'))
+	delivery_status_queryset = delivery_status_queryset.filter(date__gte = start_date, date__lte = end_date).select_related('order')
 	# ------------------------------------------------------------------------------
 	
 	if len(delivery_status_queryset) > 5000:
@@ -77,7 +76,7 @@ def excel_download(request):
 	for delivery_status in delivery_status_queryset:
 		try:
 			date = delivery_status.date + ist_timedelta
-			order = delivery_status.orders.pop()
+			order = delivery_status.order
 			excel_order = {
 			'date':date.strftime('%d-%m-%Y'),
 			'order_id':order.id,
@@ -153,13 +152,14 @@ def report(request):
 	cod_collected_dict = delivery_status_queryset.filter(date__gte = start_date, date__lte = end_date).aggregate(cod_collected = Sum('cod_collected_amount'))
 	cod_collected = cod_collected_dict['cod_collected']
 	# ------------------------------------------------------------------------------
-	
+		
 	# DATE FILTERING ---------------------------------------------------------------
 	delivery_status_queryset = delivery_status_queryset.filter(date__gte = start_date, date__lte = end_date)
 	# ------------------------------------------------------------------------------
 	
 	# TOTAL COD TO BE COLLECTED -----------------------------
-	total_cod_dict = Order.objects.filter(delivery_status = delivery_status_queryset).aggregate(total_cod = Sum('cod_amount'))
+	executable_deliveries = delivery_status_queryset.filter(Q(order_status = 'QUEUED') | Q(order_status = 'INTRANSIT') | Q(order_status = 'DELIVERED') |  Q(order_status = 'DELIVERYATTEMPTED') | Q(order_status = 'PICKUPATTEMPTED'))
+	total_cod_dict = executable_deliveries.aggregate(total_cod = Sum('order__cod_amount'))
 	total_cod = total_cod_dict['total_cod']
     # ------------------------------------------------------------------------------
 

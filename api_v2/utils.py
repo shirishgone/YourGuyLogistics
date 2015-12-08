@@ -6,6 +6,7 @@ from datetime import datetime, timedelta, time
 from yourguy.models import Order, Address, Consumer, OrderDeliveryStatus
 import json
 from django.db.models import Q
+from django.shortcuts import get_object_or_404
 
 def is_correct_pincode(pincode):
 	if pincode.isdigit() and len(pincode) == 6:
@@ -85,26 +86,56 @@ def delivery_status_update(request):
 		}
 		return Response(content, status = status.HTTP_200_OK)
 
-# @api_view(['GET'])
-# def attach_order_to_deliverystatus(request):
-# 	if request.user.is_staff is False:
-# 		content = {
-# 		'error':'insufficient permissions', 
-# 		'description':'Only admin can access this method'
-# 		}
-# 		return Response(content, status = status.HTTP_400_BAD_REQUEST)
-# 	else:
-# 		all_delivery_status = OrderDeliveryStatus.objects.filter(order = None)
-# 		for delivery_status in all_delivery_status:
-# 			try:
-# 				order_id = delivery_status.order_id_in_order_table
-# 				order = get_object_or_404(Order, pk = order_id)
-# 				delivery_status.order = order
-# 				delivery_status.save()
-# 			except Exception, e:
-# 				pass
-# 		content = {'data':'Done attaching orders'}
-# 		return Response(content, status = status.HTTP_200_OK)
+@api_view(['GET'])
+def delivery_status_without_order(request):
+	if request.user.is_staff is False:
+		content = {
+		'error':'insufficient permissions', 
+		'description':'Only admin can access this method'
+		}
+		return Response(content, status = status.HTTP_400_BAD_REQUEST)
+	else:
+		count = OrderDeliveryStatus.objects.filter(order = None).count()
+		content = {
+		'count':count
+		}
+		return Response(content, status = status.HTTP_200_OK)
+
+@api_view(['GET'])
+def delivery_status_without_order_id(request):
+	if request.user.is_staff is False:
+		content = {
+		'error':'insufficient permissions', 
+		'description':'Only admin can access this method'
+		}
+		return Response(content, status = status.HTTP_400_BAD_REQUEST)
+	else:
+		count = OrderDeliveryStatus.objects.filter(order_id_in_order_table = 0).count()
+		content = {
+		'count':count
+		}
+		return Response(content, status = status.HTTP_200_OK)
+
+@api_view(['GET'])
+def attach_order_to_deliverystatus(request):
+	if request.user.is_staff is False:
+		content = {
+		'error':'insufficient permissions', 
+		'description':'Only admin can access this method'
+		}
+		return Response(content, status = status.HTTP_400_BAD_REQUEST)
+	else:
+		all_delivery_status = OrderDeliveryStatus.objects.filter(order = None, order_id_in_order_table__gt = 0)
+		mini_delivery_statuses = all_delivery_status[0:5000]
+		for delivery_status in mini_delivery_statuses:
+			try:
+				order = get_object_or_404(Order, pk = delivery_status.order_id_in_order_table)
+				delivery_status.order = order
+				delivery_status.save()
+			except Exception, e:
+				pass
+		content = {'data':'Done attaching orders'}
+		return Response(content, status = status.HTTP_200_OK)
 
 @api_view(['GET'])
 def fill_order_ids(request):
