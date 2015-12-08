@@ -146,7 +146,7 @@ def remove_delivery_status_without_order_ids(request):
 		}
 		return Response(content, status = status.HTTP_400_BAD_REQUEST)
 	else:
-		all_delivery_status = OrderDeliveryStatus.objects.filter(order_id_in_order_table__gt = 0)		
+		all_delivery_status = OrderDeliveryStatus.objects.filter(order_id_in_order_table = 0)
 		updating_delivery_statuses = all_delivery_status[0:1000]
 		for delivery_status in updating_delivery_statuses:
 			delivery_status.delete()
