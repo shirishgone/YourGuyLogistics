@@ -118,7 +118,7 @@ def fill_order_ids(request):
 		all_orders = Order.objects.filter(delivery_status__order_id_in_order_table = 0).prefetch_related('delivery_status')
 		updating_orders = all_orders[0:1000]
 		for order in updating_orders:
-			all_deliveries = order.delivery_status.all()
+			all_deliveries = order.delivery_status.filter(order_id_in_order_table = 0)
 			for delivery_status in all_deliveries:
 				delivery_status.order_id_in_order_table = order.id
 				delivery_status.save()
