@@ -1533,20 +1533,27 @@ class OrderViewSet(viewsets.ViewSet):
         date = parse_datetime(date_string)
         dg = get_object_or_404(DeliveryGuy, id = dg_id)
         for order_id in order_ids:
-            delivery_status = get_object_or_404(OrderDeliveryStatus, id = order_id)
-            if is_user_permitted_to_update_order(request.user, delivery_status.order) is False:
-                content = {
-                'error': "You don't have permissions to update this order."
-                }
-                return Response(content, status = status.HTTP_400_BAD_REQUEST)
+            first_delivery_status = get_object_or_404(OrderDeliveryStatus, id = order_id)
+            order = first_delivery_status.order
             
-            # Final Assignment -------------------------------------------
-            if assignment_type == 'pickup':
-                delivery_status.pickup_guy = dg
-            else:
-                delivery_status.delivery_guy = dg
-            delivery_status.save()
-            is_orders_assigned = True
+            # FETCHING ALL RECURRING ORDERS FOR ASSIGNMENT ------------------------
+            current_datetime = datetime.now()
+            today_datetime = current_datetime.replace(hour=0, minute=0, second=0)
+            delivery_statuses = OrderDeliveryStatus.objects.filter(order = order, date__gte = today_datetime)
+
+            for delivery_status in delivery_statuses:
+                if is_user_permitted_to_update_order(request.user, delivery_status.order) is False:
+                    content = {
+                    'error': "You don't have permissions to update this order."
+                    }
+                    return Response(content, status = status.HTTP_400_BAD_REQUEST)
+                # Final Assignment -------------------------------------------
+                if assignment_type == 'pickup':
+                    delivery_status.pickup_guy = dg
+                else:
+                    delivery_status.delivery_guy = dg
+                delivery_status.save()
+                is_orders_assigned = True
             # -------------------------------------------------------------
                         
         # INFORM DG THROUGH SMS AND NOTIF IF ITS ONLY TODAYS DELIVERY -----
@@ -1555,7 +1562,7 @@ class OrderViewSet(viewsets.ViewSet):
                 if is_today_date(date):
                     send_dg_notification(dg, order_ids)
                     if order_count == 1:
-                        send_sms_to_dg_about_order(date, dg, delivery_status.order)
+                        send_sms_to_dg_about_order(date, dg, first_delivery_status.order)
                     else:
                         send_sms_to_dg_about_mass_orders(dg, order_ids)
             except Exception, e:
