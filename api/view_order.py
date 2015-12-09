@@ -318,16 +318,12 @@ class OrderViewSet(viewsets.ModelViewSet):
                     recurring_dates = list(rule_week)
 
                     for date in recurring_dates:
-                        delivery_status = OrderDeliveryStatus.objects.create(date = date)
-                        new_order.delivery_status.add(delivery_status)
-
+                        delivery_status = OrderDeliveryStatus.objects.create(date = date, order = new_order)
                 else:
                     new_order.is_recurring = False
-                    delivery_status = OrderDeliveryStatus.objects.create(date = pickup_datetime)
+                    delivery_status = OrderDeliveryStatus.objects.create(date = pickup_datetime, order = new_order)
                     if vendor.is_retail is False:
                         delivery_status.order_status = constants.ORDER_STATUS_QUEUED
-
-                    new_order.delivery_status.add(delivery_status)
 
                 if vendor_order_id is not None:
                     new_order.vendor_order_id = vendor_order_id
@@ -535,8 +531,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                 new_order.total_cost = total_cost
 
             for date in delivery_dates:
-                delivery_status = OrderDeliveryStatus.objects.create(date = date)
-                new_order.delivery_status.add(delivery_status)
+                delivery_status = OrderDeliveryStatus.objects.create(date = date, order = new_order)
 
             # ORDER ITEMS =====
             try:
@@ -680,8 +675,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                     new_order.is_cod = True
                     new_order.cod_amount = float(cod_amount)
                 
-                delivery_status = OrderDeliveryStatus.objects.create(date = pickup_datetime)
-                new_order.delivery_status.add(delivery_status)
+                delivery_status = OrderDeliveryStatus.objects.create(date = pickup_datetime, order = new_order)
                 new_order.save()
             except Exception, e:
                 content = {'error':'Unable to create orders with the given details'}    
