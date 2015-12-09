@@ -95,9 +95,15 @@ def delivery_status_without_order(request):
 		}
 		return Response(content, status = status.HTTP_400_BAD_REQUEST)
 	else:
-		count = OrderDeliveryStatus.objects.filter(order = None).count()
+		delivery_statuses = OrderDeliveryStatus.objects.filter(order = None)
+		count = len(delivery_statuses)
+		delivery_status_ids = []
+		for delivery_status in delivery_statuses:
+			delivery_status_ids.append(delivery_status.id)
+		
 		content = {
-		'count':count
+		'count':count,
+		'ids':delivery_status_ids
 		}
 		return Response(content, status = status.HTTP_200_OK)
 
