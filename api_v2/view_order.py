@@ -1176,11 +1176,17 @@ class OrderViewSet(viewsets.ViewSet):
         
         role = user_role(request.user)
         if role == constants.DELIVERY_GUY:
+        
+            # SEND AN EMAIL TO OPERATIONS ---------------------------------------------
             delivery_guy = get_object_or_404(DeliveryGuy, user = request.user)
             subject = 'DeliveryBoy Reported Issue'
             body = 'Hello, \nDelivery Boy %s has reported some issue about the following orders. \nOrder nos:%s \nPlease check \n\n-Team YourGuy' % (delivery_guy.user.first_name, order_ids)
             send_email(constants.OPS_EMAIL_IDS, subject, body)
-            content = 'Successfully Reported'
+            # --------------------------------------------------------------------------
+            
+            content = {
+            'data':'Successfully reported'
+            }
             return Response(content, status = status.HTTP_200_OK)
         else:
             content = {
@@ -1500,7 +1506,7 @@ class OrderViewSet(viewsets.ViewSet):
         # INPUT PARAM CHECK ---------------------------------------------
         try:
             dg_id = request.data['dg_id']
-            order_ids = request.data['order_ids']    
+            delivery_ids = request.data['order_ids']
             date_string = request.data['date']
             assignment_type = request.data['assignment_type']
         except Exception, e:
@@ -1511,8 +1517,8 @@ class OrderViewSet(viewsets.ViewSet):
         # ---------------------------------------------------------------
        
         # MAX ORDERS PER DG CHECK ---------------------------------------
-        order_count = len(order_ids)
-        if order_count > 50:
+        delivery_count = len(delivery_ids)
+        if delivery_count > 50:
             content = {
             'error':'Cant assign more than 50 orders at a time.'
             }
@@ -1532,21 +1538,42 @@ class OrderViewSet(viewsets.ViewSet):
         is_orders_assigned = False       
         date = parse_datetime(date_string)
         dg = get_object_or_404(DeliveryGuy, id = dg_id)
-        for order_id in order_ids:
-            first_delivery_status = get_object_or_404(OrderDeliveryStatus, id = order_id)
-            order = first_delivery_status.order
-            
-            # FETCHING ALL RECURRING ORDERS FOR ASSIGNMENT ------------------------
-            current_datetime = datetime.now()
-            today_datetime = current_datetime.replace(hour=0, minute=0, second=0)
-            delivery_statuses = OrderDeliveryStatus.objects.filter(order = order, date__gte = today_datetime)
+        for delivery_id in delivery_ids:
+            delivery_status = get_object_or_404(OrderDeliveryStatus, id = delivery_id)
+            order = delivery_status.order            
 
-            for delivery_status in delivery_statuses:
+            current_datetime = datetime.now()
+            if current_datetime.date() > delivery_status.date.date():
+                content = {
+                'error': "Cant assign orders of previous dates"
+                }
+                return Response(content, status = status.HTTP_400_BAD_REQUEST)
+            
+            if order.is_recurring is True:
+                # FETCHING ALL RECURRING ORDERS FOR ASSIGNMENT ------------------------
+                today_datetime = current_datetime.replace(hour=0, minute=0, second=0)
+                recurring_delivery_statuses = OrderDeliveryStatus.objects.filter(order = order, date__gte = today_datetime)
+                for recurring_delivery_status in recurring_delivery_statuses:
+                    if is_user_permitted_to_update_order(request.user, recurring_delivery_status.order) is False:
+                        content = {
+                        'error': "You don't have permissions to update this order."
+                        }
+                        return Response(content, status = status.HTTP_400_BAD_REQUEST)
+                    
+                    # Final Assignment -------------------------------------------
+                    if assignment_type == 'pickup':
+                        recurring_delivery_status.pickup_guy = dg
+                    else:
+                        recurring_delivery_status.delivery_guy = dg
+                    recurring_delivery_status.save()
+                    is_orders_assigned = True
+            else:
                 if is_user_permitted_to_update_order(request.user, delivery_status.order) is False:
                     content = {
                     'error': "You don't have permissions to update this order."
                     }
                     return Response(content, status = status.HTTP_400_BAD_REQUEST)
+                
                 # Final Assignment -------------------------------------------
                 if assignment_type == 'pickup':
                     delivery_status.pickup_guy = dg
@@ -1560,13 +1587,13 @@ class OrderViewSet(viewsets.ViewSet):
         if is_orders_assigned is True:
             try:
                 if is_today_date(date):
-                    send_dg_notification(dg, order_ids)
-                    if order_count == 1:
-                        send_sms_to_dg_about_order(date, dg, first_delivery_status.order)
+                    send_dg_notification(dg, delivery_ids)
+                    if delivery_count == 1:
+                        send_sms_to_dg_about_order(date, dg, delivery_status.order)
                     else:
-                        send_sms_to_dg_about_mass_orders(dg, order_ids)
+                        send_sms_to_dg_about_mass_orders(dg, delivery_ids)
             except Exception, e:
-                log_exception(e, 'assign_order_notify_dg')                        
+                log_exception(e, 'assign_order_notify_dg')
 
             content = {
             'description': 'Order assigned'
