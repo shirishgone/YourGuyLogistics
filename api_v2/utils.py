@@ -86,6 +86,26 @@ def delivery_status_update(request):
 		}
 		return Response(content, status = status.HTTP_200_OK)
 
+@api_view(['POST'])
+def delivery_status_for_order_id(request):
+	if request.user.is_staff is False:
+		content = {
+		'error':'insufficient permissions', 
+		'description':'Only admin can access this method'
+		}
+		return Response(content, status = status.HTTP_400_BAD_REQUEST)
+	else:
+		order_id = request.data['order_id']
+		order = get_object_or_404(Order, pk = order_id)
+		delivery_statuses = OrderDeliveryStatus.objects.filter(order = order)
+		delivery_status_ids = []
+		for delivery_status in delivery_statuses:
+		   	delivery_status_ids.append(delivery_status.id)
+		content = {
+		'ids':delivery_status_ids
+		}
+		return Response(content, status = status.HTTP_200_OK)
+
 @api_view(['GET'])
 def delivery_status_without_order(request):
 	if request.user.is_staff is False:
