@@ -466,15 +466,6 @@ class OrderViewSet(viewsets.ViewSet):
                     delivery_status_queryset = delivery_status_queryset.filter(Q(pickup_guy = None) & Q(delivery_guy = None))
         # --------------------------------------------------------------------------
 
-        # ORDER STATUS FILTERING ---------------------------------------------------
-        if len(order_statuses) > 0:
-            order_filter_queryset = []
-            for order_status in order_statuses:
-                order_filter_queryset.append(delivery_status_queryset.filter(order_status = order_status))
-            
-            delivery_status_queryset = list(chain(*order_filter_queryset))
-        # --------------------------------------------------------------------------
-
         # VENDOR FILTERING ---------------------------------------------------------
         vendor = None
         if role == constants.VENDOR:
@@ -515,6 +506,15 @@ class OrderViewSet(viewsets.ViewSet):
                     Q(order__vendor_order_id=search_query))
         # ----------------------------------------------------------------------------             
         
+        # ORDER STATUS FILTERING ---------------------------------------------------
+        if len(order_statuses) > 0:
+            order_filter_queryset = []
+            for order_status in order_statuses:
+                order_filter_queryset.append(delivery_status_queryset.filter(order_status = order_status))
+            
+            delivery_status_queryset = list(chain(*order_filter_queryset))
+        # --------------------------------------------------------------------------
+
         total_orders_count = len(delivery_status_queryset)
         if role == constants.DELIVERY_GUY:
             delivery_statuses = delivery_status_queryset
