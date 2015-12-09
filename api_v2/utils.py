@@ -96,13 +96,16 @@ def delivery_status_for_order_id(request):
 		return Response(content, status = status.HTTP_400_BAD_REQUEST)
 	else:
 		order_id = request.data['order_id']
+		delivery_status_id = request.data['delivery_status_id']
+		
 		order = get_object_or_404(Order, pk = order_id)
-		delivery_statuses = OrderDeliveryStatus.objects.filter(order = order)
-		delivery_status_ids = []
-		for delivery_status in delivery_statuses:
-		   	delivery_status_ids.append(delivery_status.id)
+		delivery_status = get_object_or_404(OrderDeliveryStatus, pk = delivery_status_id)
+
+		delivery_status.order = order
+		delivery_status.save()
+
 		content = {
-		'ids':delivery_status_ids
+		'data':'sucess'
 		}
 		return Response(content, status = status.HTTP_200_OK)
 
