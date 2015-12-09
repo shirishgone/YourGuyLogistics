@@ -311,6 +311,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                     order_item = OrderItem.objects.create(product = product, quantity = quantity)
                     new_order.order_items.add(order_item)
 
+                
                 if is_recurring is True:
                     new_order.is_recurring = True
                     int_days = days_in_int(by_day)
@@ -319,9 +320,11 @@ class OrderViewSet(viewsets.ModelViewSet):
 
                     for date in recurring_dates:
                         delivery_status = OrderDeliveryStatus.objects.create(date = date, order = new_order)
+                        new_order_ids.append(delivery_status.id)
                 else:
                     new_order.is_recurring = False
                     delivery_status = OrderDeliveryStatus.objects.create(date = pickup_datetime, order = new_order)
+                    new_order_ids.append(delivery_status.id)
                     if vendor.is_retail is False:
                         delivery_status.order_status = constants.ORDER_STATUS_QUEUED
 
@@ -332,7 +335,6 @@ class OrderViewSet(viewsets.ModelViewSet):
                     new_order.total_cost = total_cost
 
                 new_order.save()
-                new_order_ids.append(new_order.id)
 
             # CONFIRMATION MESSAGE TO OPS
             # message = constants.ORDER_PLACED_MESSAGE_OPS.format(new_order.id, vendor.store_name)
@@ -530,8 +532,10 @@ class OrderViewSet(viewsets.ModelViewSet):
             if total_cost is not None:
                 new_order.total_cost = total_cost
 
+            delivery_ids = []
             for date in delivery_dates:
                 delivery_status = OrderDeliveryStatus.objects.create(date = date, order = new_order)
+                delivery_ids.append(delivery_status.id)
 
             # ORDER ITEMS =====
             try:
@@ -555,7 +559,12 @@ class OrderViewSet(viewsets.ModelViewSet):
             message_client = constants.ORDER_PLACED_MESSAGE_CLIENT.format(new_order.id)
             send_sms(vendor.phone_number, message_client)
 
-            content = {'data':{'order_id':new_order.id}, 'message':'Your Order has been placed.'}
+            content = {
+            'data':{
+            'order_id':delivery_ids
+            }, 
+            'message':'Your Order has been placed.'
+            }
             return Response(content, status = status.HTTP_201_CREATED)
             
         except Exception, e:
