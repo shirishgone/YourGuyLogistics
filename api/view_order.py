@@ -23,6 +23,47 @@ from api.push import send_push
 from dateutil.rrule import rrule, WEEKLY
 import pytz
 
+def can_updated_order(delivery_status, status):
+    if status == constants.ORDER_STATUS_INTRANSIT:
+        if delivery_status.order_status == constants.ORDER_STATUS_QUEUED:
+            return True
+        else:
+            return False  
+    elif status == constants.ORDER_STATUS_DELIVERED:
+        if delivery_status.order_status == constants.ORDER_STATUS_INTRANSIT:
+            return True
+        else:
+            return False  
+    elif status == constants.ORDER_STATUS_PICKUP_ATTEMPTED:
+        if delivery_status.order_status == constants.ORDER_STATUS_QUEUED:
+            return True
+        else:
+            return False
+    elif status == constants.ORDER_STATUS_CANCELLED:
+        if delivery_status.order_status == constants.ORDER_STATUS_QUEUED:
+            return True
+        else:
+            return False
+    elif status == constants.ORDER_STATUS_DELIVERY_ATTEMPTED:
+        if delivery_status.order_status == constants.ORDER_STATUS_INTRANSIT:
+            return True
+        else:
+            return False
+    else:
+        return False
+
+def is_user_permitted_to_update_order(user, order):
+    is_permissible = False
+    role = user_role(user)
+    if (role == constants.VENDOR):
+        vendor_agent = get_object_or_404(VendorAgent, user = user)
+        vendor = vendor_agent.vendor
+        if order.vendor == vendor:
+            is_permissible = True
+    elif (role == constants.OPERATIONS) or (role == constants.DELIVERY_GUY):
+        is_permissible = True    
+    return is_permissible
+
 def is_recurring_order(order):
     if len(order.delivery_status.all()) > 1:
         return True
@@ -1036,43 +1077,30 @@ class OrderViewSet(viewsets.ModelViewSet):
         return Response(status = status.HTTP_200_OK)
 
     @detail_route(methods=['post'])
-    def cancel(self, request, pk):
-        try:
-            date_string = request.data['date']
-            date = parse_datetime(date_string)
-        except Exception, e:
-            content = {
-            'error':'Incomplete parameters', 
-            'description':'date'
-            }
-            return Response(content, status = status.HTTP_400_BAD_REQUEST)
-
-        order = get_object_or_404(Order, id = pk)
-        if can_user_update_this_order(order, request.user) is False:
+    def cancel(self, request, pk):        
+        delivery_status = get_object_or_404(OrderDeliveryStatus, id = pk)
+        if is_user_permitted_to_update_order(request.user, delivery_status.order) is False:
             content = {
             'error': "You don't have permissions to cancel this order."
             }
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
-
-        is_cancelled = False
-        delivery_statuses = order.delivery_status.all()
-        
-        for delivery_status in delivery_statuses:
-            if delivery_status.date.date() == date.date():
-                if can_update_delivery_status(delivery_status):
-                    delivery_status.order_status = constants.ORDER_STATUS_CANCELLED
-                    delivery_status.save()
-                    is_cancelled = True
-                    break
-                else:
-                    content = {
-                    'error': "The order has already been processed, now you cant update the status."
-                    }
-                    return Response(content, status = status.HTTP_400_BAD_REQUEST)
+                
+        # UPDATE THE DELIVERY STATUS OBJECT -------------------------
+        is_cancelled = False        
+        if can_updated_order(delivery_status, constants.ORDER_STATUS_CANCELLED):
+            delivery_status.order_status = constants.ORDER_STATUS_CANCELLED
+            delivery_status.save()
+            is_cancelled = True
+        else:
+            content = {
+            'error': "The order has already been processed, now you cant update the status."
+            }
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+        # ------------------------------------------------------------       
         
         if is_cancelled:
-            message = constants.ORDER_CANCELLED_MESSAGE_CLIENT.format(order.consumer.user.first_name, order.id)
-            send_sms(order.vendor.phone_number, message)
+            # message = constants.ORDER_CANCELLED_MESSAGE_CLIENT.format(delivery_status.order.consumer.user.first_name, delivery_status.id)
+            # send_sms(order.vendor.phone_number, message)
             content = {
             'description':'Order has been canceled'
             }
