@@ -292,7 +292,8 @@ class ProofOfDelivery(models.Model):
 
     def __unicode__(self):
         return u"%s" % self.id
-        
+                
+
 class Order(models.Model):
 
     # Mandatory Fields =====
@@ -328,7 +329,7 @@ class Order(models.Model):
     
     pickup_address = models.ForeignKey(Address, related_name='pickup_address', on_delete = models.CASCADE)
     delivery_address = models.ForeignKey(Address, related_name='delivery_address', on_delete = models.CASCADE)
-
+    
     # Auto Generated Fields =====
     created_date_time = models.DateTimeField(auto_now_add = True)
     created_by_user = models.ForeignKey(User, related_name='order_created_by')
@@ -400,6 +401,10 @@ class OrderDeliveryStatus(models.Model):
     rejection_reason = models.CharField(max_length = 500, blank = True)
     is_cod_collected = models.BooleanField(default = False)
     
+    is_reported = models.BooleanField(default = False)
+    reported_reason = models.CharField(max_length = 500, blank = True)
+    reported_solution = models.CharField(max_length = 500, blank = True)
+    
     ORDER_PLACED = 'ORDER_PLACED'
     QUEUED = 'QUEUED'
     REJECTED = 'REJECTED'
@@ -440,11 +445,10 @@ class OrderDeliveryStatus(models.Model):
 
     cod_collected_amount = models.FloatField(default = 0.0)
     cod_remarks = models.CharField(max_length = 500, blank = True)
+    
     order_id_in_order_table = models.IntegerField(default = 0)
-
     def __unicode__(self):
         return u"%s - %s" % (self.id, self.delivered_at)
-        
 
 class Suggestion(models.Model):
 

@@ -206,6 +206,8 @@ def order_details(delivery_status):
             'delivery_address':address_string(delivery_status.order.delivery_address),
             'status' : delivery_status.order_status,
             'is_recurring' : delivery_status.order.is_recurring,
+            'is_reported' : delivery_status.is_reported,
+            'reported_reason' : delivery_status.reported_reason,
             'cod_amount' : delivery_status.order.cod_amount,
             'customer_name' : delivery_status.order.consumer.user.first_name,
             'customer_phonenumber' : delivery_status.order.consumer.user.username,
@@ -276,6 +278,8 @@ def update_daily_status(delivery_status):
             'delivery_address':address_string(delivery_status.order.delivery_address),
             'status' : delivery_status.order_status,
             'is_recurring' : delivery_status.order.is_recurring,
+            'is_reported' : delivery_status.is_reported,
+            'reported_reason' : delivery_status.reported_reason,
             'cod_amount' : delivery_status.order.cod_amount,
             'cod_collected':delivery_status.cod_collected_amount,
             'customer_name' : delivery_status.order.consumer.user.first_name,
@@ -336,6 +340,8 @@ def deliveryguy_list(delivery_status):
         'pickup_address':address_string(delivery_status.order.pickup_address),
         'delivery_address':address_string(delivery_status.order.delivery_address),
         'status' : delivery_status.order_status,
+        'is_reported' : delivery_status.is_reported,
+        'reported_reason' : delivery_status.reported_reason,
         'customer_name' : delivery_status.order.consumer.user.first_name,
         'vendor_name' : delivery_status.order.vendor.store_name,
         'vendor_order_id':delivery_status.order.vendor_order_id
@@ -371,6 +377,8 @@ def order_dict_dg(delivery_status):
         'notes':delivery_status.order.notes,
         'vendor_order_id':delivery_status.order.vendor_order_id,
         'total_cost':delivery_status.order.total_cost,
+        'is_reported' : delivery_status.is_reported,
+        'reported_reason' : delivery_status.reported_reason,
     }
     return res_order
 
@@ -1168,19 +1176,39 @@ class OrderViewSet(viewsets.ViewSet):
     def report(self, request, pk=None):
         try:
             order_ids = request.data['order_ids']
+            reported_reason = request.data['reported_reason']
         except Exception, e:
             content = {
-            'error':'order_ids are mandatory parameters'
+            'error':'order_ids, reported_reason are mandatory parameters'
             }
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
         
         role = user_role(request.user)
         if role == constants.DELIVERY_GUY:
-        
+            email_orders = []
+            for order_id in order_ids:
+                delivery_status = get_object_or_404(OrderDeliveryStatus, pk = order_id)                
+                delivery_status.is_reported = True
+                delivery_status.reported_reason = reported_reason
+                delivery_status.save()
+                
+                order_detail = {
+                'order_id':delivery_status.id,
+                'vendor':delivery_status.order.vendor.store_name,
+                'customer_name':delivery_status.order.consumer.user.first_name
+                }
+                email_orders.append(order_detail)
+            
             # SEND AN EMAIL TO OPERATIONS ---------------------------------------------
             delivery_guy = get_object_or_404(DeliveryGuy, user = request.user)
-            subject = 'DeliveryBoy Reported Issue'
-            body = 'Hello, \nDelivery Boy %s has reported some issue about the following orders. \nOrder nos:%s \nPlease check \n\n-Team YourGuy' % (delivery_guy.user.first_name, order_ids)
+            subject = '%s Reported Issue'% (delivery_guy.user.first_name)
+            
+            body = 'Hello,\n\n%s has reported an issue about the following orders. \n\nIssue: %s\n'% (delivery_guy.user.first_name, reported_reason)
+            for email_order in email_orders:
+                string = '\nOrder no: %s Client Name: %s Customer Name: %s'% (email_order['order_id'], email_order['vendor'], email_order['customer_name'])
+                body = body + string
+            
+            body = body + '\n\nThanks \n-YourGuy BOT'
             send_email(constants.OPS_EMAIL_IDS, subject, body)
             # --------------------------------------------------------------------------
             
