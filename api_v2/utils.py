@@ -87,6 +87,23 @@ def delivery_status_update(request):
 		return Response(content, status = status.HTTP_200_OK)
 
 @api_view(['POST'])
+def old_order_number_for_new_delivery_id(request):
+	if request.user.is_staff is False:
+		content = {
+		'error':'insufficient permissions', 
+		'description':'Only admin can access this method'
+		}
+		return Response(content, status = status.HTTP_400_BAD_REQUEST)
+	else:
+		delivery_status_id = request.data['delivery_status_id']
+		delivery_status = get_object_or_404(OrderDeliveryStatus, pk = delivery_status_id)
+		old_id = delivery_status.order.id
+		content = {
+		'old_id':old_id
+		}
+		return Response(content, status = status.HTTP_200_OK)
+
+@api_view(['POST'])
 def delivery_status_for_order_id(request):
 	if request.user.is_staff is False:
 		content = {
