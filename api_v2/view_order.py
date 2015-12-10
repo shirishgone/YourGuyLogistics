@@ -1209,7 +1209,7 @@ class OrderViewSet(viewsets.ViewSet):
                 body = body + string
             
             body = body + '\n\nThanks \n-YourGuy BOT'
-            send_email(constants.OPS_EMAIL_IDS, subject, body)
+            send_email(constants.EMAIL_REPORTED_ORDERS, subject, body)
             # --------------------------------------------------------------------------
             
             content = {
