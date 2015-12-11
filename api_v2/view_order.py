@@ -1205,7 +1205,7 @@ class OrderViewSet(viewsets.ViewSet):
             
             body = 'Hello,\n\n%s has reported an issue about the following orders. \n\nIssue: %s\n'% (delivery_guy.user.first_name, reported_reason)
             for email_order in email_orders:
-                string = '\nOrder no: %s Client Name: %s Customer Name: %s'% (email_order['order_id'], email_order['vendor'], email_order['customer_name'])
+                string = '\nOrder no: %s | Client Name: %s | Customer Name: %s'% (email_order['order_id'], email_order['vendor'], email_order['customer_name'])
                 body = body + string
             
             body = body + '\n\nThanks \n-YourGuy BOT'
