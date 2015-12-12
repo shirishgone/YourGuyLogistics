@@ -9,6 +9,7 @@ from api_v2.view_product import ProductViewSet
 from api_v2 import view_dashboard
 from api_v2 import utils
 from api_v2 import views
+from api_v2 import mail
 
 urlpatterns = patterns(
 	'',
@@ -16,9 +17,9 @@ urlpatterns = patterns(
 	url(r'^daily_report/', views.daily_report, name = 'daily_report'),
 	url(r'^dashboard_report/', view_dashboard.report, name = 'dashboard_report'),
 	url(r'^excel_download/', view_dashboard.excel_download, name = 'excel_download'),
-	url(r'^old_order_number_for_new_delivery_id/', utils.old_order_number_for_new_delivery_id, name = 'old_order_number_for_new_delivery_id'),
+	url(r'^website_email/', mail.website_email, name = 'website_email'),
 	
-	
+	url(r'^old_order_number_for_new_delivery_id/', utils.old_order_number_for_new_delivery_id, name = 'old_order_number_for_new_delivery_id'),	
 	# url(r'^is_recurring_var_setting/', utils.is_recurring_var_setting, name = 'is_recurring_var_setting'),
 	# url(r'^delivery_status_update/', utils.delivery_status_update, name = 'delivery_status_update'),
 	# url(r'^fill_full_address/', utils.fill_full_address, name = 'fill_full_address'),
