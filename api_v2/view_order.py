@@ -30,6 +30,46 @@ from dateutil.rrule import rrule, WEEKLY
 from api.push import send_push
 from django.db.models import Prefetch
 
+def fetch_consumer(consumer_phone_number, consumer_name, vendor):
+    # CREATING USER & CONSUMER IF DOESNT EXISTS ------------------------
+    if is_userexists(consumer_phone_number) is True:
+        user = get_object_or_404(User, username = consumer_phone_number)
+        if is_consumerexists(user) is True:
+            consumer = get_object_or_404(Consumer, user = user)
+        else:
+            consumer = Consumer.objects.create(user = user)
+            consumer.associated_vendor.add(vendor)
+    else:
+        user = User.objects.create(username = consumer_phone_number, first_name = consumer_name, password = '')
+        consumer = Consumer.objects.create(user = user)
+        consumer.associated_vendor.add(vendor)
+    # ---------------------------------------------------
+    return consumer
+
+def fetch_consumer_address(consumer, full_address, pincode, landmark):
+    address = is_consumer_has_same_address_already(consumer, pincode)
+    if address is None:
+        address = Address.objects.create(pin_code = pincode)
+        if full_address is not None:
+            address.full_address = full_address
+        if landmark is not None:
+            address.landmark = landmark
+        address.save()
+        consumer.addresses.add(address)
+    return address
+
+def fetch_vendor_address(vendor, full_address, pincode, landmark):
+    address = is_vendor_has_same_address_already(vendor, pincode)
+    if address is None:
+        address = Address.objects.create(pin_code = pincode)
+        if full_address is not None:
+            address.full_address = full_address
+        if landmark is not None:
+            address.landmark = landmark
+        address.save()
+        vendor.addresses.add(address)
+    return address    
+
 def send_dg_notification(dg, order_ids):
     try:
         data = { 
@@ -177,9 +217,7 @@ def address_string(address):
         if len(address.full_address) > 1:
             address_string = address.full_address + ', ' + address.pin_code
         else:
-            address_string = address.flat_number + ',' + address.building + ',' +  address.street + ',' 
-            if address.area is not None:
-                address_string = address_string +  address.area.area_name
+            address_string = address.flat_number + ', ' + address.building + ', ' +  address.street + ', ' + address.pin_code
         return address_string
     except Exception, e:
         print e
@@ -370,6 +408,7 @@ def order_dict_dg(delivery_status):
         'delivery_address':address_string(delivery_status.order.delivery_address),
         'status' : delivery_status.order_status,
         'customer_name' : delivery_status.order.consumer.user.first_name,
+        'vendor_id':delivery_status.order.vendor.id,
         'vendor_name' : delivery_status.order.vendor.store_name,
         'vendor_order_id':delivery_status.order.vendor_order_id,
         'cod_amount' : delivery_status.order.cod_amount,
@@ -907,7 +946,7 @@ class OrderViewSet(viewsets.ViewSet):
             }
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
-        # PARSING REQUEST PARAMS ------------------------
+        # PARSING REQUEST PARAMS ------------------------        
         try:            
             pickup_datetime = request.data['pickup_datetime']
             
@@ -929,7 +968,7 @@ class OrderViewSet(viewsets.ViewSet):
         except Exception, e:
             content = {
             'error':'Incomplete parameters', 
-            'description':'pickup_datetime, customer_name, customer_phone_number, pickup_address{pickup_full_address, pickup_pin_code, pickup_landmark(optional)}, delivery_address{delivery_full_address, delivery_pin_code, delivery_landmark(optional)}, is_reverse_pickup, order_items { product_id, quantity }, total_cost, vendor_order_id, cod_amount, notes'
+            'description':'pickup_datetime, customer_name, customer_phone_number, pickup_address{full_address, pincode, landmark(optional)}, delivery_address{full_address, pincode, landmark(optional)}, is_reverse_pickup, order_items { product_id, quantity }, total_cost, vendor_order_id, cod_amount, notes'
             }
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
         # ---------------------------------------------------
@@ -992,19 +1031,7 @@ class OrderViewSet(viewsets.ViewSet):
         # ---------------------------------------------------
 
         try:
-            # CREATING USER & CONSUMER IF DOESNT EXISTS ------------------------
-            if is_userexists(consumer_phone_number) is True:
-                user = get_object_or_404(User, username = consumer_phone_number)
-                if is_consumerexists(user) is True:
-                    consumer = get_object_or_404(Consumer, user = user)
-                else:
-                    consumer = Consumer.objects.create(user = user)
-                    consumer.associated_vendor.add(vendor)
-            else:
-                user = User.objects.create(username = consumer_phone_number, first_name = consumer_name, password = '')
-                consumer = Consumer.objects.create(user = user)
-                consumer.associated_vendor.add(vendor)
-            # ---------------------------------------------------
+            consumer = fetch_consumer(consumer_phone_number, consumer_name, vendor)    
             
             # ADDRESS CHECK ---------------------------------------------------
             try:
@@ -1026,34 +1053,11 @@ class OrderViewSet(viewsets.ViewSet):
             # SORTING PICKUP AND DELIVERY ADDRESSES ------------------------------
             try:
                 if is_reverse_pickup is False:
-                    delivery_adr = is_consumer_has_same_address_already(consumer, delivery_pin_code)
-                    if delivery_adr is None:
-                        delivery_adr = Address.objects.create(full_address = delivery_full_address, pin_code = delivery_pin_code)
-                        if delivery_landmark is not None:
-                            delivery_adr.landmark = delivery_landmark
-                        consumer.addresses.add(delivery_adr)
-                    
-                    pickup_adr = is_vendor_has_same_address_already(vendor, pickup_pin_code)
-                    if pickup_adr is None:
-                        pickup_adr = Address.objects.create(full_address = pickup_full_address, pin_code = pickup_pin_code)
-                        if pickup_landmark is not None:
-                            pickup_adr.landmark = pickup_landmark
-                        vendor.addresses.add(pickup_adr)
+                    delivery_adr = fetch_consumer_address(consumer, delivery_full_address, delivery_pin_code, delivery_landmark)                    
+                    pickup_adr = fetch_vendor_address(vendor, pickup_full_address, pickup_pin_code, pickup_landmark)
                 else:
-                    pickup_adr = is_consumer_has_same_address_already(consumer, pickup_pin_code)
-                    if pickup_adr is None:
-                        pickup_adr = Address.objects.create(full_address = pickup_full_address, pin_code = pickup_pin_code)
-                        if pickup_landmark is not None:
-                            pickup_adr.landmark = pickup_landmark
-                        consumer.addresses.add(pickup_adr)
-                    
-                    delivery_adr = is_vendor_has_same_address_already(vendor, delivery_pin_code)
-                    if delivery_adr is None:
-                        delivery_adr = Address.objects.create(full_address = delivery_full_address, pin_code = delivery_pin_code)
-                        if delivery_landmark is not None:
-                            delivery_adr.landmark = delivery_landmark
-                        vendor.addresses.add(delivery_adr)
-        
+                    pickup_adr = fetch_consumer_address(consumer, pickup_full_address, pickup_pin_code, pickup_landmark)                                        
+                    delivery_adr = fetch_vendor_address(vendor, delivery_full_address, delivery_pin_code, delivery_landmark)        
             except:
                 content = {
                 'error':' Error parsing addresses'
@@ -1115,15 +1119,6 @@ class OrderViewSet(viewsets.ViewSet):
             new_order.save()
             # ---------------------------------------------------
             
-            # CONFIRMATION MESSAGE TO OPS -------------------------
-            # message = constants.ORDER_PLACED_MESSAGE_OPS.format(new_order.id, vendor.store_name)
-            # send_sms(constants.OPS_PHONE_NUMBER, message)
-
-            # CONFIRMATION MESSAGE TO CUSTOMER ------------------
-            # message_client = constants.ORDER_PLACED_MESSAGE_CLIENT.format(new_order.id)
-            # send_sms(vendor.phone_number, message_client)
-            # ---------------------------------------------------
-
             content = {
             'data':{
             'order_id':delivery_ids
@@ -1135,6 +1130,95 @@ class OrderViewSet(viewsets.ViewSet):
         except Exception, e:
             content = {'error':'Unable to create orders with the given details'}    
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
+    @list_route(methods=['put'])
+    def add_orders(self, request, pk=None):
+        role = user_role(request.user)
+        if role is not constants.DELIVERY_GUY:
+            content = {
+            'error':'Cant add orders.', 
+            'description':'You cant add orders. Only delivery_guy can add orders'
+            }
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+        else:
+            delivery_boy = get_object_or_404(DeliveryGuy, user = request.user)
+
+        # INPUT PARAMETERS CHECK --------------------------------------------
+        try:
+            vendor_id = request.data['vendor_id']
+            orders = request.data['orders']
+        except Exception, e:
+            content = {
+            'error': "Missing input parameters",
+            'description':"vendor_id, orders [customer_phonenumber, customer_name, pincode]"
+            }
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+        # --------------------------------------------------------------------
+        
+        # FETCH VENDOR DETAILS --------------------------------------------
+        try:
+            vendor = get_object_or_404(Vendor, pk = vendor_id)
+        except Exception, e:
+            content = {
+            'error': "Cant find vendor with supplied vendor_id"
+            }
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+        
+        all_vendor_addresses = vendor.addresses.all()
+        if len(all_vendor_addresses) > 0:
+            vendor_address = all_vendor_addresses[0]
+        else:
+            content = {
+            'error': "Cant find vendor address"
+            }
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+        # ------------------------------------------------------------------
+        
+        # PICK UP AND DELVIERY DATE TIMES ---------------------------------
+        pickup_datetime = datetime.now()
+        delivery_timedelta = timedelta(hours = 4, minutes = 0)
+        delivery_datetime = pickup_datetime + delivery_timedelta
+        # ------------------------------------------------------------------
+        
+        created_orders = []
+        for order in orders:
+            try:
+                consumer_name = order['consumer_name']
+                consumer_phonenumber = order['consumer_phonenumber']
+                pincode = order['pincode']
+            except Exception, e:
+                content = {
+                'error': "consumer_name, consumer_phonenumber, pincode are mandatory parameters"
+                }
+                return Response(content, status = status.HTTP_400_BAD_REQUEST)
+                
+            # FETCH CUSTOMER or CREATE NEW CUSTOMER ----------------
+            consumer = fetch_consumer(consumer_phonenumber, consumer_name, vendor)
+            consumer_address = fetch_consumer_address(consumer, None, pincode, None)
+            # ------------------------------------------------------
+
+            # CREATE NEW ORDER --------------------------------------
+            new_order = Order.objects.create(created_by_user = request.user, 
+                vendor = vendor, 
+                consumer = consumer, 
+                pickup_address = vendor_address, 
+                delivery_address = consumer_address, 
+                pickup_datetime = pickup_datetime, 
+                delivery_datetime = delivery_datetime)
+            delivery_status = OrderDeliveryStatus.objects.create(date = pickup_datetime, order = new_order)
+            created_orders.append(order_dict_dg(delivery_status))
+
+            # ASSIGN PICKUP AS SAME BOY -------------------------------------------
+            delivery_status.pickup_guy = delivery_boy
+            delivery_status.save()
+            # ------------------------------------------------------
+
+        content = {
+        'data':created_orders, 
+        'message':'Orders placed Successfully'
+        }
+        return Response(content, status = status.HTTP_201_CREATED)
+
 
     @detail_route(methods=['post'])
     def cancel(self, request, pk):        
