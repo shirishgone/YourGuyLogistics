@@ -42,12 +42,14 @@ def assign_dg():
     day_start = ist_day_start(date)
     day_end = ist_day_end(date)
     
-    unassigned_order_ids = ''
-
-    delivery_status_queryset = OrderDeliveryStatus.objects.filter(date__gte = day_start, date__lte = day_end, delivery_guy = None)            
-    # FILTER BY ORDER STATUS --------------------------------------------------------------------
+    unassigned_pickups = ''
+    unassigned_deliveries = ''
+    
+    # FILTER TO BE ASSIGNED ORDERS -------------------------------------------------------------------------
+    delivery_status_queryset = OrderDeliveryStatus.objects.filter(date__gte = day_start, date__lte = day_end)
+    delivery_status_queryset = delivery_status_queryset.filter(Q(delivery_guy = None ) | Q(pickup_guy = None))
     delivery_status_queryset = delivery_status_queryset.filter(Q(order_status = constants.ORDER_STATUS_PLACED ) | Q(order_status = constants.ORDER_STATUS_QUEUED) | Q(order_status = constants.ORDER_STATUS_INTRANSIT)) 
-    # ------------------------------------------------------------------------------------------------
+    # --------------------------------------------------------------------------------------------------------
 
     # --------------------------------------------------------------------
     for delivery_status in delivery_status_queryset.all():
@@ -61,7 +63,7 @@ def assign_dg():
             previous_delivery_statuses = OrderDeliveryStatus.objects.filter(delivery_guy__isnull = False, order__consumer = consumer, order__vendor = vendor)
             # ------------------------------------------------------------------------------------------------
 
-            # FILTER LAST 2 MONTHS ORDERS --------------------------------------------------------------------
+            # FILTER LAST 1 MONTHS ORDERS --------------------------------------------------------------------
             two_months_previous_date = day_start - dateutil.relativedelta.relativedelta(months = 1)
             previous_delivery_statuses = previous_delivery_statuses.filter(date__gte = two_months_previous_date, date__lte = day_start)
             # ------------------------------------------------------------------------------------------------
@@ -71,26 +73,36 @@ def assign_dg():
             previous_delivery_statuses = previous_delivery_statuses.filter(Q(order__pickup_datetime__hour = pickup_hour - 1 ) | Q(order__pickup_datetime__hour = pickup_hour) | Q(order__pickup_datetime__hour = pickup_hour + 1 ))
             # ------------------------------------------------------------------------------------------------
 
-            # FILTERING BY PICKUP TIME RANGE -----------------------------------------------------------------
+            # PICK LATEST PICKUP ASSIGNED PREVIOUSLY AND ASSIGN FOR TODAY ---------------------------------------
             try:
-                latest_assigned_delivery = previous_delivery_statuses.latest('date')            
-                if latest_assigned_delivery is not None:
-                    req_delivery_guy = latest_assigned_delivery.delivery_guy
-                    delivery_status.delivery_guy = req_delivery_guy
-                    delivery_status.save()                   
-            except Exception, e:                
-                unassigned_order_ids = unassigned_order_ids + "\n %s - %s - %s" % (vendor.store_name, order.id, consumer.user.first_name)
+                if delivery_status.pickup_guy is None:
+                    latest_assigned_pickup = previous_delivery_statuses.exclude(pickup_guy=None).latest('date')
+                    if latest_assigned_pickup is not None:
+                        delivery_status.pickup_guy = latest_assigned_pickup.pickup_guy
+                        delivery_status.save()
+            except Exception, e:
+                unassigned_pickups = unassigned_pickups + "\n %s - %s - %s" % (vendor.store_name, delivery_status.id, consumer.user.first_name)
                 pass
-                
+            # ------------------------------------------------------------------------------------------------
+            # PICK LATEST DELIVERY ASSIGNED AND ASSIGN FOR TODAY ------------------------------------------------
+            try:
+                if delivery_status.delivery_guy is None:
+                    latest_assigned_delivery = previous_delivery_statuses.exclude(delivery_guy=None).latest('date')
+                    if latest_assigned_delivery is not None:
+                        delivery_status.delivery_guy = latest_assigned_delivery.delivery_guy
+                        delivery_status.save()
+            except Exception, e:
+                unassigned_deliveries = unassigned_deliveries + "\n %s - %s - %s" % (vendor.store_name, delivery_status.id, consumer.user.first_name)
+                pass
+            # ------------------------------------------------------------------------------------------------                
         except Exception, e:
             pass
-    
     
     # SEND AN EMAIL SAYING CANT FIND APPROPRAITE DELIVERY GUY FOR THIS ORDER. PLEASE ASSIGN MANUALLY
     today_string = datetime.now().strftime("%Y %b %d")
     email_subject = 'Unassigned orders for %s' % (today_string) 
     
-    email_body = "Good Morning Guys, \nUnassigned Orders: %s \nPlease assign manually. \n\n- Team YourGuy" % (unassigned_order_ids)
+    email_body = "Hello, \nPlease find the unassigned orders for the day. \nUnassigned pickups: %s \n\nUnassigned deliveries: %s \nPlease assign manually. \n\n- Team YourGuy" % (unassigned_pickups, unassigned_deliveries)
     send_email(constants.EMAIL_UNASSIGNED_ORDERS, email_subject, email_body)
     # ------------------------------------------------------------------------------------------------  
 
