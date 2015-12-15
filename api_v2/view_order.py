@@ -92,19 +92,19 @@ def send_sms_to_dg_about_mass_orders(dg, order_ids):
         log_exception(e, 'Order assignment mass SMS')
         pass
 
-def send_sms_to_dg_about_order(date, dg, order):
+def send_sms_to_dg_about_order(date, dg, delivery_status):
     try:
         pickup_date_string = date.strftime("%b%d")
-        ist_date_time = ist_datetime(order.pickup_datetime)
+        ist_date_time = ist_datetime(delivery_status.order.pickup_datetime)
         pickup_time_string = ist_date_time.time().strftime("%I:%M%p")
         pickup_total_string = "%s,%s" % (pickup_date_string, pickup_time_string)
-        message = 'New Order:{},Pickup:{},Client:{},Cust:{},{},{},COD:{}'.format(order.id, 
+        message = 'New Order:{},Pickup:{},Client:{},Cust:{},{},{},COD:{}'.format(delivery_status.id, 
             pickup_total_string,
-            order.vendor.store_name, 
-            order.consumer.user.first_name,
-            order.consumer.user.username,
-            order.delivery_address,
-            order.cod_amount)
+            delivery_status.order.vendor.store_name, 
+            delivery_status.order.consumer.user.first_name,
+            delivery_status.order.consumer.user.username,
+            delivery_status.order.delivery_address,
+            delivery_status.order.cod_amount)
         send_sms(dg.user.username, message)
     except Exception, e:
         log_exception(e, 'Order assignment Single SMS')
@@ -1701,7 +1701,7 @@ class OrderViewSet(viewsets.ViewSet):
                 if is_today_date(date):
                     send_dg_notification(dg, delivery_ids)
                     if delivery_count == 1:
-                        send_sms_to_dg_about_order(date, dg, delivery_status.order)
+                        send_sms_to_dg_about_order(date, dg, delivery_status)
                     else:
                         send_sms_to_dg_about_mass_orders(dg, delivery_ids)
             except Exception, e:
