@@ -29,6 +29,7 @@ from itertools import chain
 from dateutil.rrule import rrule, WEEKLY
 from api.push import send_push
 from django.db.models import Prefetch
+import string
 
 def fetch_consumer(consumer_phone_number, consumer_name, vendor):
     # CREATING USER & CONSUMER IF DOESNT EXISTS ------------------------
@@ -218,6 +219,9 @@ def address_string(address):
             address_string = address.full_address + ', ' + address.pin_code
         else:
             address_string = address.flat_number + ', ' + address.building + ', ' +  address.street + ', ' + address.pin_code
+        
+        address_string = string.replace(address_string, ',,','')
+        address_string = string.replace(address_string, ', ,','')
         return address_string
     except Exception, e:
         print e
@@ -421,6 +425,33 @@ def order_dict_dg(delivery_status):
     }
     return res_order
 
+def search_order(user, search_query):    
+    role = user_role(user)
+    delivery_status_queryset = []
+    if role == constants.VENDOR:
+        vendor_agent = get_object_or_404(VendorAgent, user = user)
+        vendor = vendor_agent.vendor
+        delivery_status_queryset = OrderDeliveryStatus.objects.filter(order__vendor = vendor)
+        if search_query.isdigit():
+            delivery_status_queryset = delivery_status_queryset.filter(Q(id=search_query) | 
+                Q(order__consumer__user__username=search_query) |
+                Q(order__vendor_order_id=search_query))
+        else:
+            delivery_status_queryset = delivery_status_queryset.filter(Q(order__consumer__user__first_name__icontains=search_query) |
+                Q(order__vendor_order_id=search_query))
+
+    elif role == constants.OPERATIONS or role == constants.SALES:
+        if search_query.isdigit():
+            delivery_status_queryset = OrderDeliveryStatus.objects.filter(Q(id=search_query) | 
+                Q(order__consumer__user__username=search_query) |
+                Q(order__vendor_order_id=search_query))
+        else:
+            delivery_status_queryset = OrderDeliveryStatus.objects.filter(Q(order__consumer__user__first_name__icontains=search_query) |
+                Q(order__vendor_order_id=search_query))    
+    else:
+        pass
+    return delivery_status_queryset    
+
 class OrderViewSet(viewsets.ViewSet):
     """
     Order viewset that provides the standard actions 
@@ -542,17 +573,6 @@ class OrderViewSet(viewsets.ViewSet):
             delivery_status_queryset = delivery_status_queryset.filter(order__pickup_datetime__gte = filter_time_start, order__pickup_datetime__lte = filter_time_end)
         # ----------------------------------------------------------------------------
 
-        # SEARCH KEYWORD FILTERING ---------------------------------------------------
-        if search_query is not None:
-            if search_query.isdigit():
-                delivery_status_queryset = delivery_status_queryset.filter(Q(id=search_query) | 
-                    Q(order__consumer__user__username=search_query) |
-                    Q(order__vendor_order_id=search_query))
-            else:
-                delivery_status_queryset = delivery_status_queryset.filter(Q(order__consumer__user__first_name__icontains=search_query) |
-                    Q(order__vendor_order_id=search_query))
-        # ----------------------------------------------------------------------------             
-        
         # ORDER STATUS FILTERING ---------------------------------------------------
         if len(order_statuses) > 0:
             order_filter_queryset = []
@@ -561,6 +581,11 @@ class OrderViewSet(viewsets.ViewSet):
             
             delivery_status_queryset = list(chain(*order_filter_queryset))
         # --------------------------------------------------------------------------
+        
+        # SEARCH KEYWORD FILTERING ---------------------------------------------------
+        if search_query is not None:
+            delivery_status_queryset = search_order(request.user, search_query)
+        # ----------------------------------------------------------------------------             
 
         total_orders_count = len(delivery_status_queryset)
         if role == constants.DELIVERY_GUY:
@@ -1130,7 +1155,7 @@ class OrderViewSet(viewsets.ViewSet):
         except Exception, e:
             content = {'error':'Unable to create orders with the given details'}    
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
-
+    
     @list_route(methods=['put'])
     def add_orders(self, request, pk=None):
         role = user_role(request.user)
@@ -1195,8 +1220,9 @@ class OrderViewSet(viewsets.ViewSet):
             # FETCH CUSTOMER or CREATE NEW CUSTOMER ----------------
             consumer = fetch_consumer(consumer_phonenumber, consumer_name, vendor)
             consumer_address = fetch_consumer_address(consumer, None, pincode, None)
-            # ------------------------------------------------------
-
+            # ------------------------------------------------------                    
+            
+            extra_note = 'Additional order added by delivery boy: %s' % delivery_boy.user.first_name
             # CREATE NEW ORDER --------------------------------------
             new_order = Order.objects.create(created_by_user = request.user, 
                 vendor = vendor, 
@@ -1204,21 +1230,36 @@ class OrderViewSet(viewsets.ViewSet):
                 pickup_address = vendor_address, 
                 delivery_address = consumer_address, 
                 pickup_datetime = pickup_datetime, 
-                delivery_datetime = delivery_datetime)
+                delivery_datetime = delivery_datetime,
+                notes = extra_note)
+
             delivery_status = OrderDeliveryStatus.objects.create(date = pickup_datetime, order = new_order)
             created_orders.append(order_dict_dg(delivery_status))
 
             # ASSIGN PICKUP AS SAME BOY -------------------------------------------
             delivery_status.pickup_guy = delivery_boy
             delivery_status.save()
-            # ------------------------------------------------------
+            # ---------------------------------------------------------------------
 
+        # SEND AN EMAIL ABOUT ADDITIONAL ORDERS TO VENDOR AND OPS/SALES -----------
+        email_ids =  constants.EMAIL_ADDITIONAL_ORDERS
+        email_ids.append(vendor.email)
+        today_date = datetime.now()
+        subject = 'YourGuy: Extra orders picked up for today: %s' % today_date.strftime('%B %d, %Y')
+        body = 'Hi %s,'% vendor.store_name
+        body = body + '\n\nWe have picked up following additional orders from you today: %s \n'% today_date.strftime('%B %d, %Y')
+        for order in created_orders:
+            body = body + '\nOrder no: %s, Customer name: %s' % (order['id'], order['customer_name'])
+        body = body + '\n\nIf there are any discrepancies, please contact our team asap.'
+        body = body + '\n\n-Thanks \nYourGuy BOT'
+        send_email(email_ids, subject, body)
+        # --------------------------------------------------------------------------
+        
         content = {
         'data':created_orders, 
         'message':'Orders placed Successfully'
         }
         return Response(content, status = status.HTTP_201_CREATED)
-
 
     @detail_route(methods=['post'])
     def cancel(self, request, pk):        
