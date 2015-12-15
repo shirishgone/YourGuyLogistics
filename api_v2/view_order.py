@@ -1155,7 +1155,7 @@ class OrderViewSet(viewsets.ViewSet):
         except Exception, e:
             content = {'error':'Unable to create orders with the given details'}    
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
-    
+
     @list_route(methods=['put'])
     def add_orders(self, request, pk=None):
         role = user_role(request.user)
@@ -1260,6 +1260,7 @@ class OrderViewSet(viewsets.ViewSet):
         'message':'Orders placed Successfully'
         }
         return Response(content, status = status.HTTP_201_CREATED)
+
 
     @detail_route(methods=['post'])
     def cancel(self, request, pk):        
@@ -1541,6 +1542,7 @@ class OrderViewSet(viewsets.ViewSet):
 
     @detail_route(methods=['post'])
     def delivered(self, request, pk=None):   
+        
         delivery_status = get_object_or_404(OrderDeliveryStatus, pk = pk)
         if is_user_permitted_to_update_order(request.user, delivery_status.order) is False:
             content = {
@@ -1549,10 +1551,8 @@ class OrderViewSet(viewsets.ViewSet):
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
                 
         # REQUEST PARAMETERS ---------------------------------------------
-        date_string = request.data['date']
         is_cod_collected = request.data.get('cod_collected')        
         cod_collected_amount = request.data.get('cod_collected_amount')
-        delivery_remarks = request.data.get('cod_remarks')
         delivery_remarks = request.data.get('delivery_remarks')
         latitude = request.data.get('latitude')
         longitude = request.data.get('longitude')
@@ -1588,18 +1588,7 @@ class OrderViewSet(viewsets.ViewSet):
                 }
                 return Response(content, status = status.HTTP_400_BAD_REQUEST)
         # ----------------------------------------------------------------
-                
-        # UPDATE THE DELIVERY STATUS OF THE PARTICULAR DAY ----------------------        
-        try:
-            order_date = parse_datetime(date_string)
-        except Exception, e:
-            content = {
-            'error':'Incorrect date', 
-            'description':'date format is not appropriate'
-            }
-            return Response(content, status = status.HTTP_400_BAD_REQUEST)
-        # ------------------------------------------------------------------------
-                
+                                
         # UPDATING THE DELIVERY STATUS OF THE PARTICULAR DAY -----------------------
         is_order_updated = False
         if can_updated_order(delivery_status, constants.ORDER_STATUS_DELIVERED):
@@ -1622,8 +1611,29 @@ class OrderViewSet(viewsets.ViewSet):
             'error': "The order has already been processed, now you cant update the status."
             }
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
-        # -----------------------------------------------------------------------       
+        # -----------------------------------------------------------------------        
         
+        # INFORM OPERATIONS IF THERE IS ANY COD DISCREPENCIES -------------------
+        try:
+            if float(delivery_status.order.cod_amount) > 0.0 and cod_collected_amount is not None and (float(cod_collected_amount) < float(delivery_status.order.cod_amount) or float(cod_collected_amount) > float(delivery_status.order.cod_amount) ):
+                subject = 'COD discrepancy with order: %s' % delivery_status.id
+                body = 'Hello Ops,'
+                body = body + '\n\nThere is some discrepancy in COD collection for following order.'
+                body = body + '\n\nOrder no: %s' % (delivery_status.id)
+                body = body + '\nVendor: %s' % (delivery_status.order.vendor.store_name)
+                body = body + '\nCustomer name: %s' % (delivery_status.order.consumer.user.first_name)
+                body = body + '\nCOD to be collected: %s' % (delivery_status.order.cod_amount)
+                body = body + '\nCOD collected: %s' % (cod_collected_amount)
+                body = body + '\nDeliveryGuy: %s'% (request.user.first_name)
+                body = body + '\nReason added: %s'% (delivery_remarks)
+                body = body + '\n\nPlease clear the discrepancy with the DeliveryBoy and Vendor soon.'
+                body = body + '\n\n- Thanks \nYourGuy BOT'            
+                send_email(constants.EMAIL_COD_DISCREPENCY, subject, body)
+        except Exception, e:
+            log_exception(e, 'order_delivered COD discrepancy email')
+            pass
+        # -----------------------------------------------------------------------       
+
         # Final Response ---------------------------------------------------------
         if is_order_updated:            
             # CONFIRMATION MESSAGE TO CUSTOMER --------------------------------------
