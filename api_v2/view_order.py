@@ -1250,7 +1250,8 @@ class OrderViewSet(viewsets.ViewSet):
         body = body + '\n\nWe have picked up following additional orders from you today: %s \n'% today_date.strftime('%B %d, %Y')
         for order in created_orders:
             body = body + '\nOrder no: %s, Customer name: %s' % (order['id'], order['customer_name'])
-        body = body + '\n\nIf there are any discrepancies, please contact our team asap.'
+        body = body + '\n\nIf there are any discrepancies, please raise a ticket with order no. on the app - Feedback tab.'
+        body = body + '\nhttp://app.yourguy.in/#/home/complaints'
         body = body + '\n\n-Thanks \nYourGuy BOT'
         send_email(email_ids, subject, body)
         # --------------------------------------------------------------------------
