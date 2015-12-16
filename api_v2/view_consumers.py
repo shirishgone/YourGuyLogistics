@@ -74,6 +74,22 @@ def consumer_detail_dict(consumer):
 
     return consumer_dict
 
+def excel_download_consumer_detail(consumer):
+    consumer_dict = {
+            'name':consumer.user.first_name,
+            'phone_number':consumer.user.username,
+            "addresses":[]
+            }
+    
+    all_addresses = consumer.addresses.all()
+    for address in all_addresses:
+        adr_dict = {
+        "full_address":address.full_address,
+        "landmark":address.landmark,
+        "pin_code":address.pin_code
+        }   
+        consumer_dict['addresses'].append(adr_dict)
+    return consumer_dict
 
 class ConsumerViewSet(viewsets.ModelViewSet):
     """
@@ -89,7 +105,7 @@ class ConsumerViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, pk = None):        
         consumer = get_object_or_404(Consumer, id = pk)
         role = user_role(request.user)
-        if role == 'vendor':
+        if role == constants.VENDOR:
             vendor_agent = get_object_or_404(VendorAgent, user = request.user)
             all_associated_vendors = consumer.associated_vendor.all()
             is_consumer_associated_to_vendor = False
@@ -119,7 +135,7 @@ class ConsumerViewSet(viewsets.ModelViewSet):
             page = 1    
 
         role = user_role(request.user)
-        if role == 'vendor':
+        if role == constants.VENDOR:
             vendor_agent = get_object_or_404(VendorAgent, user = request.user)
             total_consumers_of_vendor = Consumer.objects.filter(associated_vendor = vendor_agent.vendor).order_by(Lower('user__first_name'))
         
@@ -201,6 +217,29 @@ class ConsumerViewSet(viewsets.ModelViewSet):
             content = {'error':'No permissions to create consumer'}   
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
+    @list_route(methods=['get'])
+    def file_download(self, request):
+        role = user_role(request.user)
+        if role == constants.VENDOR:
+            vendor_agent = get_object_or_404(VendorAgent, user = request.user)
+            all_consumers_of_vendor = Consumer.objects.filter(associated_vendor = vendor_agent.vendor).order_by(Lower('user__first_name'))
+            
+            result = []
+            for consumer in all_consumers_of_vendor:
+                consumer_dict = excel_download_consumer_detail(consumer)
+                result.append(consumer_dict)
+            
+            response_content = { 
+            "data": result
+            }
+            return Response(response_content, status = status.HTTP_200_OK)
+        else:
+            content = {
+            'error':'No permissions to access customers',
+            'description':'You dont have permissions to fetch customers list'
+            }
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+    
     @detail_route(methods=['post'])
     def add_address(self, request, pk):
         try:
