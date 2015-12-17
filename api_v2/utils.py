@@ -59,7 +59,7 @@ def old_order_id_for_new_order_id(request):
 		}
 		return Response(content, status = status.HTTP_200_OK)
 
-@api_view(['GET'])
+@api_view(['POST'])
 def new_order_id_for_old_order_id(request):
 	if request.user.is_staff is False:
 		content = {
