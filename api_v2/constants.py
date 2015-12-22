@@ -11,10 +11,10 @@ FROM_MAIL_ID = 'hi@yourguy.in'
 
 EMAIL_UNASSIGNED_ORDERS = ['tech@yourguy.in', 'alay@yourguy.in','ops@yourguy.in']
 EMAIL_DAILY_REPORT = ['tech@yourguy.in', 'alay@yourguy.in', 'ops@yourguy.in', 'bd@yourguy.in']
-EMAIL_REPORTED_ORDERS = ['tech@yourguy.in', 'alay@yourguy.in', 'ops@yourguy.in', 'bd@yourguy.in']
+EMAIL_REPORTED_ORDERS = ['ops@yourguy.in', 'bd@yourguy.in']
 EMAIL_WEBSITE = ['tech@yourguy.in', 'alay@yourguy.in', 'bd@yourguy.in']
-EMAIL_ADDITIONAL_ORDERS = ['tech@yourguy.in', 'ops@yourguy.in', 'alay@yourguy.in', 'bd@yourguy.in']
-EMAIL_COD_DISCREPENCY = ['tech@yourguy.in', 'ops@yourguy.in', 'alay@yourguy.in']
+EMAIL_ADDITIONAL_ORDERS = ['ops@yourguy.in','bd@yourguy.in']
+EMAIL_COD_DISCREPENCY = ['ops@yourguy.in']
 
 TO_EMAIL_IDS = ['tech@yourguy.in','alay@yourguy.in', 'sameet@yourguy.in', 'winston@yourguy.in']
 OPS_EMAIL_IDS = ['tech@yourguy.in','alay@yourguy.in', 'rakesh@yourguy.in', 'santosh@yourguy.in', 'sameet@yourguy.in']
