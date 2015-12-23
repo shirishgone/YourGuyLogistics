@@ -1,5 +1,6 @@
-PAGINATION_PAGE_SIZE = 50
+from server import settings
 
+PAGINATION_PAGE_SIZE = 50
 VENDOR = 'vendor'
 CONSUMER = 'consumer'
 OPERATIONS = 'operations'
@@ -9,16 +10,28 @@ DELIVERY_GUY = 'deliveryguy'
 OPS_PHONE_NUMBER = '+919820252216'
 FROM_MAIL_ID = 'hi@yourguy.in'
 
-EMAIL_UNASSIGNED_ORDERS = ['tech@yourguy.in', 'alay@yourguy.in','ops@yourguy.in']
-EMAIL_DAILY_REPORT = ['tech@yourguy.in', 'alay@yourguy.in', 'ops@yourguy.in', 'bd@yourguy.in']
-EMAIL_REPORTED_ORDERS = ['ops@yourguy.in', 'bd@yourguy.in']
-EMAIL_WEBSITE = ['tech@yourguy.in', 'alay@yourguy.in', 'bd@yourguy.in']
-EMAIL_ADDITIONAL_ORDERS = ['ops@yourguy.in','bd@yourguy.in']
-EMAIL_COD_DISCREPENCY = ['ops@yourguy.in']
+TEST_GROUP_EMAILS = ['tech@yourguy.in', 'vinit@yourguy.in','prajakta@yourguy.in', 'aquid@yourguy.in']
 
-TO_EMAIL_IDS = ['tech@yourguy.in','alay@yourguy.in', 'sameet@yourguy.in', 'winston@yourguy.in']
-OPS_EMAIL_IDS = ['tech@yourguy.in','alay@yourguy.in', 'rakesh@yourguy.in', 'santosh@yourguy.in', 'sameet@yourguy.in']
-EMAIL_IDS_EVERYBODY = ['tech@yourguy.in', 'alay@yourguy.in', 'sameet@yourguy.in', 'winston@yourguy.in', 'rakesh@yourguy.in', 'santosh@yourguy.in', 'vinit@yourguy.in', 'aquid@yourguy.in', 'saurabh@yourguy.in', 'smit@yourguy.in', 'kenneth@yourguy.in', 'bhawna.yourguy@gmail.com', 'sonali.a@yourguy.in', 'bernard.d@yourguy.in', 'sandesh.b@yourguy.in']
+if settings.ENVIRONMENT == 'PRODUCTION':
+	EMAIL_UNASSIGNED_ORDERS = ['tech@yourguy.in', 'alay@yourguy.in','ops@yourguy.in']
+	EMAIL_DAILY_REPORT = ['tech@yourguy.in', 'alay@yourguy.in', 'ops@yourguy.in', 'bd@yourguy.in']
+	EMAIL_REPORTED_ORDERS = ['ops@yourguy.in', 'bd@yourguy.in']
+	EMAIL_WEBSITE = ['tech@yourguy.in', 'alay@yourguy.in', 'bd@yourguy.in']
+	EMAIL_ADDITIONAL_ORDERS = ['ops@yourguy.in','bd@yourguy.in']
+	EMAIL_COD_DISCREPENCY = ['ops@yourguy.in']
+	TO_EMAIL_IDS = ['tech@yourguy.in','alay@yourguy.in', 'sameet@yourguy.in', 'winston@yourguy.in']
+	OPS_EMAIL_IDS = ['tech@yourguy.in','alay@yourguy.in', 'rakesh@yourguy.in', 'santosh@yourguy.in', 'sameet@yourguy.in']
+	EMAIL_IDS_EVERYBODY = ['tech@yourguy.in', 'alay@yourguy.in', 'sameet@yourguy.in', 'winston@yourguy.in', 'rakesh@yourguy.in', 'santosh@yourguy.in', 'vinit@yourguy.in', 'aquid@yourguy.in', 'saurabh@yourguy.in', 'smit@yourguy.in', 'kenneth@yourguy.in', 'bhawna.yourguy@gmail.com', 'sonali.a@yourguy.in', 'bernard.d@yourguy.in', 'sandesh.b@yourguy.in']
+else:
+	EMAIL_UNASSIGNED_ORDERS = TEST_GROUP_EMAILS
+	EMAIL_DAILY_REPORT = TEST_GROUP_EMAILS
+	EMAIL_REPORTED_ORDERS = TEST_GROUP_EMAILS
+	EMAIL_WEBSITE = TEST_GROUP_EMAILS
+	EMAIL_ADDITIONAL_ORDERS = TEST_GROUP_EMAILS
+	EMAIL_COD_DISCREPENCY = TEST_GROUP_EMAILS
+	TO_EMAIL_IDS = TEST_GROUP_EMAILS
+	OPS_EMAIL_IDS = TEST_GROUP_EMAILS
+	EMAIL_IDS_EVERYBODY = TEST_GROUP_EMAILS
 
 GCM_PUSH_API_KEY = 'AIzaSyCmXulcUBViokrkYZ9Z9bWJgEWgXyeNh1U'
 GCM_SENDER_ID = '559449819463'
@@ -58,7 +71,6 @@ ORDER_STATUS_REJECTED = 'REJECTED'
 
 
 # TOBE REMOVED --------------------------
-
 ORDER_STATUS_OUTFORPICKUP = 'OUTFORPICKUP'
 ORDER_STATUS_OUTFORDELIVERY = 'OUTFORDELIVERY'
 ORDER_STATUS_ATTEMPTED = 'ATTEMPTED'

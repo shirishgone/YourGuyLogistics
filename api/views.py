@@ -32,6 +32,7 @@ import os
 import datetime
 import pytz
 from datetime import datetime, timedelta, time
+from server import settings
 
 def s3_connection():
     AWS_ACCESS_KEY = os.environ.get('AWS_ACCESS_KEY')
@@ -115,17 +116,22 @@ def user_role(user):
 
 def send_email(to_mail_ids, subject, body):
 	try:
-		send_mail(subject, body, constants.FROM_MAIL_ID, to_mail_ids, fail_silently=False)
+		if settings.ENVIRONMENT == 'PRODUCTION':
+			send_mail(subject, body, constants.FROM_MAIL_ID, to_mail_ids, fail_silently=False)
+		else:
+			print 'test doesnt send emails'	
 	except Exception, e:
 		pass
 
 def send_sms(phonenumber, message):
-    url = constants.SMS_URL.format(mobile_number=phonenumber, message_text=message)
-    try:
-        r = requests.get(url)
-    except:
-        send_email('SMS error', 'problem sending SMS \nplease check {} {}'.format(phonenumber,message), constants.FROM_MAIL_ID, ['tech@yourguy.in'], fail_silently=False)
-
+	url = constants.SMS_URL.format(mobile_number=phonenumber, message_text=message)
+	try:
+		if settings.ENVIRONMENT == 'PRODUCTION':
+			r = requests.get(url)
+		else:
+			print 'test doesnt send sms'
+	except Exception, e:
+		pass
 
 def verify_password(user, password):
 	verified_user = authenticate(username=user.username, password=password)
