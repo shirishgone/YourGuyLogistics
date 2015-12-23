@@ -1,0 +1,84 @@
+<div class="modal-header center">
+    <h3 class="modal-title ">Update Order Status</h3>
+</div>
+<div class="modal-body center" style="padding-bottom:20px;">
+	<div class="col-sm-12">
+		<h4>Selected Oders : {{details.order_ids.length}} </h4>
+		<span ng-repeat="id in details.order_ids"> {{id}} &nbsp;&nbsp;</span>
+	</div>
+    <form class="status_popup" name="status_form" ng-submit="change_status(status)">
+        <div style="padding-bottom:10px;">
+        	<ul class="col-md-12 col-sm-12 col-xs-12">
+        		<li class="col-md-6 col-xs-12 col-sm-6 " ng-click="select_status('intransit')">
+        			<input type="radio" name="status_order" ng-model="status.name" ng-value="'intransit'" ng-required="true">
+        			<label>Update Pickup Status</label>
+        		</li>
+        		<li class="col-md-6 col-xs-12 col-sm-6 " ng-click="select_status('delivered')">
+        			<input type="radio" name="status_order" ng-model="status.name" ng-value="'delivered'" ng-required="true">
+        			<label>Update Deliver Status</label>
+        		</li>
+        	</ul>
+        </div>
+        <div ng-if="status.name == 'intransit'">
+            <div ng-repeat="order in status.order_to_update" class="col-md-12 col-sm-12 col-xs-12 status_popup_child" style="margin-bottom:10px;">
+                <div class="col-md-2 col-sm-2 col-xs-2 col-md-offset-1" style="padding-left:0px;">
+                    <h4 style="margin-top:10px;">Order #{{order.id}} </h4>
+                </div>
+                <ul class="col-md-8 col-sm-10 col-xs-10">
+                    <li class="col-md-6 col-xs-6 col-sm-6 " ng-click="order.pickup_attempted = false">
+                        <input type="radio" name="{{$index}}" ng-model="order.pickup_attempted" ng-value="false" ng-required="true">
+                        <label class="success-text">Picked Up</label>
+                    </li>
+                    <li class="col-md-6 col-xs-6 col-sm-6 " ng-click="order.pickup_attempted = true">
+                        <input type="radio" name="{{$index}}" ng-model="order.pickup_attempted" ng-value="true" ng-required="true">
+                        <label class="danger-text">Pickup Attempted</label>
+                    </li>
+                </ul>
+                <div class="col-md-8 col-sm-10 col-xs-10" ng-if="order.pickup_attempted">
+                    <div class="col-md-12 col-sm-12 col-xs-12">
+                        <input type="text" class="form-control" name="delivery_remarks" ng-model="order.delivery_remarks" ng-required="order.delivery_remarks" placeholder="Remarks">
+                    </div>
+                </div>
+            </div>
+        </div> 
+
+        <div ng-if="status.name == 'delivered'">
+            <div ng-repeat="order in status.order_to_update" class="col-md-12 col-sm-12 col-xs-12 status_popup_child" style="margin-bottom:15px;">
+                <div class="col-md-2 col-sm-2 col-xs-2" style="padding-left:0px;">
+                    <h4>Order #{{order.id}} </h4> 
+                </div>
+                <ul class="col-md-8 col-sm-10 col-xs-10">
+                    <li class="col-md-6 col-xs-6 col-sm-6 " ng-click="order.delivery_attempted = false">
+                        <input type="radio" name="{{$index}}" ng-model="order.delivery_attempted" ng-value="false" ng-required="true">
+                        <label class="success-text">Delivered</label>
+                    </li>
+                    <li class="col-md-6 col-xs-6 col-sm-6 " ng-click="order.delivery_attempted = true">
+                        <input type="radio" name="{{$index}}" ng-model="order.delivery_attempted" ng-value="true" ng-required="true">
+                        <label class="danger-text">Delivery Attempted</label>
+                    </li>
+                </ul>
+                <div class="col-md-10 col-sm-12 col-xs-12" ng-if="!order.delivery_attempted"> 
+                    <div class="col-md-5 col-sm-5 col-xs-5" style="padding-right:2px;">
+                        <select class="form-control" ng-model="order.delivered_at" ng-required="true">
+                            <option value="">Select</option>
+                            <option ng-repeat="place in $parent.delivered_place" ng-value="{{place}}">{{place}}</option>
+                        </select>
+                    </div>  
+                    <div class="col-md-5 col-sm-5 col-xs-5" style="padding-left:2px;">
+                        <input type="text" class="form-control" name="cod" ng-model="order.cod_collected_amount" placeholder="COD Amount">
+                    </div>
+                    <div class="col-md-10 col-sm-10 col-xs-10" style="margin-top:5px;">
+                        <input type="text" class="form-control" name="delivery_remarks" ng-model="order.delivery_remarks" ng-required="order.delivery_remarks" placeholder="COD remarks">
+                    </div>
+                </div>
+                <div class="col-md-8 col-sm-10 col-xs-10" ng-if="order.delivery_attempted">
+                    <div class="col-md-12 col-sm-12 col-xs-12">
+                        <input type="text" class="form-control" name="delivery_remarks" ng-model="order.delivery_remarks" ng-required="order.delivery_remarks" placeholder="Remarks">
+                    </div>
+                </div>
+            </div>
+        </div>    
+        <button type="submit" class="btn btn-primary" >Update </button>
+        <button type="button" class="btn btn-default" ng-click="cancel()">Cancel</button>
+    </form>
+</div>

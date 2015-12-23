@@ -1,0 +1,71 @@
+<div div id="content" >
+	<div class="menubar">
+		<div class="sidebar-toggler visible-xs" ng-click="$parent.open_sidebar = !$parent.open_sidebar">
+			<i class="ion-navicon"></i>
+		</div>
+		<div class="page-title">
+			Customer Details
+		</div>
+	</div>
+	<div class="content-wrapper">
+		<div class="ajax_loader" ng-show="detailLoading">
+			<img src="/static/webapp/images/377.GIF">
+		</div>
+		<div ng-hide="detailLoading">
+			<!-- {{vendor_detail}} -->
+			<!-- {{user_detail}} -->
+			<form class="form-horizontal content-form" name="vendor_form" ng-hide="success_msg">
+				<div class="form-group">
+				    <label class="col-sm-2 col-md-2 control-label">Customer Name</label>
+				    <div class="col-sm-10 col-md-8">
+				      <input type="text" class="form-control" ng-model="user_detail.name" ng-disabled="!editable"/>
+				    </div>
+			  	</div>
+			  	<div class="form-group">
+				    <label class="col-sm-2 col-md-2 control-label">Customer Email</label>
+				    <div class="col-sm-10 col-md-8">
+				      <input type="text" class="form-control" ng-model="user_detail.email" ng-disabled="!editable"/>
+				    </div>
+			  	</div>
+			  	<div class="form-group">
+				    <label class="col-sm-2 col-md-2 control-label">Customer Phone </label>
+				    <div class="col-sm-10 col-md-8">
+				      <input type="text" class="form-control" ng-model="user_detail.phone_number" ng-disabled="!editable"/>
+				    </div>
+			  	</div>
+			  	<div class="form-group" >
+			  		<label class="col-sm-2 col-md-2 control-label">
+			  			Customer Address
+			  		</label>
+			  		<div class="col-sm-10 col-md-8" >
+			  			<div class="col-sm-10 col-md-3 address-box" ng-repeat="address in user_detail.addresses">
+			  				<b>Full Address: </b> {{address.full_address}}
+			  				<br> <b>Pin Code: </b>{{address.pin_code}}
+			  				<br> <b>Landmark: </b>{{address.landmark}}
+			  				<button class="btn btn-danger pull-right" ng-click="openModal(address.id)"><span class="glyphicon glyphicon-trash"></span></button>
+			  				<br>
+			  				<br>
+			  			</div>
+			  			<div class="col-sm-10 col-md-3 address-box add-address" ng-click="openAddressModal()">
+			  				<div style="font-size:25px;">
+			  					<span class="glyphicon glyphicon-plus-sign"></span>
+			  				</div>
+			  				<h3 style="margin-top:4%;">Add New Address</h3>
+			  			</div>
+			  		</div>
+			  	</div>
+			</form>
+			<!-- <div class="animated fadeIn success" ng-show="success_msg">
+				<div class="ajax_loader " id="success_box" >
+					<img  src="/static/webapp/images/success_tick.png" >
+					<h3>
+						Thanks :)
+					</h3>
+					<h4>
+						Vendor Has Been Confirmed
+					</h4>
+				</div>
+			</div> -->
+		</div>
+	</div>
+</div>

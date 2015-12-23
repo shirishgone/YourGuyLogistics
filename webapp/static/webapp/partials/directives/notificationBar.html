@@ -1,0 +1,32 @@
+<div class="notificationbar">
+	<div class="error" ng-if="noticetype=='error'">
+		<div class="section">
+			<div class="pull-left">
+				<img src="/static/webapp/images/error_notification.png" >
+			</div>
+			<h3>
+			{{message}}
+			</h3>
+		</div>
+	</div>
+	<div class="success" ng-if="noticetype=='success'">
+		<div class="section">
+			<div class="pull-left">
+				<img src="/static/webapp/images/success.png" >
+			</div>
+			<h3>
+			{{message}}
+			</h3>
+		</div>
+	</div>
+	<div class="warning" ng-if="noticetype=='warning'">
+		<div class="section">
+			<div class="pull-left">
+				<img src="/static/webapp/images/warning_notification.png" >
+			</div>
+			<h3>
+			{{message}}
+			</h3>
+		</div>
+	</div>
+</div>

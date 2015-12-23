@@ -1,0 +1,57 @@
+<div id="content">
+	<div class="menubar fixed">
+		<div class="sidebar-toggler visible-xs" ng-click="$parent.open_sidebar = !$parent.open_sidebar">
+			<i class="ion-navicon"></i>
+		</div>
+		
+		<div class="page-title">
+			Feedback
+		</div>
+		<a ui-sref="home.create_complaints" class="new-user btn btn-success pull-right">
+			<span>New Ticket</span>
+		</a>
+	</div>
+	<div class="content-wrapper">
+		<div>
+			<table id="orders-datatable" class="table dataTable" st-table="display_complaints" st-safe-src="complaints">
+				<thead>
+					<tr>
+						<th>Order ID</th>
+						<th>Status</th>
+						<th ng-if="role.ops">Name</th>
+						<th>Created At</th>
+						<th>Type</th>
+						<th>Description</th>
+					</tr>
+					<tr>
+					<th colspan="6">
+							<input st-search placeholder="Search by anything....." class="form-control" type="search"/>
+						</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr class="asLink" ng-repeat="cpl in display_complaints" ui-sref="home.complain_details({id:cpl.display_id})" >
+        				<td>
+        					{{cpl.subject}} 
+        				</td>
+        				<td style="padding-top:15px;">
+							<span class="label" ng-class="{'label-warning' : (cpl.status_name == 'Open'),'label-success' : (cpl.status_name == 'Resolved' || cpl.status_name == 'Closed')}">{{cpl.status_name}}</span>
+						</td>
+						<td ng-if="role.ops">
+							{{cpl.requester_name}}
+						</td>
+        				<td>
+        					{{cpl.created_at | date:'dd MMM yy'}} 
+        				</td>
+                        <td>
+                           {{getGroupName(cpl.group_id)}}
+                        </td>
+                        <td>
+                        	 {{cpl.description | limitTo :20 }}{{cpl.description.length > 20 ? '......' : ''}}
+                        </td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+</div>
