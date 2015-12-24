@@ -183,7 +183,7 @@
 						scope.isVisible = !(scope.isVisible)
 					});
 					event.stopPropagation(); 
-				})
+				});
 				$document.bind('click', function(){
 					scope.isVisible = false;
 					scope.$apply();
@@ -192,13 +192,13 @@
 		}
 	}
 
-	angular.module('ygVendors').directive('ngRedirectTo', ngRedirectTo);
-	angular.module('ygVendors').directive('typeaheadFocus',typeaheadFocus)	
-	angular.module('ygVendors').directive('addProduct',addProduct)
-	angular.module('ygVendors').directive('addCustomer',addCustomer)	
-	angular.module('ygVendors').directive('onReadFile',onReadFile)
-	angular.module('ygVendors').directive('successBox',successBox)
-	angular.module('ygVendors').directive('notificationBar',notificationBar)
-	angular.module('ygVendors').directive('topBar',topBar)
-	angular.module('ygVendors').directive('clickOutside',clickOutside)
-}())
+	angular.module('ygwebapp').directive('ngRedirectTo', ngRedirectTo);
+	angular.module('ygwebapp').directive('typeaheadFocus',typeaheadFocus);	
+	angular.module('ygwebapp').directive('addProduct',addProduct);
+	angular.module('ygwebapp').directive('addCustomer',addCustomer);	
+	angular.module('ygwebapp').directive('onReadFile',onReadFile);
+	angular.module('ygwebapp').directive('successBox',successBox);
+	angular.module('ygwebapp').directive('notificationBar',notificationBar);
+	angular.module('ygwebapp').directive('topBar',topBar);
+	angular.module('ygwebapp').directive('clickOutside',clickOutside);
+}());
