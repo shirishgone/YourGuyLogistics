@@ -1242,7 +1242,8 @@ class OrderViewSet(viewsets.ViewSet):
             # ---------------------------------------------------------------------
 
         # SEND AN EMAIL ABOUT ADDITIONAL ORDERS TO VENDOR AND OPS/SALES -----------
-        email_ids =  constants.EMAIL_ADDITIONAL_ORDERS
+        email_ids = []
+        email_ids.extend(constants.EMAIL_ADDITIONAL_ORDERS)
         email_ids.append(vendor.email)
         today_date = datetime.now()
         subject = 'YourGuy: Extra orders picked up for today: %s' % today_date.strftime('%B %d, %Y')
