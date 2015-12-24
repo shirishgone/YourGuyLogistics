@@ -1,0 +1,78 @@
+<div id="datatables" ng-class="{'open-sidebar' : open_sidebar}">
+	<div id="wrapper">
+        <!-- <div id="check-internet" >
+            <h1 >You are offline</h1>
+        </div> -->
+        <div id="sidebar-default" class="main-sidebar fix-scroll">
+            <div class="current-user popup_display">
+                <a style="cursor:pointer;" class="name popup_display">
+                    <img alt="1" class="avatar" src="/static/webapp/images/profle.png" />
+                    <span class="popup_display"> {{user.name}} </span>
+                </a>
+            </div>
+            <div class="menu-section">
+                <h3>General</h3>
+                <ul class="menu">
+                    <li class="option">
+                        <a ui-sref="home.dashboard" ng-click="hideSidebar()" style="cursor:pointer;" ui-sref-active="active">
+                          <i class="ion-android-earth"></i> 
+                          <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a ui-sref="home.order" ng-click="hideSidebar()" style="cursor:pointer;" ui-sref-active="active">
+                            <img class="sidebar-image" src="/static/webapp/images/menubar-icons/orders_icon.png">&nbsp;&nbsp;
+                            Orders
+                        </a>
+                    </li>
+                    <li ng-if="role.vendor">
+                        <a ui-sref="home.user" ng-click="hideSidebar()" style="cursor:pointer" ui-sref-active="active">
+                            <img class="sidebar-image" src="/static/webapp/images/menubar-icons/customers_icon.png">&nbsp;&nbsp;
+                            Customers
+                        </a>
+                    </li>
+                    <li ng-if="role.vendor">
+                        <a ui-sref="home.product" ng-click="hideSidebar()" style="cursor:pointer" ui-sref-active="active">
+                            <img class="sidebar-image" src="/static/webapp/images/menubar-icons/products_icon.png">&nbsp;&nbsp;
+                            Products
+                        </a>
+                    </li>
+                    <li ng-if="role.ops">
+                        <a ui-sref="home.dg" ng-click="hideSidebar()" style="cursor:pointer" ui-sref-active="active">
+                            <img class="sidebar-image" src="/static/webapp/images/menubar-icons/dgs_icon.png">&nbsp;&nbsp;
+                            Delivery Guy
+                        </a>
+                    </li>
+                    <li ng-if="role.ops">
+                        <a ui-sref="home.vendor" ng-click="hideSidebar()" style="cursor:pointer" ui-sref-active="active">
+                            <img class="sidebar-image" src="/static/webapp/images/menubar-icons/vendors_icon.png">&nbsp;&nbsp;
+                            Vendors
+                        </a>
+                    </li>
+                    <li>
+                        <a ui-sref="home.complaints" ng-click="hideSidebar()" style="cursor:pointer" ui-sref-active="active">
+                            <img class="sidebar-image" src="/static/webapp/images/menubar-icons/feedback_icon.png">&nbsp;&nbsp;
+                            Feedback
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            <div class="menu-section">
+                <h3>Admin</h3>
+                <ul>
+                    <li class="option">
+                        <a data-toggle="sidebar" ng-class="{toggled : myaccount_tab, active : account_active}" ng-click="myaccount_tab = !myaccount_tab">
+                          <i class="ion-person"></i> <span>My account</span>
+                          <i class="fa fa-chevron-down"></i>
+                        </a>
+                        <ul class="submenu" ng-class="{display_account:myaccount_tab}">
+                            <li><a style="cursor:pointer;" ng-click="hideSidebar();" ui-sref="home.account.settings" ui-sref-active="active">Settings</a></li>
+                            <li><a style="cursor:pointer;" ng-click="openModal()">Sign out</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div ui-view autoscroll="true"></div>
+	</div>
+</div>

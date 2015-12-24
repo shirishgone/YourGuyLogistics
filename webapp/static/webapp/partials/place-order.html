@@ -1,0 +1,190 @@
+<div id="content" class="order-place-content">
+	<div class="menubar">
+        <div class="sidebar-toggler visible-xs" ng-click="$parent.open_sidebar = !$parent.open_sidebar">
+            <i class="ion-navicon"></i>
+        </div>
+
+        <div class="page-title">
+            Orders
+        </div>
+    </div>
+    <div ng-class="{'content-wrapper':!notification.type,'content-wrapper-margin':notification.type}">
+    	<div notification-bar message="notification.message" noticetype="notification.type" ng-show="notification.type" >
+    	</div>
+	    <div class="order-place">
+	    	<form name="order-form" ng-submit="createOrder()">
+		    	<accordion close-others="false">
+			    	<accordion-group is-open="accordian.customer" is-disabled="true">
+			    		<accordion-heading>
+							<div>
+								Customers <span ng-show="create_params.consumers.length > 0">({{create_params.consumers.length}})</span>
+							</div>
+						</accordion-heading>
+						<div class="customer">
+							<div class="cust-search">
+								<input type="text" ng-model="order_data.search_customer" 
+								placeholder="Search customer by name or phone number" 
+								title="Please select at least one customer" 
+								ng-required="create_params.consumers.length ==  0" 
+								ng-style="order_data.searching && {'background-image':'url(/static/webapp/images/select2-spinner.gif)'}||{'background-image':'none'}">
+								<div class="add-customer-btn" ng-click="openCustModal()">
+									<img src="/static/webapp/images/order-place/addcustomer.png">
+								</div>
+								<div click-outside showcontent="order_data.searched_customer" class="autocomplete" ng-show="order_data.searched_customer">
+									<div class="search_cust_list" ng-click="openCustModal()" style="padding-top:8px;">
+										+ Add a Customer
+										<div class="phone" style="color:">{{customer.phone_number}}</div>
+									</div>
+									<div class="search_cust_list" ng-repeat="customer in order_data.searched_customer" ng-click="selectCustomer(customer)">
+										<div>{{customer.name}}</div>
+										<div class="phone">{{customer.phone_number}}</div>
+									</div>
+								</div>
+							</div>
+							<div class="cust-list">
+								<table ng-show="create_params.consumers.length > 0">
+									<thead>
+										<tr>
+											<td class="forty">Name</td>
+											<td class="sixty">Address</td>
+										</tr>
+									</thead>
+									<tbody>
+										<tr ng-repeat="customer in create_params.consumers">
+											<td class="forty">{{customer.name}}</td>
+											<td class="sixty">
+												<select ng-model="customer.address_id" ng-options="address.id as address.full_address + address.pin_code for address in customer.addresses" ng-change="CheckAddress(customer)">
+													<option value=""> + Add New Address </option>
+												</select>
+												<div class="edit-image">
+													<img class="remove" src="/static/webapp/images/order-place/cross.png" ng-click="removeCustomer(customer)">
+												</div>
+											</td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+						</div>
+			    	</accordion-group>
+			    	<accordion-group is-open="accordian.order"  is-disabled="true">
+			    		<accordion-heading>
+							<div>
+								Order Details
+							</div>
+						</accordion-heading>
+						<div class="order">
+							<div class="col-md-12 section" id="no-padding">
+								<div class="col-md-4 col-sm-4" id="no-padding">
+									<h4>Product Name</h4>
+									<select id="sm-full" ng-model="order_data.selected_product" ng-options="product as product.name for product in order_data.products" ng-required="true" ng-change="selectTimeSlot()">
+										<option value="">Select Product</option>
+									</select>
+								</div>
+								<div class="col-md-4 col-sm-4" id="no-padding">
+									<h4>Order Date</h4>
+									<div class="order-date">
+										<div class="input-group">
+											<input type="text" ng-click="orderDateOpen($event)" datepicker-popup="{{format}}" ng-model="create_params.order_date" is-open="datePicker.orderDateOpen" ng-required="true" close-text="Close" show-weeks="false" datepicker-append-to-body="true" style="width:100%;" placeholder="dd/mm/yyyy">
+											<span class="input-group-btn">
+												<button type="button" class="btn calendar-button" ng-click="orderDateOpen($event)">
+													<img class="calendar-image" src="/static/webapp/images/calendar.png">
+												</button>
+											</span>
+										</div>
+									</div>
+								</div>
+								<div class="col-md-4 col-sm-4" id="no-padding" ng-if="create_params.product_id">
+									<h4>Pickup Time Slot</h4>
+									<select id="sm-full" ng-model="create_params.timeslots" ng-change="show()" ng-required="true" ng-options="time as (time.timeslot_start | timeAsDate) + 'to' + (time.timeslot_end | timeAsDate) for time in order_data.timeslots ">
+										<option value="">Select Time Slot</option>
+									</select>
+									<h5>Delivery 4 hrs from pickup slot</h5>
+								</div>
+							</div>
+							<div class="col-md-12 section" id="no-padding">
+								<div class="col-md-4 col-sm-4" id="no-padding">
+									<h4>Recurring</h4>
+									<div id="md-half-sm-full">
+										<div class="switch">
+											<button type="button" 
+											ng-class="{'none':create_params.is_recurring,'left':!create_params.is_recurring}" 
+											ng-click="create_params.is_recurring = false">NO</button>
+											<button type="button" class="right" 
+											ng-class="{'right':create_params.is_recurring,'none':!create_params.is_recurring}" 
+											ng-click="create_params.is_recurring = true">YES</button>
+										</div>
+									</div>
+								</div>
+								<div class="col-md-4 col-sm-6" id="no-padding" ng-if="create_params.is_recurring">
+									<h4>Days</h4>
+									<div class="recurring-days">
+										<ul style="margin-bottom:0px;">
+											<li ng-repeat="data in week" ng-click="data.value = !data.value;selectDays(data)"><button type="button" ng-class="{'active':data.value}">{{data.day}}</button></li>
+										</ul>
+									</div>
+								</div>
+								<div class="col-md-4 col-sm-6" id="no-padding" ng-if="create_params.is_recurring">
+									<div class="datepicker">
+										<h4>Start date</h4>
+										<span class="input-group">
+										<input type="text" ng-click="startOpen($event)" datepicker-popup="{{format}}" ng-model="create_params.recurring.start_date" is-open="datePicker.startOpen" min-date="create_params.order_date" ng-required="true" close-text="Close" show-weeks="false" datepicker-append-to-body="true" placeholder="dd/mm/yyyy">
+											<span class="input-group-btn">
+												<button type="button" class="btn calendar-button" ng-click="startOpen($event)">
+													<img class="calendar-image" src="/static/webapp/images/calendar.png">
+												</button>
+											</span>
+										</span>
+									</div>
+									<div class="datepicker">
+										<h4>End Date</h4>
+										<span class="input-group">
+										<input type="text" ng-click="endOpen($event)" datepicker-popup="{{format}}" ng-model="create_params.recurring.end_date" is-open="datePicker.endOpen" min-date="create_params.recurring.start_date" ng-required="true" close-text="Close" show-weeks="false" datepicker-append-to-body="true" placeholder="dd/mm/yyyy">
+											<span class="input-group-btn">
+												<button type="button" class="btn calendar-button" ng-click="endOpen($event)">
+													<img class="calendar-image" src="/static/webapp/images/calendar.png">
+												</button>
+											</span>
+										</span>
+									</div>
+								</div>
+							</div>
+							<div class="col-md-12 section" id="no-padding">
+								<div class="col-md-4 col-sm-4" id="no-padding">
+									<h4>Reverse Pickup</h4>
+									<div id="md-half-sm-full" style="overflow:auto;" ng-init="create_params.is_reverse_pickup = false">
+										<div class="switch">
+											<button type="button" 
+											ng-class="{'none':create_params.is_reverse_pickup,'left':!create_params.is_reverse_pickup}" 
+											ng-click="create_params.is_reverse_pickup = false">NO</button>
+											<button type="button"
+											ng-class="{'right':create_params.is_reverse_pickup,'none':!create_params.is_reverse_pickup}" 
+											ng-click="create_params.is_reverse_pickup = true">YES</button>
+										</div>
+									</div>
+									<h5 ng-show="create_params.is_reverse_pickup">Your address is the delivery address</h5>
+								</div>
+								<div class="col-md-4 col-sm-4" id="no-padding">
+									<h4>COD</h4>
+									<input type="text" id="sm-full" ng-model="create_params.cod_amount" placeholder="Enter amount">
+								</div>
+							</div>
+							<div class="col-md-12 section" id="no-padding">
+								<h4>Remarks</h4>
+								<input class="half-width"  type="text" id="sm-full" ng-model="create_params.notes" placeholder="eg: Handle with care etc">
+							</div>
+							<div class="col-md-12 section" id="no-padding" ng-if="user">
+								<h4>Address</h4>
+								<select id="sm-full" class="half-width"  ng-init="create_params.vendor_address_id = user.addresses[0].id" ng-model="create_params.vendor_address_id" ng-options="address.id  as address.full_address for address in user.addresses">
+								</select>
+							</div>
+						</div>
+			    	</accordion-group>
+		    	</accordion>
+		    	<div class="submit-order">
+		    		<button type="submit" class="place" ng-click="order_data.redirect = true">Place Order</button>
+		    		<button type="submit" class="place-another" ng-click="order_data.redirect = false">Upload & Add Another</button>
+		    	</div>
+	    	</form>
+	    </div>	
+    </div>
+</div>

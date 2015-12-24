@@ -1,0 +1,138 @@
+<div id="content">
+	<div class="menubar fixed">
+		<div class="sidebar-toggler visible-xs" ng-click="$parent.open_sidebar = !$parent.open_sidebar">
+			<i class="ion-navicon"></i>
+		</div>
+		<div class="page-title">
+			Delivery Guy
+		</div>
+		<a ui-sref="home.create_dg" class="new-user btn btn-success pull-right">
+			<span>New DG</span>
+		</a>
+	</div>
+	<div class="content-wrapper">
+		<div class="ajax_loader" ng-hide="loaded">
+            <img src="/static/webapp/images/377.GIF">
+        </div>
+        <div ng-show="loaded" >
+        	<div class="col-md-10 col-xs-12 col-md-offset-1" ng-show="show_error_message">
+		        <h2 class="alert alert-warning"> {{error_msg}} </h2>
+		    </div>
+            <!-- Change View Sction -->
+            <div class="col-md-12 col-xs-12 col-sm-12" style="padding-bottom:15px; z-index:5">
+                <div ng-if="view.map" class="col-md-8 col-sm-6" style="padding-left:0px;">
+                    <div class="col-md-8 col-xs-6 col-sm-6">
+                       <input class="form-control form-joint" 
+                       type="text" 
+                       ng-model="dgFilter.user.first_name" 
+                       placeholder="Filter by delivery guy name" 
+                       typeahead="dg as dg.user.first_name for dg in dgs_for_map | filter : $viewValue " 
+                       typeahead-append-to-body="true"
+                       ng-required="true"
+                       typeahead-focus />
+                    </div>
+                    <div class="col-md-4 col-xs-6 col-sm-6">
+                        <select class="form-control" ng-model="dgFilter.filter_time">
+                            <option value=''>All</option>
+                            <option ng-value="timeFilter.oneHour">One Hour</option>
+                            <option ng-value="timeFilter.threeHour">Three Hours</option>
+                            <option ng-value="timeFilter.today">Today</option>
+                        </select>
+                    </div>
+                </div>
+                <div ng-if="view.list" class="col-md-2 col-sm-2 col-xs-4" style="padding-left:0px;">
+                    <span class="input-group date_picker">
+                        <input
+                            type="text" 
+                            class="form-control"
+                            ng-click="startopen($event)" 
+                            datepicker-popup="{{format}}" 
+                            ng-model="datePicker.date" 
+                            max-date="'2015-12-31'" 
+                            is-open="$parent.opened" 
+                            ng-required="true" 
+                            close-text="Close">
+                        <span class="input-group-btn">
+                            <button type="button" class="btn" ng-click="startopen($event)" style="background-color:#3C434D; color:#fff">
+                                <i class="glyphicon glyphicon-calendar" style="font-size:19px;"></i>
+                            </button>
+                        </span>
+                    </span>
+                </div>
+                <div ng-if="view.list" class="col-md-2 col-sm-2 col-xs-4" style="padding-left:0px;">
+                    <select class="form-control" ng-model="datePicker.attendance" ng-options="status for status in attendance_status">
+                    </select>
+                </div>
+                <div class="btn-group pull-right" role="group" >
+                    <button type="button" ng-disabled="view.list" ng-click="view.list = true;view.map = false;" class="btn btn-warning">List</button>
+                    <button type="button" ng-disabled="view.map" ng-click="view.list = false;view.map = true;" class="btn btn-info">Map</button>
+                </div>
+            </div>
+            <div ng-hide="show_error_message">
+                <table st-table="diplay_dg" st-safe-src="dgs" class="table table-striped " ng-if="view.list">
+                    <thead>
+                        <tr style="cursor:pointer;">
+                            <th style="width:13%;">
+                                <span class="badge">{{totalDgs}}</span> Emp No
+                            </th>
+                            <th >
+                                Name 
+                            </th>
+                            <th st-sort="check_in">
+                                Attendance
+                            </th>
+                            <th >
+                                App Version 
+                            </th>
+                            <th>
+                                Delete
+                            </th>
+                        </tr>
+                        <tr>
+                            <th colspan="5">
+                                <input placeholder="Search with emp Id, dg name, dg phone, app version and press enter" ng-keyup="$event.which === 13 && search_dg($parent.searched_id)" ng-model="$parent.searched_id" class="form-control" type="search"/>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="asLink" ng-repeat="dg in diplay_dg | filter: first_name" ui-sref="home.dg_details({dgId:dg.id})">
+                            <td>
+                                {{dg.employee_code}}
+                            </td>
+                            <td>
+                                {{dg.name}}<br> <span style="color : #696969">{{dg.phone_number}}</span>
+                            </td>
+                            <td ng-class="{'danger-text': (dg.check_in == null),'success-text':(dg.check_out != null)}">
+                                <b>
+                                    {{dg.check_in || '---' | date:'h:mm a' }}&nbsp;&nbsp;&nbsp; to &nbsp;&nbsp;&nbsp;{{dg.check_out || '---' | date:'h:mm a' }}
+                                </b>
+                                <br> 
+                                <span style="color:#696969">
+                                    Total Hours- {{ calculate_time_diff(dg.check_in,dg.check_out) }} Hrs
+                                </span>
+                            </td>
+                            <td>
+                                {{dg.app_version}}
+                            </td>
+                            <td>
+                                <button class="btn btn-danger" ng-click="deleteDgModal(sm,dg,$event)">
+                                    <span class="glyphicon glyphicon-trash"></span>
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                    <tfoot>
+                        <tr ng-if="totalDgs">
+                            <td colspan="8" class="text-center">
+                                <pagination total-items="totalDgs" ng-model="datePicker.page" items-per-page="itemsByPage" max-size="8" boundary-links="true" rotate="false" ></pagination>
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+                <div class="col-md-12 col-sm-12" ng-if="view.map" ng-init="initialize_map()">
+                    <div id="map-canvas"></div>
+                </div>
+            </div>
+        </div>
+	</div>
+</div>

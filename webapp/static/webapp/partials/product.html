@@ -1,0 +1,60 @@
+<div id="content">
+	<div class="menubar fixed">
+		<div class="sidebar-toggler visible-xs" ng-click="$parent.open_sidebar = !$parent.open_sidebar">
+			<i class="ion-navicon"></i>
+		</div>
+		<div class="page-title">
+			Products
+		</div>
+	</div>
+	<div class="content-wrapper">
+		<div class="ajax_loader" ng-show="!loaded">
+            <img src="/static/webapp/images/377.GIF">
+        </div>
+        <div class="animated" ng-show="loaded" ng-class="{fadeInUp:loaded}">
+        	<div class="col-md-10 col-xs-12 col-md-offset-1" ng-show="show_product_msg">
+		        <h2 class="alert alert-warning"> {{product_msg}} </h2>
+		    </div>
+		    <table st-table="display_product" st-safe-src="products" class="table table-striped" ng-hide="show_product_msg">
+		    	<thead>
+        			<tr style="cursor:pointer;">
+        				<th st-sort="name">
+        					Name
+        				</th>
+        				<th st-sort="category">
+        					Cost 
+        				</th>
+        				<th st-sort="description">
+        					Description 
+        				</th>
+        			</tr>
+        			<tr>
+        				<th colspan="3">
+        					<input st-search placeholder="search" class="form-control" type="search"/>
+        				</th>
+        			</tr>
+        		</thead>
+        		<tbody>
+        			<tr ng-repeat="prod in display_product | filter: first_name">
+        				<td>
+        					{{prod.name}} 
+        				</td>
+        				<td>
+        					{{prod.cost}} 
+        				</td>
+        				<td>
+        					{{prod.description}}
+        				</td>
+        			</tr>
+        		</tbody>
+        		<tfoot>
+        			<tr>
+        				<td colspan="5" class="text-center">
+        					<div st-pagination="" st-items-by-page="itemsByPage" st-displayed-pages="7"></div>
+        				</td>
+        			</tr>
+        		</tfoot>
+		    </table>
+        </div>
+	</div>
+</div>

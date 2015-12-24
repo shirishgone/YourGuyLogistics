@@ -1,0 +1,299 @@
+<div id="content">
+	<div class="menubar">
+		<div class="sidebar-toggler visible-xs" ng-click="$parent.open_sidebar = !$parent.open_sidebar">
+			<i class="ion-navicon"></i>
+		</div>
+		<div class="page-title">
+			{{header}}<span ng-if="order_with_id"> # </span>{{order_with_id.id}} 
+		</div>
+		<div class="header-text pull-right" ng-show="order_with_id">
+			<span ng-if="screenWidth >= 767">Order placed on </span>{{order_with_id.order_placed_datetime | date: 'd MMM' || '---'}} at {{order_with_id.order_placed_datetime | date: 'h:mma' || '---'}}
+		</div>
+	</div>
+	<div notification-bar message="notification.message" noticetype="notification.type" ng-show="notification.type" >
+	</div>
+	<div class="content-wrapper">
+		<div class="details" ng-show="order_with_id && !success_msg">
+			<div class="status-details" ng-if="!(order_with_id.status == 'CANCELLED' || order_with_id.status == 'REJECTED' || order_with_id.status == 'ORDER_PLACED')">
+
+				<div class="status-image">
+					<div id="image">
+						<h4>QUEUED</h4>
+						<img src="/static/webapp/images/details/queued.png">
+						<h4>{{order_with_id.order_placed_datetime || "---" | date:'h:mm a'}}</h4>
+					</div>
+					<div class="line"></div>
+					<div id="image">
+						<div ng-if="order_status.pickup == false">
+							<h4 class="error" >{{order_with_id.pickup_datetime || "---" | date:'h:mm a'}}</h4>
+							<h4 class="error" ><span ng-if="screenWidth >= 767">PICKUP</span> ATTEMPTED</h4>
+							<img src="/static/webapp/images/details/unsuccessful.png">
+							<h4>{{order_with_id.pickedup_datetime || "---" | date:'h:mm a'}}</h4>
+						</div>
+						<div ng-if="order_status.pickup == true">
+							<h4>{{order_with_id.pickup_datetime || "---" | date:'h:mm a'}}</h4>
+							<h4>INTRANSIT</h4>
+							<img src="/static/webapp/images/details/pickedup.png">
+							<h4>{{order_with_id.pickedup_datetime || "---" | date:'h:mm a'}}</h4>
+						</div>
+						<div ng-if="order_status.pickup == null">
+							<h4>{{order_with_id.pickup_datetime || "---" | date:'h:mm a'}}</h4>
+							<h4 >INTRANSIT</h4>
+							<img src="/static/webapp/images/details/pickup.png">
+							<h4>{{order_with_id.pickedup_datetime || "---" | date:'h:mm a'}}</h4>
+						</div>
+					</div>
+					<div class="line"></div>
+					<div id="image">
+						<div ng-if="order_status.deliver == false">
+							<h4 class="error" >{{order_with_id.delivery_datetime || "---" | date:'h:mm a'}}</h4>
+							<h4 class="error" ><span ng-if="screenWidth >= 767">DELIVERY</span> ATTEMPTED</h4>
+							<img src="/static/webapp/images/details/unsuccessful.png">
+							<h4>{{order_with_id.completed_datetime || "---" | date:'h:mm a'}}</h4>
+						</div>
+						<div ng-if="order_status.deliver == true">
+							<h4>{{order_with_id.delivery_datetime || "---" | date:'h:mm a'}}</h4>
+							<h4>DELIVERED</h4>
+							<img src="/static/webapp/images/details/delivered.png">
+							<h4>{{order_with_id.completed_datetime || "---" | date:'h:mm a'}}</h4>
+						</div>
+						<div ng-if="order_status.deliver == null">
+							<h4>{{order_with_id.delivery_datetime || "---" | date:'h:mm a'}}</h4>
+							<h4 >DELIVERY</h4>
+							<img src="/static/webapp/images/details/deliver.png">
+							<h4>{{order_with_id.completed_datetime || "---" | date:'h:mm a'}}</h4>
+						</div>
+					</div>
+				</div>
+				<div class="status-action">
+					<div id="button">
+						<button class="button-success" 
+								ng-click="openModal(order_with_id.id,'reschedule','reschedule_order')"  
+								ng-disabled="!(order_with_id.status == 'ORDER_PLACED' || order_with_id.status == 'QUEUED' || order_with_id.status == 'PICKUP_ATTEMPTED')" >
+								Reschedule
+						</button>
+					</div>
+					<div id="button">
+						<button class="button-danger" 
+								ng-click="openModal(order_with_id,'cancel','delete_order')"
+								ng-disabled="order_with_id.status != 'QUEUED' && order_with_id.status != 'ORDER_PLACED'">
+								Cancel
+						</button>
+					</div>
+				</div>
+			</div>
+			<div class="status-rejected" ng-if="order_with_id.status == 'CANCELLED' || order_with_id.status == 'REJECTED' ">
+				<div class="status-image" ng-if="order_with_id.status == 'REJECTED'">
+					<img src="/static/webapp/images/details/rejected.png">
+					<H4 class="danger-text">REJECTED</H4>
+					<p>We are sorry but it seems your order has been rejected by our team. Please check the availability and place another order</p>
+				</div>
+				<div class="status-image" ng-if="order_with_id.status == 'CANCELLED'">
+					<img src="/static/webapp/images/details/cancelled.png">
+					<H4 class="danger-text">CANCELLED</H4>
+					<p>We are sorry but it seems your order has been cancelled. Please check the availability and place another order</p>
+				</div>
+			</div>
+			<div class="status-placed" ng-if="order_with_id.status == 'ORDER_PLACED'">
+				<div class="status-image">
+					<img src="/static/webapp/images/details/order_placed.png">
+					<H4>Your order has been placed</H4>
+					<p>We will shortly confirm or reject your order as per the availability </p>
+					<button class="button-danger"  
+							style="width:100px;" 
+							ng-click="openModal(order_with_id,'cancel','delete_order')">
+							Cancel
+					</button>
+				</div>
+			</div>
+			<div class="order-details">
+				<accordion close-others="false">
+					<accordion-group is-open="accordian.approval" ng-if="role.ops">
+						<accordion-heading>
+							<div>
+								Order Assignment And Approval
+								<i class="pull-right glyphicon" ng-class="{'glyphicon-chevron-down': accordian.approval, 'glyphicon-chevron-right': !accordian.approval}"></i>
+							</div>
+						</accordion-heading>
+						<div class="section" ng-if="order_with_id.status == 'ORDER_PLACED' ">
+							<div class="col-md-6 col-sm-6 col-xs-6" style="text-align:right;">
+								<button class="button-success" ng-click="openModal(order_with_id.id,'approve','approve_order')">Approve</button>
+							</div>
+							<div class="col-md-6 col-sm-6 col-xs-6" style="text-align:left;">
+								<button class="button-danger" ng-click="openModal(order_with_id.id,'decline','decline_order')">Reject</button>
+							</div>
+						</div>
+						<hr ng-if="order_with_id.status == 'ORDER_PLACED' ">
+						<div class="left-section">
+							<div class="section" style="overflow:inherit;">
+								<div class="col-md-5 col-sm-4 col-xs-6">
+									<h4>Pickup Guy <span class="sm-hide">Name</span> </h4>
+									<div class="text">{{ order_with_id.pickupguy_name || '-----'}}</div>
+									<h5>+91 {{order_with_id.pickupguy_phonenumber || '-----'}}</h5>
+								</div>
+								<div class="col-md-5 col-sm-4 col-xs-6">
+									<h4>Delivery Guy <span class="sm-hide">Name</span></h4>
+									<div class="text">{{ order_with_id.deliveryguy_name || '-----'}}</div>
+									<h5>+91 {{order_with_id.deliveryguy_phonenumber || '-----'}}</h5>
+								</div>
+							</div>
+						</div>
+						<div class="right-section">
+							<div id="button">
+								<button class="button-warning" 
+										ng-click="openDgModal(order_with_id)" 
+										ng-disabled="disableByStatus(order_with_id)">Assign DG
+								</button>
+							</div>
+						</div>
+					</accordion-group>
+					<accordion-group is-open="accordian.delivery">
+						<accordion-heading>
+							<div>
+								Delivery Details
+								<i class="pull-right glyphicon" ng-class="{'glyphicon-chevron-down': accordian.delivery, 'glyphicon-chevron-right': !accordian.delivery}"></i>
+							</div>
+						</accordion-heading>
+						<div class="left-section">
+							<div class="section">
+								<div class="col-md-3 col-sm-3 col-xs-6">
+									<h4>Cod Collected</h4>
+									<div class="text">
+										<span ng-if="order_with_id" ng-class="compareCOD(order_with_id)">
+											{{order_with_id.cod_collected_amount}}rs
+										</span>/{{order_with_id.cod_amount}}rs
+									</div>
+								</div>
+								<div class="col-md-9 col-sm-9 col-xs-6" ng-if="!(order_with_id.delivered_at =='NOT_DELIVERED')">
+									<h4>Delivered To</h4>
+									<div class="text">{{order_with_id.delivered_at}}</div>
+								</div>
+							</div>
+							<hr>
+							<div class="section">
+								<div class="col-md-12 col-sm-12 col-xs-12">
+									<h4>Reason</h4>
+									<div class="text">{{order_with_id.cod_remarks || '-----'}}</div>
+								</div>
+							</div>
+						</div>
+						<div class="right-section" >
+							<div id="button">
+								<div>
+									<button class="button-danger"
+											ng-disabled="order_with_id.pickedup_datetime == null" 
+											ng-click="downloadPop()">
+										<!-- <img src="/static/webapp/images/details/download.png">&nbsp;&nbsp; -->Pickup Proof
+									</button>
+								</div>
+								<div>
+									<button class="button-danger" 
+											ng-click="downloadPod()" 
+											ng-disabled="order_with_id.completed_datetime == null">
+										<!-- <img src="/static/webapp/images/details/download.png">&nbsp;&nbsp; -->Delivery Proof
+									</button>
+								</div>
+							</div>
+						</div>
+					</accordion-group>
+					<accordion-group is-open="accordian.order">
+						<accordion-heading>
+							<div>
+								Order Details
+								<i class="pull-right glyphicon" ng-class="{'glyphicon-chevron-down': accordian.order, 'glyphicon-chevron-right': !accordian.order}"></i>
+							</div>
+						</accordion-heading>
+						<div class="section">
+							<div class="col-md-3 col-sm-3 col-xs-6">
+								<h4>Product Name</h4>
+								<div ng-repeat="item in order_with_id.order_items">
+									<div class="text">{{item.product_name }}</div>
+								</div>
+								<span class="text" ng-show="(order_with_id.order_items).length == 0">-----</span>
+							</div>
+							<div class="col-md-3 col-sm-3 col-xs-6">
+								<h4>Quantity</h4>
+								<div ng-repeat="item in order_with_id.order_items">
+									<div class="text">{{item.quantity}}</div>
+								</div>
+								<span class="text" ng-show="(order_with_id.order_items).length == 0">-----</span>
+							</div>
+							<div class="col-md-3 col-sm-3 col-xs-6">
+								<h4>Total Cost</h4>
+								<div class="text">{{order_with_id.total_cost}}rs</div>
+							</div>
+							<div class="col-md-3 col-sm-3 col-xs-6" ng-if="order_with_id.completed_datetime">
+								<h4>Delivery Date</h4>
+								<div class="text">{{order_with_id.completed_datetime | date:'d,MMMM,yyyy' }}</div>
+							</div>
+						</div>
+						<hr>
+						<div class="section">
+							<div class="col-md-9 col-sm-9 col-xs-12">
+								<h4>Remarks by the vendor</h4>
+								<div class="text">{{order_with_id.notes || '-----'}}</div>
+							</div>
+							<div class="col-md-3 col-sm-3 col-xs-12">
+								<h4>Vendor Order Id</h4>
+								<div class="text">{{order_with_id.vendor_order_id || '-----'}}</div>
+							</div>
+						</div>
+					</accordion-group>
+					<accordion-group is-open="accordian.address">
+						<accordion-heading>
+							<div>
+								Address and Customer Details
+								<i class="pull-right glyphicon" ng-class="{'glyphicon-chevron-down': accordian.address, 'glyphicon-chevron-right': !accordian.address}"></i>
+							</div>
+						</accordion-heading>
+						<div class="section">
+							<div class="col-md-12 col-sm-12 col-xs-12">
+								<h4>Pickup Address</h4>
+								<div class="text">{{order_with_id.pickup_address}}</div>
+							</div>
+							<div class="col-md-12 col-sm-12 col-xs-12">
+								<h4>Deliver Address</h4>
+								<div class="text">{{order_with_id.delivery_address}}</div>
+							</div>
+						</div>
+						<hr>
+						<div class="left-side">
+							<div class="section">
+								<div class="col-md-4 col-sm-5 col-xs-4 consumer">
+									<img  src="/static/webapp/images/details/consumer.png" >
+								</div>
+								<div class="col-md-8 col-sm-7 col-xs-8" >
+									<h4>Customer Name</h4>
+									<div class="text">{{order_with_id.customer_name}}</div>
+								</div>
+								<div class="col-md-8 col-sm-7 col-xs-8" >
+									<h4>Phone no</h4>
+									<div class="text">{{order_with_id.customer_phonenumber}}</div>
+								</div>
+							</div>
+						</div>
+						<div class="right-side" ng-if="role.ops">
+							<hr class="show-in-mobile">
+							<div class="section">
+								<div class="col-md-4 col-sm-5 col-xs-4 consumer">
+									<img  src="/static/webapp/images/details/vendor.png" >
+								</div>
+								<div class="col-md-8 col-sm-7 col-xs-8" >
+									<h4>Vendor Name</h4>
+									<div class="text">{{order_with_id.vendor_name}}</div>
+								</div>
+								<div class="col-md-8 col-sm-7 col-xs-8" >
+									<h4>Phone no</h4>
+									<div class="text">{{order_with_id.vendor_phonenumber}}</div>
+								</div>
+							</div>
+						</div>
+					</accordion-group>
+				</accordion>
+			</div>
+		</div>
+		<div class=" animated fadeIn success" ng-show="success_msg">
+			<div success-box message="success_msg"></div>
+		</div>
+	</div>
+</div>
