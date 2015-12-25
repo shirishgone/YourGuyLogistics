@@ -174,8 +174,9 @@ ygVendors.config(function ($stateProvider, $urlRouterProvider, $httpProvider,cfp
     }
   })
   .state('home.user', {
-    url: "/user?page",
+    url: "/user?page&search",
     templateUrl: "/static/webapp/partials/user.html",
+    reloadOnSearch : false,
     controller: "userCntrl",
     data :{
       requireLogin:true
@@ -475,14 +476,6 @@ ygVendors.controller('homeCntrl', function ($state,$scope,StoreSession,$q,$modal
       $scope.user.name  = baseURl.OPS.toUpperCase()
       GetJsonData.fetchFromServer().then(function (data){
         $scope.vendors = data.vendors.data;
-        // $scope.vendors.forEach(function(vendor){
-        //   if(vendor.is_retail){
-        //     vendor.type = "Retail"
-        //   }
-        //   else{
-        //     vendor.type = "Corporate"
-        //   }
-        // })
         $scope.area_codes = data.areas;
         $scope.dgs = data.dgs;
         $scope.dgs.unshift({user :{username:'UNASSIGNED',first_name:'Unassigned'}})
@@ -494,7 +487,6 @@ ygVendors.controller('homeCntrl', function ($state,$scope,StoreSession,$q,$modal
       $scope.role.vendor = true
       GetJsonData.fetchFromServer().then(function (data){
         $scope.user  = data.vendors.data;
-        $scope.area_codes = data.areas
       },error)
     } 
   }
@@ -1246,29 +1238,43 @@ ygVendors.controller('createOrderCntrl',function ($scope,$state,$modal,$timeout,
   }
 })
 
-ygVendors.controller('userCntrl',function ($scope,$http,StoreSession,$location,$stateParams,$modal,Consumers,Errorhandler,baseURl){
-  $scope.toggle = false
+ygVendors.controller('userCntrl',function ($scope,$http,StoreSession,$location,$stateParams,$modal,cfpLoadingBar,Consumers,Errorhandler,baseURl){
+  $scope.toggle = false;
   $scope.open_sidebar = false;
-  $scope.current_user_page = ($stateParams.page!= undefined) ? $stateParams.page : 1;
-  $scope.itemsByPage = baseURl.ItemByPage
+  $scope.user_params = $stateParams;
+  $scope.user_params.page = (!isNaN($stateParams.page))? parseInt($stateParams.page): 1;
+  $scope.searched_cust = $stateParams.search;
+  $scope.itemsByPage = baseURl.ItemByPage;
 
-  $scope.getConsumer = function(){
-    var query_obejct = {
-      page: $scope.current_user_page
+  $scope.search_user = function(id){
+    if(id == undefined || id == ""){
+      delete $scope.user_params.search; 
     }
-    $location.search(query_obejct)
-    Consumers.fetchConsumer($scope.current_user_page).finally( function(){
+    else{
+      $scope.user_params.search = id
+    }
+  };
+
+  $scope.getConsumer = function (data){
+    cfpLoadingBar.start()
+    Consumers.fetchConsumer(data).finally( function(){
       var get_status = Errorhandler.getStatus()
+      cfpLoadingBar.complete()
       if(get_status.has_error){
-        $scope.loaded = true
         $scope.show_consumer_msg = true
         $scope.consumer_msg = get_status.error
       }
       else{
-        $scope.loaded = true
         if(get_status.data.data.length == 0){
-          $scope.show_consumer_msg = true
-          $scope.consumer_msg = "Sorry, no customers added.Please add your customers by clicking the above NEW CUSTOMER button"
+          if($scope.user_params.search!= undefined){
+            $scope.show_consumer_msg = true
+            $scope.consumer_msg = "Sorry! No customer found."
+          }
+          else{
+            $scope.show_consumer_msg = true
+            $scope.consumer_msg = "There are no customers. Please start adding your customers."
+          }
+          
         }
         else{
           $scope.show_consumer_msg = false
@@ -1279,8 +1285,15 @@ ygVendors.controller('userCntrl',function ($scope,$http,StoreSession,$location,$
     })
   }
 
-  $scope.getConsumer()
   $scope.display_consumer = [].concat($scope.consumer_data)
+
+  $scope.$watch('user_params', function (newValue,oldValue){
+    if(newValue){
+      if (parseInt(newValue.page) == parseInt(oldValue.page)) {newValue.page = 1}
+      $location.search(newValue);
+      $scope.getConsumer(newValue);
+    }
+  },true)
 
   $scope.deleteConsumer = function(user){
     $scope.loaded = false
@@ -1364,9 +1377,9 @@ ygVendors.controller('productCntrl',function ($scope,Products,Errorhandler,baseU
         $scope.show_product_msg = true
         $scope.product_msg = status.error
       }
-      else if(status.data.length == 0){
+      else if(status.data.products.length == 0){
         $scope.show_product_msg = true
-        $scope.product_msg = "Please add your products by clicking the above NEW PRODUCT button."
+        $scope.product_msg = "You have no product. Please contact YourGuy to add your products."
       }
       else{
         $scope.show_product_msg = false
@@ -2507,31 +2520,36 @@ ygVendors.controller('reportsCntrl', function ($scope,$timeout,Dashboard,Errorha
         }
         else{
           scope.dashboard_value = status.data
-          cfpLoadingBar.set(0.7)
-          scope.graphData.categories[0].category = []
-          scope.graphData.dataset[0].data = []
-          scope.graphData.dataset[1].data = []
-          scope.graphData.dataset[2].data = []
-          scope.graphData.dataset[3].data = []
-          scope.graphData.dataset[4].data = []
-          for(var i=0; i < scope.dashboard_value.orders.length;i++){
-            scope.graphData.categories[0].category[i] = {}
-            scope.graphData.categories[0].category[i].label = scope.dashboard_value.orders[i].date.slice(8,10)
-            scope.graphData.dataset[0].data[i] = {}
-            scope.graphData.dataset[1].data[i] = {}
-            scope.graphData.dataset[2].data[i] = {}
-            scope.graphData.dataset[3].data[i] = {}
-            scope.graphData.dataset[4].data[i] = {}
-            scope.graphData.dataset[0].data[i].value = scope.dashboard_value.orders[i].delivered_count   
-            scope.graphData.dataset[0].data[i].toolText = "Total Delivered:"+scope.dashboard_value.orders[i].delivered_count+"{br} Total Placed:"+scope.dashboard_value.orders[i].total_orders_count+"{br}"+new Date(scope.dashboard_value.orders[i].date).toDateString()
-            scope.graphData.dataset[1].data[i].value = scope.dashboard_value.orders[i].delivery_attempted_count+scope.dashboard_value.orders[i].pickup_attempted_count  
-            scope.graphData.dataset[1].data[i].toolText = "Total Attempted:"+(scope.dashboard_value.orders[i].delivery_attempted_count+scope.dashboard_value.orders[i].pickup_attempted_count)+"{br} Total Placed:"+scope.dashboard_value.orders[i].total_orders_count+"{br}"+new Date(scope.dashboard_value.orders[i].date).toDateString()
-            scope.graphData.dataset[2].data[i].value = scope.dashboard_value.orders[i].intransit_count   
-            scope.graphData.dataset[2].data[i].toolText = "Total Intransit:"+scope.dashboard_value.orders[i].intransit_count+"{br} Total Placed:"+scope.dashboard_value.orders[i].total_orders_count+"{br}"+new Date(scope.dashboard_value.orders[i].date).toDateString()
-            scope.graphData.dataset[3].data[i].value = scope.dashboard_value.orders[i].queued_count   
-            scope.graphData.dataset[3].data[i].toolText = "Total Queued:"+scope.dashboard_value.orders[i].queued_count+"{br} Total Placed:"+scope.dashboard_value.orders[i].total_orders_count+"{br}"+new Date(scope.dashboard_value.orders[i].date).toDateString()
-            scope.graphData.dataset[4].data[i].value = scope.dashboard_value.orders[i].cancelled_count   
-            scope.graphData.dataset[4].data[i].toolText = "Total Cancelled:"+scope.dashboard_value.orders[i].cancelled_count+"{br} Total Placed:"+scope.dashboard_value.orders[i].total_orders_count+"{br}"+new Date(scope.dashboard_value.orders[i].date).toDateString()
+          if( scope.dashboard_value.total_orders == 0) {
+            scope.no_reports_msg = 'Hello ! There are no reports yet, please place orders to view your reports.'
+          }
+          else{
+            scope.no_reports_msg = undefined;
+            scope.graphData.categories[0].category = []
+            scope.graphData.dataset[0].data = []
+            scope.graphData.dataset[1].data = []
+            scope.graphData.dataset[2].data = []
+            scope.graphData.dataset[3].data = []
+            scope.graphData.dataset[4].data = []
+            for(var i=0; i < scope.dashboard_value.orders.length;i++){
+              scope.graphData.categories[0].category[i] = {}
+              scope.graphData.categories[0].category[i].label = scope.dashboard_value.orders[i].date.slice(8,10)
+              scope.graphData.dataset[0].data[i] = {}
+              scope.graphData.dataset[1].data[i] = {}
+              scope.graphData.dataset[2].data[i] = {}
+              scope.graphData.dataset[3].data[i] = {}
+              scope.graphData.dataset[4].data[i] = {}
+              scope.graphData.dataset[0].data[i].value = scope.dashboard_value.orders[i].delivered_count   
+              scope.graphData.dataset[0].data[i].toolText = "Total Delivered:"+scope.dashboard_value.orders[i].delivered_count+"{br} Total Placed:"+scope.dashboard_value.orders[i].total_orders_count+"{br}"+new Date(scope.dashboard_value.orders[i].date).toDateString()
+              scope.graphData.dataset[1].data[i].value = scope.dashboard_value.orders[i].delivery_attempted_count+scope.dashboard_value.orders[i].pickup_attempted_count  
+              scope.graphData.dataset[1].data[i].toolText = "Total Attempted:"+(scope.dashboard_value.orders[i].delivery_attempted_count+scope.dashboard_value.orders[i].pickup_attempted_count)+"{br} Total Placed:"+scope.dashboard_value.orders[i].total_orders_count+"{br}"+new Date(scope.dashboard_value.orders[i].date).toDateString()
+              scope.graphData.dataset[2].data[i].value = scope.dashboard_value.orders[i].intransit_count   
+              scope.graphData.dataset[2].data[i].toolText = "Total Intransit:"+scope.dashboard_value.orders[i].intransit_count+"{br} Total Placed:"+scope.dashboard_value.orders[i].total_orders_count+"{br}"+new Date(scope.dashboard_value.orders[i].date).toDateString()
+              scope.graphData.dataset[3].data[i].value = scope.dashboard_value.orders[i].queued_count   
+              scope.graphData.dataset[3].data[i].toolText = "Total Queued:"+scope.dashboard_value.orders[i].queued_count+"{br} Total Placed:"+scope.dashboard_value.orders[i].total_orders_count+"{br}"+new Date(scope.dashboard_value.orders[i].date).toDateString()
+              scope.graphData.dataset[4].data[i].value = scope.dashboard_value.orders[i].cancelled_count   
+              scope.graphData.dataset[4].data[i].toolText = "Total Cancelled:"+scope.dashboard_value.orders[i].cancelled_count+"{br} Total Placed:"+scope.dashboard_value.orders[i].total_orders_count+"{br}"+new Date(scope.dashboard_value.orders[i].date).toDateString()
+            }
           }
         }
       })

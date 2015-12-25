@@ -246,9 +246,15 @@ ygVendors.factory('Orders',function ($http,baseURl,$q,Errorhandler){
 
 ygVendors.factory('Consumers',function ($http,Errorhandler,baseURl){
     var consumers = {};
-    consumers.fetchConsumer = function(page){
+    consumers.fetchConsumer = function(data){
         Errorhandler.clear();
-        return $http.get(baseURl.V2apiURL+"/consumer/?page="+page).then(Errorhandler.successStatus,Errorhandler.errorStatus);
+        if(data.search){
+            search_string = "&search="+data.search;
+        }
+        else {
+            search_string = "";
+        }
+        return $http.get(baseURl.V2apiURL+"/consumer/?page="+data.page+search_string).then(Errorhandler.successStatus,Errorhandler.errorStatus);
     };
 
     consumers.fetchConsumerv1 = function(){
@@ -395,11 +401,9 @@ ygVendors.factory('GetJsonData', function ($http,$q,baseURl,StoreSession,$localS
 
         var getvendor = $http.get(baseURl.V2apiURL+'/vendor/');
         var dg = $http.get(baseURl.apiURL+'/deliveryguy/');
-        var area = $http.get(baseURl.apiURL+"/area/");
-        $q.all([getvendor,dg,area]).then(function (value){
+        $q.all([getvendor,dg]).then(function (value){
             jsonData.vendors = value[0].data;
             jsonData.dgs = value[1].data;
-            jsonData.areas = value[2].data;
             deferred.resolve(jsonData);
         }, function (error){
             deferred.reject("Could not retrieve data! Please reload the page"+error);
