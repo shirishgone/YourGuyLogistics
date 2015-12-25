@@ -6,6 +6,7 @@ from rest_framework import authentication, status
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.decorators import list_route
 
 from api_v3 import constants
 from api_v3.utils import user_role, paginate, is_userexists, is_consumerexists
@@ -57,6 +58,24 @@ def consumer_detail_dict(consumer):
         }
         consumer_dict['addresses'].append(adr_dict)
 
+    return consumer_dict
+
+
+def excel_download_consumer_detail(consumer):
+    consumer_dict = {
+        'name': consumer.user.first_name,
+        'phone_number': consumer.user.username,
+        "addresses": []
+    }
+
+    all_addresses = consumer.addresses.all()
+    for address in all_addresses:
+        adr_dict = {
+            "full_address": address.full_address,
+            "landmark": address.landmark,
+            "pin_code": address.pin_code
+        }
+        consumer_dict['addresses'].append(adr_dict)
     return consumer_dict
 
 
@@ -169,3 +188,26 @@ class ConsumerViewSet(viewsets.ModelViewSet):
                 'error': 'You don\'t have permissions to view all Consumers'
             }
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
+
+    @list_route(methods=['get'])
+    def file_download(self, request):
+        role = user_role(request.user)
+        if role == constants.VENDOR:
+            vendor_agent = get_object_or_404(VendorAgent, user = request.user)
+            all_consumers_of_vendor = Consumer.objects.filter(associated_vendor = vendor_agent.vendor).order_by(Lower('user__first_name'))
+
+            result = []
+            for consumer in all_consumers_of_vendor:
+                consumer_dict = excel_download_consumer_detail(consumer)
+                result.append(consumer_dict)
+
+            response_content = {
+            "data": result
+            }
+            return Response(response_content, status = status.HTTP_200_OK)
+        else:
+            content = {
+            'error':'No permissions to access customers',
+            'description':'You dont have permissions to fetch customers list'
+            }
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)

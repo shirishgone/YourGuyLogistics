@@ -1,5 +1,6 @@
 from datetime import timedelta
-
+from dateutil.rrule import rrule, DAILY
+from django.db.models import Sum, Q
 from django.shortcuts import get_object_or_404
 from django.utils.dateparse import parse_datetime
 from rest_framework import status
@@ -71,7 +72,7 @@ def excel_download(request):
             order = delivery_status.order
             excel_order = {
                 'date': date.strftime('%d-%m-%Y'),
-                'order_id': order.id,
+                'order_id': delivery_status.id,
                 'customer_name': order.consumer.user.first_name,
                 'customer_phone_number': order.consumer.user.username,
                 'cod_amount': order.cod_amount,
@@ -96,3 +97,115 @@ def excel_download(request):
         'orders': excel_order_details
     }
     return Response(content, status=status.HTTP_200_OK)
+
+@api_view(['POST'])
+@permission_classes((IsAuthenticated,))
+def report(request):
+    try:
+        start_date_string = request.data['start_date']
+        end_date_string = request.data['end_date']
+
+        start_date = parse_datetime(start_date_string)
+        start_date = ist_day_start(start_date)
+
+        end_date = parse_datetime(end_date_string)
+        end_date = ist_day_end(end_date)
+
+    except APIException as e:
+        content = {
+            'error': 'Error in params: start_date, end_date'
+        }
+        return Response(content, status=status.HTTP_400_BAD_REQUEST)
+
+    # CREATE DATE RULE -----------------------------------------------------------
+    rule_daily = rrule(DAILY, dtstart=start_date, until=end_date)
+    alldates = list(rule_daily)
+
+    # VENDOR FILTERING -----------------------------------------------------------
+    vendor = None
+    role = user_role(request.user)
+    if role == constants.VENDOR:
+        vendor_agent = get_object_or_404(VendorAgent, user=request.user)
+        vendor = vendor_agent.vendor
+    else:
+        vendor_id = request.data.get('vendor_id')
+        if vendor_id is not None:
+            vendor = get_object_or_404(Vendor, pk=vendor_id)
+        else:
+            pass
+
+    if vendor is not None:
+        delivery_status_queryset = OrderDeliveryStatus.objects.filter(order__vendor=vendor)
+    else:
+        delivery_status_queryset = OrderDeliveryStatus.objects.all()
+
+    # TOTAL COD COLLECTED ------------------------------------------------------------
+    cod_collected_dict = delivery_status_queryset.filter(date__gte=start_date, date__lte=end_date).aggregate(
+        cod_collected=Sum('cod_collected_amount'))
+    cod_collected = cod_collected_dict['cod_collected']
+
+    # DATE FILTERING ---------------------------------------------------------------
+    delivery_status_queryset = delivery_status_queryset.filter(date__gte=start_date, date__lte=end_date)
+
+    # TOTAL COD TO BE COLLECTED -----------------------------
+    executable_deliveries = delivery_status_queryset.filter(
+        Q(order_status=constants.ORDER_STATUS_QUEUED) | Q(order_status=constants.ORDER_STATUS_INTRANSIT) | Q(
+            order_status=constants.ORDER_STATUS_DELIVERED) | Q(
+            order_status=constants.ORDER_STATUS_DELIVERY_ATTEMPTED) | Q(
+            order_status=constants.ORDER_STATUS_PICKUP_ATTEMPTED))
+    total_cod_dict = executable_deliveries.aggregate(total_cod=Sum('order__cod_amount'))
+    total_cod = total_cod_dict['total_cod']
+
+    # ORDER STATUS FILTERING -------------------------------------------------------
+    total_orders = delivery_status_queryset.count()
+    total_orders_executed = delivery_status_queryset.filter(
+        Q(order_status=constants.ORDER_STATUS_DELIVERED) | Q(
+            order_status=constants.ORDER_STATUS_DELIVERY_ATTEMPTED) | Q(
+            order_status=constants.ORDER_STATUS_PICKUP_ATTEMPTED)).count()
+
+    # FOR ORDER COUNT FOR INDIVIDUAL DATES -----------------------------------------
+    fullday_timedelta = timedelta(hours=23, minutes=59)
+    orders_graph = []
+    for date in alldates:
+        day_start = date
+        day_end = day_start + fullday_timedelta
+        delivery_status_per_date = delivery_status_queryset.filter(date__gte=day_start, date__lte=day_end)
+
+        total_orders_per_day = delivery_status_per_date.count()
+        orders_delivered_count = delivery_status_per_date.filter(
+            Q(order_status=constants.ORDER_STATUS_DELIVERED)).count()
+        orders_delivered_attempted_count = delivery_status_per_date.filter(
+            Q(order_status=constants.ORDER_STATUS_DELIVERY_ATTEMPTED)).count()
+        orders_pickup_attempted_count = delivery_status_per_date.filter(
+            Q(order_status=constants.ORDER_STATUS_PICKUP_ATTEMPTED)).count()
+        orders_cancelled_count = delivery_status_per_date.filter(
+            Q(order_status=constants.ORDER_STATUS_CANCELLED)).count()
+        orders_undelivered_count = delivery_status_per_date.filter(
+            Q(order_status=constants.ORDER_STATUS_PLACED) | Q(order_status=constants.ORDER_STATUS_QUEUED)).count()
+        orders_intransit_count = delivery_status_per_date.filter(
+            Q(order_status=constants.ORDER_STATUS_INTRANSIT)).count()
+
+        ist_timedelta = timedelta(hours=5, minutes=30)
+        display_date = date + ist_timedelta
+
+        result = {
+            'total_orders_count': total_orders_per_day,
+            'delivered_count': orders_delivered_count,
+            'delivery_attempted_count': orders_delivered_attempted_count,
+            'pickup_attempted_count': orders_pickup_attempted_count,
+            'cancelled_count': orders_cancelled_count,
+            'queued_count': orders_undelivered_count,
+            'intransit_count': orders_intransit_count,
+            'date': display_date.date()
+        }
+        orders_graph.append(result)
+
+    content = {
+        'total_orders': total_orders,
+        'total_orders_executed': total_orders_executed,
+        'total_cod': total_cod,
+        'cod_collected': cod_collected,
+        'orders': orders_graph
+    }
+    return Response(content, status=status.HTTP_200_OK)
+

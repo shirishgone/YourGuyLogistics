@@ -1,11 +1,13 @@
 import base64
+import os
+import string
 from datetime import time, datetime, timedelta
 
-import dateutil.relativedelta
+import requests
+from boto.s3.connection import S3Connection
 from django.contrib.auth.models import User, Group
 from django.core.mail import send_mail
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.authtoken.models import Token
@@ -13,7 +15,18 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from api_v3 import constants
+from server import settings
 from yourguy.models import Order, OrderDeliveryStatus, VendorAgent, Consumer
+
+
+def s3_connection():
+    AWS_ACCESS_KEY = os.environ.get('AWS_ACCESS_KEY')
+    AWS_SECRET_KEY = os.environ.get('AWS_SECRET_KEY')
+    return S3Connection(AWS_ACCESS_KEY, AWS_SECRET_KEY)
+
+
+def s3_bucket_pod():
+    return os.environ.get('S3_BUCKET_POD')
 
 
 def address_string(address):
@@ -21,9 +34,10 @@ def address_string(address):
         if len(address.full_address) > 1:
             address_string = address.full_address + ', ' + address.pin_code
         else:
-            address_string = address.flat_number + ',' + address.building + ',' + address.street + ','
-            if address.area is not None:
-                address_string = address_string + address.area.area_name
+            address_string = address.flat_number + ', ' + address.building + ', ' + address.street + ', ' + address.pin_code
+
+        address_string = string.replace(address_string, ',,', '')
+        address_string = string.replace(address_string, ', ,', '')
         return address_string
     except Exception as e:
         print(e)
@@ -169,7 +183,10 @@ def log_exception(e, message):
 
 def send_email(to_mail_ids, subject, body):
     try:
-        send_mail(subject, body, constants.FROM_MAIL_ID, to_mail_ids, fail_silently=False)
+        if settings.ENVIRONMENT == 'PRODUCTION':
+            send_mail(subject, body, constants.FROM_MAIL_ID, to_mail_ids, fail_silently=False)
+        else:
+            print('Emails are not sent during testing')
     except Exception as e:
         pass
 
@@ -177,11 +194,12 @@ def send_email(to_mail_ids, subject, body):
 def send_sms(phonenumber, message):
     url = constants.SMS_URL.format(mobile_number=phonenumber, message_text=message)
     try:
-        print
-        "Test server doesnt send sms"
+        if settings.ENVIRONMENT == 'PRODUCTION':
+            r = requests.get(url)
+        else:
+            print('test doesnt send sms')
     except Exception as e:
-        send_email('SMS error', 'problem sending SMS \nplease check {} {}'.format(phonenumber, message),
-                   constants.FROM_MAIL_ID, ['tech@yourguy.in'], fail_silently=False)
+        pass
 
 
 def is_vendoragentexists(user):
@@ -213,80 +231,12 @@ def is_pickup_time_acceptable(datetime):
 
 
 def inform_dgs_about_orders_assigned():
-    # FETCH ALL ORDERS ASSIGNED TO DGs
-    date = datetime.today()
-    day_start = ist_day_start(date)
-    day_end = ist_day_end(date)
-    try:
-        delivery_status_queryset = OrderDeliveryStatus.objects.filter(delivery_guy__isnull=False, date__gte=day_start,
-                                                                      date__lte=day_end).annotate('delivery_guy')
-    except Exception as e:
-        print(e)
+    pass
+    # TODO
 
 
-def assign_dg():
-    # FETCH ALL TODAY ORDERS
-    date = datetime.today()
-    day_start = ist_day_start(date)
-    day_end = ist_day_end(date)
-
-    unassigned_order_ids = ''
-
-    delivery_status_queryset = OrderDeliveryStatus.objects.filter(date__gte=day_start, date__lte=day_end,
-                                                                  delivery_guy=None)
-    # FILTER BY ORDER STATUS
-    delivery_status_queryset = delivery_status_queryset.filter(
-        Q(order_status=constants.ORDER_STATUS_PLACED) | Q(order_status=constants.ORDER_STATUS_QUEUED) | Q(
-            order_status=constants.ORDER_STATUS_INTRANSIT))
-    # --------------------------------------------------------------------
-    for delivery_status in delivery_status_queryset.all():
-        try:
-            order = get_object_or_404(Order, delivery_status=delivery_status)
-
-            # CUSTOMER AND VENDOR FILTERING
-            vendor = order.vendor
-            consumer = order.consumer
-
-            previous_delivery_statuses = OrderDeliveryStatus.objects.filter(delivery_guy__isnull=False,
-                                                                            order__consumer=consumer,
-                                                                            order__vendor=vendor)
-            # FILTER LAST 2 MONTHS ORDERS
-            two_months_previous_date = day_start - dateutil.relativedelta.relativedelta(months=1)
-            previous_delivery_statuses = previous_delivery_statuses.filter(date__gte=two_months_previous_date,
-                                                                           date__lte=day_start)
-            # FILTERING BY PICKUP TIME RANGE
-            pickup_hour = int(order.pickup_datetime.hour)
-            previous_delivery_statuses = previous_delivery_statuses.filter(
-                Q(order__pickup_datetime__hour=pickup_hour - 1) | Q(order__pickup_datetime__hour=pickup_hour) | Q(
-                    order__pickup_datetime__hour=pickup_hour + 1))
-
-            # FILTERING BY PICKUP TIME RANGE
-            try:
-                latest_assigned_delivery = previous_delivery_statuses.latest('date')
-                if latest_assigned_delivery is not None:
-                    req_delivery_guy = latest_assigned_delivery.delivery_guy
-                    delivery_status.delivery_guy = req_delivery_guy
-                    delivery_status.save()
-            except Exception as e:
-                unassigned_order_ids = unassigned_order_ids + "\n %s - %s - %s" % (
-                    vendor.store_name, order.id, consumer.user.first_name)
-                pass
-
-        except Exception as e:
-            print(e)
-
-    # SEND AN EMAIL SAYING CANT FIND APPROPRIATE DELIVERY GUY FOR THIS ORDER. PLEASE ASSIGN MANUALLY
-    today_string = datetime.now().strftime("%Y %b %d")
-    email_subject = 'Unassigned orders for %s' % today_string
-
-    email_body = "Good Morning Guys, \nUnassigned Orders: %s \nPlease assign manually. \n\n- Team YourGuy" % (
-        unassigned_order_ids)
-    send_email(constants.EMAIL_UNASSIGNED_ORDERS, email_subject, email_body)
-    return
-
-
-@api_view(['GET'])
-def is_recurring_var_setting(request):
+@api_view(['POST'])
+def old_order_id_for_new_order_id(request):
     if request.user.is_staff is False:
         content = {
             'error': 'insufficient permissions',
@@ -294,18 +244,17 @@ def is_recurring_var_setting(request):
         }
         return Response(content, status=status.HTTP_400_BAD_REQUEST)
     else:
-        all_orders = Order.objects.all()
-        for order in all_orders:
-            if len(order.delivery_status.all()) > 1:
-                order.is_recurring = True
-                order.save()
-
-        content = {'data': 'All done'}
+        delivery_status_id = request.data['new_order_id']
+        delivery_status = get_object_or_404(OrderDeliveryStatus, pk=delivery_status_id)
+        old_id = delivery_status.order.id
+        content = {
+            'old_id': old_id
+        }
         return Response(content, status=status.HTTP_200_OK)
 
 
-@api_view(['GET'])
-def delivery_status_update(request):
+@api_view(['POST'])
+def new_order_id_for_old_order_id(request):
     if request.user.is_staff is False:
         content = {
             'error': 'insufficient permissions',
@@ -313,46 +262,11 @@ def delivery_status_update(request):
         }
         return Response(content, status=status.HTTP_400_BAD_REQUEST)
     else:
-        all_delivery_statuses = OrderDeliveryStatus.objects.all()
-        for delivery_status in all_delivery_statuses:
-            if delivery_status.delivered_at == 'ATTEMPTED':
-                delivery_status.delivered_at = 'DELIVERYATTEMPTED'
-                delivery_status.save()
-            elif delivery_status.delivered_at == 'DOOR_STEP' or delivery_status.delivered_at == 'SECURITY' or delivery_status.delivered_at == 'RECEPTION' or delivery_status.delivered_at == 'CUSTOMER':
-                print
-                'dont change'
-            else:
-                delivery_status.delivered_at = 'NONE'
-                delivery_status.save()
-
-        content = {'data': 'All done'}
+        old_order_id = request.data['old_order_id']
+        order = get_object_or_404(Order, pk=old_order_id)
+        delivery_status = get_object_or_404(OrderDeliveryStatus, order=order)
+        new_id = delivery_status.id
+        content = {
+            'new_id': new_id
+        }
         return Response(content, status=status.HTTP_200_OK)
-
-
-@api_view(['GET'])
-def attach_order_to_deliverystatus(request):
-    all_delivery_status = OrderDeliveryStatus.objects.filter(order=None)
-    for delivery_status in all_delivery_status:
-        try:
-            order_id = delivery_status.order_id_in_order_table
-            order = get_object_or_404(Order, pk=order_id)
-            delivery_status.order = order
-            delivery_status.save()
-        except Exception as e:
-            pass
-
-    content = {'data': 'Done attaching orders'}
-    return Response(content, status=status.HTTP_200_OK)
-
-
-@api_view(['GET'])
-def fill_order_ids(request):
-    all_orders = Order.objects.all().prefetch_related('delivery_status')
-    for order in all_orders:
-        all_deliveries = order.delivery_status.all()
-        for delivery_status in all_deliveries:
-            delivery_status.order_id = order.id
-            delivery_status.save()
-
-    content = {'data': 'Done saving addresses'}
-    return Response(content, status=status.HTTP_200_OK)

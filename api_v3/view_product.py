@@ -6,8 +6,9 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from api_v3 import constants
-from api_v3.utils import user_role
+from api_v3.utils import user_role, paginate
 from yourguy.models import Product, VendorAgent
+from django.db.models import Q
 
 
 def product_list_dict(product):
@@ -41,20 +42,36 @@ class ProductViewSet(viewsets.ModelViewSet):
 
     def list(self, request):
         role = user_role(request.user)
+        search = request.QUERY_PARAMS.get('search', None)
+        page = request.QUERY_PARAMS.get('page', '1')
         if role == constants.VENDOR:
             vendor_agent = VendorAgent.objects.get(user=self.request.user)
             products_of_vendor = Product.objects.filter(vendor=vendor_agent.vendor).order_by(
                 Lower('name')).prefetch_related('timeslots')
-
+            if search is not None:
+                products_of_vendor = products_of_vendor.filter(Q(name__icontains=search))
+            # PAGINATION  ----------------------------------------------------------------
+            total_product_count = len(products_of_vendor)
+            page = int(page)
+            total_pages = int(total_product_count / constants.PAGINATION_PAGE_SIZE) + 1
+            if page > total_pages or page <= 0:
+                response_content = {
+                    "error": "Invalid page number"
+                }
+                return Response(response_content, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                result_products = paginate(products_of_vendor, page)
+            # ----------------------------------------------------------------------------
             result = []
-            for product in products_of_vendor:
+            for product in result_products:
                 product_dict = product_list_dict(product)
                 result.append(product_dict)
-
-            content = {
-                "products": result
+            response_content = {
+                "data": result,
+                "total_pages": total_pages,
+                "total_product_count": total_product_count
             }
-            return Response(content, status=status.HTTP_200_OK)
+            return Response(response_content, status=status.HTTP_200_OK)
         else:
             content = {
                 'error': 'You don\'t have permissions to view products'

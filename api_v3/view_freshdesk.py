@@ -7,8 +7,8 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from api_v3.utils import user_role
 from api_v3 import constants
+from api_v3.utils import user_role
 from yourguy.models import VendorAgent
 
 
@@ -16,8 +16,8 @@ def auth_headers():
     # TODO:
     # freshdesk_key = os.environ['freshdesk_key']
 
-    freshdesk_test_key = 'wxMmvYfVzHCaYaXi1yln'
-    freshdesk_production_key = 'iUVZ8uJ1AywpVsQKL'
+    freshdesk_test_key = constants.FRESHDESK_TEST_KEY
+    freshdesk_production_key = constants.FRESHDESK_PRODUCTION_KEY
 
     base64string = encode(freshdesk_production_key).replace('\n', '')
     headers = {

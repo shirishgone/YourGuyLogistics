@@ -2,16 +2,17 @@ from django.db.models.functions import Lower
 from django.shortcuts import get_object_or_404
 from rest_framework import status, authentication
 from rest_framework import viewsets
-from rest_framework.decorators import detail_route, list_route
+from rest_framework.decorators import detail_route
 from rest_framework.exceptions import APIException
 from rest_framework.response import Response
 
 from api_v3 import constants
+from api_v3.utils import user_role, send_email, send_sms, is_userexists, create_token, paginate
 from api_v3.view_address import create_address
-from api_v3.utils import user_role, send_email, send_sms, is_userexists, create_token
 from api_v3.views import IsAuthenticatedOrWriteOnly
 from yourguy.models import Vendor, VendorAgent, User, Industry
-
+from django.db.models import Q
+import json
 
 def vendor_detail_dict(vendor):
     vendor_dict = {
@@ -45,6 +46,8 @@ def vendor_list_dict(vendor):
     vendor_dict = {
         'id': vendor.id,
         'name': vendor.store_name,
+        'is_verified': vendor.verified,
+        'is_retail': vendor.is_retail
     }
     return vendor_dict
 
@@ -89,44 +92,50 @@ class VendorViewSet(viewsets.ModelViewSet):
 
     def list(self, request):
         role = user_role(request.user)
+        is_verified = request.QUERY_PARAMS.get('is_verified', None)
+        search = request.QUERY_PARAMS.get('search', None)
+        page = request.QUERY_PARAMS.get('page', '1')
+
         if (role == constants.SALES) or (role == constants.OPERATIONS):
-            all_vendors = Vendor.objects.filter(verified=True).order_by(Lower('store_name'))
+            all_vendors = Vendor.objects.all().order_by(Lower('store_name'))
+            if search is not None:
+                all_vendors = all_vendors.filter(Q(store_name__icontains=search))
 
-            all_vendors_array = []
-            for vendor in all_vendors:
+            if is_verified is not None:
+                is_verified = json.loads(is_verified.lower())
+                if is_verified is True:
+                    all_vendors = all_vendors.filter(verified=True)
+                else:
+                    all_vendors = all_vendors.filter(verified=False)
+            # PAGINATION  ----------------------------------------------------------------
+            total_vendor_count = len(all_vendors)
+            page = int(page)
+            total_pages = int(total_vendor_count / constants.PAGINATION_PAGE_SIZE) + 1
+            if page > total_pages or page <= 0:
+                response_content = {
+                    "error": "Invalid page number"
+                }
+                return Response(response_content, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                result_vendors = paginate(all_vendors, page)
+            # ----------------------------------------------------------------------------
+
+            result = []
+            for vendor in result_vendors:
                 vendor_dict = vendor_list_dict(vendor)
-                all_vendors_array.append(vendor_dict)
+                result.append(vendor_dict)
 
-            content = {
-                "data": all_vendors_array
+            response_content = {
+                "data": result,
+                "total_pages": total_pages,
+                "total_vendor_count": total_vendor_count
             }
-            return Response(content, status=status.HTTP_200_OK)
+            return Response(response_content, status=status.HTTP_200_OK)
         elif role == constants.VENDOR:
             vendor_agent = get_object_or_404(VendorAgent, user=request.user)
             vendor_detail = vendor_detail_dict(vendor_agent.vendor)
             content = {
                 "data": vendor_detail
-            }
-            return Response(content, status=status.HTTP_200_OK)
-        else:
-            content = {
-                'error': 'You don\'t have permissions to view all vendors'
-            }
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
-
-    @list_route()
-    def requestedvendors(self, request):
-        role = user_role(request.user)
-        if (role == constants.SALES) or (role == constants.OPERATIONS):
-            all_vendors = Vendor.objects.filter(verified=False).order_by(Lower('store_name'))
-
-            all_vendors_array = []
-            for vendor in all_vendors:
-                vendor_dict = vendor_list_dict(vendor)
-                all_vendors_array.append(vendor_dict)
-
-            content = {
-                "data": all_vendors_array
             }
             return Response(content, status=status.HTTP_200_OK)
         else:
