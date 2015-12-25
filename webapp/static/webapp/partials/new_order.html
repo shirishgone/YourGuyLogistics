@@ -1,0 +1,297 @@
+<div id="content" class="order-content" >
+	<div class="menubar">
+        <div class="sidebar-toggler visible-xs" ng-click="$parent.open_sidebar = !$parent.open_sidebar">
+            <i class="ion-navicon"></i>
+        </div>
+        <div class="page-title">
+            Orders
+        </div>
+    </div>
+	<div top-bar class="order-top">
+		<div class="notificationbar">
+			<div class="error" ng-if="notification.type=='error'">
+				<div class="section">
+					<div class="pull-left">
+						<img src="/static/webapp/images/error_notification.png" >
+					</div>
+					<h3>
+						{{notification.message}}
+					</h3>
+				</div>
+			</div>
+			<div class="success" ng-if="notification.type=='success'">
+				<div class="section">
+					<div class="pull-left">
+						<img src="/static/webapp/images/success.png" >
+					</div>
+					<h3>
+						{{notification.message}}
+					</h3>
+				</div>
+			</div>
+			<div class="warning" ng-if="notification.type=='warning'">
+				<div class="section">
+					<div class="pull-left">
+						<img src="/static/webapp/images/warning_notification.png" >
+					</div>
+					<h3>
+						{{notification.message}}
+					</h3>
+				</div>
+			</div>
+		</div>
+		<div class="filters">
+			<div class="col-md-12"  id="no-padding" style="overflow:auto;">
+				<div class="col-md-2 col-sm-2 col-xs-4" id="no-padding">
+					<span class="input-group date_picker">
+						<input type="text" class="form-control" ng-click="startopen($event)" datepicker-popup="{{format}}" ng-model="order_params.date" min-date="2015-01-01" max-date="'2015-12-31'" is-open="opened" ng-required="true" close-text="Close" show-weeks="false" datepicker-append-to-body="true">
+						<span class="input-group-btn">
+							<button type="button" class="btn calendar-button" ng-click="startopen($event)">
+								<img class="calendar-image" src="/static/webapp/images/calendar.png">
+							</button>
+						</span>
+					</span>
+				</div>
+				<div class="col-md-2 col-sm-2 sm-hide" id="no-padding">
+					<select class="form-control" ng-model="order_params.vendor" ng-options="vendor.id as vendor.name group by vendor.type for vendor in vendors">
+                        <option value=''> All Vendors </option>
+                    </select>
+				</div>
+				<div class="col-md-2 col-sm-2 sm-hide" id="no-padding">
+					<select class="form-control" ng-model="order_params.dg" ng-options="dg.user.username as dg.user.first_name for dg in dgs">
+                        <option value=''> All Delivery Boys </option>
+                    </select>
+				</div>
+				<div class="col-md-2 col-sm-2 sm-hide" id="no-padding">
+					<div class="status_filter">
+						<button click-outside showcontent="show_status" id="single-button" type="button" class="btn btn-default">
+							<span class="caret"></span>
+							<span ng-if="order_params.status.length == 0">All Status</span>
+							<span ng-if="order_params.status.length != 0">{{order_params.status[0]}} 
+								<span ng-show="order_params.status.length != 1">+{{order_params.status.length -1 }}</span>
+							</span>
+						</button>
+						<ul role="menu" ng-show="show_status" style="position:fixed;">
+							<li class="asAnchor" ng-click="unselectOrderStatus()">
+								<input type="checkbox" name="select_status" ng-model="st"/>&nbsp;&nbsp;All Status
+							</li>
+							<li class="asAnchor" ng-repeat="st in STATUS" ng-click="st.selected=!st.selected;selectOrderStatus(st)">
+								<span>
+									<input type="checkbox" name="select_status" ng-model="st.selected" ng-click="$event.stopPropagation();selectOrderStatus(st)"/>&nbsp;&nbsp;{{st.status}}
+								</span>
+							</li>
+						</ul>
+					</div>
+				</div>
+				<div class="col-md-3 col-sm-3 col-xs-6" id="no-padding">
+					<input type="text" class="form-control"  ng-model="searched_id" placeholder="search by order id,customer name,customer phone number" ng-keyup="$event.which === 13 && search_order(searched_id)">
+				</div>
+				<div class="col-md-1 col-sm-1 col-xs-2" id="no-padding">
+					<button class="more_filters" ng-click="show_filter = !show_filter">
+						<span ng-hide="show_filter">More</span><span ng-show="show_filter">Hide</span>
+					</button>
+				</div>
+			</div>
+			<div class="col-md-12 filter-lvl2" id="no-padding" ng-show="show_filter">
+				<div class="col-xs-6 md-hide" id="no-padding">
+					<select class="form-control" ng-model="order_params.vendor" ng-options="vendor.id as vendor.name group by vendor.type for vendor in vendors">
+                        <option value=''> All Vendors </option>
+                    </select>
+				</div>
+				<div  class="col-xs-6 md-hide" id="no-padding">
+					<select class="form-control" ng-model="order_params.dg" ng-options="dg.user.username as dg.user.first_name for dg in dgs">
+                        <option value=''> All Delivery Boys </option>
+                    </select>
+				</div>
+				<div class="col-md-2 col-xs-4 sm-pad" id="no-padding">
+					<select class="form-control" ng-model="order_time" ng-change="selectTime(order_time)" ng-options="time.time as time.value for time in time_data" >
+                        <option value=''> 24 Hours </option>
+                    </select>
+				</div>
+				<div class="col-xs-4 md-hide sm-pad" id="no-padding">
+					<div class="status_filter">
+						<button click-outside showcontent="show_status" id="single-button" type="button" class="btn btn-default">
+							<span class="caret"></span>
+							<span ng-if="order_params.status.length == 0">All Status</span>
+							<span ng-if="order_params.status.length != 0">{{order_params.status[0]}} 
+								<span ng-show="order_params.status.length != 1">+{{order_params.status.length -1 }}</span>
+							</span>
+						</button>
+						<ul role="menu" ng-show="show_status" style="position:fixed;">
+							<li class="asAnchor" ng-click="unselectOrderStatus()">
+								<input type="checkbox" name="select_status" ng-model="st"/>&nbsp;&nbsp;All Status
+							</li>
+							<li class="asAnchor" ng-repeat="st in STATUS"ng-click="st.selected=!st.selected;selectOrderStatus(st)">
+								<span>
+									<input type="checkbox" name="select_status" ng-model="st.selected" ng-click="$event.stopPropagation();selectOrderStatus(st)"/>&nbsp;&nbsp;{{st.status}}
+								</span>
+							</li>
+						</ul>
+					</div>
+				</div>
+				<div class="col-md-2 col-xs-2 cod-switch">
+					<md-switch ng-model="order_params.cod" class="md-primary md-block" aria-label="Switch 1" class="md-block" style="margin:0px;">
+						COD
+					</md-switch>
+				</div>
+				<div class="col-md-2 col-xs-1 reset" id="no-padding" ng-click="reset_filter()" style="cursor:pointer;">
+					<u>Reset</u>
+				</div>
+			</div>
+		</div>
+		<div class="table-header">
+			<div class="wid-7 wid-sm-12">
+				<label class="order-checkbox" >
+					<input type="checkbox" ng-model="is_all_selected" name="select_all" ng-click="select_all_order(is_all_selected)"/>
+					<span></span>
+				</label>
+				<div ng-if="is_selected"  class="dropdown order_bulk_action">
+					<a class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-triangle-bottom"></span></a>
+					<ul class="dropdown-menu">
+						<li><a style="cursor:pointer;" ng-click="openDgModal()">Assign Delivery Guy</a></li>
+                        <li><a style="cursor:pointer;" ng-click="selectStatus()" >Update Order Status</a></li>
+					</ul>
+				</div>
+			</div>
+			<div class="wid-15 wid-sm-22">
+				<span class="md-hide">Cust..</span> <span class="sm-hide">Customer Name</span> 
+			</div>
+			<div class="wid-15 wid-sm-22">
+				<span class="md-hide">Prod..</span><span class="sm-hide">Product</span> 
+			</div>
+			<div class="wid-15 wid-sm-22">
+				Vendor
+			</div>
+			<div class="wid-15 wid-sm-22">
+				<span class="md-hide">Order</span><span class="sm-hide">Order No</span> 
+			</div>
+			<div class="wid-15 sm-hide">
+				Status
+			</div>
+			<div class="wid-18 sm-hide">
+				Delivery Boy
+			</div>
+		</div>
+	</div>
+	<div class="content-wrapper order">
+		<div ng-hide="order_not_found" class="table-list">
+			<div class="order-card"
+				 ng-click="redirect_to_details(order)"
+				 ng-repeat="order in orders_data">
+				<div class="section-one">
+					<div class="wid-7 wid-sm-12"  ng-click="$event.stopPropagation()">
+						<label class="order-checkbox" >
+							<input name="select_single" type="checkbox" ng-model="order.selected" name="test" ng-click="select_single_order(order)"/>
+    						<span></span>
+						</label>
+					</div>
+					<div class="wid-15 wid-sm-22">
+						{{order.customer_name}}
+					</div>
+					<div class="wid-15  wid-sm-22">
+						{{order.order_items[0].product_name|| "-----"}}
+					</div>
+					<div class="wid-15  wid-sm-22">
+						{{ order.vendor_name}}
+					</div>
+					<div class="wid-15  wid-sm-22">
+						{{order.id}}
+					</div>
+					<div class="wid-15 sm-hide" style="padding-top:10px;">
+						<span class="label" ng-class="{
+                            'label-success' : (order.status == 'DELIVERED'),
+                            'label-warning' : (order.status == 'INTRANSIT'),
+                            'label-info' : (order.status == 'DELIVERYATTEMPTED'|| order.status == 'REJECTED' || order.status == 'CANCELLED' || order.status == 'PICKUPATTEMPTED'|| order.status == 'ATTEMPTED'),
+                            'label-danger' : (order.status == 'QUEUED' || order.status == 'ORDER_PLACED')}">
+                            {{order.status}}
+                        <span>
+					</div>
+					<div class="wid-18 sm-hide" ng-click="$event.stopPropagation();asignSingleOrder(order)">
+						<div style="float:left;" ng-hide="!order.deliveryguy_name && !order.pickupguy_name">
+							<span>
+								<img src="/static/webapp/images/Pickup.png" style="width:12px;height:auto;">&nbsp;&nbsp;
+						    	{{order.pickupguy_name || '----'}}&nbsp;&nbsp;&nbsp;&nbsp;
+						    </span>
+						    <br>
+						    <span>
+						    	<img src="/static/webapp/images/Deliver.png" style="width:12px;height:auto;">&nbsp;&nbsp;
+						    	{{order.deliveryguy_name || '----'}}&nbsp;&nbsp;&nbsp;&nbsp;
+						    </span>
+						</div>
+					    <img class="dg-edit-image" src="/static/webapp/images/edit-dg.png" ng-hide="!order.deliveryguy_name && !order.pickupguy_name">
+						<button ng-hide="order.deliveryguy_name || order.pickupguy_name" class="assign-button">Assign Dg</button>
+					</div>
+				</div>
+				<hr>
+				<div class="section-two">
+					<div class="wid-7 wid-sm-12">
+						
+					</div>
+					<div class="wid-15 wid-sm-22">
+						<h4>PICKUP</h4>
+						{{order.pickup_datetime | date:'dd MMM yyyy @ h:mm a'}}
+					</div>
+					<div class="wid-60 wid-sm-66" ng-if="order.is_reverse_pickup">
+						<h4>PICKUP ADDRESS</h4>
+						{{order.pickup_address}}
+					</div>
+					<div class="wid-60 wid-sm-66" ng-if="!order.is_reverse_pickup" >
+						<h4>DELIVERY ADDRESS</h4>
+						{{order.delivery_address}}
+					</div>
+					<div class="wid-18 sm-hide">
+						<h4>COD</h4>
+						<span ng-class="compareCOD(order)">{{order.cod_collected}}rs</span>/{{order.cod_amount}}rs
+					</div>
+				</div>
+				<hr class="third_line">
+				<div class="section-three">
+					<div class="wid-7  wid-sm-12">
+						
+					</div>
+					<div class="wid-15 wid-sm-22" style="padding-top:10px;">
+						<span class="label" ng-class="{
+                            'label-success' : (order.status == 'DELIVERED'),
+                            'label-warning' : (order.status == 'INTRANSIT'),
+                            'label-info' : (order.status == 'DELIVERYATTEMPTED'|| order.status == 'REJECTED' || order.status == 'CANCELLED' || order.status == 'PICKUPATTEMPTED'|| order.status == 'ATTEMPTED'),
+                            'label-danger' : (order.status == 'QUEUED' || order.status == 'ORDER_PLACED')}">
+                            {{order.status == 'PICKUPATTEMPTED' ? 'P.ATTEMPTED': order.status == 'DELIVERYATTEMPTED'? 'D.ATTEMPTED': order.status == 'ORDER_PLACED'? 'PLACED' : order.status | limitTo:7}}
+                        <span>
+					</div>
+					<div class="wid-60 wid-sm-22">
+						<h4>COD</h4>
+						<span ng-class="compareCOD(order)">{{order.cod_collected}}</span>/{{order.cod_amount}} rs
+					</div>
+					<div class="wid-15 wid-sm-34" ng-click="$event.stopPropagation();asignSingleOrder(order)">
+						<div style="float:left;" ng-hide="!order.deliveryguy_name && !order.pickupguy_name">
+							<span>
+								<img src="/static/webapp/images/Pickup.png" style="width:12px;height:auto;">&nbsp;&nbsp;
+						    	{{order.pickupguy_name || '----'}}
+						    </span>
+						    <br>
+						    <span>
+						    	<img src="/static/webapp/images/Pickup.png" style="width:12px;height:auto;">&nbsp;&nbsp;
+						    	{{order.deliveryguy_name || '----'}}
+						    </span>
+						</div>
+						<button ng-hide="order.deliveryguy_name || order.pickupguy_name" class="assign-button">Assign Dg</button>
+					</div>
+				</div>
+				<div ng-if="order.is_reverse_pickup" class="reverse" tooltip="Reverse Pickup" tooltip-placement="right">
+					<img src="/static/webapp/images/reverse.png" >
+				</div>
+				<div ng-if="order.is_recurring" class="recurring" tooltip="Recurring Order" tooltip-placement="left">
+					<img src="/static/webapp/images/recurring_order.png" >
+				</div>
+			</div>
+		</div>
+		<div ng-if="total_orders">
+			<div class="text-center">
+				<pagination total-items="total_orders" ng-model="order_params.page" items-per-page="itemsByPage" max-size="8" boundary-links="true" rotate="false"></pagination>
+			</div>
+		</div>
+		<div ng-if="order_not_found" class="no-orders">
+			<img ng-src="/static/webapp/images/{{order_not_found}}.png">
+		</div>
+	</div>
+</div>

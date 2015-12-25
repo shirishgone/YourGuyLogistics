@@ -1,0 +1,72 @@
+<div id="signup" style="min-height:100%;">
+	<a href="index.html" class="logo">
+		<img src="/static/webapp/images/yourguy/logo.png" alt="yourguy">
+	</a>
+	<h3>Request For Vendor Account</h3>
+	<div class="content" ng-hide="show_success_msg">
+		<form ng-submit="register()" name="signup_form">
+			<div class="fields">
+				<input class="form-control" ng-model="signup.store_name" type="text" maxlength="100" placeholder="Store name" ng-required="true"/>
+				<input class="form-control" ng-model="signup.phone_number" type="text" pattern="\d*" minlength="10" maxlength="11" placeholder="Phone number" ng-required="true" />
+				<div class="form-group">
+					<input class="form-control" ng-model="signup.email" type="email" placeholder="Email" ng-required="true"/>
+				</div>
+				<div class="form-group">
+					<div class="col-md-6 col-sm-6" id="no-padding">
+						<input type="text" class="form-control" maxlength="6" minlength="6" placeholder="Pin Code" ng-model="signup.pin_code" ng-required="true" />
+					</div>
+					<div class="col-md-6 col-sm-6" id="no-padding">
+						<input type="text" class="form-control" maxlength="150" placeholder="Landmark (Optional)" ng-model="signup.landmark"/>
+					</div>
+				</div>
+				<div class="form-group">
+					<input type="text" class="form-control" maxlength="200" placeholder="Full Address" ng-model="signup.full_address" ng-required="true" />
+				</div>
+				<div class="form-group">
+					<div class="checkbox checkbox-success">
+						<input id="checkbox" type="checkbox" ng-required="true" ng-model="tc" >
+						<label for="checkbox">Please accept out <a class="link-type" target="_blank" ui-sref="tc"> Terms & Conditions </a> to request for an account</label>
+					</div>
+				</div>
+			</div>
+			<div style="text-align:center;">
+				 <img src="/static/webapp/images/377.GIF" style="height:30px; width:30px;" ng-show="signup_in_process">
+			</div>
+			<div style="text-align:center;">
+				 <span class="error_message" style="font-size:2.5ex;" >{{errmsg}}</span>
+			</div>
+			<div class="signup">
+				<input type="submit" class="btn btn-success btn-lg" value="Request Account"/> 
+			</div>
+		</form>
+	</div>
+	<div class=" animated fadeIn success" ng-show="show_success_msg">
+		<div class="ajax_loader " id="signup_box" >
+			<img  src="/static/webapp/images/success_tick.png" >
+			<h3>
+				GREAT WORK :)
+			</h3>
+			<h4>
+				{{success_msg}}
+			</h4>
+		</div>
+	</div>
+
+	<div class="bottom-wrapper">
+		<div class="message">
+			<span>Already have an account?</span>
+			<a ng-redirect-to="#/signin" style="cursor:pointer">Sign in here</a>.
+		</div>
+	</div>
+	<script type="text/javascript">
+		$(function () {
+			var $switcher = $(".signup-switcher a");
+			$switcher.click(function (e) {
+				e.preventDefault();
+				$switcher.removeClass("active");
+				$(this).addClass("active");
+				$("body").attr("class", $(this).data("class"));
+			});
+		});
+	</script>
+</div>

@@ -1,0 +1,256 @@
+<div id="content">
+	<div class="menubar">
+		<div class="sidebar-toggler visible-xs" ng-click="$parent.open_sidebar = !$parent.open_sidebar">
+			<i class="ion-navicon"></i>
+		</div>
+		<div class="page-title">
+			{{header}} 
+		</div>
+		<a class="btn btn-danger  pull-right" ng-disabled="order_with_id.status != 'QUEUED' && order_with_id.status != 'ORDER_PLACED'" ng-click="openModal(order_with_id,'cancel','delete_order')">
+		Cancel Order
+		</a>
+	</div>
+	<div class="content-wrapper">
+		<div ng-hide="success_msg">
+			<div class="webkit" style="text-align:center;" ng-show="show_order_error_msg">
+	            <h2 class="alert alert-warning"> {{order_error_msg}} </h2>
+	        </div>
+	        <div ng-hide="show_order_error_msg">
+				<div class="ajax_loader" ng-hide="loaded">
+		            <img src="/static/webapp/images/377.GIF">
+		        </div>
+				<form class="form-horizontal content-form webkit animated" ng-submit="editOrder()" name="order_with_id_form" ng-show="loaded" ng-class="{fadeInUp:loaded}">
+					<div ng-hide="success">
+						<accordion close-others="false">
+							<!-- Order Approval -->
+							<accordion-group is-open="accordian.approval" ng-if="role.ops">
+								<accordion-heading>
+									<div>
+										Order Assignment And Approval
+										<i class="pull-right glyphicon" ng-class="{'glyphicon-chevron-down': accordian.approval, 'glyphicon-chevron-right': !accordian.approval}"></i>
+									</div>
+								</accordion-heading>
+								<div class="form-group" style="text-align:center;" ng-if="order_with_id.status == 'ORDER_PLACED' ">
+									<label class="col-md-12" style="font-size: 15px; color: #555;"> Approve Order </label>
+									<div class="col-md-12">
+										<a class="btn btn-success" ng-click="openModal(order_with_id.id,'approve','approve_order')">Approve</a> &nbsp;&nbsp;&nbsp;
+										<a class="btn btn-danger" ng-click="openModal(order_with_id.id,'decline','decline_order')">Decline</a>
+									</div>
+								</div>
+								<hr ng-if="order_with_id.status == 'ORDER_PLACED' ">
+								<div class="form-group" style="text-align:center;">
+									<label class="col-sm-12 col-md-12 col-xs-12" style="font-size:15px; color: #555;">Delivery Guy</label>
+									<div class="col-sm-4">
+										<button class="btn btn-warning" ng-click="openDgModal(order_with_id.id)" ng-disabled="disableByStatus(order_with_id)">Assign DG</button>
+									</div>
+									<div class="col-sm-4" style="font-size: 15px; color: #555;">
+										<h4>Dg Name : {{ order_with_id.deliveryguy_name || '-----'}}</h4>
+									</div>
+									<div class="col-sm-4" style="font-size: 15px; color: #555;">
+										<h4>Ph No : {{ order_with_id.deliveryguy_phonenumber || '-----'}}</h4>
+									</div>
+								</div>
+							</accordion-group>
+							<!-- Product Details -->
+							<accordion-group is-open="accordian.order">
+								<accordion-heading>
+									<div>
+										Order Details
+										<i class="pull-right glyphicon" ng-class="{'glyphicon-chevron-down': accordian.order, 'glyphicon-chevron-right': !accordian.order}"></i>
+									</div>
+								</accordion-heading>
+								<div class="form-group">
+									<div class="col-md-6 col-sm-6 col-xs-12" style="padding-left:0px;">
+										<label class="col-sm-12 col-md-12 col-xs-12" style="font-size: 15px; color: #555;">Product Name</label>
+										<div class="col-sm-12 col-md-12 col-xs-12" style="font-size: 20px; color: #555;">
+											{{order_with_id.order_items[0].product_name }}
+										</div>
+									</div>
+									<div class="col-md-3 col-sm-3 col-xs-6" style="padding-left:0px;">
+										<label class="col-sm-12 col-md-12 col-xs-12" style="font-size: 15px; color: #555;">Quantity</label>
+										<div class="col-sm-12 col-md-12 col-xs-12" style="font-size: 20px; color: #555;">
+											{{order_with_id.order_items[0].quantity}}
+										</div>
+									</div>
+									<div class="col-md-3 col-sm-3 col-xs-6" style="padding-left:0px;">
+										<label class="col-sm-12 col-md-12 col-xs-12" style="font-size: 15px; color: #555;">Total Cost</label>
+										<div class="col-sm-12 col-md-12 col-xs-12" style="font-size: 20px; color: #555;">
+											{{order_with_id.total_cost}}
+										</div>
+									</div>
+								</div>
+								<div class="form-group" ng-repeat="item in order_with_id.order_items" ng-if="!$first">
+									<div class="col-md-6 col-sm-6 col-xs-12" style="font-size: 20px; color: #555;">
+										{{item.product_name }}
+									</div>
+									<div class="col-md-3 col-sm-3 col-xs-6" style="font-size: 20px; color: #555;">
+										{{item.quantity}}
+									</div>
+								</div>
+								<hr>
+								<div class="form-group">
+									<div class="col-md-6 col-sm-6 col-xs-12" style="padding-left:0px;">
+										<label class="col-sm-12 col-md-12 col-xs-12" style="font-size: 15px; color: #555;">Order Date</label>
+										<div class="col-sm-12 col-md-12 col-xs-12" style="font-size: 20px; color: #555;">
+											{{order_with_id.pickup_datetime | date:'dd MMM yyyy'}}
+										</div>
+										<div class="col-sm-12 col-md-12 col-xs-12" ng-if="order_with_id.status == 'ORDER_PLACED' || order_with_id.status == 'QUEUED'" >
+											<a style="cursor:pointer;" ng-click="openModal(order_with_id.id,'reschedule','reschedule_order')">Reschedule</a>
+										</div>
+									</div>
+									<div class="col-md-3 col-sm-3 col-xs-6" style="padding-left:0px;">
+										<label class="col-sm-12 col-md-12 col-xs-12" style="font-size: 15px; color: #555;">Pickup Time</label>
+										<div class="col-sm-12 col-md-12 col-xs-12" style="font-size: 20px; color: #555;">
+											{{order_with_id.pickup_datetime | date:'h:mm a'}}
+										</div>
+									</div>
+									<div class="col-md-3 col-sm-3 col-xs-6" style="padding-left:0px;">
+										<label class="col-sm-12 col-md-12 col-xs-12" style="font-size: 15px; color: #555;">Delivery Time</label>
+										<div class="col-sm-12 col-md-12 col-xs-12" style="font-size: 20px; color: #555;">
+											{{order_with_id.delivery_datetime | date:'h:mm a'}}
+										</div>
+									</div>
+								</div>
+								<hr>
+								<div class="form-group">
+									<div class="col-md-6 col-sm-6 col-xs-12" style="padding-left:0px;">
+										<label class="col-sm-12 col-md-12 col-xs-12" style="font-size: 15px; color: #555;">Cash On Deliver</label>
+										<div class="col-sm-12 col-md-12 col-xs-12" style="font-size: 20px; color: #555;">
+											{{order_with_id.cod_amount}}
+										</div>
+									</div>
+									<div class="col-md-6 col-sm-6 col-xs-12" style="padding-left:0px;">
+										<label class="col-sm-12 col-md-12 col-xs-12" style="font-size: 15px; color: #555;">Remarks</label>
+										<div class="col-sm-12 col-md-12 col-xs-12" style="font-size: 20px; color: #555;">
+											{{order_with_id.notes || '-----'}}
+										</div>
+									</div>
+								</div>
+							</accordion-group>
+							<!-- Status Details -->
+							<accordion-group is-open="accordian.consumer">
+								<accordion-heading>
+									<div>
+										Status And Address Details
+										<i class="pull-right glyphicon" ng-class="{'glyphicon-chevron-down': accordian.consumer, 'glyphicon-chevron-right': !accordian.consumer}"></i>
+									</div>
+								</accordion-heading>
+								<div class="form-group" >
+									<div class="col-md-6" style="padding-left:0px;">
+										<label class="col-sm-12 col-md-12 col-xs-12" style="font-size: 15px; color: #555;">Pickedup Time</label>
+										<div class="col-sm-12 col-md-12 col-xs-12" style="font-size: 20px; color: #555;">
+											{{order_with_id.pickedup_datetime || '-----' | date:'h:mm a' }}
+										</div>
+										<div class="col-sm-12 col-md-12 col-xs-12" ng-if="order_with_id.status == 'INTRANSIT' || order_with_id.status == 'DELIVERED'">
+											<button class="btn btn-xs btn-default" ng-click="downloadPop($event)">Download POP</button>
+										</div>
+									</div>
+									<div  class="col-md-6" style="padding-left:0px;">
+										<label class="col-sm-12 col-md-12 col-xs-12" style="font-size: 15px; color: #555;">Delivered Time</label>
+										<div class="col-sm-12 col-md-12 col-xs-12" style="font-size: 20px; color: #555;">
+											{{order_with_id.completed_datetime || '-----' | date:'h:mm a' }}
+										</div>
+										<div class="col-sm-12 col-md-12 col-xs-12" ng-if="order_with_id.status == 'DELIVERED'">
+											<button class="btn btn-xs btn-default" ng-click="downloadPod()">Download POD</button>
+										</div>
+									</div>
+								</div>
+								<hr>
+								<div class="form-group">
+									<div class="col-md-6">
+									   	<a class="alert status" ng-class="{'alert-success' : (order_with_id.status == 'DELIVERED'),'alert-warning' : (order_with_id.status == 'INTRANSIT'),'alert-info' : (order_with_id.status == 'ATTEMPTED'|| order_with_id.status == 'REJECTED' || order_with_id.status == 'CANCELLED'),'alert-danger' : (order_with_id.status == 'QUEUED' || order_with_id.status == 'ORDER_PLACED')}"><strong>{{order_with_id.status}}</strong></a>
+									</div>
+									<div class="col-md-6" style="padding-left:0px;">
+										<label class="col-sm-12 col-md-12 col-xs-12" style="font-size: 15px; color: #555;">Delivered At</label>
+										<div class="col-sm-12 col-md-12 col-xs-12" style="font-size: 20px; color: #555;">
+										{{order_with_id.delivered_at}}
+										</div>
+									</div>
+								</div>
+								<hr>
+								<div class="form-group">
+									<div class="col-md-6"  style="padding-left:0px;">
+									   	<label class="col-sm-12 col-md-12 col-xs-12" style="font-size: 15px; color: #555;">Cash Collected</label>
+										<div class="col-sm-12 col-md-12 col-xs-12" style="font-size: 20px; color: #555;">
+										{{order_with_id.cod_collected_amount}}
+										</div>
+									</div>
+									<div class="col-md-6" style="padding-left:0px;">
+										<label class="col-sm-12 col-md-12 col-xs-12" style="font-size: 15px; color: #555;">Remarks For Cash</label>
+										<div class="col-sm-12 col-md-12 col-xs-12" style="font-size: 20px; color: #555;">
+										{{order_with_id.cod_remarks || '-----'}}
+										</div>
+									</div>
+								</div>
+								<hr>
+								<div class="form-group">
+									<label class="col-sm-12 col-md-12 col-xs-12" style="font-size: 15px; color: #555;"> Delivery Address </label>
+									<div class="col-md-12 col-sm-12 col-xs-12" style="font-size: 20px; color: #555;">
+										{{order_with_id.delivery_address}}
+									</div>
+								</div>
+								<hr>
+								<div class="form-group">
+									<label class="col-sm-12 col-md-12 col-xs-12" style="font-size: 15px; color: #555;"> Pickup Address </label>
+									<div class="col-md-12 col-sm-12 col-xs-12" style="font-size: 20px; color: #555;">
+										{{order_with_id.pickup_address}}
+									</div>
+								</div>
+								<hr>
+								<div class="form-group">
+									<label class="col-md-12" style="font-size: 15px; color: #555;"> Customer </label>
+									<div class="col-md-4 col-sm-6 col-xs-12" style="font-size: 20px; color: #555;">
+										{{order_with_id.customer_name}}
+									</div>
+									<div class="col-md-4 col-sm-6 col-xs-12" style="font-size: 20px; color: #555;">
+										Ph No - {{order_with_id.customer_phonenumber}}
+									</div>
+								</div>
+								<hr>
+								<div class="form-group">
+									<label class="col-md-12" style="font-size: 15px; color: #555;"> Vendor </label>
+									<div class="col-md-4 col-sm-6 col-xs-12" style="font-size: 20px; color: #555;">
+										{{order_with_id.vendor_name}}
+									</div>
+									<div class="col-md-4 col-sm-6 col-xs-12" style="font-size: 20px; color: #555;">
+										Ph No - {{order_with_id.vendor_phonenumber}}
+									</div>
+									<div class="col-md-12" style="font-size: 15px; color: #555;">
+										Vendor Order Id - {{order_with_id.vendor_order_id || 'Not Present'}}
+									</div>
+								</div>
+							</accordion-group>
+						</accordion>
+						<!-- Error message section -->
+						<div style="text-align:center; margin-bottom:20px; font-weight:700" ng-show="show_error_message" class="animated pulse">
+							<span class="error_message"  style="font-size:2.5ex;" >{{error_msg}}</span>
+						</div>
+						<!-- Form submition loader -->
+						<div style="text-align:center;" class="form-joint" ng-show="in_process">
+							<img src="/static/webapp/images/377.GIF" style="height:30px;">
+						</div>
+						<!-- Button section -->
+						<!-- <div class="form-group form-actions">
+							<div class="col-sm-10" ng-show="disable">
+								<a class="btn btn-danger" ng-disabled="order_with_id.status != 'QUEUED' && order_with_id.status != 'ORDER_PLACED'" ng-click="openModal(order_with_id,'delete','delete_order')">Cancel Order</a>
+							</div>
+							<div class="col-sm-10" ng-hide="disable">
+								<a class="btn btn-danger">Cancel</a>
+								<button type="submit" class="btn btn-success" ng-disabled="order_with_id_form.$invalid || invalid" >Save order_with_id</button>
+							</div>
+						</div> -->
+					</div>
+				</form>
+			</div>
+		</div>
+		<div class=" animated fadeIn success" ng-show="success_msg">
+			<div success-box message="success_msg"></div>
+		</div>
+	</div>
+</div>
+<script type="text/ng-template" id="customTemplate.html">
+	<a>
+		<p style="margin:0px;" bind-html-unsafe="match.model.user.first_name | typeaheadHighlight:query"></p>
+		<p style="margin:0px; font-size:12px;" bind-html-unsafe="match.model.addresses[0].area.area_name"></p>
+	</a>
+</script>

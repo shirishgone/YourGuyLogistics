@@ -1,0 +1,47 @@
+<form id="new-customer" class="form-horizontal content-form" ng-submit="createcustomer()" name="customer_form">
+	<div class="form-group">
+		<label class="col-sm-2 col-md-2 control-label">Customer Name</label>
+		<div class="col-sm-10 col-md-10">
+			<input type="text" class="form-control" ng-model="customer.name" ng-required="true" placeholder="Customer Name"/>
+		</div>
+	</div>
+	<div class="form-group">
+		<label class="col-sm-2 col-md-2 control-label">Phone number</label>
+		<div class="col-sm-10 col-md-10">
+			<input class="form-control" ng-model="customer.phone_number" type="text" pattern="\d*" minlength="10" maxlength="11" placeholder="Phone number" ng-required="true" />
+		</div>
+	</div>
+	<div class="address">
+		<div class="form-group">
+			<label class="col-sm-2 col-md-2 control-label">Address</label>
+			<div class="col-sm-5 col-md-5">
+				<input type="text" class="form-control form-joint" maxlength="50" placeholder="Pin Code" ng-model="customer.pin_code" ng-required="true" />
+			</div>
+			<div class="col-sm-5 col-md-5">
+				<input type="text" class="form-control form-joint" maxlength="150" placeholder="Landmark (Optional)" ng-model="customer.Landmark" />
+			</div>
+		</div>
+
+		<div class="form-group">
+			<div class="col-sm-10 col-sm-offset-2">
+				<input type="text" class="form-control form-joint" maxlength="150" placeholder="Full Address" ng-model="customer.full_address" ng-required="true" />
+				<!-- <select class="form-control" placeholder="Area" ng-model="customer.area_code" ng-required="true">
+					<option value=''>-- Select Area --</option>
+					<option class="form-control" ng-repeat="area in areacodes" ng-value="area.area_code"> {{area.area_name}}</option>
+				</select> -->
+			</div>
+		</div>
+	</div>
+	<div style="text-align:center; margin-bottom:20px; font-weight:700" class="animated pulse">
+		<span class="error_message" style="font-size:2.5ex;">{{errmsg}}</span>
+	</div>
+	<div style="text-align:center;" class="form-group form-joint" ng-show="custinprocess">
+		<img src="/static/webapp/images/377.GIF" style="height:30px;">
+	</div>
+	<div class="form-group form-actions">
+		<div class="col-sm-offset-2 col-sm-10">
+			<a ng-click="cancel()" class="btn btn-default">Cancel</a>
+			<button type="submit" class="btn btn-success" ng-disabled="customer_form.$invalid">Save customer</button>
+		</div>
+	</div>
+</form>

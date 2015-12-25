@@ -1,0 +1,71 @@
+<div id="dashboard" >
+  <div id="content">
+    <div class="menubar">
+      <div class="sidebar-toggler visible-xs" ng-click="$parent.open_sidebar = !$parent.open_sidebar">
+        <i class="ion-navicon"></i>
+      </div>
+      <div class="page-title">
+        Reports
+      </div>
+      <div class="period-select hidden-xs">
+        <form class="input-daterange">
+          <div class="input-group dashboard_date">
+            <span class="input-group-btn">
+              <button type="button" class="btn" ng-click="open($event,'start_date')">
+                <i class="glyphicon glyphicon-calendar" style="font-size:16.5px;"></i>
+              </button>
+            </span>
+            <input type="text" class="input-sm form-control" ng-click="open($event,'start_date')" datepicker-popup="{{format}}" ng-model="dash_data.start_date" is-open="datePicker.start_date" show-weeks="false" ng-change="send_dates()" />
+          </div>
+
+          <p class="pull-left">to</p>
+
+          <div class="input-group dashboard_date">
+            <span class="input-group-btn">
+              <button type="button" class="btn" ng-click="open($event,'end_date')">
+                <i class="glyphicon glyphicon-calendar" style="font-size:16.5px;"></i>
+              </button>
+            </span>
+            <input type="text" class="input-sm form-control" ng-click="open($event,'end_date')" datepicker-popup="{{format}}" ng-model="dash_data.end_date" min-date="dash_data.start_date" is-open="datePicker.end_date" ng-required="true" show-weeks="false" ng-change="send_dates()"/>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div notification-bar message="notification.message" noticetype="notification.type" ng-show="notification.type" >
+    </div>
+    <div class="content-wrapper">
+      <div style="overflow:auto;">
+        <div id="no-padding" class="col-md-4 col-sm-8 col-xs-6" ng-if="$parent.role.ops">
+          <select class="form-control" ng-model="dash_data.vendor_id" ng-options="vendor.id as vendor.name for vendor in vendors">
+            <option value=''> All Vendor </option>
+          </select>
+        </div>
+        <div >
+          <button type="button" class="btn btn-default pull-right" ng-click="downloadExcelData()" azy-load="true" ng-csv="excel_data" filename="orders.csv">Download Report</button>
+        </div>
+      </div>
+      <!-- metrix -->
+      <div class="metrics clearfix">
+        <div class="metric">
+          <span class="field">Total Orders</span>
+          <span class="data">{{dashboard_value.total_orders}}</span>
+        </div>
+        <div class="metric">
+          <span class="field">Orders Executed</span>
+          <span class="data">{{dashboard_value.total_orders_executed}}</span>
+        </div>
+        <div class="metric">
+          <span class="field">Total COD Amount</span>
+          <span class="data">Rs {{dashboard_value.total_cod | number : 2}}</span>
+        </div>
+        <div class="metric">
+          <span class="field">Total COD Collected</span>
+          <span class="data">Rs {{dashboard_value.cod_collected | number : 2}}</span>
+        </div>
+      </div>
+      <div class="chart">
+        <div fusioncharts width="100%" height="100%" type="stackedcolumn2d" dataSource="{{graphData}}"></div>
+      </div>
+    </div>
+  </div>
+</div>

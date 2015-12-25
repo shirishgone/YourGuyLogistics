@@ -1,0 +1,41 @@
+<form id="new-product" class="form-horizontal content-form" ng-submit="createproduct()" name="product_form">
+	<div class="form-group">
+		<label class="col-sm-2 col-md-2 control-label">Product Name</label>
+		<div class="col-sm-10 col-md-8">
+			<input type="text" class="form-control" maxlength="100" ng-model="product.name" ng-required="true" placeholder="Maximum 100 characters" />
+		</div>
+	</div>
+	<div class="form-group">
+		<label class="col-sm-2 col-md-2 control-label">Product Cost</label>
+		<div class="col-sm-10 col-md-8">
+			<input type="number" class="form-control" ng-model="product.cost" ng-required="true" placeholder="Only Numbers"/>
+		</div>
+	</div>
+	<div class="form-group">
+		<label class="col-sm-2 col-md-2 control-label">Select Category</label>
+		<div class="col-sm-8 col-sm-8">
+			<select class="form-control" ng-model="product.category">
+				<option value=''>-- Select Product Category --</option>
+				<option class="form-control" ng-repeat="category in product_category" ng-value="category.category_name"> {{category.category_name}}</option>
+			</select>
+		</div>
+	</div>
+	<div class="form-group">
+		<label class="col-sm-2 col-md-2 control-label">Product Description</label>
+		<div class="col-sm-10 col-md-8">
+			<textarea class="form-control" rows="3" maxlength="500" placeholder="Add some description within 500 words" ng-model="product.description" ng-required="true"></textarea>
+		</div>
+	</div>
+	<div style="text-align:center; margin-bottom:20px; font-weight:700" class="animated pulse">
+		<span class="error_message"  style="font-size:2.5ex;" >{{errmsg}}</span>
+	</div>
+	<div style="text-align:center;" class="form-group form-joint" ng-show="productinprocess">
+		<img src="/static/webapp/images/377.GIF" style="height:30px;">
+	</div>
+	<div class="form-group form-actions">
+		<div class="col-sm-10">
+			<button type="button" ng-click="cancel()" class="btn btn-default">Cancel</button>
+			<button type="submit" class="btn btn-success" ng-disabled="product_form.$invalid">Create product</button>
+		</div>
+	</div>
+</form>
