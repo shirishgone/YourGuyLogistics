@@ -1,7 +1,0 @@
-*.DS_Store
-venv
-*.pyc
-staticfiles
-.idea/*
-*.sqlite3
-.gitignore
