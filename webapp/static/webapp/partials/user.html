@@ -1,0 +1,74 @@
+<div id="content">
+	<div class="menubar fixed">
+		<div class="sidebar-toggler visible-xs" ng-click="$parent.open_sidebar = !$parent.open_sidebar">
+			<i class="ion-navicon"></i>
+		</div>
+		
+		<div class="page-title">
+			Customers
+		</div>
+		<a ui-sref="home.create_user" class="new-user btn btn-success pull-right">
+			<span>New Customer</span>
+		</a>
+	</div>
+	<div class="content-wrapper" id="users" >
+		<div class="ajax_loader" ng-hide="loaded">
+            <img src="/static/webapp/images/377.GIF">
+        </div>
+        
+        <div ng-show="loaded">
+		    <div class="col-md-10 col-xs-12 col-md-offset-1" ng-show="show_consumer_msg">
+		        <h2 class="alert alert-warning"> {{consumer_msg}} </h2>
+		    </div>
+        	<table st-table="display_consumer" st-safe-src="consumer_data" class="table table-striped" ng-hide="show_consumer_msg">
+        		<thead>
+        			<tr style="cursor:pointer;">
+                        <th>
+                            Sr No
+                        </th>
+        				<th st-sort="user.first_name">
+        					Name
+        				</th>
+        				<th st-sort="user.username">
+        					Phone
+        				</th>
+                        <th>
+                            Delete
+                        </th>
+        			</tr>
+        			<!-- <tr>
+        				<th colspan="4">
+        					<input st-search placeholder="search" class="form-control" type="search"/>
+        				</th>
+        			</tr> -->
+        		</thead>
+        		<tbody>
+        			<tr class="asLink" ng-repeat="user in display_consumer | filter: first_name" ui-sref="home.customer_details({customerId:user.id})">
+                        <td>
+                            {{$index+1}}
+                        </td>
+        				<td>
+        					{{user.name}} 
+        				</td>
+        				<td>
+        					{{user.phone_number}} 
+        				</td>
+        				<!-- <td>
+        					{{user.addresses[0].flat_number}}, {{user.addresses[0].building}}, {{user.addresses[0].street}},{{user.addresses[0].area.area_name}}
+        				</td> -->
+                        <td>
+                            <button class="btn btn-danger" ng-click="openModal(sm,user,$event)"><span class="glyphicon glyphicon-trash"></span></button>
+                        </td>
+        			</tr>
+        		</tbody>
+        		<tfoot>
+        			<tr ng-if="totalUsers">
+                        <td colspan="8" class="text-center">
+                            <pagination total-items="totalUsers" ng-model="$parent.current_user_page" items-per-page="itemsByPage" max-size="8" boundary-links="true" rotate="false" ng-change="getConsumer()"></pagination>
+                        </td>
+                    </tr>
+        		</tfoot>
+        	</table>
+        </div>
+	</div>
+</div>

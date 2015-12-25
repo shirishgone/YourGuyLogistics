@@ -1,0 +1,108 @@
+<div id="content">
+    <div class="menubar">
+        <div class="sidebar-toggler visible-xs" ng-click="$parent.open_sidebar = !$parent.open_sidebar">
+            <i class="ion-navicon"></i>
+        </div>
+
+        <div class="page-title">
+            Orders
+        </div>
+        <a ui-sref="home.create_order" class="new-user btn btn-success pull-right">
+            <span>Place Order</span>
+        </a>
+    </div>
+    <div notification-bar message="notification.message" noticetype="notification.type" ng-show="notification.type" >
+    </div>
+    <div class="content-wrapper animated webkit" ng-class="{fadeInUp:laded}">
+        <div class="col-md-12 col-xs-12" id="no-padding" style="margin-bottom:15px;">
+            <div class="col-md-2 col-sm-3 col-xs-6" id="no-padding">
+                <span class="input-group date_picker">
+                    <input type="text" class="form-control" ng-click="startopen($event)" datepicker-popup="{{format}}" ng-model="order_params.date" min-date="2015-01-01" max-date="'2015-12-31'" is-open="opened" ng-required="true" close-text="Close" show-weeks="false" datepicker-append-to-body="true">
+                    <span class="input-group-btn">
+                        <button type="button" class="btn calendar-button" ng-click="startopen($event)">
+                            <img class="calendar-image" src="/static/webapp/images/calendar.png">
+                        </button>
+                    </span>
+                </span>
+            </div>
+            <div class="col-md-2 col-sm-3 col-xs-6" id="no-padding" style="padding-left:0px" >
+                <div class="status_filter">
+                    <button click-outside showcontent="show_status" id="single-button" type="button" class="btn btn-default">
+                        <span class="caret"></span>
+                        <span ng-if="order_params.status.length == 0">All Status</span>
+                        <span ng-if="order_params.status.length != 0">{{order_params.status[0]}} 
+                            <span ng-show="order_params.status.length != 1">+{{order_params.status.length -1 }}</span>
+                        </span>
+                    </button>
+                    <ul role="menu" ng-show="show_status" style="position:fixed;">
+                        <li class="asAnchor" ng-click="unselectOrderStatus()">
+                            <input type="checkbox" name="select_status" ng-model="st"/>&nbsp;&nbsp;All Status
+                        </li>
+                        <li class="asAnchor" ng-repeat="st in STATUS" ng-click="selectOrderStatus(st)">
+                            <span>
+                                <input type="checkbox" name="select_status" ng-model="st.selected"/>&nbsp;&nbsp;{{st.status}}
+                            </span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-8 col-sm-3 col-xs-12 sm-pad" id="no-padding">
+                <input type="text" class="form-control"  ng-model="searched_id" placeholder="search by order id,customer name,customer phone number" ng-keyup="$event.which === 13 && search_order(searched_id)">
+            </div>
+        </div>
+                <!-- Table contents -->
+        <div class="col-md-12 col-sm-12 col-xs-12" ng-show="order_not_found" style="text-align:center;">
+           <img ng-src="/static/webapp/images/{{order_not_found}}.png" style="width:80%;height:auto;">
+        </div>
+        <div ng-show="!order_not_found" style="padding-top:20px;" >
+            <table st-table="diplay_orders" st-safe-src="orders_data" class="table">
+                <thead>
+                    <tr class="orders" style="cursor:pointer;">
+                        <th> Sr No </th>
+                        <th  st-sort="id">Order</th>
+                        <th> Date </th>
+                        <th  st-sort="consumer.user.first_name" style="width:30%;" >Customer</th>
+                        <th  st-sort="status" style="width:30%;" >Status</th>
+                        <th  st-sort="cod_amount" >COD</th>
+                    </tr>
+                </thead>
+                <tbody class="asLink" ng-repeat="order in diplay_orders" ng-click="redirect_to_details(order)" style="cursor:pointer;  border-top: 1px solid #ddd;">
+                    <tr>
+                        <td>
+                            {{$index+1}}
+                        </td>
+                        <td>
+                            <a ng-click="redirect_to_details(order)" >{{order.id}}</a>
+                        </td>
+                        <td>
+                           {{order.pickup_datetime | date:'dd MMM yyyy @ h:mm a'}}
+                        </td>
+                        <td>
+                            {{order.customer_name}}
+                            <div ng-if="order.is_recurring" class="pull-right">
+                                <img class="recurring-image" src="/static/webapp/images/recurring.png">
+                            </div>
+                        </td>
+                        <td style="padding-top:15px;">
+                            <span class="label" ng-class="{
+                            'label-success' : (order.status == 'DELIVERED'),
+                            'label-warning' : (order.status == 'INTRANSIT'),
+                            'label-info' : (order.status == 'DELIVERYATTEMPTED'|| order.status == 'REJECTED' || order.status == 'CANCELLED' || order.status == 'PICKUPATTEMPTED'|| order.status == 'ATTEMPTED'),
+                            'label-danger' : (order.status == 'QUEUED' || order.status == 'ORDER_PLACED')}">{{order.status}}</span>
+                        </td>
+                        <td>
+                            <span ng-class="compareCOD(order)">{{order.cod_collected}}rs</span>/{{order.cod_amount}}rs
+                        </td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr ng-if="total_orders">
+                        <td colspan="8" class="text-center">
+                            <pagination total-items="total_orders" ng-model="order_params.page" items-per-page="itemsByPage" max-size="8" boundary-links="true" rotate="false"></pagination>
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div> 
+    </div>
+</div>

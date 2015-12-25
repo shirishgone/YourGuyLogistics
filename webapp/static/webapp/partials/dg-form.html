@@ -1,0 +1,58 @@
+<div id="content">
+	<div class="menubar">
+		<div class="sidebar-toggler visible-xs" ng-click="$parent.open_sidebar = !$parent.open_sidebar">
+			<i class="ion-navicon"></i>
+		</div>
+
+		<div class="page-title">
+			Add a new Delivery Guy 
+		</div>
+	</div>
+	<div class="content-wrapper">
+		<div ng-hide="success_msg">
+			<form class="form-horizontal content-form" ng-submit="dg_form.$valid && createDg()" name="dg_form">
+				<div class="form-group">
+				    <label class="col-sm-2 col-md-2 control-label">Delivery Guy Name</label>
+				    <div class="col-sm-10 col-md-8">
+				      <input type="text" class="form-control" ng-model="dg.name" ng-required="true" placeholder="Name"/>
+				    </div>
+			  	</div>
+			  	<div class="form-group">
+				    <label class="col-sm-2 col-md-2 control-label">Phone number</label>
+				    <div class="col-sm-10 col-md-8">
+				    	<input class="form-control" ng-model="dg.phone_number" type="text" pattern="\d*" minlength="10" maxlength="11" placeholder="Mobile number should be 10 to 11 digits" ng-required="true" />
+				    </div>
+			  	</div>
+			  	<div class="form-group">
+				    <label class="col-sm-2 col-md-2 control-label">Password</label>
+				    <div class="col-sm-10 col-md-8">
+				    	<input type="text" class="form-control" ng-model="dg.password" ng-required="true" placeholder="Password For Delivery Guy"/>
+				    </div>
+			  	</div>
+			  	<div style="text-align:center; margin-bottom:20px; font-weight:700" ng-show="show_alert_message" class="animated pulse">
+			  		<span class="error_message"  style="font-size:2.5ex;" >{{alert_message}}</span>
+			  	</div>
+			  	<div style="text-align:center;" class="form-joint" ng-show="dg_in_process">
+			  		<img src="/static/webapp/images/377.GIF" style="height:30px;">
+			  	</div>
+			  	<div class="form-group form-actions">
+			    	<div class="col-sm-offset-2 col-sm-10">
+			    		<a ui-sref="home.dg" class="btn btn-default">Cancel</a>
+			      		<button type="submit" class="btn btn-success">CREATE</button>
+		    		</div>
+			  	</div>
+			</form>
+		</div>
+		<div class=" animated fadeIn success" ng-show="success_msg">
+			<div class="ajax_loader " id="success_box" >
+				 <img  src="/static/webapp/images/success_tick.png" >
+				 <h3>
+				 	GREAT WORK :)
+				 </h3>
+				 <h4>
+				 	Delivery Guy Added Successfully
+				 </h4>
+			</div>
+		</div>
+	</div>
+</div>

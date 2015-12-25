@@ -2,3 +2,6 @@
 venv
 *.pyc
 staticfiles
+.idea/*
+*.sqlite3
+.gitignore

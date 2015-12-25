@@ -1,0 +1,63 @@
+{% load staticfiles %}
+<html>
+<head>
+	<meta charset="UTF-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />	
+	<title>YourGuy</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+	<!-- stylesheets -->
+	
+	<link rel="stylesheet" type="text/css" href="{% static 'webapp/css/vendor/brankic.css' %}" />
+	<link rel="stylesheet" type="text/css" href="{% static 'webapp/css/vendor/ionicons.min.css' %}" />
+	<link rel="stylesheet" type="text/css" href="{% static 'webapp/css/vendor/font-awesome.min.css' %}" />
+	<link rel="stylesheet" type="text/css" href="{% static 'webapp/css/vendor/jquery.dataTables.css' %}" />
+	<link rel="stylesheet" type="text/css" href="{% static 'webapp/css/vendor/animate.css' %}" />
+	<link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css"/>
+	<link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/angular_material/0.11.2/angular-material.min.css">
+	<link rel="stylesheet" type="text/css" href="{% static 'webapp/css/compiled/checkbox.css' %}" />
+	<link rel="stylesheet" type="text/css" href="{% static 'webapp/css/loading-bar.min.css' %}" />
+	<link rel="stylesheet" type="text/css" href="{% static 'webapp/css/compiled/theme.css' %}?v=0.0.2" />
+	<link rel="stylesheet" type="text/css" href="{% static 'webapp/css/compiled/style-version-two.css' %}?v=0.0.2" />
+
+
+
+	<!-- javascript -->
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.0/jquery.min.js"></script>
+	<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCw-8x3QBSDty-nVkHvdhutCiXim1ho-YA"></script>
+	<script src="{% static 'webapp/js/bootstrap/bootstrap.min.js' %}"></script>
+	<script src="{% static 'webapp/js/theme.js' %}"></script>
+	<script src="{% static 'webapp/js/vendor/jquery.dataTables.min.js' %}"></script>
+	<script src="{% static 'webapp/js/angular.min.js' %}"></script>
+	<script src="{% static 'webapp/js/angular-cookies.js' %}"></script>
+	<script src="{% static 'webapp/js/ngStorage.min.js' %}"></script>
+	<script src="{% static 'webapp/js/ui-router.js' %}"></script>
+	<script src="{% static 'webapp/js/ngscripts/main.js' %}?v=0.0.3"></script>
+	<script src="{% static 'webapp/js/ngscripts/directives.js' %}?0.0.3"></script>
+	<script src="{% static 'webapp/js/ngscripts/services.js' %}?0.0.3"></script>
+	<script src="{% static 'webapp/js/ngscripts/filters.js' %}?0.0.3"></script>
+	<script src="{% static 'webapp/js/smart-table.min.js' %}"></script>
+	<script src="{% static 'webapp/js/ui-bootstrap.min.js' %}"></script>
+	<script src="{% static 'webapp/js/base64.min.js' %}"></script>
+	<script src="{% static 'webapp/js/datepicker-multiselect.js' %}"></script>
+	<script src="{% static 'webapp/js/xlxs.core.min.js' %}"></script>
+	<script src="{% static 'webapp/js/fusioncharts.js' %}"></script>
+	<script src="{% static 'webapp/js/fusioncharts.charts.js' %}"></script>
+	<script src="{% static 'webapp/js/angular-fusioncharts.min.js' %}"></script>
+	<script src="{% static 'webapp/js/loading-bar.min.js' %}"></script>
+	<script src="{% static 'webapp/js/aws-sdk.min.js' %}"></script>
+	<script src="{% static 'webapp/js/FileSaver.js' %}"></script>
+	<script src="{% static 'webapp/js/canvas-to-blob.min.js' %}"></script>
+	<script src="{% static 'webapp/js/alasql.min.js' %}"></script>
+	<!-- cdn scripts -->
+	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular-animate.min.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular-aria.min.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/angular_material/0.11.2/angular-material.min.js"></script>
+	<!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+</head>
+<body ng-app="ygwebapp">
+	<div ui-view></div>
+</body>
+</html>

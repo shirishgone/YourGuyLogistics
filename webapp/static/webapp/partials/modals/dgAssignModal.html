@@ -1,0 +1,79 @@
+<div class="modal-header center">
+    <h3 class="modal-title ">Assign Delivery Guy</h3>
+</div>
+<div class="dg-modal-body">
+    <accordion>
+        <accordion-group is-open="accordion.isFirstOpen" ng-init="accordion.isFirstOpen = true">
+            <accordion-heading>
+                <div>
+                    PICKUP &nbsp;&nbsp;
+                    <span ng-show="dg_assign_array[0].dg_name" style="font-size:14px;font-weight:600;">({{dg_assign_array[0].dg_name}})</span> 
+                    <i class="pull-right glyphicon" ng-class="{'glyphicon-chevron-down': accordion.isFirstOpen, 'glyphicon-chevron-right': !accordion.isFirstOpen}" style="font-size:10px"></i>
+                </div>
+            </accordion-heading>
+            <div>
+                <div  style="padding:5px;">
+                    <input type="text" class="form-control" ng-model="search_pickup_dg" placeholder="Search pickup guy" />
+                </div>
+                <div>
+                    <table class="table" style="width:100%;">
+                        <thead>
+                            <tr>
+                                <td class="wid-20">Select</td>
+                                <td class="wid-40">Name</td>
+                                <td class="wid-40">Phone</td>
+                            </trZ
+                        </thead>
+                        <tbody>
+                            <tr ng-repeat="dg in details.dgs | filter : search_pickup_dg | DgName" ng-click="dg_assign_array[0].dg_id = dg.id;dg_assign_array[0].dg_name = dg.user.first_name;" ng-init="setDefaultDg(dg,dg_assign_array[0])">
+                                <td class="wid-20">
+                                    <input type="radio" name="pickup_dg" ng-value="dg.id" ng-model="dg_assign_array[0].dg_id" ng-required="true" ng-click="dg_assign_array[0].dg_name = dg.user.first_name">
+                                </td>
+                                <td class="wid-40">{{dg.user.first_name}}</td>
+                                <td class="wid-40">{{dg.user.username}}</td>
+                            </tr>
+                        </tbody>
+                    </table> 
+                </div>
+            </div>
+        </accordion-group>
+        <accordion-group  is-open="accordion.isSecondOpen">
+            <accordion-heading>
+                <div>
+                    DELIVERY &nbsp;&nbsp;
+                    <span ng-show="dg_assign_array[1].dg_name" style="font-size:14px;font-weight:600;">({{dg_assign_array[1].dg_name}})</span>
+                    <i class="pull-right glyphicon" ng-class="{'glyphicon-chevron-down': accordion.isSecondOpen, 'glyphicon-chevron-right': !accordion.isSecondOpen}" style="font-size:10px"></i>
+                </div>
+            </accordion-heading>
+            <div>
+                <div style="padding:5px;">
+                    <input type="text" class="form-control" ng-model="search_deliver_dg" placeholder="Search delivery guy" />
+                </div>
+                <div>
+                    <table class="table" style="width:100%;">
+                        <thead>
+                            <tr>
+                                <td class="wid-20">Select</td>
+                                <td class="wid-40">Name</td>
+                                <td class="wid-40">Phone</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr ng-repeat="dg in details.dgs| filter : search_deliver_dg | DgName" ng-click="dg_assign_array[1].dg_id = dg.id; dg_assign_array[1].dg_name = dg.user.first_name;" ng-init="setDefaultDg(dg,dg_assign_array[1])">
+                                <td class="wid-20">
+                                    <input type="radio" name="deliver_dg" ng-value="dg.id" ng-model="dg_assign_array[1].dg_id" ng-required="true" ng-click="dg_assign_array[1].dg_name = dg.user.first_name">
+                                </td>
+                                <td class="wid-40">{{dg.user.first_name}}</td>
+                                <td class="wid-40">{{dg.user.username}}</td>
+                            </tr>
+                        </tbody>
+                    </table> 
+                </div>
+            </div>
+        </accordion-group>
+    </accordion>
+    <div class="dg-modal-footer">
+        <button class="button-danger" ng-click="cancel()">Cancel</button>&nbsp;&nbsp;
+        <button class="button-success" ng-disabled="!dg_assign_array[1].dg_id && !dg_assign_array[0].dg_id" ng-click="assign_dg()">Assign</button>
+    </div>
+</div>

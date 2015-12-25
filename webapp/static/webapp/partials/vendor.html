@@ -1,0 +1,91 @@
+<div div id="content" >
+	<div class="menubar">
+		<div class="sidebar-toggler visible-xs" ng-click="$parent.open_sidebar = !$parent.open_sidebar">
+			<i class="ion-navicon"></i>
+		</div>
+		<div class="page-title">
+			Vendors
+		</div>
+		<!-- <a class="new-user btn btn-success pull-right">
+			<span>New Vendor</span>
+		</a> -->
+	</div>
+	<div class="content-wrapper">
+		<div>
+			<tabset justified="true"  >
+				<tab heading="Vendors" ng-click="getVendor()">
+					<div class="ajax_loader" ng-show="VendorLoading">
+						<img src="/static/webapp/images/377.GIF">
+					</div>
+					<div ng-init="getVendor()" ng-hide="VendorLoading">
+						<table class="table table-striped" st-table="display_vendor" st-safe-src="vendors">
+							<thead>
+								<tr>
+									<th>
+										Sr No
+									</th>
+									<th st-sort="store_name">
+										Name
+									</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr class="asLink" ng-repeat="vendor in display_vendor" ui-sref="home.vendor_details({vendorId:vendor.id})" >
+									<td>
+										{{$index+1}}
+									</td>
+									<td>
+										{{vendor.name}} 
+									</td>
+								</tr>
+							</tbody>
+							<tfoot>
+								<tr>
+									<td colspan="5" class="text-center">
+										<div st-pagination="" st-items-by-page="itemsByPage" st-displayed-pages="7"></div>
+									</td>
+								</tr>
+							</tfoot>
+						</table>
+					</div>
+				</tab>
+				<tab heading="Requested Vendors" ng-click="getRequestedVendors()">
+					<div class="ajax_loader" ng-show="rqstVendorLoading">
+						<img src="/static/webapp/images/377.GIF">
+					</div>
+					<div ng-hide="rqstVendorLoading">
+						<table class="table table-striped" st-table="display_rqst_vendor" st-safe-src="requestedVendors" >
+							<thead>
+								<tr>
+									<th>
+										Sr No
+									</th>
+									<th st-sort="store_name">
+										Name
+									</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr class="asLink" ng-repeat="vendor in display_rqst_vendor" ui-sref="home.vendor_details({vendorId:vendor.id})">
+									<td>
+										{{$index+1}}
+									</td>
+									<td>
+										{{vendor.name}} 
+									</td>
+								</tr>
+							</tbody>
+							<tfoot>
+								<tr>
+									<td colspan="5" class="text-center">
+										<div st-pagination="" st-items-by-page="itemsByPage" st-displayed-pages="7"></div>
+									</td>
+								</tr>
+							</tfoot>
+						</table>
+					</div>
+				</tab>
+			</tabset>
+		</div>
+	</div>
+</div>

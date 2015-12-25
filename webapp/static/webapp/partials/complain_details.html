@@ -1,0 +1,88 @@
+<div id="latest-activity" >
+<div id="content">
+	<div class="menubar fixed">
+		<div class="sidebar-toggler visible-xs" ng-click="$parent.open_sidebar = !$parent.open_sidebar">
+			<i class="ion-navicon"></i>
+		</div>
+		
+		<div class="page-title">
+			Feedback Details
+		</div>
+	</div>
+	<div class="content-wrapper">
+		<div class="moment first">
+			<div class="row event clearfix">
+				<div class="col-sm-1">
+					<div class="icon violet">
+						<i class="fa fa-upload"></i>
+					</div>
+				</div>
+				<div class="col-sm-11 message">
+					<div class="content">
+						<div style="position:relative;">
+							<h4>Order Id - {{ticket.helpdesk_ticket.subject}} #{{getGroupName(ticket.helpdesk_ticket.group_id)}} </h4>
+							<div class="status_ticket label" ng-class="{'label-warning' : (ticket.helpdesk_ticket.status_name == 'Open'),'label-success' : (ticket.helpdesk_ticket.status_name == 'Resolved' || ticket.helpdesk_ticket.status_name == 'Closed')}">{{ticket.helpdesk_ticket.status_name}}</div>
+						</div>
+						<div style="font-size:13px; ">
+							Created By - <strong>{{ticket.helpdesk_ticket.requester_name}} </strong><br> 
+							Created On - <b>{{ticket.helpdesk_ticket.created_at | date:'dd MMM yy h:mm a'}} </b> <br> 
+							Due By - <b>{{ticket.helpdesk_ticket.due_by | date:'dd MMM yy h:mm a'}}</b>
+						</div>
+						<div style="padding-top:15px; padding-bottom:15px;">
+							{{ticket.helpdesk_ticket.description}}
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="moment" ng-repeat="note in ticket.helpdesk_ticket.notes" ng-if="!$first">
+			<div class="row event clearfix">
+				<div class="col-sm-1">
+					<div class="icon">
+						<i class="fa fa-comment"></i>
+					</div>
+				</div>
+				<div class="col-sm-11 message">
+					<div class="content">
+						<div style="font-size:13px; ">
+							<strong> {{ getUsername(note.note.user_id) }} </strong> added a note<br> 
+							Created On <b> {{note.note.created_at | date:'dd MMM yy h:mm a'}} </b> <br> 
+						</div>
+						<div style="padding-top:15px; padding-bottom:15px;">
+							{{note.note.body}}
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="moment last">
+			<div class="row event clearfix">
+				<div class="col-sm-1">
+					<div class="icon purple">
+						<i class="fa fa-quote-left"></i>
+					</div>
+				</div>
+				<div class="col-sm-11 message">
+					<div class="content">
+						<div class="ticket_notes" ng-hide="show_note_section">
+							<a class="btn" ng-click="addNotes()" ng-disabled="ticket.helpdesk_ticket.status == 4" >Add Note</a> &nbsp;&nbsp; 
+							<a class="btn" ng-click="resolveComplain()" ng-disabled="ticket.helpdesk_ticket.status == 4"> Resolve </a>
+						</div>
+						<div ng-show="show_note_section">
+							<textarea ng-model="ticket_data.note.helpdesk_note.body" maxlength="500" class="form-control" placeholder="Please enter some notes within 500 characters" rows="4" cols="30"></textarea>
+							<br>
+							<input type="text" ng-model="ticket_data.note.helpdesk_note.private" ng-init="ticket_data.note.helpdesk_note.private = false" style="display: none;">
+							<div>
+								<a ng-click="hideNotes()" class="btn btn-default" >Cancel</a>
+								<button type="button" class="btn btn-info" ng-show="submit_notes" ng-click="submitNote(ticket_data)" >Add Notes</button>
+								<button type="button" class="btn btn-danger" ng-show="submit_resolve" ng-click="closeComplain(ticket_data)" >Resolve</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+</div>

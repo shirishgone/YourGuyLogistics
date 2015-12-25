@@ -1,0 +1,65 @@
+<div class="modal-header center">
+	<h3 class="modal-title ">Are you sure?</h3>
+</div>
+<!-- logout user -->
+<div class="modal-body center" ng-if="details.modal_scope == scope_details.Logout">
+	You want to logout
+	<br>
+	<br>
+	<button class="btn btn-danger" ng-click="ok()">Logout</button>
+	<button class="btn btn-default" ng-click="cancel()">Cancel</button>
+</div>
+<!-- delete customer -->
+<div class="modal-body center" ng-if="details.modal_scope == scope_details.Delete_Cust">
+	{{details.message}} 
+	<strong>
+		<span ng-show="details.action_on.user.first_name">{{details.action_on.user.first_name}}</span>
+		<span ng-show="details.action_on.name">{{details.action_on.name}}</span>
+	</strong>
+	<br>
+	<br>
+	<button class="btn btn-danger" ng-click="ok()">Delete</button>
+	<button class="btn btn-default" ng-click="cancel()">Cancel</button>
+</div>
+<!-- delete Address -->
+<div class="modal-body center" ng-if="details.modal_scope == scope_details.Delete_Address">
+	{{details.message}}
+	<br>
+	<br>
+	<button class="btn btn-danger" ng-click="ok()">Delete</button>
+	<button class="btn btn-default" ng-click="cancel()">Cancel</button>
+</div>
+<!-- approve order -->
+<div class="modal-body center" ng-if="details.modal_scope == scope_details.Approve_order">
+	{{details.message}} <strong>{{details.action_on}}</strong> 
+	<br>
+	<br>
+	<button class="btn btn-info" ng-click="approve_order(details.action_on)">Approve</button>
+	<button class="btn btn-default" ng-click="cancel()">Cancel</button>
+</div>
+<!-- reject order -->
+<div class="modal-body center" ng-if="details.modal_scope == scope_details.Decline_order">
+	{{details.message}} <strong>{{details.action_on}}</strong> 
+	<form name="reject-from" ng-submit="decline_order(details.action_on)">
+		<br>
+		<textarea ng-model="$parent.reject_message" maxlength="500" class="form-control" placeholder="Please enter rejection reason within 500 characters" rows="2" cols="15" ng-required="true"></textarea>
+		<br>
+		<button type="submit" ng-disabled="reject-from.$invalid" class="btn btn-danger">Decline</button>
+		<button class="btn btn-default" ng-click="cancel()">Cancel</button>
+	</form>
+</div>
+<!-- Delete Order -->
+<div class="modal-body center" ng-if="details.modal_scope == scope_details.Delete_order">
+	<h5>{{details.message}} <strong>{{details.action_on.id}}</strong></h5> 
+	<button class="btn btn-danger" ng-click="delete_order(details.action_on)">Confirm</button>
+	<button class="btn btn-default" ng-click="cancel()">Cancel</button>
+</div>
+<!-- Reschedule Order -->
+<div class="modal-body center" ng-if="details.modal_scope == scope_details.Reschedule_order">
+	<h5>{{details.message}} <strong>{{details.action_on}}</strong></h5> 
+	<div align="center" style="padding-bottom:15px;">
+		<datepicker show-weeks="false" min-date="minDate" ng-model='reschedule_date'></datepicker>
+	</div>
+	<button class="btn btn-danger" ng-click="reschedule_order({date:reschedule_date,id:details.action_on})">Confirm</button>
+	<button class="btn btn-default" ng-click="cancel()">Cancel</button>
+</div>

@@ -1,0 +1,55 @@
+<div id="content" >
+	<div class="menubar">
+		<div class="sidebar-toggler visible-xs" ng-click="$parent.open_sidebar = !$parent.open_sidebar">
+			<i class="ion-navicon"></i>
+		</div>
+
+		<div class="page-title">
+			Send A Feedback
+		</div>
+	</div>
+	<div class="content-wrapper">
+		<div ng-hide="show_success_msg">
+			<form class="form-horizontal content-form" ng-submit="complain_form.$valid && doComplain()" name="complain_form">
+				<div class="form-group">
+				    <label class="col-sm-2 col-md-2 control-label">Email</label>
+				    <div class="col-sm-10 col-md-8">
+				      <input type="email" class="form-control" ng-model="tickets.helpdesk_ticket.email" ng-init="tickets.helpdesk_ticket.email = user.email" ng-required="true" placeholder="Email"/>
+				    </div>
+			  	</div>
+			  	<div class="form-group">
+			  		<label class="col-sm-2 col-md-2 control-label">Type</label>
+			  		<div class="col-sm-10 col-md-4">
+			  			<select class="form-control" ng-model="tickets.helpdesk_ticket.group_id" ng-required="true" ng-options="group.group.id as group.group.name for group in groups">
+			  				<option value=''>-- Select Type --</option>
+			  			</select>
+			  		</div>
+			  	</div>
+			  	<input type="text" ng-model="tickets.helpdesk_ticket.status" ng-init="tickets.helpdesk_ticket.status = complain_status.Open" style="display: none;">
+			  	<input type="text" ng-model="tickets.helpdesk_ticket.priority" ng-init="tickets.helpdesk_ticket.priority = priorities.Low" style="display: none;">
+			  	<div class="form-group">
+				    <label class="col-sm-2 col-md-2 control-label">Order Id</label>
+				    <div class="col-sm-10 col-md-4">
+				    	<input class="form-control" ng-model="tickets.helpdesk_ticket.subject" type="text"placeholder="Order Id" ng-required="true" />
+				    </div>
+			  	</div>
+			  	<div class="form-group">
+			  		<label class="col-sm-2 col-md-2 control-label">Description</label>
+			  		<div class="col-sm-10 col-md-8">
+			  			<textarea ng-model="tickets.helpdesk_ticket.description" maxlength="2000" ng-required="true" class="form-control" placeholder="Please add the desc....." rows="4" cols="30">
+			  			</textarea>
+			  		</div>
+			  	</div>
+			  	<div class="form-group ">
+			    	<div class="col-sm-offset-2 col-sm-10">
+			    		<a ui-sref="home.complaints" class="btn btn-default">Cancel</a>
+			      		<button type="submit" class="btn btn-success" ng-disabled="complain_btn_disable" >Send</button>
+		    		</div>
+			  	</div>
+			</form>
+		</div>
+		<div ng-show="show_success_msg">
+			<div success-box message="success_msg"></div>
+		</div>
+	</div>
+</div>

@@ -1,0 +1,169 @@
+<div id="user-profile" >
+	<div id="content">
+		<div class="menubar">
+			<div class="sidebar-toggler visible-xs" ng-click="$parent.open_sidebar = !$parent.open_sidebar">
+				<i class="ion-navicon"></i>
+			</div>
+			<div class="page-title">
+				{{dg_detail.user.first_name}}
+				<small class="hidden-xs" style="font-weight:600;">DG Details</small>
+			</div>
+			<!-- <a href="#" class="pull-right btn btn-primary">Edit user</a> -->
+		</div>
+		<div class="content-wrapper clearfix">
+			<div class="ajax_loader" ng-show="detailLoading">
+				<img src="/static/webapp/images/377.GIF">
+			</div>
+			<div ng-hide="detailLoading">
+				<div class="profile-info">
+					<div class="avatar">
+						<img alt="14" src="/static/webapp/images/circle-icons/full-color/biker.png" />
+						<div class="name">{{dg_detail.user.first_name}}</div>
+						<div class="position">Delivery Guy</div>
+						<!-- <div class="social">
+							<a href="#"><i class="fa fa-facebook"></i></a>
+							<a href="#"><i class="fa fa-twitter"></i></a>
+						</div> -->
+					</div>
+					<div class="main-details clearfix">
+						<div class="col">
+							<div class="value">{{dg_detail.assignment_type}}</div>
+							Assignment Type
+						</div>
+						<div class="col">
+							<div class="value">{{dg_detail.status}}</div>
+							Status
+						</div>
+					</div>
+					<div class="details">
+						<div class="field">
+							<label>Email</label>
+							<div class="value">{{dg_detail.user.email || "Not Present"}}</div>
+						</div>
+						<div class="field">
+							<label>Phone</label>
+							<div class="value">{{dg_detail.user.username || "Not Present"}}</div>
+						</div>
+						<!-- <div class="field">
+							<label>Address</label>
+							<div class="value">
+								5th Avenue 345 San Francisco 55589, CA. USA.
+							</div>
+						</div> -->
+						<div class="field">
+							<label>App Version</label>
+							<div class="value">
+								{{dg_detail.app_version}}
+							</div>
+						</div>
+						<div class="field">
+							<label>Last Seen</label>
+							<div class="value">
+								{{dg_detail.last_connected_time | date :'dd - MMM -  yyyy hh : mm a' }}
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="profile-content" ng-class="{expand_view: tabs.attendance}">
+					<div class="tabs">
+						<ul>
+							<li>
+								<a class="href_link" ng-class="{active:tabs.details}" ng-click="tabs.details = true;tabs.attendance = false;">Details</a>
+							</li>
+							<li>
+								<a class="href_link" ng-class="{active:tabs.attendance}" ng-click="tabs.attendance = true;tabs.details = false;" >Attendance</a>
+							</li>
+							<!-- <li>
+								<a href="#">Work</a>
+							</li> -->
+						</ul>
+					</div>
+
+					<div class="tab-content" ng-if="tabs.details">
+						<div class="col-sm-8 col-sm-offset-2" >
+							<form class="form-horizontal content-form">	
+								<div class="form-group">
+									<label>Delivery Guy Id</label>
+									<input type="text" class="form-control" ng-model="dg_detail.id" ng-disabled="true"/>
+								</div>
+								<div class="form-group">
+									<label>App Version</label>
+									<input type="text" class="form-control" ng-model="dg_detail.app_version" ng-disabled="true"/>
+								</div>
+								<div class="form-group">
+									<label>Area Name</label>
+									<input type="text" class="form-control" ng-model="dg_detail.area " ng-disabled="true"/>
+								</div>
+								<div class="form-group">
+									<label>Transportation Mode</label>
+									<input type="text" class="form-control" ng-model="dg_detail.transportation_mode" ng-disabled="true"/>
+								</div>
+								<div class="form-group">
+									<label>Baterry Percentage</label>
+									<input type="text" class="form-control" ng-model="dg_detail.battery_percentage" ng-disabled="true"/>
+								</div>
+							</form>
+						</div>
+					</div>
+					<div class="tab-content" ng-show="tabs.attendance" style="min-height:300px;">
+						<div class="ajax_loader" ng-hide="attendance_loaded">
+								<img src="/static/webapp/images/377.GIF">
+							</div>
+						<div ng-show="attendance_loaded">
+							<div class="col-sm-4" style="padding-bottom:20px;">
+								<div class="input-group date_picker">
+									<input type="text" 
+										class="input-sm form-control"
+										ng-click="startopen($event)" 
+										datepicker-popup="{{format}}" 
+										ng-model="date"  
+										is-open="opened" 
+										datepicker-options="{minMode: 'month'}"
+										datepicker-mode="'month'"
+										ng-required="true" 
+										datepicker-append-to-body="true" />
+									<span class="input-group-btn">
+										<button type="button" class="btn" ng-click="startopen($event)" style="background-color:#3C434D; color:#fff">
+											<i class="glyphicon glyphicon-calendar" style="font-size:15.5px;"></i>
+										</button>
+									</span>
+								</div>
+							</div>
+							<table st-table="display_days" st-safe-src="days" class="table table-striped">
+			                    <thead>
+			                        <tr>
+				                        <th>
+				                        	Date
+				                        </th>
+			                            <th>
+			                                In Time 
+			                            </th>
+			                            <th>
+			                                Out Time 
+			                            </th>
+			                            <th>
+			                            	Status
+			                            </th>
+			                            <th>
+			                            	Total
+			                            </th>
+			                        </tr>
+			                    </thead>
+			                    <tbody>
+				                    <tr ng-repeat="day in display_days track by $index">
+				                    	<td>{{setDate($index+1) | date :'d-EEE'}}</td>
+					             		<td>{{day.login_time || "---" | date :'hh : mm a'  }}</td>
+					             		<td>{{day.logout_time  || "---" | date :'hh : mm a'}}</td>
+					             		<td>{{day.status || "---" }}</td>
+					             		<td>{{calculate_time_diff(day.login_time,day.logout_time) }}</td>
+				                    </tr>
+			                    </tbody>
+            				</table>
+						</div>
+					</div>
+				</div>
+			</div>
+			
+		</div>
+    </div>
+</div>
