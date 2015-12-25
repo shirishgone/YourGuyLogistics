@@ -1,18 +1,19 @@
 <div id="content">
-	<div class="menubar fixed">
-		<div class="sidebar-toggler visible-xs" ng-click="$parent.open_sidebar = !$parent.open_sidebar">
-			<i class="ion-navicon"></i>
-		</div>
-		<div class="page-title">
-			File Upload
-		</div>
-	</div>
+	<div class="menubar">
+        <div class="sidebar-toggler visible-xs" ng-click="$parent.open_sidebar = !$parent.open_sidebar">
+            <i class="ion-navicon"></i>
+        </div>
+        <div class="page-title">
+            Excel Upload
+        </div>
+        <a target="_self" class="btn btn-primary pull-right" href="https://s3-ap-southeast-1.amazonaws.com/yourguy-webapp/orders.xlsx"><span>Download Sample</span></a>
+    </div>
 	<div class="content-wrapper" style="text-align:center;">
 		<div ng-hide="show_success_msg">
 			<form name="exel_upload" ng-submit="exel_upload.$valid && UploadFile()">
 				<div class="pickup-address row">
 					<h4>
-						Select the Pickup Address
+						Select a Pickup Address
 					</h4>
 					<ul class="col-md-12">
 						<li ng-repeat="address in user.addresses" class="col-md-6 col-xs-12 col-sm-6 " ng-click="select_pickup(address.id)">
@@ -22,7 +23,7 @@
 					</ul>
 				</div>
 				<div class="file-upload">
-					<h1 style="margin-bottom: 20px;">Select Exel File</h1>
+					<h1 style="margin-bottom: 20px;">Upload your Excel file</h1>
 					<div class="upload">
 						<input type="file" on-read-file="showContent($fileContent)" size="60" ng-required="true" id="fileUpload"/>
 					</div>
@@ -31,14 +32,12 @@
 					</div>
 					<div style="margin-bottom: 20px;">
 						<a ui-sref="home.order" class="btn btn-default">Cancel</a>
-						<button type="submit" class="btn btn-primary" ng-disabled="in_process">Upload</button>
+						<button type="submit" class="btn btn-success" ng-disabled="in_process">Upload Orders</button>
 					</div>
 				</div>
 			</form>
 			<div>
-				<h4>Click the below donload button to download the demo excel file</h4>
-				<p style="color:#d43f3a">Plase fill not more than <b>50</b> orders at a time and the data as provided in the excel file or else it won't work</p>
-				<a target="_self" class="btn btn-success" href="https://s3-ap-southeast-1.amazonaws.com/yourguy-webapp/orders.xlsx">Download</a>
+				<p style="color:#d43f3a">Note: Max <b>50</b> orders can be uploaded at once.</p>
 			</div>
 		</div>
 		<div ng-show="show_success_msg">

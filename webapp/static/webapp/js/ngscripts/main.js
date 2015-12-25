@@ -293,10 +293,10 @@ ygVendors.config(function ($stateProvider, $urlRouterProvider, $httpProvider,cfp
       requireLogin:true
     }
   })
-  .state('home.dashboard', {
-    url: "/dashboard",
-    templateUrl: "/static/webapp/partials/dashboard.html",
-    controller: "dashboardCntrl",
+  .state('home.reports', {
+    url: "/reports",
+    templateUrl: "/static/webapp/partials/reports.html",
+    controller: "reportsCntrl",
     data :{
       requireLogin:true
     }
@@ -2416,7 +2416,7 @@ ygVendors.controller('fileUploadCntrl' ,function ($scope,$filter,$timeout,$state
   }
 })
 
-ygVendors.controller('dashboardCntrl', function ($scope,$timeout,Dashboard,Errorhandler,cfpLoadingBar){
+ygVendors.controller('reportsCntrl', function ($scope,$timeout,Dashboard,Errorhandler,cfpLoadingBar){
   $scope.format = 'dd-MMM-yyyy';
   $scope.dash_data = {
     start_date : new Date(),

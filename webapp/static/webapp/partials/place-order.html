@@ -7,6 +7,10 @@
         <div class="page-title">
             Orders
         </div>
+        <a class="btn btn-primary pull-right" ui-sref="home.file_upload" style="margin-right:10px;">
+            <img class="upload-image" src="/static/webapp/images/circle-icons/full-color/arrow-up.png" >
+            <span class="hide-xs">&nbsp;Excel Upload</span>
+        </a>
     </div>
     <div ng-class="{'content-wrapper':!notification.type,'content-wrapper-margin':notification.type}">
     	<div notification-bar message="notification.message" noticetype="notification.type" ng-show="notification.type" >
