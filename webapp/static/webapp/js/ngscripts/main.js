@@ -2595,25 +2595,41 @@ ygVendors.controller('complaintsCntrl' , function ($scope,Complaints,StoreSessio
         var status =  Errorhandler.getStatus()
         if(status.has_error){
           cfpLoadingBar.complete()
-          alert(status.error)
+          $scope.show_complaint_msg = true;
+          $scope.complaint_msg = status.error;
         }
         else{
           cfpLoadingBar.complete()
-          $scope.complaints = status.data
           $scope.groups = StoreSessionData.getData('ticket_gruops')
+          if(status.data.errors){
+            $scope.show_complaint_msg = true;
+            $scope.complaint_msg = 'Happy to Help!';
+          }
+          else{
+            $scope.show_complaint_msg = false;
+            $scope.complaints = status.data
+          }
         }
       })
     }
     else{
       cfpLoadingBar.start();
-      Complaints.getTicketAndGroup().then(function(data){
-        cfpLoadingBar.complete()
-        $scope.complaints = data.tickets
-        $scope.groups = data.groups
-        StoreSessionData.setData('ticket_gruops',$scope.groups)
+      Complaints.getTicketAndGroup().then(function (data){
+        cfpLoadingBar.complete();
+        $scope.groups = data.groups;
+        StoreSessionData.setData('ticket_gruops',$scope.groups);
+        if(data.tickets.errors){
+            $scope.show_complaint_msg = true;
+            $scope.complaint_msg = 'Happy to Help!';
+        }
+        else{
+          $scope.show_complaint_msg = false;
+          $scope.complaints = data.tickets
+        }
       },function (err){
         cfpLoadingBar.complete()
-        alert(err)
+        $scope.show_complaint_msg = true;
+        $scope.complaint_msg = err;
       })
     }
   }
@@ -2784,9 +2800,10 @@ ygVendors.controller('detailComplaintsCntrl', function ($scope,$stateParams,Stor
     }
     data.resolve = {
       helpdesk_ticket :{
-        status: "4"
+        status: "5"
       }
     }
+    cfpLoadingBar.start();
     Complaints.closeComplain(data).finally(function(){
       var status = Errorhandler.getStatus()
       if(status.has_error){
