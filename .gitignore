@@ -4,5 +4,3 @@ venv
 staticfiles
 .idea/*
 *.sqlite3
-server/settings.py
-yourguy/*
