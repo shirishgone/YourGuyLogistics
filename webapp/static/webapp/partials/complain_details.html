@@ -66,8 +66,8 @@
 				<div class="col-sm-11 message">
 					<div class="content">
 						<div class="ticket_notes" ng-hide="show_note_section">
-							<a class="btn" ng-click="addNotes()" ng-disabled="ticket.helpdesk_ticket.status == 4" >Add Note</a> &nbsp;&nbsp; 
-							<a class="btn" ng-click="resolveComplain()" ng-disabled="ticket.helpdesk_ticket.status == 4"> Resolve </a>
+							<a class="btn" ng-click="addNotes()" ng-disabled="ticket.helpdesk_ticket.status == 5" >Add Note</a> &nbsp;&nbsp; 
+							<a class="btn" ng-click="resolveComplain()" ng-disabled="ticket.helpdesk_ticket.status == 5"> Resolve </a>
 						</div>
 						<div ng-show="show_note_section">
 							<textarea ng-model="ticket_data.note.helpdesk_note.body" maxlength="500" class="form-control" placeholder="Please enter some notes within 500 characters" rows="4" cols="30"></textarea>

@@ -58,30 +58,23 @@
             <table st-table="diplay_orders" st-safe-src="orders_data" class="table">
                 <thead>
                     <tr class="orders" style="cursor:pointer;">
-                        <th> Sr No </th>
-                        <th  st-sort="id">Order</th>
-                        <th> Date </th>
-                        <th  st-sort="consumer.user.first_name" style="width:30%;" >Customer</th>
-                        <th  st-sort="status" style="width:30%;" >Status</th>
+                        <th class="reverse_td" st-sort="id">Order</th>
+                         <th  st-sort="consumer.user.first_name" style="width:20%;" >Customer</th>
+                         <th  st-sort="status" >Status</th>
                         <th  st-sort="cod_amount" >COD</th>
+                        <th> Date </th>
                     </tr>
                 </thead>
                 <tbody class="asLink" ng-repeat="order in diplay_orders" ng-click="redirect_to_details(order)" style="cursor:pointer;  border-top: 1px solid #ddd;">
                     <tr>
-                        <td>
-                            {{$index+1}}
-                        </td>
-                        <td>
+                        <td class="reverse_td">
                             <a ng-click="redirect_to_details(order)" >{{order.id}}</a>
-                        </td>
-                        <td>
-                           {{order.pickup_datetime | date:'dd MMM yyyy @ h:mm a'}}
-                        </td>
-                        <td>
-                            {{order.customer_name}}
-                            <div ng-if="order.is_recurring" class="pull-right">
-                                <img class="recurring-image" src="/static/webapp/images/recurring.png">
+                            <div ng-if="order.is_reverse_pickup" class="reverse" tooltip="Reverse Pickup" tooltip-placement="right">
+                                <img src="/static/webapp/images/reverse.png" >
                             </div>
+                        </td>
+                        <td>
+                            {{order.customer_name | limitTo: 20 }}{{order.customer_name.length > 20 ? '...' : ''}}
                         </td>
                         <td style="padding-top:15px;">
                             <span class="label" ng-class="{
@@ -92,6 +85,12 @@
                         </td>
                         <td>
                             <span ng-class="compareCOD(order)">{{order.cod_collected}}rs</span>/{{order.cod_amount}}rs
+                        </td>
+                        <td class="recurring_td">
+                           {{order.pickup_datetime | date:'dd MMM yyyy @ h:mm a'}}
+                           <div ng-if="order.is_recurring" class="recurring" tooltip="Recurring Order" tooltip-placement="left">
+                                <img src="/static/webapp/images/recurring_order.png" >
+                            </div>
                         </td>
                     </tr>
                 </tbody>

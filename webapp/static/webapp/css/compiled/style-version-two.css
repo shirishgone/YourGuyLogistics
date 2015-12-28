@@ -1,3 +1,8 @@
+@font-face{
+	font-family:'Roboto';
+	src:url('/static/webapp/fonts/Roboto-Thin.ttf');
+}
+
 .button-success{
 	background-color: #FFFFFF;
 	padding: 10px 5px 10px 5px;
@@ -1126,4 +1131,71 @@
 .dg-modal-footer {
 	text-align: center;
 	margin-bottom: 20px;
+}
+
+.vendor-addresses {
+	display: flex;
+	flex-wrap : wrap;
+}
+
+.recurring_td,.reverse_td {
+	position: relative;
+}
+
+.recurring_td .recurring {
+	position: absolute;
+	right: 0px;
+	bottom: 0px;
+}
+
+.recurring_td .recurring img {
+	height: 30px;
+	width: auto;
+}
+
+.reverse_td {
+	text-align: center;
+}
+
+.reverse_td .reverse {
+	position: absolute;
+	left: 0px;
+	bottom: 0px;
+}
+
+.reverse_td .reverse img {
+	height: 30px;
+	width: auto;
+}
+
+.no-content {
+	font-family: 'Roboto';
+	text-align: center;
+	position: fixed;
+	top: 50%;
+    left: 55%;
+    -moz-transform: translate(-50%, -50%);
+    -o-transform: translate(-50%, -50%);
+    -ms-transform: translate(-50%, -50%);
+    -webkit-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+}
+.no-content img {
+	width: 50%;
+	height: auto;
+	max-width: 150px;
+}
+.no-content h1 {
+	color: #898081;
+}
+
+@media (max-width: 767px){
+	.no-content {
+		width: 75%;
+		left: 50%;
+	}
+	.no-content h1 {
+		color: #898081;
+		font-size: 24px;
+	}
 }

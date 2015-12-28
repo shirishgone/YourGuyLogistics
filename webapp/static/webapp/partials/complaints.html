@@ -12,8 +12,17 @@
 		</a>
 	</div>
 	<div class="content-wrapper">
-		<div>
-			<table id="orders-datatable" class="table dataTable" st-table="display_complaints" st-safe-src="complaints">
+		<div ng-show="groups" class="col-md-12">
+			<div class="col-md-10 col-sm-12 col-xs-12 col-md-offset-1" ng-show="show_complaint_msg || filtered_complaints.length == 0">
+                <div class="no-content">
+                    <img src="/static/webapp/images/no-feedback.png">
+                    <h1>{{ complaint_msg || 'Sorry! No feedback found.'}}</h1>
+                </div>
+            </div>
+			<div style="margin: 10px 0px" ng-hide="show_complaint_msg && searched_complaint == undefined">
+                <input type="text" class="form-control input-sm" ng-model="searched_complaint" placeholder="Search by anything.....">
+            </div>
+			<table id="orders-datatable" class="table dataTable" st-table="display_complaints" st-safe-src="complaints" ng-hide="show_complaint_msg || filtered_complaints.length == 0">
 				<thead>
 					<tr>
 						<th>Order ID</th>
@@ -23,14 +32,14 @@
 						<th>Type</th>
 						<th>Description</th>
 					</tr>
-					<tr>
-					<th colspan="6">
+					<!-- <tr>
+						<th colspan="6">
 							<input st-search placeholder="Search by anything....." class="form-control" type="search"/>
 						</th>
-					</tr>
+					</tr> -->
 				</thead>
 				<tbody>
-					<tr class="asLink" ng-repeat="cpl in display_complaints" ui-sref="home.complain_details({id:cpl.display_id})" >
+					<tr class="asLink" ng-repeat="cpl in filtered_complaints  = ( display_complaints | filter: searched_complaint)" ui-sref="home.complain_details({id:cpl.display_id})" >
         				<td>
         					{{cpl.subject}} 
         				</td>
