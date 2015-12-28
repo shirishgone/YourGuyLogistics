@@ -9,10 +9,7 @@ from django.contrib.auth.models import User, Group
 from django.core.mail import send_mail
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.shortcuts import get_object_or_404
-from rest_framework import status
 from rest_framework.authtoken.models import Token
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
 
 from api_v3 import constants
 from server import settings
@@ -233,40 +230,3 @@ def is_pickup_time_acceptable(datetime):
 def inform_dgs_about_orders_assigned():
     pass
     # TODO
-
-
-@api_view(['PUT'])
-def old_order_id_for_new_order_id(request):
-    if request.user.is_staff is False:
-        content = {
-            'error': 'insufficient permissions',
-            'description': 'Only admin can access this method'
-        }
-        return Response(content, status=status.HTTP_400_BAD_REQUEST)
-    else:
-        delivery_status_id = request.data['new_order_id']
-        delivery_status = get_object_or_404(OrderDeliveryStatus, pk=delivery_status_id)
-        old_id = delivery_status.order.id
-        content = {
-            'old_id': old_id
-        }
-        return Response(content, status=status.HTTP_200_OK)
-
-
-@api_view(['PUT'])
-def new_order_id_for_old_order_id(request):
-    if request.user.is_staff is False:
-        content = {
-            'error': 'insufficient permissions',
-            'description': 'Only admin can access this method'
-        }
-        return Response(content, status=status.HTTP_400_BAD_REQUEST)
-    else:
-        old_order_id = request.data['old_order_id']
-        order = get_object_or_404(Order, pk=old_order_id)
-        delivery_status = get_object_or_404(OrderDeliveryStatus, order=order)
-        new_id = delivery_status.id
-        content = {
-            'new_id': new_id
-        }
-        return Response(content, status=status.HTTP_200_OK)

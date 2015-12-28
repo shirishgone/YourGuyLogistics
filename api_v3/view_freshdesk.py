@@ -15,7 +15,7 @@ from yourguy.models import VendorAgent
 def auth_headers():
     # TODO:
     # freshdesk_key = os.environ['freshdesk_key']
-
+    # Can save the keys in Heroku Shared preferences and fetch it dynamically
     freshdesk_test_key = constants.FRESHDESK_TEST_KEY
     freshdesk_production_key = constants.FRESHDESK_PRODUCTION_KEY
 

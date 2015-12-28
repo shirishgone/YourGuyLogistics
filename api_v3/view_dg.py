@@ -122,7 +122,7 @@ class DGViewSet(viewsets.ModelViewSet):
         else:
             page = 1
 
-            # ATTENDANCE FILTERING ------------------------------------------------------
+        # ATTENDANCE FILTERING ------------------------------------------------------
         if attendance_status is not None:
             if attendance_status == 'ALL' or attendance_status == 'ONLY_CHECKEDIN' or attendance_status == 'NOT_CHECKEDIN' \
                     or attendance_status == 'CHECKEDIN_AND_CHECKEDOUT':
@@ -309,10 +309,6 @@ class DGViewSet(viewsets.ModelViewSet):
             'all_dg_attendance': all_dg_attendance
         }
         return Response(content, status=status.HTTP_200_OK)
-
-    def get_queryset(self):
-        queryset = DeliveryGuy.objects.order_by(Lower('user__first_name'))
-        return queryset
 
     @detail_route(methods=['put'])
     def update_pushtoken(self, request, pk=None):

@@ -68,7 +68,7 @@ class VendorViewSet(viewsets.ModelViewSet):
         role = user_role(request.user)
         can_respond = False
 
-        if role == 'vendor':
+        if role == constants.VENDOR:
             vendor_agent = get_object_or_404(VendorAgent, user=request.user)
             if vendor.id == vendor_agent.vendor.id:
                 can_respond = True
@@ -88,7 +88,6 @@ class VendorViewSet(viewsets.ModelViewSet):
                 'error': 'You don\'t have permissions to view this vendor details.'
             }
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
-            ##########
 
     def list(self, request):
         role = user_role(request.user)

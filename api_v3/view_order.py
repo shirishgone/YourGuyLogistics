@@ -91,7 +91,7 @@ def send_sms_to_dg_about_mass_orders(dg, order_ids):
         message = 'New Orders are assigned to you. Order IDs: {}'.format(order_ids)
         send_sms(dg.user.username, message)
     except Exception as e:
-        log_exception(e, 'Order assignment mass SMS')
+        log_exception(e, 'Mass Order assignment SMS failed')
 
 
 def send_sms_to_dg_about_order(date, dg, delivery_status):
@@ -109,9 +109,7 @@ def send_sms_to_dg_about_order(date, dg, delivery_status):
                                                                                  delivery_status.order.cod_amount)
         send_sms(dg.user.username, message)
     except Exception as e:
-        log_exception(e, 'Order assignment Single SMS')
-        pass
-
+        log_exception(e, 'Order assignment Single SMS failed')
 
 def is_user_permitted_to_update_order(user, order):
     is_permissible = False
@@ -177,10 +175,10 @@ def create_proof(proof_dict):
             for picture in pictures:
                 proof.pictures.add(Picture.objects.create(name=picture))
                 proof.save()
+            return proof
     except Exception as e:
         log_exception(e, 'create_proof')
-    return proof
-
+        return None
 
 # UPDATE DELIVERY STATUS -----------------------------------------------------------
 def update_delivery_status_delivery_attempted(delivery_status, dg_remarks, attempted_datetime):
@@ -417,7 +415,7 @@ class OrderViewSet(viewsets.ViewSet):
     def retrieve(self, request, pk=None):
         delivery_status = get_object_or_404(OrderDeliveryStatus, id=pk)
 
-        # VENDOR PERMISSION CHECK ==============
+        # VENDOR PERMISSION CHECK ---------------------------------------------
         role = user_role(request.user)
         if role == constants.VENDOR:
             vendor_agent = get_object_or_404(VendorAgent, user=request.user)
@@ -438,7 +436,6 @@ class OrderViewSet(viewsets.ViewSet):
         by filtering against a `consumer_id` or 'vendor_id' query parameter in the URL.
         """
         vendor_id = request.QUERY_PARAMS.get('vendor_id', None)
-        area_code = request.QUERY_PARAMS.get('area_code', None)
         dg_phone_number = request.QUERY_PARAMS.get('dg_username', None)
         page = request.QUERY_PARAMS.get('page', None)
         date_string = request.QUERY_PARAMS.get('date', None)
@@ -790,7 +787,7 @@ class OrderViewSet(viewsets.ViewSet):
     @detail_route(methods=['post'])
     def upload_excel(self, request, pk):
 
-        # VENDOR ONLY ACCESS CHECK =========
+        # VENDOR ONLY ACCESS CHECK ----------------------------------------
         role = user_role(self.request.user)
         if role == constants.VENDOR:
             vendor_agent = get_object_or_404(VendorAgent, user=self.request.user)
@@ -801,8 +798,7 @@ class OrderViewSet(viewsets.ViewSet):
                 'description': 'You cant access this API'
             }
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
-
-        # =======================
+        # ------------------------------------------------------------------
 
         try:
             pickup_address_id = request.data['pickup_address_id']
@@ -818,20 +814,20 @@ class OrderViewSet(viewsets.ViewSet):
                 pickup_datetime = single_order['pickup_datetime']
                 vendor_order_id = single_order['vendor_order_id']
 
-                # Optional =======
+                # Optional ------------------------------------------------
                 cod_amount = single_order.get('cod_amount')
                 notes = single_order.get('notes')
 
-                # Customer details =======
+                # Customer details ----------------------------------------
                 consumer_name = single_order['customer_name']
                 consumer_phone_number = single_order['customer_phone_number']
 
-                # Delivery address =======
+                # Delivery address ------------------------------------------
                 delivery_full_address = single_order['delivery_full_address']
                 delivery_pin_code = single_order['delivery_pincode']
                 delivery_landmark = single_order.get('delivery_landmark')
 
-                # PINCODE IS INTEGER CHECK =====
+                # PINCODE IS INTEGER CHECK --------------------------------
                 if is_correct_pincode(delivery_pin_code) is False:
                     content = {
                         'error': 'Incorrect pin_code',
@@ -929,7 +925,6 @@ class OrderViewSet(viewsets.ViewSet):
 
     @detail_route(methods=['put'])
     def cancel(self, request, pk):
-
         delivery_status = get_object_or_404(OrderDeliveryStatus, id=pk)
         if is_user_permitted_to_update_order(request.user, delivery_status.order) is False:
             content = {
@@ -937,7 +932,7 @@ class OrderViewSet(viewsets.ViewSet):
             }
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
-        # UPDATE THE DELIVERY STATUS OBJECT -------------------------
+        # UPDATE THE DELIVERY STATUS OBJECT ----------------------------------
         is_cancelled = False
         if can_updated_order(delivery_status, constants.ORDER_STATUS_CANCELLED):
             delivery_status.order_status = constants.ORDER_STATUS_CANCELLED
@@ -948,7 +943,7 @@ class OrderViewSet(viewsets.ViewSet):
                 'error': "The order has already been processed, now you cant update the status."
             }
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
-        # ------------------------------------------------------------
+        # ----------------------------------------------------------------------
 
         if is_cancelled:
             # message = constants.ORDER_CANCELLED_MESSAGE_CLIENT.format(delivery_status.order.consumer.user.first_name, order.id)
@@ -1311,7 +1306,6 @@ class OrderViewSet(viewsets.ViewSet):
                 send_email(constants.EMAIL_COD_DISCREPENCY, subject, body)
         except Exception as e:
             log_exception(e, 'order_delivered COD discrepancy email')
-            pass
         # -----------------------------------------------------------------------
 
 

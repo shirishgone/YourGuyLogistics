@@ -6,7 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from api_v3 import constants
-from api_v3.utils import user_role, is_userexists, create_token, is_vendoragentexists
+from api_v3.utils import user_role, is_userexists, create_token, is_vendoragentexists, log_exception
 from yourguy.models import VendorAgent, Vendor
 
 
@@ -30,10 +30,7 @@ class VendorAgentViewSet(viewsets.ModelViewSet):
         role = user_role(request.user)
         if role == constants.VENDOR:
             vendor_agent = VendorAgent.objects.get(user=request.user)
-            print(vendor_agent)
             vendor_agents_of_vendor = VendorAgent.objects.filter(vendor=vendor_agent.vendor)
-            print(vendor_agents_of_vendor)
-
             vendoragents = []
             for agent in vendor_agents_of_vendor:
                 vendor_agent_dict = vendor_agent_list_dict(agent)
@@ -86,8 +83,11 @@ class VendorAgentViewSet(viewsets.ModelViewSet):
                 new_vendor_agent = VendorAgent.objects.create(user=user, vendor=vendor)
 
             # GROUP SETTING
-            group = Group.objects.get(name=constants.VENDOR)
-            group.user_set.add(user)
+            try:
+                group = Group.objects.get(name=constants.VENDOR)
+                group.user_set.add(user)
+            except Exception, e:
+                log_exception(e, 'Group settings failed for vendor agent')
 
             token = create_token(user, constants.VENDOR)
             content = {

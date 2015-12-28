@@ -132,15 +132,10 @@ class ConsumerViewSet(viewsets.ModelViewSet):
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
     def list(self, request):
-        page = self.request.QUERY_PARAMS.get('page', None)
+        page = self.request.QUERY_PARAMS.get('page', '1')
         search_query = request.QUERY_PARAMS.get('search', None)
         addresses_required = False
-
-        if page is not None:
-            page = int(page)
-        else:
-            page = 1
-
+        page = int(page)
         role = user_role(request.user)
         if role == constants.VENDOR:
             vendor_agent = get_object_or_404(VendorAgent, user=request.user)
