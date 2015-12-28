@@ -1,7 +1,8 @@
 from django.conf.urls import url, patterns
 from rest_framework.routers import DefaultRouter
 
-from api_v3 import mail, views, view_user, view_freshdesk, view_address, view_dashboard, report, cron_jobs
+import view_cron
+from api_v3 import mail, views, view_user, view_freshdesk, view_address, view_dashboard, report, cron_jobs, utils
 from api_v3.view_consumer import ConsumerViewSet
 from api_v3.view_dg import DGViewSet
 from api_v3.view_order import OrderViewSet
@@ -12,13 +13,15 @@ from api_v3.view_vendoragent import VendorAgentViewSet
 urlpatterns = patterns(
     'api_v3.views',
     url(r'^register/', view_user.register, name='Registration'),
-    url(r'^reset_password_link/', view_user.reset_password_link, name='reset_password_link'),
-    url(r'^reset_password/', view_user.reset_password, name='reset_password'),
+    # url(r'^reset_password_link/', view_user.reset_password_link, name='reset_password_link'),
+    # url(r'^reset_password/', view_user.reset_password, name='reset_password'),
     url(r'^fill_full_address/', view_address.fill_full_address, name='fill_full_address'),
     url(r'^add_address/', view_address.add_address, name='add_address'),
     url(r'^remove_address', view_address.remove_address, name='remove_address'),
-    url(r'^dashboard_report/', view_dashboard.report, name='dashboard_report'),
+    url(r'^dashboard_stats/', view_dashboard.dashboard_stats, name='dashboard_stats'),
     url(r'^excel_download/', view_dashboard.excel_download, name='excel_download'),
+    url(r'^new_order_id_for_old_order_id/', utils.new_order_id_for_old_order_id, name='new_order_id_for_old_order_id'),
+    url(r'^old_order_id_for_new_order_id/', utils.old_order_id_for_new_order_id, name='old_order_id_for_new_order_id'),
     url(r'^freshdesk/all_tickets', view_freshdesk.all_tickets, name='freshdesk_all_tickets'),
     url(r'^freshdesk/groups', view_freshdesk.groups, name='freshdesk_groups'),
     url(r'^freshdesk/create_ticket', view_freshdesk.create_ticket, name='freshdesk_create_ticket'),
@@ -27,7 +30,7 @@ urlpatterns = patterns(
     url(r'^freshdesk/resolve', view_freshdesk.resolve, name='freshdesk_resolve'),
     url(r'^daily_report/', report.daily_report, name='daily_report'),
     url(r'^website_email/', mail.website_email, name='website_email'),
-    url(r'^assign_dg/', cron_jobs.assign_dg(), name='assign_dg')
+    url(r'^assign_dg/', cron_jobs.assign_dg, name='assign_dg')
 )
 
 router = DefaultRouter()

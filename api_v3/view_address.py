@@ -78,7 +78,7 @@ def add_address(request):
         return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(['POST'])
+@api_view(['PUT'])
 @permission_classes((IsAuthenticated,))
 def remove_address(request):
     try:

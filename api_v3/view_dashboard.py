@@ -14,7 +14,7 @@ from api_v3.utils import user_role, ist_day_start, ist_day_end
 from yourguy.models import OrderDeliveryStatus, Vendor, VendorAgent
 
 
-@api_view(['POST'])
+@api_view(['PUT'])
 @permission_classes((IsAuthenticated,))
 def excel_download(request):
     try:
@@ -100,7 +100,7 @@ def excel_download(request):
 
 @api_view(['POST'])
 @permission_classes((IsAuthenticated,))
-def report(request):
+def dashboard_stats(request):
     try:
         start_date_string = request.data['start_date']
         end_date_string = request.data['end_date']

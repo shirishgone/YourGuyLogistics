@@ -207,7 +207,7 @@ class DGViewSet(viewsets.ModelViewSet):
             }
             return Response(content, status=status.HTTP_200_OK)
 
-    @detail_route(methods=['post'])
+    @detail_route(methods=['put'])
     def check_in(self, request, pk=None):
         app_version = request.data.get('app_version')
         dg = get_object_or_404(DeliveryGuy, user=request.user)
@@ -241,7 +241,7 @@ class DGViewSet(viewsets.ModelViewSet):
             }
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
-    @detail_route(methods=['post'])
+    @detail_route(methods=['put'])
     def check_out(self, request, pk=None):
         dg = get_object_or_404(DeliveryGuy, user=request.user)
         today_now = datetime.now()
@@ -272,7 +272,7 @@ class DGViewSet(viewsets.ModelViewSet):
             }
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
-    @detail_route(methods=['post'])
+    @detail_route(methods=['put'])
     def attendance(self, request, pk):
         month = request.data.get('month')
         year = request.data.get('year')
@@ -314,7 +314,7 @@ class DGViewSet(viewsets.ModelViewSet):
         queryset = DeliveryGuy.objects.order_by(Lower('user__first_name'))
         return queryset
 
-    @detail_route(methods=['post'])
+    @detail_route(methods=['put'])
     def update_pushtoken(self, request, pk=None):
         push_token = request.data['push_token']
 

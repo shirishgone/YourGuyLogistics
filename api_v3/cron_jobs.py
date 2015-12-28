@@ -2,14 +2,19 @@ from datetime import datetime
 
 import dateutil.relativedelta
 from django.db.models import Q
+from rest_framework import status
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
 
 from api_v3 import constants
 from api_v3.utils import ist_day_start, ist_day_end, send_email
 from yourguy.models import OrderDeliveryStatus
 
 
-def assign_dg():
+@api_view(['GET'])
+def assign_dg(request):
     # FETCH ALL TODAY ORDERS --------------------------------------------
+
     date = datetime.today()
     day_start = ist_day_start(date)
     day_end = ist_day_end(date)
@@ -88,8 +93,9 @@ def assign_dg():
                  "\nUnassigned pickups: %s \n\nUnassigned deliveries: %s \nPlease assign manually. \n\n- Team YourGuy" \
                  % (unassigned_pickups, unassigned_deliveries)
     send_email(constants.EMAIL_UNASSIGNED_ORDERS, email_subject, email_body)
+
     # ------------------------------------------------------------------------------------------------
 
     # TODO
     # inform_dgs_about_orders_assigned()
-    return
+    return Response(status=status.HTTP_200_OK)

@@ -5,8 +5,7 @@ from rest_framework.exceptions import APIException
 from rest_framework.response import Response
 
 from api_v3 import constants
-from api_v3.utils import is_userexists, create_token, assign_usergroup_with_name, assign_usergroup, send_email, \
-    log_exception
+from api_v3.utils import is_userexists, create_token, assign_usergroup_with_name, assign_usergroup
 from yourguy.models import User, Vendor, VendorAgent, Consumer, DeliveryGuy, Employee
 
 
@@ -93,69 +92,72 @@ def register(request):
 
     return Response(content, status=status.HTTP_201_CREATED)
 
-
-@api_view(['POST'])
-def reset_password_link(request):
-    try:
-        phone_number = request.data['phone_number']
-    except APIException:
-        content = {
-            'error': 'Incomplete params',
-            'description': 'MANDATORY: phone_number'
-        }
-        return Response(content, status=status.HTTP_400_BAD_REQUEST)
-
-    user = User.objects.get(username=phone_number)
-    if is_userexists(user):
-        try:
-            approval_link = 'http://app.yourguy.in/resetpassword'
-            to_mail_ids = user.email
-            subject = 'YourGuy: Password Reset'
-            body = 'Please use the below link to reset your password \n' + approval_link
-
-            send_email(to_mail_ids, subject, body)
-            content = {
-                'description': 'Password reset link has been mailed'
-            }
-            return Response(content, status=status.HTTP_200_OK)
-        except Exception as e:
-            message = 'Failed to send email for password reset'
-            log_exception(e, message)
-            content = {
-                'description': 'Failed to send the reset password email'
-            }
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
-    else:
-        content = {
-            'description': 'No such user exists.'
-        }
-        return Response(content, status=status.HTTP_400_BAD_REQUEST)
+# DO NOT DELETE
+# Reset password implementation will be implemented later on
 
 
-@api_view(['PUT'])
-def reset_password(request):
-    try:
-        phone_number = request.data['phone_number']
-        old_password = request.data['old_password']
-        new_password = request.data['new_password']
-    except APIException:
-        content = {
-            'error': 'Incomplete params',
-            'description': 'MANDATORY: phone_number, old_password, new_password'
-        }
-        return Response(content, status=status.HTTP_400_BAD_REQUEST)
-
-    user = User.objects.get(username=phone_number)
-
-    if old_password != new_password and new_password is not None:
-        user.set_password(new_password)
-        user.save()
-        content = {
-            'description': 'Password changed successfully'
-        }
-        return Response(content, status=status.HTTP_201_CREATED)
-    else:
-        content = {
-            'description': 'Please try a different password.'
-        }
-        return Response(content, status=status.HTTP_400_BAD_REQUEST)
+# @api_view(['POST'])
+# def reset_password_link(request):
+#     try:
+#         phone_number = request.data['phone_number']
+#     except APIException:
+#         content = {
+#             'error': 'Incomplete params',
+#             'description': 'MANDATORY: phone_number'
+#         }
+#         return Response(content, status=status.HTTP_400_BAD_REQUEST)
+#
+#     user = User.objects.get(username=phone_number)
+#     if is_userexists(user):
+#         try:
+#             approval_link = 'http://app.yourguy.in/resetpassword'
+#             to_mail_ids = user.email
+#             subject = 'YourGuy: Password Reset'
+#             body = 'Please use the below link to reset your password \n' + approval_link
+#
+#             send_email(to_mail_ids, subject, body)
+#             content = {
+#                 'description': 'Password reset link has been mailed'
+#             }
+#             return Response(content, status=status.HTTP_200_OK)
+#         except Exception as e:
+#             message = 'Failed to send email for password reset'
+#             log_exception(e, message)
+#             content = {
+#                 'description': 'Failed to send the reset password email'
+#             }
+#             return Response(content, status=status.HTTP_400_BAD_REQUEST)
+#     else:
+#         content = {
+#             'description': 'No such user exists.'
+#         }
+#         return Response(content, status=status.HTTP_400_BAD_REQUEST)
+#
+#
+# @api_view(['PUT'])
+# def reset_password(request):
+#     try:
+#         phone_number = request.data['phone_number']
+#         old_password = request.data['old_password']
+#         new_password = request.data['new_password']
+#     except APIException:
+#         content = {
+#             'error': 'Incomplete params',
+#             'description': 'MANDATORY: phone_number, old_password, new_password'
+#         }
+#         return Response(content, status=status.HTTP_400_BAD_REQUEST)
+#
+#     user = User.objects.get(username=phone_number)
+#
+#     if old_password != new_password and new_password is not None:
+#         user.set_password(new_password)
+#         user.save()
+#         content = {
+#             'description': 'Password changed successfully'
+#         }
+#         return Response(content, status=status.HTTP_201_CREATED)
+#     else:
+#         content = {
+#             'description': 'Please try a different password.'
+#         }
+#         return Response(content, status=status.HTTP_400_BAD_REQUEST)

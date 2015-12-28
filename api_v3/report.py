@@ -2,20 +2,16 @@ from datetime import datetime
 
 from django.db.models import Sum, Q
 from rest_framework import status
-from rest_framework.authentication import TokenAuthentication
-from rest_framework.decorators import api_view, authentication_classes, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import api_view
 from rest_framework.response import Response
-
 from api_v3 import constants
 from api_v3.utils import send_email, ist_day_start, ist_day_end
 from yourguy.models import DeliveryGuy, OrderDeliveryStatus, DGAttendance
 
 
 @api_view(['GET'])
-@authentication_classes(TokenAuthentication)
-@permission_classes((IsAuthenticated,))
 def daily_report(request):
+
     date = datetime.today()
     day_start = ist_day_start(date)
     day_end = ist_day_end(date)
@@ -127,40 +123,40 @@ def daily_report(request):
         email_body = email_body + "\n\nTotal orders = %s" % (orders_total_count)
 
         email_body = email_body + "\nPending orders     = %s [%s percent]" % (
-        pending_orders_count, pending_orders_percentage)
+            pending_orders_count, pending_orders_percentage)
         email_body = email_body + "\nExecuted orders    = %s [%s percent]" % (
-        completed_orders_count, completed_orders_percentage)
+            completed_orders_count, completed_orders_percentage)
 
         email_body = email_body + "\n\nSTATUS WISE BIFURGATION ------------"
         email_body = email_body + "\nOrders assigned    = %s [%s percent]" % (
-        orders_assigned_count, orders_assigned_percentage)
+            orders_assigned_count, orders_assigned_percentage)
         email_body = email_body + "\nOrders unassigned  = %s [%s percent]" % (
-        orders_unassigned_count, orders_unassigned_percentage)
+            orders_unassigned_count, orders_unassigned_percentage)
         email_body = email_body + "\nQueued         = %s [%s percent]" % (orders_queued_count, orders_queued_percentage)
         email_body = email_body + "\nInTransit      = %s [%s percent]" % (
-        orders_intransit_count, orders_intransit_percentage)
+            orders_intransit_count, orders_intransit_percentage)
         email_body = email_body + "\ndelivered      = %s [%s percent]" % (
-        orders_delivered_count, orders_delivered_percentage)
+            orders_delivered_count, orders_delivered_percentage)
         email_body = email_body + "\nPickup Attempted   = %s [%s percent]" % (
-        orders_pickup_attempted_count, orders_pickup_attempted_percentage)
+            orders_pickup_attempted_count, orders_pickup_attempted_percentage)
         email_body = email_body + "\nDelivery Attempted = %s [%s percent]" % (
-        orders_delivery_attempted_count, orders_delivered_percentage)
+            orders_delivery_attempted_count, orders_delivered_percentage)
         email_body = email_body + "\nRejected       = %s [%s percent]" % (
-        orders_rejected_count, orders_rejected_percentage)
+            orders_rejected_count, orders_rejected_percentage)
         email_body = email_body + "\nCanceled       = %s [%s percent]" % (
-        orders_canceled_count, orders_canceled_percentage)
+            orders_canceled_count, orders_canceled_percentage)
         email_body = email_body + "\n------------------------------------"
 
         email_body = email_body + "\n\nDELIVERY BOY ATTENDANCE -------"
         email_body = email_body + "\nTotal DGs on app   = %s" % total_dg_count
         email_body = email_body + "\nTotal DGs CheckIn  = %s [%s percent]" % (
-        total_dg_checked_in_count, dg_checkin_percentage)
+            total_dg_checked_in_count, dg_checkin_percentage)
         email_body = email_body + "\n-----------------------------------"
 
         email_body = email_body + "\n\nCOD DETAILS ------------------"
         email_body = email_body + "\nTotal COD to be collected  = %s" % total_cod_to_be_collected
         email_body = email_body + "\nTotal COD collected        = %s [%s percent]" % (
-        total_cod_collected, cod_collected_percentage)
+            total_cod_collected, cod_collected_percentage)
 
         email_body = email_body + "\n-----------------------------------"
 

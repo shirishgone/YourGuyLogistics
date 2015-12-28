@@ -235,7 +235,7 @@ def inform_dgs_about_orders_assigned():
     # TODO
 
 
-@api_view(['POST'])
+@api_view(['PUT'])
 def old_order_id_for_new_order_id(request):
     if request.user.is_staff is False:
         content = {
@@ -253,7 +253,7 @@ def old_order_id_for_new_order_id(request):
         return Response(content, status=status.HTTP_200_OK)
 
 
-@api_view(['POST'])
+@api_view(['PUT'])
 def new_order_id_for_old_order_id(request):
     if request.user.is_staff is False:
         content = {

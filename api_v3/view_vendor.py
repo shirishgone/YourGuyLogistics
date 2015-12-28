@@ -191,7 +191,7 @@ class VendorViewSet(viewsets.ModelViewSet):
         }
         return Response(content, status=status.HTTP_201_CREATED)
 
-    @detail_route(methods=['post'])
+    @detail_route(methods=['put'])
     def approve(self, request, pk):
         vendor = get_object_or_404(Vendor, pk=pk)
         notes = request.data.get('notes')
