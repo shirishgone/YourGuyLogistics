@@ -12,63 +12,57 @@
 		</a>
 	</div>
 	<div class="content-wrapper" id="users" >
-		<div class="ajax_loader" ng-hide="loaded">
-            <img src="/static/webapp/images/377.GIF">
-        </div>
-        
-        <div ng-show="loaded">
-		    <div class="col-md-10 col-xs-12 col-md-offset-1" ng-show="show_consumer_msg">
-		        <h2 class="alert alert-warning"> {{consumer_msg}} </h2>
-		    </div>
-        	<table st-table="display_consumer" st-safe-src="consumer_data" class="table table-striped" ng-hide="show_consumer_msg">
-        		<thead>
-        			<tr style="cursor:pointer;">
+        <div>
+            <div class="col-md-10 col-sm-12 col-xs-12 col-md-offset-1" ng-show="show_consumer_msg">
+                <div class="no-content">
+                    <img src="/static/webapp/images/no-customer.png">
+                    <h1>{{consumer_msg}}</h1>
+                </div>
+            </div>
+            <div style="margin: 10px 0px" ng-hide="show_consumer_msg && user_params.search == undefined">
+                <input type="text" class="form-control input-sm" ng-model="searched_cust" placeholder="Search for customer name or phone number and press enter" ng-keyup="$event.which === 13 && search_user(searched_cust)">
+            </div>
+            <table st-table="display_consumer" st-safe-src="consumer_data" class="table table-striped" ng-hide="show_consumer_msg">
+                <thead>
+                    <tr style="cursor:pointer;">
                         <th>
                             Sr No
                         </th>
-        				<th st-sort="user.first_name">
-        					Name
-        				</th>
-        				<th st-sort="user.username">
-        					Phone
-        				</th>
+                        <th>
+                            Name
+                        </th>
+                        <th>
+                            Phone
+                        </th>
                         <th>
                             Delete
                         </th>
-        			</tr>
-        			<!-- <tr>
-        				<th colspan="4">
-        					<input st-search placeholder="search" class="form-control" type="search"/>
-        				</th>
-        			</tr> -->
-        		</thead>
-        		<tbody>
-        			<tr class="asLink" ng-repeat="user in display_consumer | filter: first_name" ui-sref="home.customer_details({customerId:user.id})">
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="asLink" ng-repeat="user in display_consumer | filter: first_name" ui-sref="home.customer_details({customerId:user.id})">
                         <td>
                             {{$index+1}}
                         </td>
-        				<td>
-        					{{user.name}} 
-        				</td>
-        				<td>
-        					{{user.phone_number}} 
-        				</td>
-        				<!-- <td>
-        					{{user.addresses[0].flat_number}}, {{user.addresses[0].building}}, {{user.addresses[0].street}},{{user.addresses[0].area.area_name}}
-        				</td> -->
+                        <td>
+                            {{user.name}} 
+                        </td>
+                        <td>
+                            {{user.phone_number}} 
+                        </td>
                         <td>
                             <button class="btn btn-danger" ng-click="openModal(sm,user,$event)"><span class="glyphicon glyphicon-trash"></span></button>
                         </td>
-        			</tr>
-        		</tbody>
-        		<tfoot>
-        			<tr ng-if="totalUsers">
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr ng-if="totalUsers">
                         <td colspan="8" class="text-center">
-                            <pagination total-items="totalUsers" ng-model="$parent.current_user_page" items-per-page="itemsByPage" max-size="8" boundary-links="true" rotate="false" ng-change="getConsumer()"></pagination>
+                            <pagination total-items="totalUsers" ng-model="user_params.page" items-per-page="itemsByPage" max-size="8" boundary-links="true" rotate="false"></pagination>
                         </td>
                     </tr>
-        		</tfoot>
-        	</table>
+                </tfoot>
+            </table>
         </div>
-	</div>
+    </div>
 </div>

@@ -34,37 +34,47 @@
     <div notification-bar message="notification.message" noticetype="notification.type" ng-show="notification.type" >
     </div>
     <div class="content-wrapper">
-      <div style="overflow:auto;">
-        <div id="no-padding" class="col-md-4 col-sm-8 col-xs-6" ng-if="$parent.role.ops">
-          <select class="form-control" ng-model="dash_data.vendor_id" ng-options="vendor.id as vendor.name for vendor in vendors">
-            <option value=''> All Vendor </option>
-          </select>
+      <div ng-hide="dashboard_value.total_orders == 0" ng-if="dashboard_value.total_orders">
+        <div style="overflow:auto;">
+          <div id="no-padding" class="col-md-4 col-sm-8 col-xs-6" ng-if="$parent.role.ops">
+            <select class="form-control" ng-model="dash_data.vendor_id" ng-options="vendor.id as vendor.name for vendor in vendors">
+              <option value=''> All Vendor </option>
+            </select>
+          </div>
+          <div >
+            <button type="button" class="btn btn-default pull-right" ng-click="downloadExcelData()" azy-load="true" ng-csv="excel_data" filename="orders.csv">Download Report</button>
+          </div>
         </div>
-        <div >
-          <button type="button" class="btn btn-default pull-right" ng-click="downloadExcelData()" azy-load="true" ng-csv="excel_data" filename="orders.csv">Download Report</button>
+        <!-- metrix -->
+        <div class="metrics clearfix">
+          <div class="metric">
+            <span class="field">Total Orders</span>
+            <span class="data">{{dashboard_value.total_orders}}</span>
+          </div>
+          <div class="metric">
+            <span class="field">Orders Executed</span>
+            <span class="data">{{dashboard_value.total_orders_executed}}</span>
+          </div>
+          <div class="metric">
+            <span class="field">Total COD Amount</span>
+            <span class="data">Rs {{dashboard_value.total_cod | number : 2}}</span>
+          </div>
+          <div class="metric">
+            <span class="field">Total COD Collected</span>
+            <span class="data">Rs {{dashboard_value.cod_collected | number : 2}}</span>
+          </div>
+        </div>
+        <div class="chart">
+          <div fusioncharts width="100%" height="100%" type="stackedcolumn2d" dataSource="{{graphData}}"></div>
         </div>
       </div>
-      <!-- metrix -->
-      <div class="metrics clearfix">
-        <div class="metric">
-          <span class="field">Total Orders</span>
-          <span class="data">{{dashboard_value.total_orders}}</span>
+      <div ng-show="dashboard_value.total_orders == 0">
+        <div class="col-md-10 col-sm-12 col-xs-12 col-md-offset-1">
+          <div class="no-content">
+            <img src="/static/webapp/images/no-reports.png">
+            <h1>{{no_reports_msg}}</h1>
+          </div>
         </div>
-        <div class="metric">
-          <span class="field">Orders Executed</span>
-          <span class="data">{{dashboard_value.total_orders_executed}}</span>
-        </div>
-        <div class="metric">
-          <span class="field">Total COD Amount</span>
-          <span class="data">Rs {{dashboard_value.total_cod | number : 2}}</span>
-        </div>
-        <div class="metric">
-          <span class="field">Total COD Collected</span>
-          <span class="data">Rs {{dashboard_value.cod_collected | number : 2}}</span>
-        </div>
-      </div>
-      <div class="chart">
-        <div fusioncharts width="100%" height="100%" type="stackedcolumn2d" dataSource="{{graphData}}"></div>
       </div>
     </div>
   </div>

@@ -198,8 +198,11 @@ class ConsumerViewSet(viewsets.ModelViewSet):
             new_consumer = create_consumer(name, phone_number, new_address)
 
             # SETTING USER GROUP -------------------------------------------
-            group = get_object_or_404(Group, name=constants.CONSUMER)
-            group.user_set.add(new_consumer.user)
+            try:
+                group = get_object_or_404(Group, name=constants.CONSUMER)
+                group.user_set.add(new_consumer.user)        
+            except Exception, e:
+                print 'group not set'
             # --------------------------------------------------------------
             
             # SETTING ASSOCIATED VENDOR ------------------------------------
