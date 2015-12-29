@@ -21,7 +21,10 @@ admin.site.register(VendorAccount)
 admin.site.register(Consumer)
 
 admin.site.register(Order)
-admin.site.register(OrderDeliveryStatus)
+
+class DeliveryStatusAdmin(admin.ModelAdmin):
+    raw_id_fields = ('order','pickup_guy','delivery_guy','pickup_proof','delivery_proof')
+admin.site.register(OrderDeliveryStatus, DeliveryStatusAdmin)
 
 admin.site.register(Product)
 admin.site.register(ProductCategory)
