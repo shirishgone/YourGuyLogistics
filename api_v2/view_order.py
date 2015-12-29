@@ -31,6 +31,13 @@ from api.push import send_push
 from django.db.models import Prefetch
 import string
 
+def retail_order_send_email(vendor, new_order_ids):
+    client_name = vendor.store_name
+    subject = '[Retail] New Orders placed by %s'% (client_name)
+    body = 'Hello,\n\n%s has place few orders.\n\nOrder Nos: %s \n\n Please check' % (new_order_ids, client_name)
+    body = body + '\n\nThanks \n-YourGuy BOT'
+    send_email(constants.RETAIL_EMAIL_ID, subject, body)
+
 def fetch_consumer(consumer_phone_number, consumer_name, vendor):
     # CREATING USER & CONSUMER IF DOESNT EXISTS ------------------------
     if is_userexists(consumer_phone_number) is True:
@@ -638,42 +645,42 @@ class OrderViewSet(viewsets.ViewSet):
     @detail_route(methods=['post'])
     def upload_excel(self, request, pk):
         
-        # VENDOR ONLY ACCESS CHECK =========
+        # VENDOR ONLY ACCESS CHECK ------------------------------------
         role = user_role(self.request.user)
-        if role == 'vendor':
+        if role == constants.VENDOR:
             vendor_agent = get_object_or_404(VendorAgent, user = self.request.user)
             vendor = vendor_agent.vendor
         else:
             content = {'error':'API Access limited.', 'description':'You cant access this API'}
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
-
-        # =======================
+        # --------------------------------------------------------------
         try:
             pickup_address_id = request.data['pickup_address_id']
             orders = request.data['orders']
         except Exception, e:
             content = {'error':'Incomplete params. pickup_address_id, orders'}
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
-                        
+              
+        new_order_ids = []                
         for single_order in orders:
             try:
                 pickup_datetime = single_order['pickup_datetime']
                 vendor_order_id = single_order['vendor_order_id']
 
-                # Optional =======
+                # Optional ------------------------------------
                 cod_amount = single_order.get('cod_amount')
                 notes = single_order.get('notes')
                         
-                # Customer details =======
+                # Customer details ------------------------------------
                 consumer_name = single_order['customer_name']
                 consumer_phone_number = single_order['customer_phone_number']
                 
-                # Delivery address ======= 
+                # Delivery address ------------------------------------
                 delivery_full_address = single_order['delivery_full_address']
                 delivery_pin_code = single_order['delivery_pincode']
                 delivery_landmark = single_order.get('delivery_landmark')
                 
-                # PINCODE IS INTEGER CHECK ===== 
+                # PINCODE IS INTEGER CHECK -----------------------------
                 if is_correct_pincode(delivery_pin_code) is False:
                     content = {'error':'Incorrect pin_code', 
                     'description':'Pincode should be an integer with 6 digits.'}
@@ -751,14 +758,15 @@ class OrderViewSet(viewsets.ViewSet):
                 if notes is not None:
                     new_order.notes = notes
                 new_order.save()
-                
                 delivery_status = OrderDeliveryStatus.objects.create(date = pickup_datetime, order = new_order)
-            except Exception, e:
+                new_order_ids.append(delivery_status.id)
+            except:
                 content = {
                 'error':'Unable to create orders with the given details'
                 }
                 return Response(content, status = status.HTTP_400_BAD_REQUEST)
-        
+        if vendor.is_retail is True and len(new_order_ids) > 0:
+            retail_order_send_email(vendor, new_order_ids)
         content = {
         'message':'Your Orders has been placed.'
         }
@@ -942,21 +950,9 @@ class OrderViewSet(viewsets.ViewSet):
             
             new_order.save()
         # -------------------------------------------------------------
-        # SEND MAIL TO RETAIL TEAM, IF ITS A RETAIL ORDER
-        if vendor.is_retail:
-            order_numbers = new_order_ids
-            client_name = vendor.store_name
-            pickup_date = new_order.pickup_datetime.strftime("%Y %b %d")
-            pickup_time = new_order.pickup_datetime.strftime('%H:%M:%S')
-
-            subject = '[Retail]New Orders placed by %s'% (client_name)
-            body = 'Hello,\n\nNew Orders placed for Retail. \n\nOrder Nos: %s,\n\nClient Name: %s,\n\nPickup Date: %s,' \
-                   '\n\nPickup Time: %s' % (order_numbers, client_name, pickup_date, pickup_time)
-
-            body = body + '\n\nThanks \n-YourGuy BOT'
-            send_email(constants.RETAIL_EMAIL_ID, subject, body)
-        else:
-            pass
+        # SEND MAIL TO RETAIL TEAM, IF ITS A RETAIL ORDER -------------
+        if vendor.is_retail is True and len(new_order_ids)> 0:
+            retail_order_send_email(vendor, new_order_ids)
         # -------------------------------------------------------------
         # FINAL RESPONSE ----------------------------------------------
         if len(new_order_ids) > 0:

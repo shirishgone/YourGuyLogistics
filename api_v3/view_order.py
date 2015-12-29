@@ -22,6 +22,13 @@ from yourguy.models import User, Vendor, DeliveryGuy, VendorAgent, Picture, Proo
     Consumer, Address, Order, Product, OrderItem
 
 
+def retail_order_send_email(vendor, new_order_ids):
+    client_name = vendor.store_name
+    subject = '[Retail] New Orders placed by %s'% (client_name)
+    body = 'Hello,\n\n%s has place few orders.\n\nOrder Nos: %s \n\n Please check' % (new_order_ids, client_name)
+    body = body + '\n\nThanks \n-YourGuy BOT'
+    send_email(constants.RETAIL_EMAIL_ID, subject, body)
+
 def can_update_delivery_status(delivery_status):
     if delivery_status.order_status == constants.ORDER_STATUS_PLACED or delivery_status.order_status == constants.ORDER_STATUS_QUEUED:
         return True
@@ -779,20 +786,8 @@ class OrderViewSet(viewsets.ViewSet):
             new_order.save()
         # -------------------------------------------------------------
         # SEND MAIL TO RETAIL TEAM, IF ITS A RETAIL ORDER
-        if vendor.is_retail:
-            order_numbers = new_order_ids
-            client_name = vendor.store_name
-            pickup_date = new_order.pickup_datetime.strftime("%Y %b %d")
-            pickup_time = new_order.pickup_datetime.strftime('%H:%M:%S')
-
-            subject = '[Retail]New Orders placed by %s'% (client_name)
-            body = 'Hello,\n\nNew Orders placed for Retail. \n\nOrder Nos: %s,\n\nClient Name: %s,\n\nPickup Date: %s,' \
-                   '\n\nPickup Time: %s' % (order_numbers, client_name, pickup_date, pickup_time)
-
-            body = body + '\n\nThanks \n-YourGuy BOT'
-            send_email(constants.RETAIL_EMAIL_ID, subject, body)
-        else:
-            pass
+        if vendor.is_retail is True and len(new_order_ids)> 0:
+            retail_order_send_email(vendor, new_order_ids)
         # -------------------------------------------------------------
 
         # FINAL RESPONSE ----------------------------------------------
@@ -834,6 +829,7 @@ class OrderViewSet(viewsets.ViewSet):
             }
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
+        new_order_ids = []
         for single_order in orders:
             try:
                 pickup_datetime = single_order['pickup_datetime']
@@ -937,11 +933,17 @@ class OrderViewSet(viewsets.ViewSet):
                 new_order.save()
 
                 delivery_status = OrderDeliveryStatus.objects.create(date=pickup_datetime, order=new_order)
+                new_order_ids.append(delivery_status.id)
             except Exception as e:
                 content = {
                     'error': 'Unable to create orders with the given details'
                 }
                 return Response(content, status=status.HTTP_400_BAD_REQUEST)
+
+        # SEND MAIL TO RETAIL TEAM, IF ITS A RETAIL ORDER
+        if vendor.is_retail is True and len(new_order_ids)> 0:
+            retail_order_send_email(vendor, new_order_ids)
+        # -------------------------------------------------------------
 
         content = {
             'message': 'Your Orders has been placed.'
