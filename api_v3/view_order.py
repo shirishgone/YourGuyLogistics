@@ -600,10 +600,9 @@ class OrderViewSet(viewsets.ViewSet):
             return Response(response_content, status=status.HTTP_200_OK)
 
     def create(self, request):
-
-        role = user_role(request.user)
-        if role == constants.VENDOR:
-            vendor_agent = get_object_or_404(VendorAgent, user=request.user)
+        role = user_role(self.request.user)
+        if role == 'vendor':
+            vendor_agent = get_object_or_404(VendorAgent, user=self.request.user)
             vendor = vendor_agent.vendor
         else:
             content = {
@@ -613,16 +612,22 @@ class OrderViewSet(viewsets.ViewSet):
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
         # PARSING REQUEST PARAMS ------------------------
-
         try:
             order_date = request.data['order_date']
             timeslots = request.data['timeslots']
+
             product_id = request.data['product_id']
             product = get_object_or_404(Product, pk=product_id)
+
             consumers = request.data['consumers']
+
             vendor_address_id = request.data['vendor_address_id']
             vendor_address = get_object_or_404(Address, pk=vendor_address_id)
             is_reverse_pickup = request.data['is_reverse_pickup']
+
+            # new parameter to track retail orders
+            is_retail = request.data['is_retail']
+
             cod_amount = request.data.get('cod_amount')
             notes = request.data.get('notes')
             vendor_order_id = request.data.get('vendor_order_id')
@@ -631,8 +636,8 @@ class OrderViewSet(viewsets.ViewSet):
         except Exception as e:
             content = {
                 'error': 'Incomplete parameters',
-                'description': 'order_date, timeslots, consumers, product_id, recurring, vendor_address_id, '
-                               'is_reverse_pickup. Optional: cod_amount, notes, total_cost, vendor_order_id'
+                'description': 'order_date, timeslots, customers, product_id, recurring, vendor_address_id, '
+                               'is_reverse_pickup, is_retail. Optional: cod_amount, notes, total_cost, vendor_order_id'
             }
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
         # ---------------------------------------------------
@@ -645,7 +650,7 @@ class OrderViewSet(viewsets.ViewSet):
         except Exception as e:
             content = {
                 'error': 'Incomplete parameters',
-                'description': 'timeslot_start, timeslot_end are mandatory parameters'
+                'description': 'timeslot_start, timeslot_start are mandatory parameters'
             }
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
         # ---------------------------------------------------
@@ -681,7 +686,7 @@ class OrderViewSet(viewsets.ViewSet):
                     }
                     return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
-            except:
+            except Exception as e:
                 content = {
                     'error': 'Incomplete parameters',
                     'description': 'start_date, end_date, by_day should be mentioned for recurring events'
@@ -702,6 +707,13 @@ class OrderViewSet(viewsets.ViewSet):
         # CREATING NEW ORDER FOR EACH CUSTOMER -------------------------
         time_obj = time.strptime(timeslot_start, "%H:%M:%S")
         pickup_datetime = order_datetime.replace(hour=time_obj.tm_hour, minute=time_obj.tm_min)
+
+        if is_pickup_time_acceptable(pickup_datetime) is False:
+            content = {
+                'error': 'Pickup date or time not acceptable',
+                'description': 'Pickup time can only be between 5.30AM to 10.00PM and past dates are not allowed'
+            }
+            return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
         delivery_timedelta = timedelta(hours=4, minutes=0)  # DELIVERY IS 4 HOURS FROM PICKUP
         delivery_datetime = pickup_datetime + delivery_timedelta
@@ -757,6 +769,7 @@ class OrderViewSet(viewsets.ViewSet):
 
             for date in delivery_dates:
                 delivery_status = OrderDeliveryStatus.objects.create(date=date, order=new_order)
+                new_order_ids.append(delivery_status.id)
 
             if len(delivery_dates) > 1:
                 new_order.is_recurring = True
@@ -767,8 +780,22 @@ class OrderViewSet(viewsets.ViewSet):
             # -------------------------------------------------------------
 
             new_order.save()
-            new_order_ids.append(new_order.id)
         # -------------------------------------------------------------
+        # SEND MAIL TO RETAIL TEAM, IF ITS A RETAIL ORDER
+        if is_retail:
+            order_number = new_order.id
+            client_name = new_order.consumer
+            pickup_date = new_order.pickup_datetime.strftime("%Y %b %d")
+            pickup_time = new_order.pickup_datetime.strftime('%H:%M:%S')
+
+            subject = 'New Order placed by Retail'
+            body = 'Hello,\n\nNew Order is placed by Retail. \n\nOrder No: %s,\n\nClient Name: %s,\n\nPickup Date: %s,' \
+                   '\n\nPickup Time: %s' % (order_number, client_name, pickup_date, pickup_time)
+
+            body = body + '\n\nThanks \n-YourGuy BOT'
+            send_email(constants.RETAIL_EMAIL_ID, subject, body)
+        else:
+            pass
 
         # FINAL RESPONSE ----------------------------------------------
         if len(new_order_ids) > 0:
@@ -1339,7 +1366,6 @@ class OrderViewSet(viewsets.ViewSet):
             }
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
             # -----------------------------------------------------------------------
-
 
     @detail_route(methods=['put'])
     def assign_order(self, request, pk=None):

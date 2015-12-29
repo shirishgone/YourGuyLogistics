@@ -1,8 +1,8 @@
 from django.conf.urls import url, patterns
 from rest_framework.routers import DefaultRouter
 
-import view_cron
-from api_v3 import mail, views, view_user, view_freshdesk, view_address, view_dashboard, report, cron_jobs, internals
+from api_v3 import mail, views, view_user, view_freshdesk, view_address, view_dashboard, report, cron_jobs, \
+    view_internals
 from api_v3.view_consumer import ConsumerViewSet
 from api_v3.view_dg import DGViewSet
 from api_v3.view_order import OrderViewSet
@@ -30,9 +30,11 @@ urlpatterns = patterns(
     url(r'^assign_dg/', cron_jobs.assign_dg, name='assign_dg'),
 
     # STAFF METHODS -----------------------------------------
-    url(r'^new_order_id_for_old_order_id/', internals.new_order_id_for_old_order_id, name='new_order_id_for_old_order_id'),
-    url(r'^old_order_id_for_new_order_id/', internals.old_order_id_for_new_order_id, name='old_order_id_for_new_order_id')
-    url(r'^fill_full_address/', internals.fill_full_address, name='fill_full_address'),
+    url(r'^new_order_id_for_old_order_id/', view_internals.new_order_id_for_old_order_id,
+        name='new_order_id_for_old_order_id'),
+    url(r'^old_order_id_for_new_order_id/', view_internals.old_order_id_for_new_order_id,
+        name='old_order_id_for_new_order_id'),
+    url(r'^fill_full_address/', view_internals.fill_full_address, name='fill_full_address')
     # --------------------------------------------------------
 )
 

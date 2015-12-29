@@ -220,11 +220,12 @@ def paginate(list, page):
     return result.object_list
 
 
-def is_pickup_time_acceptable(datetime):
-    if time(0, 0) <= datetime.time() <= time(16, 30):
-        return True
-    else:
-        return False
+def is_pickup_time_acceptable(pickup_datetime):
+	current_datetime = datetime.now()
+	if time(0, 0) <= pickup_datetime.time() <= time(16, 30) and pickup_datetime.date() >= current_datetime.date():
+		return True
+	else:
+		return False
 
 
 def inform_dgs_about_orders_assigned():

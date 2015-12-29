@@ -6,7 +6,7 @@ from pytz import utc
 
 os.environ['DJANGO_SETTINGS_MODULE'] = 'server.settings'
 scheduler = BackgroundScheduler(timezone=utc)
-
+scheduler.start()
 
 # AUTO ASSIGNED SCHEDULER ----------------------------------------
 @scheduler.scheduled_job('cron', id='auto_assign_job_1', hour=0)
@@ -73,9 +73,7 @@ def daily_report():
         # REPORT ERROR
 
 
-# # ----------------------------------------------------------------
-
-scheduler.start()
-
-while True:
-    pass
+# ----------------------------------------------------------------
+#
+# while True:
+#     pass
