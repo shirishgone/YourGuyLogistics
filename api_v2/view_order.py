@@ -788,8 +788,8 @@ class OrderViewSet(viewsets.ViewSet):
             
             vendor_address_id = request.data['vendor_address_id']
             vendor_address = get_object_or_404(Address, pk = vendor_address_id)
-            is_reverse_pickup = request.data['is_reverse_pickup']
-                        
+            is_reverse_pickup = request.data['is_reverse_pickup']                        
+            
             cod_amount = request.data.get('cod_amount')
             notes = request.data.get('notes')
             vendor_order_id = request.data.get('vendor_order_id')
@@ -856,7 +856,7 @@ class OrderViewSet(viewsets.ViewSet):
         except:
             delivery_dates.append(order_datetime)
         # --------------------------------------------------------------
-        
+
         # CREATING NEW ORDER FOR EACH CUSTOMER -------------------------
         if len(consumers) == 0:
             content = {
@@ -941,8 +941,23 @@ class OrderViewSet(viewsets.ViewSet):
             # -------------------------------------------------------------           
             
             new_order.save()
-        # -------------------------------------------------------------       
-        
+        # -------------------------------------------------------------
+        # SEND MAIL TO RETAIL TEAM, IF ITS A RETAIL ORDER
+        if vendor.is_retail:
+            order_numbers = new_order_ids
+            client_name = vendor.store_name
+            pickup_date = new_order.pickup_datetime.strftime("%Y %b %d")
+            pickup_time = new_order.pickup_datetime.strftime('%H:%M:%S')
+
+            subject = '[Retail]New Orders placed by %s'% (client_name)
+            body = 'Hello,\n\nNew Orders placed for Retail. \n\nOrder Nos: %s,\n\nClient Name: %s,\n\nPickup Date: %s,' \
+                   '\n\nPickup Time: %s' % (order_numbers, client_name, pickup_date, pickup_time)
+
+            body = body + '\n\nThanks \n-YourGuy BOT'
+            send_email(constants.RETAIL_EMAIL_ID, subject, body)
+        else:
+            pass
+        # -------------------------------------------------------------
         # FINAL RESPONSE ----------------------------------------------
         if len(new_order_ids) > 0:
             content = {
