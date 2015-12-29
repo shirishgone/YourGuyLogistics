@@ -47,6 +47,7 @@ INSTALLED_APPS = (
     'djoser',
     'recurrence',
     'webapp',
+    'v2_webapp'
 )
 
 MIDDLEWARE_CLASSES = (
