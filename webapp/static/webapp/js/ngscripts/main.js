@@ -2601,7 +2601,7 @@ ygVendors.controller('complaintsCntrl' , function ($scope,Complaints,StoreSessio
         else{
           cfpLoadingBar.complete()
           $scope.groups = StoreSessionData.getData('ticket_gruops')
-          if(status.data.errors){
+          if(status.data.errors || status.data.length == 0){
             $scope.show_complaint_msg = true;
             $scope.complaint_msg = 'Happy to Help!';
           }
@@ -2618,7 +2618,7 @@ ygVendors.controller('complaintsCntrl' , function ($scope,Complaints,StoreSessio
         cfpLoadingBar.complete();
         $scope.groups = data.groups;
         StoreSessionData.setData('ticket_gruops',$scope.groups);
-        if(data.tickets.errors){
+        if(data.tickets.errors || data.tickets.length == 0 ){
             $scope.show_complaint_msg = true;
             $scope.complaint_msg = 'Happy to Help!';
         }
