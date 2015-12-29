@@ -788,11 +788,8 @@ class OrderViewSet(viewsets.ViewSet):
             
             vendor_address_id = request.data['vendor_address_id']
             vendor_address = get_object_or_404(Address, pk = vendor_address_id)
-            is_reverse_pickup = request.data['is_reverse_pickup']
-
-            # new parameter to track retail orders
-            is_retail = request.data['is_retail']
-                        
+            is_reverse_pickup = request.data['is_reverse_pickup']                        
+            
             cod_amount = request.data.get('cod_amount')
             notes = request.data.get('notes')
             vendor_order_id = request.data.get('vendor_order_id')
@@ -801,7 +798,7 @@ class OrderViewSet(viewsets.ViewSet):
         except Exception, e:
             content = {
             'error':'Incomplete parameters', 
-            'description':'order_date, timeslots, customers, product_id, recurring, vendor_address_id, is_reverse_pickup, is_retail. Optional: cod_amount, notes, total_cost, vendor_order_id'
+            'description':'order_date, timeslots, customers, product_id, recurring, vendor_address_id, is_reverse_pickup. Optional: cod_amount, notes, total_cost, vendor_order_id'
             }
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
         # ---------------------------------------------------
@@ -946,21 +943,21 @@ class OrderViewSet(viewsets.ViewSet):
             new_order.save()
         # -------------------------------------------------------------
         # SEND MAIL TO RETAIL TEAM, IF ITS A RETAIL ORDER
-        if is_retail:
-            order_number = new_order.id
-            client_name = new_order.consumer
+        if vendor.is_retail:
+            order_numbers = new_order_ids
+            client_name = vendor.store_name
             pickup_date = new_order.pickup_datetime.strftime("%Y %b %d")
             pickup_time = new_order.pickup_datetime.strftime('%H:%M:%S')
 
-            subject = 'New Order placed by Retail'
-            body = 'Hello,\n\nNew Order is placed by Retail. \n\nOrder No: %s,\n\nClient Name: %s,\n\nPickup Date: %s,' \
-                   '\n\nPickup Time: %s' % (order_number, client_name, pickup_date, pickup_time)
+            subject = '[Retail]New Orders placed by %s'% (client_name)
+            body = 'Hello,\n\nNew Orders placed for Retail. \n\nOrder Nos: %s,\n\nClient Name: %s,\n\nPickup Date: %s,' \
+                   '\n\nPickup Time: %s' % (order_numbers, client_name, pickup_date, pickup_time)
 
             body = body + '\n\nThanks \n-YourGuy BOT'
             send_email(constants.RETAIL_EMAIL_ID, subject, body)
         else:
             pass
-        
+        # -------------------------------------------------------------
         # FINAL RESPONSE ----------------------------------------------
         if len(new_order_ids) > 0:
             content = {
