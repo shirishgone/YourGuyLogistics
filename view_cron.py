@@ -1,13 +1,15 @@
 import os
-from server import settings
+os.environ['DJANGO_SETTINGS_MODULE'] = 'server.settings'
+
+from apscheduler.schedulers.background import BackgroundScheduler
 
 import requests
-from apscheduler.schedulers.background import BackgroundScheduler
+import base64
+import json
 from pytz import utc
+from server import settings
 
-os.environ['DJANGO_SETTINGS_MODULE'] = 'server.settings'
 scheduler = BackgroundScheduler(timezone=utc)
-scheduler.start()
 
 def base_url():
     if settings.ENVIRONMENT == 'PRODUCTION':
@@ -60,6 +62,7 @@ def daily_report():
         print('send_daily_report : ERROR')
 
 # ----------------------------------------------------------------
-#
-# while True:
-#     pass
+scheduler.start()
+
+while True:
+    pass
