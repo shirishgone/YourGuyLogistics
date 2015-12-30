@@ -2837,15 +2837,13 @@ ygVendors.controller('tutorialCntrl',function ($scope,$stateParams){
     var newWidth = slides.length + 1;
      slides.push({
       image: '/static/webapp/images/tutorial/' + newWidth + '.jpg',
-      text: ['More','Extra','Lots of','Surplus'][slides.length % 5] + ' ' +
-        ['Cats', 'Kittens', 'Felines', 'Cuties'][slides.length % 5]
+      text: ['Check Your Orders','Create Orders','Add Your Customers','Get All Your Reports', 'Provide Your Feedback'][slides.length % 5]
     });
   };
 
   for (var i=0; i<5; i++) {
     $scope.addSlide();
   }
-
 })
 
 

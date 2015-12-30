@@ -14,8 +14,9 @@
 				<slide ng-repeat="slide in slides" active="slide.active">
 					<img ng-src="{{slide.image}}" style="margin:auto;">
 					<div class="carousel-caption">
-						<button class="carousel-btn-orange button-warning pull-left" ng-click="goPrev()">Back</button>
-						<button class="carousel-btn-green button-success pull-right" ng-click="goNext()">Next</button>
+						<h3>{{slide.text}}</h3>
+						<button class="sm-hide carousel-btn-orange button-warning pull-left" ng-click="goPrev()" ng-disabled="$first">Back</button>
+						<button class="sm-hide carousel-btn-green button-success pull-right" ng-click="goNext()" ng-disabled="$last">Next</button>
 					</div>
 				</slide>
 			</carousel>
