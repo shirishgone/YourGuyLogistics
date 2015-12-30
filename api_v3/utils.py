@@ -180,7 +180,7 @@ def log_exception(e, message):
 
 def send_email(to_mail_ids, subject, body):
     try:
-        if settings.ENVIRONMENT == 'PRODUCTION':
+        if settings.ENVIRONMENT == 'PRODUCTION' or settings.ENVIRONMENT == 'STAGE':
             send_mail(subject, body, constants.FROM_MAIL_ID, to_mail_ids, fail_silently=False)
         else:
             print('Emails are not sent during testing')
