@@ -116,10 +116,10 @@ def user_role(user):
 
 def send_email(to_mail_ids, subject, body):
 	try:
-		if settings.ENVIRONMENT == 'PRODUCTION':
+		if settings.ENVIRONMENT == 'PRODUCTION' or settings.ENVIRONMENT == 'STAGE':
 			send_mail(subject, body, constants.FROM_MAIL_ID, to_mail_ids, fail_silently=False)
 		else:
-			print 'test doesnt send emails'	
+			print 'Local Dev doesnt send emails'	
 	except Exception, e:
 		pass
 
