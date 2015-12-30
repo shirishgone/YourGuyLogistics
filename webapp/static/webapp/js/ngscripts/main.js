@@ -326,6 +326,14 @@ ygVendors.config(function ($stateProvider, $urlRouterProvider, $httpProvider,cfp
       requireLogin:true
     }
   })
+  .state('home.tutorial', {
+    url: "/tutorial",
+    templateUrl: "/static/webapp/partials/tutorial.html",
+    controller: "tutorialCntrl",
+    data :{
+      requireLogin:true
+    }
+  })
 })
 
 ygVendors.controller('loginCntrl',function ($scope,$http,AuthService,StoreSession,$location,$base64){
@@ -2818,6 +2826,26 @@ ygVendors.controller('detailComplaintsCntrl', function ($scope,$stateParams,Stor
       }
     })
   }
+})
+
+ygVendors.controller('tutorialCntrl',function ($scope,$stateParams){
+  $scope.myInterval = 0;
+  $scope.noWrapSlides = true;
+  var slides = $scope.slides = []
+
+  $scope.addSlide = function() {
+    var newWidth = slides.length + 1;
+     slides.push({
+      image: '/static/webapp/images/tutorial/' + newWidth + '.jpg',
+      text: ['More','Extra','Lots of','Surplus'][slides.length % 5] + ' ' +
+        ['Cats', 'Kittens', 'Felines', 'Cuties'][slides.length % 5]
+    });
+  };
+
+  for (var i=0; i<5; i++) {
+    $scope.addSlide();
+  }
+
 })
 
 

@@ -1,0 +1,24 @@
+<div id="content">
+	<div class="menubar">
+		<div class="sidebar-toggler visible-xs" ng-click="$parent.open_sidebar = !$parent.open_sidebar">
+			<i class="ion-navicon"></i>
+		</div>
+		
+		<div class="page-title">
+			Tutorial
+		</div>
+	</div>
+	<div class="content-wrapper">
+		<div class="slider" style="height: 80%">
+			<carousel carousel-controls interval="myInterval" no-wrap="noWrapSlides">
+				<slide ng-repeat="slide in slides" active="slide.active">
+					<img ng-src="{{slide.image}}" style="margin:auto;">
+					<div class="carousel-caption">
+						<button class="carousel-btn-orange button-warning pull-left" ng-click="goPrev()">Back</button>
+						<button class="carousel-btn-green button-success pull-right" ng-click="goNext()">Next</button>
+					</div>
+				</slide>
+			</carousel>
+		</div>
+	</div>
+</div>

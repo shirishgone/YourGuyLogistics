@@ -1199,3 +1199,27 @@
 		font-size: 24px;
 	}
 }
+
+.carousel {
+	max-width: 1280px;
+	max-height: 630px;
+	margin: 0 auto;
+}
+
+.carousel-inner > .item > img, .carousel-inner > .item > a > img {
+    width: 100%;
+}
+
+.right.carousel-control, .left.carousel-control {
+    display: none;
+}
+
+.carousel-btn-orange{
+	background-color: #FCC06A;
+	color: #FFFFFF;
+}
+
+.carousel-btn-green{
+	background-color: #39B54A;
+	color: #FFFFFF;
+}
