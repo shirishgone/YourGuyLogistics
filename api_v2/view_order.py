@@ -34,7 +34,8 @@ import string
 def retail_order_send_email(vendor, new_order_ids):
     client_name = vendor.store_name
     subject = '[Retail] New Orders placed by %s'% (client_name)
-    body = 'Hello,\n\n%s has place few orders.\n\nOrder Nos: %s \n\n Please check' % (new_order_ids, client_name)
+    order_ids = ' , '.join(str(order_id) for order_id in new_order_ids)
+    body = 'Hello,\n\n%s has placed few orders.\n\nOrder Nos: %s \n\n Please check' % (client_name, order_ids)
     body = body + '\n\nThanks \n-YourGuy BOT'
     send_email(constants.RETAIL_EMAIL_ID, subject, body)
 

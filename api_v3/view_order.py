@@ -21,11 +21,11 @@ from api_v3.utils import log_exception, send_sms, ist_datetime, user_role, addre
 from yourguy.models import User, Vendor, DeliveryGuy, VendorAgent, Picture, ProofOfDelivery, OrderDeliveryStatus, \
     Consumer, Address, Order, Product, OrderItem
 
-
 def retail_order_send_email(vendor, new_order_ids):
     client_name = vendor.store_name
     subject = '[Retail] New Orders placed by %s'% (client_name)
-    body = 'Hello,\n\n%s has place few orders.\n\nOrder Nos: %s \n\n Please check' % (new_order_ids, client_name)
+    order_ids = ' , '.join(str(order_id) for order_id in new_order_ids)
+    body = 'Hello,\n\n%s has placed few orders.\n\nOrder Nos: %s \n\n Please check' % (client_name, order_ids)
     body = body + '\n\nThanks \n-YourGuy BOT'
     send_email(constants.RETAIL_EMAIL_ID, subject, body)
 
@@ -34,7 +34,6 @@ def can_update_delivery_status(delivery_status):
         return True
     else:
         return False
-
 
 def fetch_consumer(consumer_phone_number, consumer_name, vendor):
     # CREATING USER & CONSUMER IF DOESNT EXISTS ------------------------
