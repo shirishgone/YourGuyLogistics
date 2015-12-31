@@ -34,6 +34,9 @@ module.exports = function(grunt){
 				files: {
 					'static/assets/js/vendors.min.js': 'static/assets/js/vendors.js'
 				}
+			},
+			appdev : {
+				
 			}
 		}
 	});
