@@ -172,12 +172,14 @@ def time_delta():
 
 def ist_day_start(date):
     ist_timedelta = time_delta()
-    day_start = datetime.combine(date, time()).replace(hour=0, minute=0, second=0)
+    ist_date = date + ist_timedelta
+    day_start = datetime.combine(ist_date, time()).replace(hour=0, minute=0, second=0)
     return day_start - ist_timedelta
 
 def ist_day_end(date):
     ist_timedelta = time_delta()
-    day_end = datetime.combine(date, time()).replace(hour=23, minute=59, second=59)
+    ist_date = date + ist_timedelta
+    day_end = datetime.combine(ist_date, time()).replace(hour=23, minute=59, second=59)
     return day_end - ist_timedelta
 
 def ist_datetime(datetime):
