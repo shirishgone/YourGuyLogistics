@@ -26,11 +26,7 @@ SECRET_KEY = 'vtyju!_%klrjx-_y=@@1@v8p$4(jvr5#6t@nty#$yd8qfpdr(c'
 ENVIRONMENT = 'PRODUCTION'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-if ENVIRONMENT == 'PRODUCTION':
-    DEBUG = False
-else:
-    DEBUG = True
-
+DEBUG = True
 
 ALLOWED_HOSTS = []
 
