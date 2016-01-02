@@ -26449,6 +26449,173 @@ var minlengthDirective = function() {
 })(window, document);
 
 !window.angular.$$csp() && window.angular.element(document.head).prepend('<style type="text/css">@charset "UTF-8";[ng\\:cloak],[ng-cloak],[data-ng-cloak],[x-ng-cloak],.ng-cloak,.x-ng-cloak,.ng-hide:not(.ng-hide-animate){display:none !important;}ng\\:form{display:block;}</style>');
+(function() {
+    'use strict';
+
+    /*
+     * Encapsulation of Nick Galbreath's base64.js library for AngularJS
+     * Original notice included below
+     */
+
+    /*
+     * Copyright (c) 2010 Nick Galbreath
+     * http://code.google.com/p/stringencoders/source/browse/#svn/trunk/javascript
+     *
+     * Permission is hereby granted, free of charge, to any person
+     * obtaining a copy of this software and associated documentation
+     * files (the "Software"), to deal in the Software without
+     * restriction, including without limitation the rights to use,
+     * copy, modify, merge, publish, distribute, sublicense, and/or sell
+     * copies of the Software, and to permit persons to whom the
+     * Software is furnished to do so, subject to the following
+     * conditions:
+     *
+     * The above copyright notice and this permission notice shall be
+     * included in all copies or substantial portions of the Software.
+     *
+     * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+     * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+     * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+     * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+     * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+     * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+     * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+     * OTHER DEALINGS IN THE SOFTWARE.
+     */
+
+    /* base64 encode/decode compatible with window.btoa/atob
+     *
+     * window.atob/btoa is a Firefox extension to convert binary data (the "b")
+     * to base64 (ascii, the "a").
+     *
+     * It is also found in Safari and Chrome.  It is not available in IE.
+     *
+     * if (!window.btoa) window.btoa = base64.encode
+     * if (!window.atob) window.atob = base64.decode
+     *
+     * The original spec's for atob/btoa are a bit lacking
+     * https://developer.mozilla.org/en/DOM/window.atob
+     * https://developer.mozilla.org/en/DOM/window.btoa
+     *
+     * window.btoa and base64.encode takes a string where charCodeAt is [0,255]
+     * If any character is not [0,255], then an exception is thrown.
+     *
+     * window.atob and base64.decode take a base64-encoded string
+     * If the input length is not a multiple of 4, or contains invalid characters
+     *   then an exception is thrown.
+     */
+
+    angular.module('base64', []).constant('$base64', (function() {
+
+        var PADCHAR = '=';
+
+        var ALPHA = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+
+        function getbyte64(s,i) {
+            var idx = ALPHA.indexOf(s.charAt(i));
+            if (idx == -1) {
+                throw "Cannot decode base64";
+            }
+            return idx;
+        }
+
+        function decode(s) {
+            // convert to string
+            s = "" + s;
+            var pads, i, b10;
+            var imax = s.length;
+            if (imax == 0) {
+                return s;
+            }
+
+            if (imax % 4 != 0) {
+                throw "Cannot decode base64";
+            }
+
+            pads = 0;
+            if (s.charAt(imax -1) == PADCHAR) {
+                pads = 1;
+                if (s.charAt(imax -2) == PADCHAR) {
+                    pads = 2;
+                }
+                // either way, we want to ignore this last block
+                imax -= 4;
+            }
+
+            var x = [];
+            for (i = 0; i < imax; i += 4) {
+                b10 = (getbyte64(s,i) << 18) | (getbyte64(s,i+1) << 12) |
+                    (getbyte64(s,i+2) << 6) | getbyte64(s,i+3);
+                x.push(String.fromCharCode(b10 >> 16, (b10 >> 8) & 0xff, b10 & 0xff));
+            }
+
+            switch (pads) {
+                case 1:
+                    b10 = (getbyte64(s,i) << 18) | (getbyte64(s,i+1) << 12) | (getbyte64(s,i+2) << 6);
+                    x.push(String.fromCharCode(b10 >> 16, (b10 >> 8) & 0xff));
+                    break;
+                case 2:
+                    b10 = (getbyte64(s,i) << 18) | (getbyte64(s,i+1) << 12);
+                    x.push(String.fromCharCode(b10 >> 16));
+                    break;
+            }
+            return x.join('');
+        }
+
+        function getbyte(s,i) {
+            var x = s.charCodeAt(i);
+            if (x > 255) {
+                throw "INVALID_CHARACTER_ERR: DOM Exception 5";
+            }
+            return x;
+        }
+
+        function encode(s) {
+            if (arguments.length != 1) {
+                throw "SyntaxError: Not enough arguments";
+            }
+
+            var i, b10;
+            var x = [];
+
+            // convert to string
+            s = "" + s;
+
+            var imax = s.length - s.length % 3;
+
+            if (s.length == 0) {
+                return s;
+            }
+            for (i = 0; i < imax; i += 3) {
+                b10 = (getbyte(s,i) << 16) | (getbyte(s,i+1) << 8) | getbyte(s,i+2);
+                x.push(ALPHA.charAt(b10 >> 18));
+                x.push(ALPHA.charAt((b10 >> 12) & 0x3F));
+                x.push(ALPHA.charAt((b10 >> 6) & 0x3f));
+                x.push(ALPHA.charAt(b10 & 0x3f));
+            }
+            switch (s.length - imax) {
+                case 1:
+                    b10 = getbyte(s,i) << 16;
+                    x.push(ALPHA.charAt(b10 >> 18) + ALPHA.charAt((b10 >> 12) & 0x3F) +
+                        PADCHAR + PADCHAR);
+                    break;
+                case 2:
+                    b10 = (getbyte(s,i) << 16) | (getbyte(s,i+1) << 8);
+                    x.push(ALPHA.charAt(b10 >> 18) + ALPHA.charAt((b10 >> 12) & 0x3F) +
+                        ALPHA.charAt((b10 >> 6) & 0x3f) + PADCHAR);
+                    break;
+            }
+            return x.join('');
+        }
+
+        return {
+            encode: encode,
+            decode: decode
+        };
+    })());
+
+})();
+
 /**
  * @license AngularJS v1.3.20
  * (c) 2010-2014 Google, Inc. http://angularjs.org
@@ -44881,3 +45048,224 @@ angular.module('ui.router.state')
   .filter('isState', $IsStateFilter)
   .filter('includedByState', $IncludedByStateFilter);
 })(window, window.angular);
+(function (root, factory) {
+  'use strict';
+
+  if (typeof define === 'function' && define.amd) {
+    define(['angular'], factory);
+  } else if (root.hasOwnProperty('angular')) {
+    // Browser globals (root is window), we don't register it.
+    factory(root.angular);
+  } else if (typeof exports === 'object') {
+    module.exports = factory(require('angular'));
+  }
+}(this , function (angular) {
+    'use strict';
+
+    // In cases where Angular does not get passed or angular is a truthy value
+    // but misses .module we can fall back to using window.
+    angular = (angular && angular.module ) ? angular : window.angular;
+
+    /**
+     * @ngdoc overview
+     * @name ngStorage
+     */
+
+    return angular.module('ngStorage', [])
+
+    /**
+     * @ngdoc object
+     * @name ngStorage.$localStorage
+     * @requires $rootScope
+     * @requires $window
+     */
+
+    .provider('$localStorage', _storageProvider('localStorage'))
+
+    /**
+     * @ngdoc object
+     * @name ngStorage.$sessionStorage
+     * @requires $rootScope
+     * @requires $window
+     */
+
+    .provider('$sessionStorage', _storageProvider('sessionStorage'));
+
+    function _storageProvider(storageType) {
+        return function () {
+          var storageKeyPrefix = 'ngStorage-';
+
+          this.setKeyPrefix = function (prefix) {
+            if (typeof prefix !== 'string') {
+              throw new TypeError('[ngStorage] - ' + storageType + 'Provider.setKeyPrefix() expects a String.');
+            }
+            storageKeyPrefix = prefix;
+          };
+
+          var serializer = angular.toJson;
+          var deserializer = angular.fromJson;
+
+          this.setSerializer = function (s) {
+            if (typeof s !== 'function') {
+              throw new TypeError('[ngStorage] - ' + storageType + 'Provider.setSerializer expects a function.');
+            }
+
+            serializer = s;
+          };
+
+          this.setDeserializer = function (d) {
+            if (typeof d !== 'function') {
+              throw new TypeError('[ngStorage] - ' + storageType + 'Provider.setDeserializer expects a function.');
+            }
+
+            deserializer = d;
+          };
+
+          // Note: This is not very elegant at all.
+          this.get = function (key) {
+            return deserializer(window[storageType].getItem(storageKeyPrefix + key));
+          };
+
+          // Note: This is not very elegant at all.
+          this.set = function (key, value) {
+            return window[storageType].setItem(storageKeyPrefix + key, serializer(value));
+          };
+
+          this.$get = [
+              '$rootScope',
+              '$window',
+              '$log',
+              '$timeout',
+              '$document',
+
+              function(
+                  $rootScope,
+                  $window,
+                  $log,
+                  $timeout,
+                  $document
+              ){
+                function isStorageSupported(storageType) {
+
+                    // Some installations of IE, for an unknown reason, throw "SCRIPT5: Error: Access is denied"
+                    // when accessing window.localStorage. This happens before you try to do anything with it. Catch
+                    // that error and allow execution to continue.
+
+                    // fix 'SecurityError: DOM Exception 18' exception in Desktop Safari, Mobile Safari
+                    // when "Block cookies": "Always block" is turned on
+                    var supported;
+                    try {
+                        supported = $window[storageType];
+                    }
+                    catch (err) {
+                        supported = false;
+                    }
+
+                    // When Safari (OS X or iOS) is in private browsing mode, it appears as though localStorage
+                    // is available, but trying to call .setItem throws an exception below:
+                    // "QUOTA_EXCEEDED_ERR: DOM Exception 22: An attempt was made to add something to storage that exceeded the quota."
+                    if (supported && storageType === 'localStorage') {
+                        var key = '__' + Math.round(Math.random() * 1e7);
+
+                        try {
+                            localStorage.setItem(key, key);
+                            localStorage.removeItem(key);
+                        }
+                        catch (err) {
+                            supported = false;
+                        }
+                    }
+
+                    return supported;
+                }
+
+                // The magic number 10 is used which only works for some keyPrefixes...
+                // See https://github.com/gsklee/ngStorage/issues/137
+                var prefixLength = storageKeyPrefix.length;
+
+                // #9: Assign a placeholder object if Web Storage is unavailable to prevent breaking the entire AngularJS app
+                var webStorage = isStorageSupported(storageType) || ($log.warn('This browser does not support Web Storage!'), {setItem: angular.noop, getItem: angular.noop, removeItem: angular.noop}),
+                    $storage = {
+                        $default: function(items) {
+                            for (var k in items) {
+                                angular.isDefined($storage[k]) || ($storage[k] = angular.copy(items[k]) );
+                            }
+
+                            $storage.$sync();
+                            return $storage;
+                        },
+                        $reset: function(items) {
+                            for (var k in $storage) {
+                                '$' === k[0] || (delete $storage[k] && webStorage.removeItem(storageKeyPrefix + k));
+                            }
+
+                            return $storage.$default(items);
+                        },
+                        $sync: function () {
+                            for (var i = 0, l = webStorage.length, k; i < l; i++) {
+                                // #8, #10: `webStorage.key(i)` may be an empty string (or throw an exception in IE9 if `webStorage` is empty)
+                                (k = webStorage.key(i)) && storageKeyPrefix === k.slice(0, prefixLength) && ($storage[k.slice(prefixLength)] = deserializer(webStorage.getItem(k)));
+                            }
+                        },
+                        $apply: function() {
+                            var temp$storage;
+
+                            _debounce = null;
+
+                            if (!angular.equals($storage, _last$storage)) {
+                                temp$storage = angular.copy(_last$storage);
+                                angular.forEach($storage, function(v, k) {
+                                    if (angular.isDefined(v) && '$' !== k[0]) {
+                                        webStorage.setItem(storageKeyPrefix + k, serializer(v));
+                                        delete temp$storage[k];
+                                    }
+                                });
+
+                                for (var k in temp$storage) {
+                                    webStorage.removeItem(storageKeyPrefix + k);
+                                }
+
+                                _last$storage = angular.copy($storage);
+                            }
+                        }
+                    },
+                    _last$storage,
+                    _debounce;
+
+                $storage.$sync();
+
+                _last$storage = angular.copy($storage);
+
+                $rootScope.$watch(function() {
+                    _debounce || (_debounce = $timeout($storage.$apply, 100, false));
+                });
+
+                // #6: Use `$window.addEventListener` instead of `angular.element` to avoid the jQuery-specific `event.originalEvent`
+                $window.addEventListener && $window.addEventListener('storage', function(event) {
+                    if (!event.key) {
+                      return;
+                    }
+
+                    // Reference doc.
+                    var doc = $document[0];
+
+                    if ( (!doc.hasFocus || !doc.hasFocus()) && storageKeyPrefix === event.key.slice(0, prefixLength) ) {
+                        event.newValue ? $storage[event.key.slice(prefixLength)] = deserializer(event.newValue) : delete $storage[event.key.slice(prefixLength)];
+
+                        _last$storage = angular.copy($storage);
+
+                        $rootScope.$apply();
+                    }
+                });
+
+                $window.addEventListener && $window.addEventListener('beforeunload', function() {
+                    $storage.$apply();
+                });
+
+                return $storage;
+              }
+          ];
+      };
+    }
+
+}));

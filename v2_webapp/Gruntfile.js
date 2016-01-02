@@ -35,8 +35,37 @@ module.exports = function(grunt){
 					'static/assets/js/vendors.min.js': 'static/assets/js/vendors.js'
 				}
 			},
-			appdev : {
-				
+			development : {
+				options: {
+					mangle: true,
+					compress: true,
+					preserveComments: true,
+					sourceMap: true,
+					banner:  '/*! <%= pkg.name %> - v<%= pkg.version %> - ' +
+    					'<%= grunt.template.today("yyyy-mm-dd") %> */',
+				},
+				files: {
+					'static/assets/js/main.min.js': 'static/assets/js/main.js'
+				}
+			}
+		},
+		concat : {
+			ngScripts : {
+				src : [
+					'static/modules/login/login.js',
+					'static/modules/login/AuthService.js',
+					'static/modules/app.js',
+					'static/modules/constants/*.js',
+					'static/modules/services/*.js',
+					'static/modules/providers/*.js'
+				],
+				dest : 'static/assets/js/main.js'
+			}
+		},
+		watch : {
+			scripts : {
+				files : 'static/modules/**/*.js',
+				tasks : ['devScripts']
 			}
 		}
 	});
@@ -55,4 +84,9 @@ module.exports = function(grunt){
 		grunt.task.run('shell:bowerupdate:' + library);
 		grunt.task.run('buildbower');
 	});
+
+	grunt.registerTask('devScripts',[
+		'concat',
+		'uglify:development'
+	]);
 };

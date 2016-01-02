@@ -1,3 +1,17 @@
 {% load staticfiles %}
-<h1>hello</h1>
-<script type="text/javascript" src="{% static 'assets/js/vendors.min.js' %}" ></script>
+<!DOCTYPE html>
+<html ng-app="ygVendorApp">
+	<head>
+		<meta charset="utf-8">
+	    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+	    <meta name="description" content="Webapplication for Yourguy business partners. You have things to deliver across Mumbai? We will deliver it for you. Just login and start placing your pickup requests.">
+	    <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no" />
+		<title>Web App</title>
+		<base href="/v2/">
+	</head>
+	<body>
+		<div ui-view></div>
+		<script type="text/javascript" src="{% static 'assets/js/vendors.min.js' %}" ></script>
+		<script type="text/javascript" src="{% static 'assets/js/main.js' %}" ></script>
+	</body>
+</html>
