@@ -326,6 +326,14 @@ ygVendors.config(function ($stateProvider, $urlRouterProvider, $httpProvider,cfp
       requireLogin:true
     }
   })
+  .state('home.tutorial', {
+    url: "/tutorial",
+    templateUrl: "/static/webapp/partials/tutorial.html",
+    controller: "tutorialCntrl",
+    data :{
+      requireLogin:true
+    }
+  })
 })
 
 ygVendors.controller('loginCntrl',function ($scope,$http,AuthService,StoreSession,$location,$base64){
@@ -681,6 +689,8 @@ ygVendors.controller('newOrderCntrl',function ($scope,$stateParams,$state,$locat
       else{
         $scope.orders_data = status.data.data
         $scope.total_orders = status.data.total_orders
+        $scope.pending_orders = status.data.pending_orders_count
+        $scope.unassigned_orders = status.data.unassigned_orders_count
         $scope.orders_data.forEach(function (order){
           if($scope.assign_order.order_ids.indexOf(order.id) != -1){
               order.selected = true
@@ -2817,6 +2827,25 @@ ygVendors.controller('detailComplaintsCntrl', function ($scope,$stateParams,Stor
         $scope.getTicket(ticket_id)
       }
     })
+  }
+})
+
+ygVendors.controller('tutorialCntrl',function ($scope,$stateParams){
+  $scope.myInterval = 0;
+  $scope.noWrapSlides = true;
+  var slides = $scope.slides = []
+
+  $scope.addSlide = function() {
+    var newWidth = slides.length + 1;
+     slides.push({
+      image: '/static/webapp/images/tutorial/' + newWidth + '.jpg',
+      index : ['1','2','3','4','5'][slides.length % 5],
+      text: ['View Your Orders','Place New Orders','Add Your Customers','View/Download Monthly Reports', 'Report Any Issues'][slides.length % 5]
+    });
+  };
+
+  for (var i=0; i<5; i++) {
+    $scope.addSlide();
   }
 })
 

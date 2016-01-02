@@ -6,6 +6,18 @@
         <div class="page-title">
             Orders
         </div>
+        <div class="orders-count">
+        	<div class="count-section">
+        		<span class='count count-warning'>{{pending_orders}}</span> <span class="sm-hide">Pending Orders</span>
+        	</div>
+        	<div class="count-section">
+        		<span class='count count-danger'>{{unassigned_orders}}</span> <span class="sm-hide">Unassigned Orders</span>
+        	</div>
+        	<div class="count-section">
+        		<span class='count count-primary'>{{total_orders}}</span> <span class="sm-hide">Total Orders</span>
+        	</div>
+            
+        </div>
     </div>
 	<div top-bar class="order-top">
 		<div class="notificationbar">

@@ -1199,3 +1199,81 @@
 		font-size: 24px;
 	}
 }
+
+.carousel {
+	margin: 0 auto;
+}
+
+.carousel-inner > .item > img, .carousel-inner > .item > a > img {
+    width: 100%;
+    /*height: 100%;*/
+}
+
+.right.carousel-control, .left.carousel-control {
+    display: none;
+}
+
+.carousel-btn-orange{
+	margin: 0px 10px;
+	background-color: #FCC06A;
+	color: #FFFFFF;
+	box-shadow: 0px 0px 10px 5px #383838;
+}
+
+.carousel-btn-green{
+	margin: 0px 10px;
+	background-color: #39B54A;
+	color: #FFFFFF;
+	box-shadow: 0px 0px 10px 5px #383838;
+}
+
+@media (max-width: 767px){
+	.right.carousel-control, .left.carousel-control {
+		display: block;
+	}
+}
+
+
+.orders-count {
+	float: right;
+	margin-top: -5px;
+	text-align: center;
+	padding: 6px 20px;
+	font-weight: 600;
+	letter-spacing: .3px;
+}
+
+.orders-count .count-section{
+	float: left;
+	padding: 0px 5px;
+}
+
+.orders-count .count {
+	padding: 6px;
+	color: #FFFFFF;
+	background-color: #2A313B;
+	border-radius: 3px;
+}
+
+.orders-count .count.count-danger {
+	background-color: #FE5E64;
+}
+
+.orders-count .count.count-warning {
+	background-color: #FCC06A;
+}
+
+.orders-count .count.count-primary {
+	background-color: #2A313B;
+}
+
+.carousel-caption {
+	right :10%;
+	left: 10%;
+}
+
+.tutorial-header {
+	margin-top: 10px;
+	color: #7e7e7e;
+	font-weight: 500;
+}
