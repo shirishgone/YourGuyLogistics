@@ -1213,6 +1213,12 @@ class OrderViewSet(viewsets.ViewSet):
         
         # PICK UP AND DELVIERY DATE TIMES ---------------------------------
         pickup_datetime = datetime.now()
+        if is_pickup_time_acceptable(pickup_datetime) is False:
+            content = {
+            'error':'Pickup date or time not acceptable', 
+            'description':'Pickup time can only be between 5.30AM to 10.00PM and past dates are not allowed'
+            }
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)            
         delivery_timedelta = timedelta(hours = 4, minutes = 0)
         delivery_datetime = pickup_datetime + delivery_timedelta
         # ------------------------------------------------------------------
