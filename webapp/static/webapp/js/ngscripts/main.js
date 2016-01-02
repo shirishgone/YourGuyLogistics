@@ -2839,7 +2839,8 @@ ygVendors.controller('tutorialCntrl',function ($scope,$stateParams){
     var newWidth = slides.length + 1;
      slides.push({
       image: '/static/webapp/images/tutorial/' + newWidth + '.jpg',
-      text: ['Check Your Orders','Create Orders','Add Your Customers','Get All Your Reports', 'Provide Your Feedback'][slides.length % 5]
+      index : ['1','2','3','4','5'][slides.length % 5],
+      text: ['View Your Orders','Place New Orders','Add Your Customers','View/Download Monthly Reports', 'Report Any Issues'][slides.length % 5]
     });
   };
 
