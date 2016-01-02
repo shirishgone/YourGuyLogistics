@@ -1241,9 +1241,26 @@
 	letter-spacing: .3px;
 }
 
+.orders-count .count-section{
+	float: left;
+	padding: 0px 5px;
+}
+
 .orders-count .count {
 	padding: 6px;
 	color: #FFFFFF;
 	background-color: #2A313B;
 	border-radius: 3px;
+}
+
+.orders-count .count.count-danger {
+	background-color: #FE5E64;
+}
+
+.orders-count .count.count-warning {
+	background-color: #FCC06A;
+}
+
+.orders-count .count.count-primary {
+	background-color: #2A313B;
 }

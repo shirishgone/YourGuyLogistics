@@ -689,6 +689,8 @@ ygVendors.controller('newOrderCntrl',function ($scope,$stateParams,$state,$locat
       else{
         $scope.orders_data = status.data.data
         $scope.total_orders = status.data.total_orders
+        $scope.pending_orders = status.data.pending_orders_count
+        $scope.unassigned_orders = status.data.unassigned_orders_count
         $scope.orders_data.forEach(function (order){
           if($scope.assign_order.order_ids.indexOf(order.id) != -1){
               order.selected = true
