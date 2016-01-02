@@ -10,6 +10,9 @@
         <a ui-sref="home.create_order" class="new-user btn btn-success pull-right">
             <span>Place Order</span>
         </a>
+        <div class="orders-count">
+            <span class='count'>{{total_orders}}</span> <span class="sm-hide">Total Orders</span>
+        </div>
     </div>
     <div notification-bar message="notification.message" noticetype="notification.type" ng-show="notification.type" >
     </div>

@@ -1230,3 +1230,20 @@
 		display: block;
 	}
 }
+
+
+.orders-count {
+	float: right;
+	margin-top: -5px;
+	text-align: center;
+	padding: 6px 20px;
+	font-weight: 600;
+	letter-spacing: .3px;
+}
+
+.orders-count .count {
+	padding: 6px;
+	color: #FFFFFF;
+	background-color: #2A313B;
+	border-radius: 3px;
+}
