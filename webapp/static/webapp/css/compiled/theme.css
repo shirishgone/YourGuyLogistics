@@ -860,7 +860,7 @@ body {
   bottom: 0px; }
   @media screen and (min-height: 901px) {
     .main-sidebar {
-      position: fixed !important; } }
+      position: fixed;} }
 
 #sidebar-dark {
   background: #2f343d;
