@@ -679,6 +679,9 @@ ygVendors.controller('newOrderCntrl',function ($scope,$stateParams,$state,$locat
         $scope.error_handler('error',status.error)
       }
       else if(status.data.total_orders == 0){
+        $scope.total_orders = 0;
+        $scope.pending_orders = 0;
+        $scope.unassigned_orders = 0;
         if(filterApplied()){
           $scope.order_not_found = 'no-orders-filter'
         }
@@ -958,6 +961,7 @@ ygVendors.controller('orderCntrl',function ($scope,$state,$stateParams,cfpLoadin
         $scope.error_handler('error',status.error)
       }
       else if(status.data.total_orders == 0){
+        $scope.total_orders = 0;
         if(filterApplied()){
           $scope.order_not_found = 'no-orders-filter'
         }

@@ -11,7 +11,7 @@
             <span>Place Order</span>
         </a>
         <div class="orders-count">
-            <span class='count count-primary'>{{total_orders}}</span> <span class="sm-hide">Total Orders</span>
+            <span class='count count-primary'>{{total_orders || '0'}}</span> <span class="sm-hide">Total Orders</span>
         </div>
     </div>
     <div notification-bar message="notification.message" noticetype="notification.type" ng-show="notification.type" >
