@@ -4,6 +4,7 @@ from django.db.models import Sum, Q
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+
 from api_v3 import constants
 from api_v3.utils import send_email, ist_day_start, ist_day_end
 from yourguy.models import DeliveryGuy, OrderDeliveryStatus, DGAttendance
@@ -11,7 +12,6 @@ from yourguy.models import DeliveryGuy, OrderDeliveryStatus, DGAttendance
 
 @api_view(['GET'])
 def daily_report(request):
-
     date = datetime.today()
     day_start = ist_day_start(date)
     day_end = ist_day_end(date)
@@ -91,8 +91,11 @@ def daily_report(request):
         total_cod_collected = total_cod_collected['cod_collected_amount__sum']
 
         executable_deliveries = delivery_statuses_today.filter(
-            Q(order_status='QUEUED') | Q(order_status='INTRANSIT') | Q(order_status='DELIVERED') | Q(
-                order_status='DELIVERYATTEMPTED') | Q(order_status='PICKUPATTEMPTED'))
+            Q(order_status=constants.ORDER_STATUS_QUEUED) |
+            Q(order_status=constants.ORDER_STATUS_INTRANSIT) |
+            Q(order_status=constants.ORDER_STATUS_DELIVERED) |
+            Q(order_status=constants.ORDER_STATUS_DELIVERY_ATTEMPTED) |
+            Q(order_status=constants.ORDER_STATUS_PICKUP_ATTEMPTED))
         total_cod_dict = executable_deliveries.aggregate(total_cod=Sum('order__cod_amount'))
         total_cod_to_be_collected = total_cod_dict['total_cod']
 
