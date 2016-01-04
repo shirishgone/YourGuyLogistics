@@ -585,9 +585,9 @@ class OrderViewSet(viewsets.ViewSet):
         if len(order_statuses) > 0:
             order_filter_queryset = []
             for order_status in order_statuses:
-                order_filter_queryset.append(delivery_status_queryset.filter(order_status = order_status))
+                order_filter_queryset.extend(delivery_status_queryset.filter(order_status = order_status))
             
-            delivery_status_queryset = list(chain(*order_filter_queryset))
+            delivery_status_queryset = order_filter_queryset
         # --------------------------------------------------------------------------
         
         # SEARCH KEYWORD FILTERING ---------------------------------------------------
