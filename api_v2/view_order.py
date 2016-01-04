@@ -583,11 +583,7 @@ class OrderViewSet(viewsets.ViewSet):
 
         # ORDER STATUS FILTERING ---------------------------------------------------
         if len(order_statuses) > 0:
-            order_filter_queryset = []
-            for order_status in order_statuses:
-                order_filter_queryset.append(delivery_status_queryset.filter(order_status = order_status))
-            
-            delivery_status_queryset = list(chain(*order_filter_queryset))
+            delivery_status_queryset = delivery_status_queryset.filter(order_status__in = order_statuses)
         # --------------------------------------------------------------------------
         
         # SEARCH KEYWORD FILTERING ---------------------------------------------------
@@ -596,6 +592,9 @@ class OrderViewSet(viewsets.ViewSet):
         # ----------------------------------------------------------------------------             
 
         total_orders_count = len(delivery_status_queryset)
+        unassigned_orders_count = delivery_status_queryset.filter(Q(pickup_guy = None) & Q(delivery_guy = None)).count()
+        pending_orders_count = delivery_status_queryset.filter(Q(order_status = constants.ORDER_STATUS_INTRANSIT) | Q(order_status = constants.ORDER_STATUS_QUEUED)).count()
+
         if role == constants.DELIVERY_GUY:
             delivery_statuses = delivery_status_queryset
             result = []
@@ -638,7 +637,9 @@ class OrderViewSet(viewsets.ViewSet):
             response_content = {
             "data": result, 
             "total_pages": total_pages, 
-            "total_orders" : total_orders_count
+            "total_orders" : total_orders_count,
+            "unassigned_orders_count":unassigned_orders_count,
+            "pending_orders_count":pending_orders_count
             }
 
             return Response(response_content, status = status.HTTP_200_OK)

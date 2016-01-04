@@ -585,10 +585,12 @@
 	position: absolute;
 	right: 0px;
 	bottom: 0px;
+	z-index: 10;
 }
 .order .recurring img{
 	height: 50px;
 	width: auto;
+	z-index: 10;
 }
 
 .order .reverse{
@@ -600,6 +602,19 @@
 .order .reverse img{
 	height: 50px;
 	width: auto;
+}
+
+.order .reported {
+	position: absolute;
+	height: 100%;
+	right: 0px;
+	bottom: 0px;
+	z-index: 9;
+}
+
+.order .reported img {
+	height: 100%;
+	width: 50px;
 }
 
 .order .tooltip-inner{
@@ -628,6 +643,9 @@
 
 @media (max-width: 991px){
 	.table-list .order-card .section-three,.third_line{
+		display: none;
+	}
+	.tab-hide {
 		display: none;
 	}
 }
@@ -1197,5 +1215,96 @@
 	.no-content h1 {
 		color: #898081;
 		font-size: 24px;
+	}
+}
+
+.carousel {
+	margin: 0 auto;
+}
+
+.carousel-inner > .item > img, .carousel-inner > .item > a > img {
+    width: 100%;
+    /*height: 100%;*/
+}
+
+/*.right.carousel-control, .left.carousel-control {
+    display: none;
+}*/
+
+.carousel-btn-orange{
+	margin: 0px 10px;
+	background-color: #FCC06A;
+	color: #FFFFFF;
+	box-shadow: 0px 0px 10px 5px #383838;
+}
+
+.carousel-btn-green{
+	margin: 0px 10px;
+	background-color: #39B54A;
+	color: #FFFFFF;
+	box-shadow: 0px 0px 10px 5px #383838;
+}
+
+@media (max-width: 767px){
+	.right.carousel-control, .left.carousel-control {
+		display: block;
+	}
+}
+
+
+.orders-count {
+	float: right;
+	margin-top: -5px;
+	text-align: center;
+	padding: 6px 20px;
+	font-weight: 600;
+	letter-spacing: .3px;
+}
+
+.orders-count .count-section{
+	float: left;
+	padding: 0px 5px;
+}
+
+.orders-count .count {
+	padding: 6px;
+	color: #FFFFFF;
+	background-color: #2A313B;
+	border-radius: 3px;
+}
+
+.orders-count .count.count-danger {
+	background-color: #FE5E64;
+}
+
+.orders-count .count.count-warning {
+	background-color: #FCC06A;
+}
+
+.orders-count .count.count-primary {
+	background-color: #2A313B;
+}
+
+.carousel-caption {
+	right :10%;
+	left: 10%;
+}
+
+.tutorial-header {
+	margin-top: 10px;
+	color: #7e7e7e;
+	font-weight: 500;
+}
+
+@media (max-width: 767px){
+	#sidebar-default {
+		position: absolute;
+	}
+}
+
+
+@media (max-width: 991px){
+	#sidebar-default {
+		position: absolute;
 	}
 }

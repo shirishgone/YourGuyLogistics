@@ -6,6 +6,17 @@
         <div class="page-title">
             Orders
         </div>
+        <div class="orders-count" ng-hide="total_orders == null ">
+        	<div class="count-section">
+        		<span class='count count-warning'>{{pending_orders || '0'}}</span> <span class="sm-hide">Pending Orders</span>
+        	</div>
+        	<div class="count-section">
+        		<span class='count count-danger'>{{unassigned_orders || '0'}}</span> <span class="sm-hide">Unassigned Orders</span>
+        	</div>
+        	<div class="count-section">
+        		<span class='count count-primary'>{{total_orders || '0'}}</span> <span class="sm-hide">Total Orders</span>
+        	</div>
+        </div>
     </div>
 	<div top-bar class="order-top">
 		<div class="notificationbar">
@@ -175,9 +186,7 @@
 	</div>
 	<div class="content-wrapper order">
 		<div ng-hide="order_not_found" class="table-list">
-			<div class="order-card"
-				 ng-click="redirect_to_details(order)"
-				 ng-repeat="order in orders_data">
+			<div class="order-card" ng-click="redirect_to_details(order)" ng-repeat="order in orders_data">
 				<div class="section-one">
 					<div class="wid-7 wid-sm-12"  ng-click="$event.stopPropagation()">
 						<label class="order-checkbox" >
@@ -283,6 +292,9 @@
 				<div ng-if="order.is_recurring" class="recurring" tooltip="Recurring Order" tooltip-placement="left">
 					<img src="/static/webapp/images/recurring_order.png" >
 				</div>
+				<!-- <div class="reported"  tooltip="Reported Order" tooltip-placement="left">
+					<img src="/static/webapp/images/reported.png" >
+				</div> -->
 			</div>
 		</div>
 		<div ng-if="total_orders">
