@@ -6,7 +6,7 @@
         <div class="page-title">
             Orders
         </div>
-        <div class="orders-count">
+        <div class="orders-count" ng-hide="total_orders == null ">
         	<div class="count-section">
         		<span class='count count-warning'>{{pending_orders || '0'}}</span> <span class="sm-hide">Pending Orders</span>
         	</div>
