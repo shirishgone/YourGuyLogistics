@@ -1,0 +1,22 @@
+<div id="content">
+	<div class="menubar">
+		<div class="sidebar-toggler visible-xs" ng-click="$parent.open_sidebar = !$parent.open_sidebar">
+			<i class="ion-navicon"></i>
+		</div>
+		
+		<div class="page-title">
+			<div ng-repeat="slide in slides" ng-if="slide.active">
+				{{slide.text}}
+			</div>
+		</div>
+	</div>
+	<div class="content-wrapper">
+		<div class="slider" style="height: 80%">
+			<carousel carousel-controls interval="myInterval" no-wrap="noWrapSlides">
+				<slide ng-repeat="slide in slides" active="slide.active">
+					<img ng-src="{{slide.image}}" style="margin:auto;">
+				</slide>
+			</carousel>
+		</div>
+	</div>
+</div>

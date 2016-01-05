@@ -185,8 +185,7 @@ def send_email(to_mail_ids, subject, body):
         if settings.ENVIRONMENT == 'PRODUCTION' or settings.ENVIRONMENT == 'STAGE':
             send_mail(subject, body, constants.FROM_MAIL_ID, to_mail_ids, fail_silently=False)
         else:
-            # print('Emails are not sent during testing')
-            send_mail(subject, body, constants.FROM_MAIL_ID, to_mail_ids, fail_silently=False)
+            print('Emails are not sent during testing')
     except Exception as e:
         pass
 

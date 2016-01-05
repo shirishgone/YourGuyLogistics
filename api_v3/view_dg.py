@@ -89,14 +89,14 @@ class DGViewSet(viewsets.ModelViewSet):
             return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
     def retrieve(self, request, pk=None):
-        delivery_guy = get_object_or_404(DeliveryGuy, id=pk)
         role = user_role(request.user)
-        if role == 'vendor':
+        if role == constants.VENDOR:
             content = {
                 'error': 'You don\'t have permissions to view delivery guy info'
             }
             return Response(content, status=status.HTTP_405_METHOD_NOT_ALLOWED)
         else:
+            delivery_guy = get_object_or_404(DeliveryGuy, id = pk)
             detail_dict = dg_details_dict(delivery_guy)
             content = {
                 "data": detail_dict
