@@ -5,6 +5,7 @@
 	angular.module('ygVendorApp', [
 		'ui.router',
 		'ngStorage',
+		'ngResource',
 		'base64',
 		'login'
 	])

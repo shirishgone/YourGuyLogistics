@@ -1,0 +1,30 @@
+{
+  "name": "Vendor Webapp",
+  "description": "Yourguy vendor web application",
+  "main": "",
+  "authors": [
+    "shahwarcoder <aquid.shahwar@gmail.com>"
+  ],
+  "license": "MIT",
+  "moduleType": [],
+  "homepage": "",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "angular-base64": "~2.0.5",
+    "angular-material-sass-files": "~0.8.3",
+    "angular-resource": "~1.3.20",
+    "angular-ui-router": "~0.2.15",
+    "ngstorage": "~0.3.10",
+    "angular": "1.3.20"
+  },
+  "resolutions": {
+    "angular": "1.3.x"
+  }
+}

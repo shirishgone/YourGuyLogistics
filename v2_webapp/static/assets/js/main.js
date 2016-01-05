@@ -1,6 +1,6 @@
 (function(){
 	'use strict';
-	var LoginCntrl = function ($state,AuthService,UserData,$localStorage,role){
+	var LoginCntrl = function ($state,AuthService,UserData,$localStorage,vendorClients){
 		this.userLogin = function(){
 			var data = {
 				username : this.username,
@@ -8,9 +8,10 @@
 			};
 			AuthService.login(data).then(function (response){
 				console.log(response.data);
-				$localStorage.$reset();
 				$localStorage.token = response.data.auth_token;
-				console.log(role.userrole);
+				vendorClients.$refresh().then(function (response){
+					console.log(response);
+				});
 			});
 		};
 	};
@@ -22,7 +23,10 @@
 			url : '/login',
 			templateUrl : '/static/modules/login/login.html',
 			controllerAs : 'login',
-			controller: 'LoginCntrl'
+			controller: 'LoginCntrl',
+			resolve: {
+				vendorClients : "vendorClients"
+			}
 		});
 	}])
 	.controller('LoginCntrl', [
@@ -30,21 +34,26 @@
 		'AuthService',
 		'UserData',
 		'$localStorage',
-		'role',
+		'vendorClients',
 		LoginCntrl
 	]);
 })();
 (function(){
 	'use strice';
-
-	angular.module('login')
-	.factory('AuthService', ['$http','constants', function ($http,constants){
+	var AuthService = function ($http,constants){
 		return{
 			login : function(userdata) {
 				return $http.post(constants.v1baseUrl+'auth/login/',userdata);
 			}
 		};
-	}]);
+	};
+	
+	angular.module('login')
+	.factory('AuthService', [
+		'$http',
+		'constants', 
+		AuthService
+	]);
 })();
 (function(){
 	'use strict';
@@ -53,6 +62,7 @@
 	angular.module('ygVendorApp', [
 		'ui.router',
 		'ngStorage',
+		'ngResource',
 		'base64',
 		'login'
 	])
@@ -88,28 +98,49 @@
 })();
 (function(){
 	'use strict';
+	var Vendor = function ($resource,constants){
+		return $resource(constants.v1baseUrl+'vendor/:id',{id:"@id"},{
+			profile: {
+				method: 'GET'
+			}
+		});
+	};
+	
 	angular.module('ygVendorApp')
-	.factory('errorHandler', ['$q','$localStorage','$location', function ($q,$localStorage,$location){
+	.factory('Vendor', [
+		'$resource',
+		'constants', 
+		Vendor
+	]);
+})();
+(function(){
+	'use strict';
+	var errorHandler = function ($q,$localStorage,$location){
 		var errorHandler = {
 			responseError : function(response){
 				if (response.status === 401 || response.status === 403) {
 					$localStorage.$reset();
 					$location.path('/login');
 				}
-				console.log(response);
 				return $q.reject(response);
 			}
 		};
 		return errorHandler;
-	}])
+	};
+	angular.module('ygVendorApp')
+	.factory('errorHandler', [
+		'$q',
+		'$localStorage',
+		'$location', 
+		errorHandler
+	])
 	.config(['$httpProvider',function ($httpProvider) {
 		$httpProvider.interceptors.push('errorHandler');
 	}]);
 })();
 (function(){
 	'use strict';
-	angular.module('ygVendorApp')
-	.factory('tokenInjector', ['$localStorage', function ($localStorage){
+	var tokenInjector = function ($localStorage){
 		var tokenInjector = {
 			request : function(config){
 				config.headers = config.headers || {};
@@ -120,10 +151,59 @@
 			}
 		};
 		return tokenInjector;
-	}])
+	};
+	angular.module('ygVendorApp')
+	.factory('tokenInjector', [
+		'$localStorage',
+		tokenInjector 
+	])
 	.config(['$httpProvider',function ($httpProvider) {
 		$httpProvider.interceptors.push('tokenInjector');
 	}]);
+})();
+(function(){
+	'use strict';
+	var vendorClients = function ($q,Vendor){
+		var vendorClients = {};
+		var fetchVendors = function() {
+			var deferred = $q.defer();
+			Vendor.profile(function (response) {
+				deferred.resolve(angular.extend(vendorClients, response, {
+					data: "vendor",
+					$refresh: fetchVendors
+
+					// $hasRole: function(role) {
+					// 	return userProfile.roles.indexOf(role) >= 0;
+					// },
+
+					// $hasAnyRole: function(roles) {
+					// 	return !!userProfile.roles.filter(function(role) {
+					// 		return roles.indexOf(role) >= 0;
+					// 	}).length;
+					// },
+
+					// $isAnonymous: function() {
+					// 	return userProfile.anonymous;
+					// },
+
+					// $isAuthenticated: function() {
+					// 	return !userProfile.anonymous;
+					// }
+
+				}));
+
+			});
+			return deferred.promise;
+		};
+		return fetchVendors();
+	};
+
+	angular.module('ygVendorApp')
+	.factory('vendorClients', [
+		'$q',
+		'Vendor', 
+		vendorClients
+	]);
 })();
 (function(){
 	'use strice';

@@ -1,6 +1,6 @@
 (function(){
 	'use strict';
-	var LoginCntrl = function ($state,AuthService,UserData,$localStorage,role){
+	var LoginCntrl = function ($state,AuthService,UserData,$localStorage,vendorClients){
 		this.userLogin = function(){
 			var data = {
 				username : this.username,
@@ -8,9 +8,10 @@
 			};
 			AuthService.login(data).then(function (response){
 				console.log(response.data);
-				$localStorage.$reset();
 				$localStorage.token = response.data.auth_token;
-				console.log(role.userrole);
+				vendorClients.$refresh().then(function (response){
+					console.log(response);
+				});
 			});
 		};
 	};
@@ -22,7 +23,10 @@
 			url : '/login',
 			templateUrl : '/static/modules/login/login.html',
 			controllerAs : 'login',
-			controller: 'LoginCntrl'
+			controller: 'LoginCntrl',
+			resolve: {
+				vendorClients : "vendorClients"
+			}
 		});
 	}])
 	.controller('LoginCntrl', [
@@ -30,7 +34,7 @@
 		'AuthService',
 		'UserData',
 		'$localStorage',
-		'role',
+		'vendorClients',
 		LoginCntrl
 	]);
 })();

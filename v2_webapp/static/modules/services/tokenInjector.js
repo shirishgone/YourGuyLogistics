@@ -1,7 +1,6 @@
 (function(){
 	'use strict';
-	angular.module('ygVendorApp')
-	.factory('tokenInjector', ['$localStorage', function ($localStorage){
+	var tokenInjector = function ($localStorage){
 		var tokenInjector = {
 			request : function(config){
 				config.headers = config.headers || {};
@@ -12,7 +11,12 @@
 			}
 		};
 		return tokenInjector;
-	}])
+	};
+	angular.module('ygVendorApp')
+	.factory('tokenInjector', [
+		'$localStorage',
+		tokenInjector 
+	])
 	.config(['$httpProvider',function ($httpProvider) {
 		$httpProvider.interceptors.push('tokenInjector');
 	}]);
