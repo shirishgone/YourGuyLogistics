@@ -8,13 +8,15 @@
         </div>
         <div class="orders-count" ng-hide="total_orders == null ">
         	<div class="count-section">
-        		<span class='count count-warning'>{{pending_orders || '0'}}</span> <span class="sm-hide">Pending Orders</span>
+        		<span class='count count-warning'>{{pending_orders || '0'}}</span> <span class="sm-hide">Pending</span> 
+        		<span class="tab-hide">Orders</span>
         	</div>
         	<div class="count-section">
-        		<span class='count count-danger'>{{unassigned_orders || '0'}}</span> <span class="sm-hide">Unassigned Orders</span>
+        		<span class='count count-danger'>{{unassigned_orders || '0'}}</span> <span class="sm-hide">Unassigned </span> <span class="tab-hide">Orders</span>
         	</div>
         	<div class="count-section">
-        		<span class='count count-primary'>{{total_orders || '0'}}</span> <span class="sm-hide">Total Orders</span>
+        		<span class='count count-primary'>{{total_orders || '0'}}</span> <span class="sm-hide">Total</span> 
+        		<span class="tab-hide">Orders</span>
         	</div>
         </div>
     </div>
