@@ -84,11 +84,7 @@ class DGViewSet(viewsets.ModelViewSet):
             }
             return Response(content, status = status.HTTP_405_METHOD_NOT_ALLOWED)
         else:
-            if role == constants.DELIVERY_GUY:
-                delivery_guy = get_object_or_404(DeliveryGuy, user = user)
-            else: 
-                delivery_guy = get_object_or_404(DeliveryGuy, id = pk)
-                
+            delivery_guy = get_object_or_404(DeliveryGuy, id = pk)
             detail_dict = dg_details_dict(delivery_guy)
             response_content = { "data": detail_dict}
             return Response(response_content, status = status.HTTP_200_OK)
