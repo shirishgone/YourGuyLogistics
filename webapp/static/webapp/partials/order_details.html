@@ -108,6 +108,34 @@
 			</div>
 			<div class="order-details">
 				<accordion close-others="false">
+					<accordion-group is-open="accordian.approval" ng-if="role.ops && order_with_id.is_reported" ng-class="{ 'panel-danger': order_with_id.is_reported}">
+						<accordion-heading>
+							<div>
+								Reported
+								<i class="pull-right glyphicon" ng-class="{'glyphicon-chevron-down': accordian.approval, 'glyphicon-chevron-right': !accordian.approval}"></i>
+							</div>
+						</accordion-heading>
+						<div class="left-section">
+							<div class="section">
+								<div class="col-md-12 col-sm-12 col-xs-12">
+									<h4>Reason</h4>
+									<div class="text">{{order_with_id.reported_reason}}</div>
+								</div>
+								<!-- <div class="col-md-12 col-sm-12 col-xs-12">
+									<h4>Deliver Address</h4>
+									<div class="text">{{order_with_id.delivery_address}}</div>
+								</div> -->
+							</div>
+						</div>
+						<div class="right-section">
+							<div id="button">
+								<button class="button-warning" 
+										ng-click="openDgModal(order_with_id)" 
+										ng-disabled="disableByStatus(order_with_id)">Resolve
+								</button>
+							</div>
+						</div>
+					</accordion-group>
 					<accordion-group is-open="accordian.approval" ng-if="role.ops">
 						<accordion-heading>
 							<div>

@@ -167,18 +167,20 @@
 				</div>
 			</div>
 			<div class="wid-15 wid-sm-22">
-				<span class="md-hide">Cust..</span> <span class="sm-hide">Customer Name</span> 
+				<span class="visible-xs-block">Cust..</span> 
+				<span class="visible-md-block visible-lg-block">Customer Name</span> 
+				<span class="visible-sm-block">Customer</span>
 			</div>
-			<div class="wid-15 wid-sm-22">
+			<div class="wid-15 wid-tab-13 wid-sm-22">
 				<span class="md-hide">Prod..</span><span class="sm-hide">Product</span> 
 			</div>
-			<div class="wid-15 wid-sm-22">
+			<div class="wid-15 wid-tab-13 wid-sm-22">
 				Vendor
 			</div>
-			<div class="wid-15 wid-sm-22">
+			<div class="wid-15 wid-tab-13 wid-sm-22">
 				<span class="md-hide">Order</span><span class="sm-hide">Order No</span> 
 			</div>
-			<div class="wid-15 sm-hide">
+			<div class="wid-15 wid-tab-13 sm-hide">
 				Status
 			</div>
 			<div class="wid-18 sm-hide">
@@ -199,16 +201,16 @@
 					<div class="wid-15 wid-sm-22">
 						{{order.customer_name}}
 					</div>
-					<div class="wid-15  wid-sm-22">
+					<div class="wid-15 wid-tab-13 wid-sm-22">
 						{{order.order_items[0].product_name|| "-----"}}
 					</div>
-					<div class="wid-15  wid-sm-22">
+					<div class="wid-15 wid-tab-13 wid-sm-22">
 						{{ order.vendor_name}}
 					</div>
-					<div class="wid-15  wid-sm-22">
+					<div class="wid-15 wid-tab-13 wid-sm-22">
 						{{order.id}}
 					</div>
-					<div class="wid-15 sm-hide" style="padding-top:10px;">
+					<div class="wid-15 wid-tab-13 sm-hide" style="padding-top:10px;">
 						<span class="label" ng-class="{
                             'label-success' : (order.status == 'DELIVERED'),
                             'label-warning' : (order.status == 'INTRANSIT'),
@@ -246,7 +248,7 @@
 						<h4>PICKUP ADDRESS</h4>
 						{{order.pickup_address}}
 					</div>
-					<div class="wid-60 wid-sm-66" ng-if="!order.is_reverse_pickup" >
+					<div class="wid-60 wid-tab-52 wid-sm-66" ng-if="!order.is_reverse_pickup" >
 						<h4>DELIVERY ADDRESS</h4>
 						{{order.delivery_address}}
 					</div>
@@ -294,9 +296,9 @@
 				<div ng-if="order.is_recurring" class="recurring" tooltip="Recurring Order" tooltip-placement="left">
 					<img src="/static/webapp/images/recurring_order.png" >
 				</div>
-				<!-- <div class="reported"  tooltip="Reported Order" tooltip-placement="left">
+				<div class="reported" ng-if="order.is_reported" tooltip="Reported Order" tooltip-placement="left">
 					<img src="/static/webapp/images/reported.png" >
-				</div> -->
+				</div>
 			</div>
 		</div>
 		<div ng-if="total_orders">

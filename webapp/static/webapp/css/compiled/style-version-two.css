@@ -648,6 +648,16 @@
 	.tab-hide {
 		display: none;
 	}
+	.wid-tab-13{
+		width: 13%;
+		float: left;
+		padding: 5px;
+	}
+	.wid-tab-52{
+		width: 52%;
+		float: left;
+		padding: 5px;
+	}
 }
 
 @media (max-width: 767px){
@@ -1306,4 +1316,8 @@
 	#sidebar-default {
 		position: absolute;
 	}
+}
+
+.panel-danger.panel-default .panel-heading , .panel-danger.panel-default .panel-title{
+	background: #FE5E64;
 }
