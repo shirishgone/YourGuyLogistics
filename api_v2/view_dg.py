@@ -5,6 +5,7 @@ from django.db.models.functions import Lower
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status, authentication
 from rest_framework import viewsets
+from rest_framework.decorators import api_view
 from rest_framework.decorators import detail_route, list_route
 from rest_framework.response import Response
 
@@ -15,10 +16,8 @@ from datetime import date, datetime, timedelta, time
 from api.views import user_role
 from api_v2.views import paginate
 from django.db.models import Q
-
-import constants
-
-
+from api_v2 import constants
+    
 def dg_list_dict(delivery_guy, attendance):
     dg_list_dict = {
             'id' : delivery_guy.id,
@@ -203,6 +202,7 @@ class DGViewSet(viewsets.ModelViewSet):
 @api_view(['GET'])
 def dg_app_version(request):
     response_content = { 
-        "app_version": constants.LATEST_APP_VERSION
+        "app_version": constants.LATEST_DG_APP_VERSION
         }
     return Response(response_content, status = status.HTTP_200_OK)                        
+            

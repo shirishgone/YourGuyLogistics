@@ -6,6 +6,7 @@ from django.shortcuts import get_object_or_404
 from django.utils.dateparse import parse_datetime
 from rest_framework import status, authentication
 from rest_framework import viewsets
+from rest_framework.decorators import api_view
 from rest_framework.decorators import detail_route, list_route
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -340,6 +341,6 @@ class DGViewSet(viewsets.ModelViewSet):
 @api_view(['GET'])
 def dg_app_version(request):
     response_content = { 
-        "app_version": constants.LATEST_APP_VERSION
+        "app_version": constants.LATEST_DG_APP_VERSION
         }
     return Response(response_content, status = status.HTTP_200_OK)            

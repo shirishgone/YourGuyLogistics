@@ -4,12 +4,12 @@ from rest_framework.routers import DefaultRouter
 from api_v3 import mail, views, view_user, view_freshdesk, view_address, view_dashboard, report, cron_jobs, \
     view_internals
 from api_v3.view_consumer import ConsumerViewSet
-from api_v3.view_dg import DGViewSet
+#from api_v3.view_dg import DGViewSet
 from api_v3.view_order import OrderViewSet
 from api_v3.view_product import ProductViewSet
 from api_v3.view_vendor import VendorViewSet
 from api_v3.view_vendoragent import VendorAgentViewSet
-import api_v3
+from api_v3 import view_dg
 
 urlpatterns = patterns(
     'api_v3.views',
@@ -29,7 +29,7 @@ urlpatterns = patterns(
     url(r'^daily_report/', report.daily_report, name='daily_report'),
     url(r'^website_email/', mail.website_email, name='website_email'),
     url(r'^assign_dg/', cron_jobs.assign_dg, name='assign_dg'),
-    url(r'^dg_app_version/', api_v3.dg_app_version, name='dg_app_version'),
+    url(r'^dg_app_version/', view_dg.dg_app_version, name='dg_app_version'),
     
     # STAFF METHODS -----------------------------------------
     url(r'^new_order_id_for_old_order_id/', view_internals.new_order_id_for_old_order_id,
@@ -44,7 +44,7 @@ router = DefaultRouter()
 router.register(r'industry', views.IndustryViewSet)
 router.register(r'vendor', VendorViewSet)
 router.register(r'vendoragent', VendorAgentViewSet)
-router.register(r'deliveryguy', DGViewSet)
+router.register(r'deliveryguy', view_dg.DGViewSet)
 router.register(r'consumer', ConsumerViewSet)
 router.register(r'order', OrderViewSet, base_name='orders')
 router.register(r'product', ProductViewSet)
