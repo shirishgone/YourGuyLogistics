@@ -71,6 +71,16 @@ def cod_report():
     except:
         print('send_cod_report : ERROR')
 
+
+@scheduler.scheduled_job('cron', id='dg_report_job', hour=17)
+def dg_report():
+    try:
+        url = base_url()
+        url = url + '/api/v3/dg_report/'
+        result = requests.get(url)
+    except:
+        print('send_dg_report : ERROR')
+
 # ----------------------------------------------------------------
 scheduler.start()
 

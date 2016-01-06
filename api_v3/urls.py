@@ -27,6 +27,7 @@ urlpatterns = patterns(
     url(r'^freshdesk/resolve', view_freshdesk.resolve, name='freshdesk_resolve'),
     url(r'^daily_report/', report.daily_report, name='daily_report'),
     url(r'^cod_report/', report.cod_report, name='cod_report'),
+    url(r'^dg_report/', report.dg_report, name='dg_report'),
     url(r'^website_email/', mail.website_email, name='website_email'),
     url(r'^assign_dg/', cron_jobs.assign_dg, name='assign_dg'),
 
