@@ -9,6 +9,7 @@ from api_v3.view_order import OrderViewSet
 from api_v3.view_product import ProductViewSet
 from api_v3.view_vendor import VendorViewSet
 from api_v3.view_vendoragent import VendorAgentViewSet
+import api_v3
 
 urlpatterns = patterns(
     'api_v3.views',
@@ -28,7 +29,8 @@ urlpatterns = patterns(
     url(r'^daily_report/', report.daily_report, name='daily_report'),
     url(r'^website_email/', mail.website_email, name='website_email'),
     url(r'^assign_dg/', cron_jobs.assign_dg, name='assign_dg'),
-
+    url(r'^dg_app_version/', api_v3.dg_app_version, name='dg_app_version'),
+    
     # STAFF METHODS -----------------------------------------
     url(r'^new_order_id_for_old_order_id/', view_internals.new_order_id_for_old_order_id,
         name='new_order_id_for_old_order_id'),

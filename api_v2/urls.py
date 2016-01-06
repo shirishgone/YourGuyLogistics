@@ -10,6 +10,7 @@ from api_v2 import view_dashboard
 from api_v2 import utils
 from api_v2 import views
 from api_v2 import mail
+from api_v2 import view_dg
 
 urlpatterns = patterns(
 	'',
@@ -22,6 +23,7 @@ urlpatterns = patterns(
 	url(r'^new_order_id_for_old_order_id/', utils.new_order_id_for_old_order_id, name = 'new_order_id_for_old_order_id'),
 	url(r'^old_order_id_for_new_order_id/', utils.old_order_id_for_new_order_id, name = 'old_order_id_for_new_order_id'),	
 	url(r'^fill_full_address/', utils.fill_full_address, name = 'fill_full_address'),
+	url(r'^dg_app_version/', view_dg.dg_app_version, name='dg_app_version'),
 )
 router = DefaultRouter()
 router.register(r'consumer', ConsumerViewSet)
