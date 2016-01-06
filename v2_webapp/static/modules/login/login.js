@@ -1,16 +1,16 @@
 (function(){
 	'use strict';
-	var LoginCntrl = function ($state,AuthService,UserData,$localStorage,vendorClients){
+	var LoginCntrl = function ($state,AuthService,$localStorage,vendorClients){
 		this.userLogin = function(){
 			var data = {
 				username : this.username,
 				password : this.password
 			};
 			AuthService.login(data).then(function (response){
-				console.log(response.data);
 				$localStorage.token = response.data.auth_token;
-				vendorClients.$refresh().then(function (response){
-					console.log(response);
+				vendorClients.$refresh().then(function (vendor){
+					vendor.$updateuserRole();
+					$state.go('home');
 				});
 			});
 		};
@@ -25,14 +25,16 @@
 			controllerAs : 'login',
 			controller: 'LoginCntrl',
 			resolve: {
-				vendorClients : "vendorClients"
+				vendorClients : "vendorClients",
+				access : ["Access",function (Access){
+					return Access.isAnonymous();
+				}]
 			}
 		});
 	}])
 	.controller('LoginCntrl', [
 		'$state', 
 		'AuthService',
-		'UserData',
 		'$localStorage',
 		'vendorClients',
 		LoginCntrl

@@ -7,12 +7,14 @@
 		'ngStorage',
 		'ngResource',
 		'base64',
-		'login'
+		'login',
+		'home'
 	])
-	.config(['$urlRouterProvider','$locationProvider',function ($urlRouterProvider,$locationProvider) {
+	.config(['$urlRouterProvider','$locationProvider','roleProvider',function ($urlRouterProvider,$locationProvider,roleProvider) {
 		// For any unmatched url, redirect to /login
-  		$urlRouterProvider.otherwise("/login");
+  		$urlRouterProvider.otherwise("/home");
   		$locationProvider.html5Mode(true).hashPrefix('!');
+  		roleProvider.$get().$setUserRole();
 	}]);
 
 })();

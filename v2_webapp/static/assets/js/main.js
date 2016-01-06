@@ -1,16 +1,16 @@
 (function(){
 	'use strict';
-	var LoginCntrl = function ($state,AuthService,UserData,$localStorage,vendorClients){
+	var LoginCntrl = function ($state,AuthService,$localStorage,vendorClients){
 		this.userLogin = function(){
 			var data = {
 				username : this.username,
 				password : this.password
 			};
 			AuthService.login(data).then(function (response){
-				console.log(response.data);
 				$localStorage.token = response.data.auth_token;
-				vendorClients.$refresh().then(function (response){
-					console.log(response);
+				vendorClients.$refresh().then(function (vendor){
+					vendor.$updateuserRole();
+					$state.go('home');
 				});
 			});
 		};
@@ -25,14 +25,16 @@
 			controllerAs : 'login',
 			controller: 'LoginCntrl',
 			resolve: {
-				vendorClients : "vendorClients"
+				vendorClients : "vendorClients",
+				access : ["Access",function (Access){
+					return Access.isAnonymous();
+				}]
 			}
 		});
 	}])
 	.controller('LoginCntrl', [
 		'$state', 
 		'AuthService',
-		'UserData',
 		'$localStorage',
 		'vendorClients',
 		LoginCntrl
@@ -57,6 +59,39 @@
 })();
 (function(){
 	'use strict';
+	var homeCntrl = function($state,constants,vendorClients){
+		console.log(vendorClients.$hasRole(constants.userRole.VENDOR));
+		// if(vendorClients.$hasRole(constants.userRole.ADMIN)){
+
+		// }
+	};
+
+	angular.module('home', [])
+	.config(['$stateProvider',function ($stateProvider) {
+		$stateProvider
+		.state('home',{
+			url: "/home",
+			// abstract: true,
+			templateUrl: "/static/modules/home/home.html",
+			controllerAs : 'home',
+    		controller: "homeCntrl",
+    		resolve: {
+    			vendorClients : 'vendorClients',
+    			access: ["Access",function (Access){ 
+    				return Access.isAuthenticated(); 
+    			}]
+    		}
+		});
+	}])
+	.controller('homeCntrl', [
+		'$state', 
+		'constants',
+		'vendorClients',
+		homeCntrl
+	]);
+})();
+(function(){
+	'use strict';
 
 	// Declare all the app level modules which depend on the different filters and services
 	angular.module('ygVendorApp', [
@@ -64,12 +99,14 @@
 		'ngStorage',
 		'ngResource',
 		'base64',
-		'login'
+		'login',
+		'home'
 	])
-	.config(['$urlRouterProvider','$locationProvider',function ($urlRouterProvider,$locationProvider) {
+	.config(['$urlRouterProvider','$locationProvider','roleProvider',function ($urlRouterProvider,$locationProvider,roleProvider) {
 		// For any unmatched url, redirect to /login
-  		$urlRouterProvider.otherwise("/login");
+  		$urlRouterProvider.otherwise("/home");
   		$locationProvider.html5Mode(true).hashPrefix('!');
+  		roleProvider.$get().$setUserRole();
 	}]);
 
 })();
@@ -91,10 +128,72 @@
 		v1baseUrl: '/api/v1/',
 		v2baseUrl: '/api/v2/',
 		v3baseUrl: '/api/v3/',
+		userRole: {
+			ADMIN : 'operations',
+			VENDOR : 'vendor'
+		}
 	};
 
 	angular.module('ygVendorApp')
 	.constant('constants', constants);
+})();
+(function(){
+	'use strict';
+	var Access = function($q,vendorClients){
+		var Access = {
+			OK: 200,
+			UNAUTHORIZED: 401,
+    		FORBIDDEN: 403,
+
+    		hasRole : function(role){
+    			var deferred = $q.defer();
+    			vendorClients.then(function (vendorClients){
+    				if(vendorClients.$hasRole(role)){
+    					deferred.resolve(Access.OK);
+    				}
+    				else if(vendorClients.$isAnonymous()){
+    					deferred.reject(Access.UNAUTHORIZED);
+    				}
+    				else{
+    					deferred.reject(Access.FORBIDDEN);
+    				}
+    			});
+    			return deferred.promise;
+    		},
+    		isAuthenticated : function(){
+    			var deferred = $q.defer();
+    			vendorClients.then(function (vendorClients){
+    				if(vendorClients.$isAuthenticated()){
+    					deferred.resolve(Access.Ok);
+    				}
+    				else{
+    					deferred.reject(Access.UNAUTHORIZED);
+    				}
+    			});
+    			return deferred.promise;
+    		},
+    		isAnonymous : function(){
+    			var deferred = $q.defer();
+    			vendorClients.then(function (vendorClients){
+    				if(vendorClients.$isAnonymous()){
+    					deferred.resolve(Access.OK);
+    				}
+    				else{
+    					deferred.reject(Access.FORBIDDEN);
+    				}
+    			});
+    			return deferred.promise;
+    		}
+		};
+        return Access;
+	};
+
+	angular.module('ygVendorApp').
+	factory('Access', [
+		'$q',
+		'vendorClients',
+		Access
+	]);
 })();
 (function(){
 	'use strict';
@@ -118,11 +217,14 @@
 	var errorHandler = function ($q,$localStorage,$location){
 		var errorHandler = {
 			responseError : function(response){
+				var defer = $q.defer();
 				if (response.status === 401 || response.status === 403) {
 					$localStorage.$reset();
 					$location.path('/login');
 				}
-				return $q.reject(response);
+				defer.reject(response);
+				return defer.promise;
+
 			}
 		};
 		return errorHandler;
@@ -162,36 +264,81 @@
 	}]);
 })();
 (function(){
+	'use strice';
+
+	var role = function ($base64,$localStorage){
+		var role = {
+			userrole : 'anonymous',
+			authenticated : false,
+			$setUserRole : function(){
+				if($localStorage.token){
+					var x = $base64.decode($localStorage.token).split(':');
+					userrole = x[1];
+					authenticated = true;
+				}
+				else{
+					userrole = 'anonymous';
+					authenticated = false;
+				}
+			},
+			$getUserRole : function(){
+				return {
+					userrole : userrole,
+					is_authenticated : authenticated
+				};
+			}
+		};
+		return role;
+	};
+
+	angular.module('ygVendorApp')
+	.factory('role', [
+		'$base64',
+		'$localStorage',
+		role
+	]);
+})();
+(function(){
 	'use strict';
-	var vendorClients = function ($q,Vendor){
+	var vendorClients = function ($q,role,Vendor){
 		var vendorClients = {};
 		var fetchVendors = function() {
 			var deferred = $q.defer();
 			Vendor.profile(function (response) {
 				deferred.resolve(angular.extend(vendorClients, response, {
-					data: "vendor",
-					$refresh: fetchVendors
+					$refresh: fetchVendors,
+					$updateuserRole: function(){
+						return role.$setUserRole();
+					},
 
-					// $hasRole: function(role) {
-					// 	return userProfile.roles.indexOf(role) >= 0;
-					// },
+					$hasRole: function(roleValue) {
+						return role.$getUserRole().userrole == roleValue;
+					},
 
-					// $hasAnyRole: function(roles) {
-					// 	return !!userProfile.roles.filter(function(role) {
-					// 		return roles.indexOf(role) >= 0;
-					// 	}).length;
-					// },
-
-					// $isAnonymous: function() {
-					// 	return userProfile.anonymous;
-					// },
-
-					// $isAuthenticated: function() {
-					// 	return !userProfile.anonymous;
-					// }
-
+					$isAuthenticated: function() {
+						return role.$getUserRole().is_authenticated;
+					},
+					$isAnonymous: function() {
+						return !role.$getUserRole().is_authenticated;
+					}
 				}));
 
+			}, function (error){
+				deferred.resolve(angular.extend(vendorClients ,{
+					$refresh : fetchVendors,
+					$updateuserRole: function(){
+						return role.$setUserRole();
+					},
+					$hasRole : function (roleValue){
+						return role,$getUserRole().userrole == roleValue;
+					},
+					$isAuthenticated: function() {
+						return role.$getUserRole().is_authenticated;
+					},
+					$isAnonymous: function() {
+						return !role.$getUserRole().is_authenticated;
+					}
+				}));
 			});
 			return deferred.promise;
 		};
@@ -201,33 +348,8 @@
 	angular.module('ygVendorApp')
 	.factory('vendorClients', [
 		'$q',
+		'role',
 		'Vendor', 
 		vendorClients
-	]);
-})();
-(function(){
-	'use strice';
-
-	var role = function ($base64,$localStorageProvider){
-		var userrole ;
-		return {
-			setUserRole: function (){
-				var x = $base64.decode($localStorageProvider.get('token'));
-				userrole = x;
-			},
-			$get : function(){
-				return {
-					userrole: userrole
-				};
-			}
-
-		};
-	};
-
-	angular.module('ygVendorApp')
-	.provider('role', [
-		'$base64',
-		'$localStorageProvider',
-		role
 	]);
 })();

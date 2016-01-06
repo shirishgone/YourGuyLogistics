@@ -1,34 +1,44 @@
 (function(){
 	'use strict';
-	var vendorClients = function ($q,Vendor){
+	var vendorClients = function ($q,role,Vendor){
 		var vendorClients = {};
 		var fetchVendors = function() {
 			var deferred = $q.defer();
 			Vendor.profile(function (response) {
 				deferred.resolve(angular.extend(vendorClients, response, {
-					data: "vendor",
-					$refresh: fetchVendors
+					$refresh: fetchVendors,
+					$updateuserRole: function(){
+						return role.$setUserRole();
+					},
 
-					// $hasRole: function(role) {
-					// 	return userProfile.roles.indexOf(role) >= 0;
-					// },
+					$hasRole: function(roleValue) {
+						return role.$getUserRole().userrole == roleValue;
+					},
 
-					// $hasAnyRole: function(roles) {
-					// 	return !!userProfile.roles.filter(function(role) {
-					// 		return roles.indexOf(role) >= 0;
-					// 	}).length;
-					// },
-
-					// $isAnonymous: function() {
-					// 	return userProfile.anonymous;
-					// },
-
-					// $isAuthenticated: function() {
-					// 	return !userProfile.anonymous;
-					// }
-
+					$isAuthenticated: function() {
+						return role.$getUserRole().is_authenticated;
+					},
+					$isAnonymous: function() {
+						return !role.$getUserRole().is_authenticated;
+					}
 				}));
 
+			}, function (error){
+				deferred.resolve(angular.extend(vendorClients ,{
+					$refresh : fetchVendors,
+					$updateuserRole: function(){
+						return role.$setUserRole();
+					},
+					$hasRole : function (roleValue){
+						return role,$getUserRole().userrole == roleValue;
+					},
+					$isAuthenticated: function() {
+						return role.$getUserRole().is_authenticated;
+					},
+					$isAnonymous: function() {
+						return !role.$getUserRole().is_authenticated;
+					}
+				}));
 			});
 			return deferred.promise;
 		};
@@ -38,6 +48,7 @@
 	angular.module('ygVendorApp')
 	.factory('vendorClients', [
 		'$q',
+		'role',
 		'Vendor', 
 		vendorClients
 	]);

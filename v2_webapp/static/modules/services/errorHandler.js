@@ -3,11 +3,14 @@
 	var errorHandler = function ($q,$localStorage,$location){
 		var errorHandler = {
 			responseError : function(response){
+				var defer = $q.defer();
 				if (response.status === 401 || response.status === 403) {
 					$localStorage.$reset();
 					$location.path('/login');
 				}
-				return $q.reject(response);
+				defer.reject(response);
+				return defer.promise;
+
 			}
 		};
 		return errorHandler;

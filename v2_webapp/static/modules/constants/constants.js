@@ -5,6 +5,10 @@
 		v1baseUrl: '/api/v1/',
 		v2baseUrl: '/api/v2/',
 		v3baseUrl: '/api/v3/',
+		userRole: {
+			ADMIN : 'operations',
+			VENDOR : 'vendor'
+		}
 	};
 
 	angular.module('ygVendorApp')

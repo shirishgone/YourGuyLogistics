@@ -54,10 +54,11 @@ module.exports = function(grunt){
 				src : [
 					'static/modules/login/login.js',
 					'static/modules/login/AuthService.js',
+					'static/modules/home/home.js',
 					'static/modules/app.js',
+					'static/modules/providers/*.js',
 					'static/modules/constants/*.js',
 					'static/modules/services/*.js',
-					'static/modules/providers/*.js'
 				],
 				dest : 'static/assets/js/main.js'
 			}
