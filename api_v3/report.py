@@ -17,7 +17,7 @@ def daily_report(request):
     day_end = ist_day_end(date)
 
     # TOTAL ORDERS ----------------------------------------------------------------------
-    delivery_statuses_today = OrderDeliveryStatus.objects.filter(date__gte=day_start, date__lte=day_end, order__cod_amount__gt = 0)
+    delivery_statuses_today = OrderDeliveryStatus.objects.filter(date__gte=day_start, date__lte=day_end)
     orders_total_count = len(delivery_statuses_today)
     # -----------------------------------------------------------------------------------
 
@@ -181,7 +181,7 @@ def cod_report(request):
     day_end = ist_day_end(date)
 
     # TOTAL ORDERS ----------------------------------------------------------------------
-    delivery_statuses_today = OrderDeliveryStatus.objects.filter(date__gte=day_start, date__lte=day_end)
+    delivery_statuses_today = OrderDeliveryStatus.objects.filter(date__gte=day_start, date__lte=day_end, order__cod_amount__gt = 0)
     orders_total_count = len(delivery_statuses_today)
     # -----------------------------------------------------------------------------------
 
@@ -333,6 +333,7 @@ def dg_report(request):
             Q(order_status=constants.ORDER_STATUS_DELIVERED)
             )
 
+    delivery_statuses_today = delivery_statuses_today.exclude(delivery_guy=None)
     all_dgs = delivery_statuses_today.values('delivery_guy__user__username').\
         annotate(sum_of_cod_collected=Sum('cod_collected_amount'), sum_of_cod_amount=Sum('order__cod_amount'))
     dg_total_count = len(all_dgs)
