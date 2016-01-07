@@ -322,7 +322,7 @@ def cod_report(request):
                 sum_of_cod_amount = item['sum_of_cod_amount']
 
                 cod_with_vendor = ''
-                cod_with_vendor = "\n - Vendor: %s\n--sum of cod collected = %s\n--sum of cod amount = %s" % \
+                cod_with_vendor = "\n  Vendor: %s\n   sum of cod collected = %s\n   sum of cod amount = %s" % \
                                   (vendor_name, sum_of_cod_collected, sum_of_cod_amount)
                 email_body = email_body + "\n" + cod_with_vendor
 
