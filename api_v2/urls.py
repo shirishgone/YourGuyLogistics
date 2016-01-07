@@ -23,6 +23,7 @@ urlpatterns = patterns(
 	url(r'^old_order_id_for_new_order_id/', utils.old_order_id_for_new_order_id, name = 'old_order_id_for_new_order_id'),	
 	url(r'^fill_full_address/', utils.fill_full_address, name = 'fill_full_address'),
 	url(r'^dg_app_version/', view_dg.dg_app_version, name='dg_app_version'),
+	url(r'^delivery_guy/profile/', view_dg.profile, name='dg_profile'),
 )
 router = DefaultRouter()
 router.register(r'consumer', ConsumerViewSet)

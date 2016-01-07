@@ -33,6 +33,7 @@ urlpatterns = patterns(
     url(r'^website_email/', mail.website_email, name='website_email'),
     url(r'^assign_dg/', cron_jobs.assign_dg, name='assign_dg'),
     url(r'^dg_app_version/', view_dg.dg_app_version, name='dg_app_version'),
+    url(r'^deliveryguy/profile/', view_dg.profile, name='dg_profile'),
     
     # STAFF METHODS -----------------------------------------
     url(r'^new_order_id_for_old_order_id/', view_internals.new_order_id_for_old_order_id,
