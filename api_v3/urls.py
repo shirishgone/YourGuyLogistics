@@ -29,6 +29,7 @@ urlpatterns = patterns(
     url(r'^daily_report/', report.daily_report, name='daily_report'),
     url(r'^cod_report/', report.cod_report, name='cod_report'),
     url(r'^dg_report/', report.dg_report, name='dg_report'),
+    url(r'^vendor_report/', report.vendor_report, name='vendor_report'),
     url(r'^website_email/', mail.website_email, name='website_email'),
     url(r'^assign_dg/', cron_jobs.assign_dg, name='assign_dg'),
     url(r'^dg_app_version/', view_dg.dg_app_version, name='dg_app_version'),
