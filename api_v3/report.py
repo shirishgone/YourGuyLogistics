@@ -284,11 +284,18 @@ def cod_report(request):
         cod_with_dg = ''
         # for each DG, display his total collection and amount supposed to be collected
         for single_dg in dg_tracked:
-            dg_username = single_dg['delivery_guy__user__username']
+            dg_ph_number = single_dg['delivery_guy__user__username']
             sum_of_cod_collected = single_dg['sum_of_cod_collected']
             sum_of_cod_amount = single_dg['sum_of_cod_amount']
+
+            if dg_ph_number is not None:
+                dg = DeliveryGuy.objects.get(user__username=dg_ph_number)
+                dg_full_name = dg.user.first_name + dg.user.last_name
+            else:
+                dg_full_name = 'Unassigned'
+
             cod_with_dg = "\nDG: %s                sum of cod collected = %s            sum of cod amount = %s" % \
-                          (dg_username, sum_of_cod_collected, sum_of_cod_amount)
+                         (dg_full_name, sum_of_cod_collected, sum_of_cod_amount)
             email_body = email_body + "\n\n" + cod_with_dg
             # ===============================================================
             # For the same DG, specify vendor wise collection bifurcation,
