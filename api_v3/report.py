@@ -62,7 +62,7 @@ def daily_report(request):
 
         orders_delivery_attempted_count = delivery_statuses_today.filter(
             order_status=constants.ORDER_STATUS_DELIVERY_ATTEMPTED).count()
-        orders_delivert_attempted_percentage = "{0:.0f}%".format(
+        orders_delivery_attempted_percentage = "{0:.0f}%".format(
             float(orders_delivery_attempted_count) / float(orders_total_count) * 100)
 
         orders_rejected_count = delivery_statuses_today.filter(order_status=constants.ORDER_STATUS_REJECTED).count()
@@ -143,7 +143,7 @@ def daily_report(request):
         email_body = email_body + "\nPickup Attempted   = %s [%s percent]" % (
             orders_pickup_attempted_count, orders_pickup_attempted_percentage)
         email_body = email_body + "\nDelivery Attempted = %s [%s percent]" % (
-            orders_delivery_attempted_count, orders_delivered_percentage)
+            orders_delivery_attempted_count, orders_delivery_attempted_percentage)
         email_body = email_body + "\nRejected       = %s [%s percent]" % (
             orders_rejected_count, orders_rejected_percentage)
         email_body = email_body + "\nCanceled       = %s [%s percent]" % (
