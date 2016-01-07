@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from django.db.models import Sum, Q, Count
+from django.db.models import Sum, Q
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -277,7 +277,7 @@ def cod_report(request):
         # COD as per DG
         # dict of all DGs for tracked orders
         email_body = email_body + "\n----------------------------------------------------------------------------------------------------------------------------------------------\n"
-        email_body = email_body + "\nDG wise COD"
+        email_body = email_body + "\nDG wise COD: \n* COD of pending and attempted orders are not considered."
 
         dg_tracked = delivery_statuses_tracked_queryset.values('delivery_guy__user__username'). \
             annotate(sum_of_cod_collected=Sum('cod_collected_amount'), sum_of_cod_amount=Sum('order__cod_amount'))
@@ -351,13 +351,12 @@ def dg_report(request):
 
     else:
         # DG details for today
-        # does cancelled order come under assigned order?
         today_string = datetime.now().strftime("%Y %b %d")
         email_subject = 'DG Report : %s' % (today_string)
 
         email_body = "Good Evening Guys, \n\nPlease find the dg report of the day."
         email_body = email_body + "\n\nTotal dgs working today = %s" % (dg_total_count)
-        email_body = email_body + "\n\nDELIVERY BOY DETAILS -------"
+        email_body = email_body + "\n\nDELIVERY BOY DETAILS -------\n* COD of Cancelled orders are not considered."
 
         orders_executed = delivery_statuses_today.filter(order_status=constants.ORDER_STATUS_DELIVERED)
 
@@ -377,12 +376,14 @@ def dg_report(request):
             orders_executed_tracked = orders_executed.filter(delivery_guy__user__username=single_dg['delivery_guy__user__username'])
             no_of_executed_orders = len(orders_executed_tracked)
 
-            email_body = email_body + "\n\n DG Name: %s, DG Phone Number: %s, Number of Orders Assigned: %s, Number of Orders executed: %s, COD collected: %s, COD to be collected: %s" % (dg_full_name, dg_ph_number, no_of_assigned_orders, no_of_executed_orders, cod_collected, cod_to_be_collected)
+            email_body = email_body + "\n\n DG Name: %s, DG Phone Number: %s, Number of Orders Assigned: %s, " \
+                                      "Number of Orders executed: %s, COD collected: %s, COD to be collected: %s" % \
+                                      (dg_full_name, dg_ph_number, no_of_assigned_orders, no_of_executed_orders,
+                                       cod_collected, cod_to_be_collected)
             email_body = email_body + "\n-----------------------------------"
-
 
         email_body = email_body + "\n-----------------------------------"
         email_body = email_body + "\n\n- YourGuy BOT"
-        
+
         send_email(constants.EMAIL_DG_REPORT, email_subject, email_body)
         return Response(status=status.HTTP_200_OK)
