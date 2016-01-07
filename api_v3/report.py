@@ -247,9 +247,10 @@ def cod_report(request):
         email_subject = "COD Report : %s" % (today_string)
 
         email_body = "Good Evening Guys, \nPlease find the COD report of the day."
-        email_body = email_body + "\n----------------------------------------------------------------------------------------------------------------------------------------------\n"
+        email_body = email_body + "\n-----------------------\n"
 
         email_body = email_body + "\nDELIVERY STATUS wise COD"
+        email_body = email_body + "\n-----------------------\n"
         email_body = email_body + "\n\nPENDING Orders amount: %0.0f" % (pending_cod_amount)
 
         email_body = email_body + "\nATTEMPTED Orders amount: %0.0f" % (attempted_cod_amount)
@@ -259,6 +260,7 @@ def cod_report(request):
         email_body = email_body + "\nTOTAL COD amount: %0.0f" % (total_cod_amount)
 
         email_body = email_body + "\nCOLLECTED COD amount: %0.0f" % (total_cod_collected)
+        email_body = email_body + "\n-----------------------\n"
 
         # COD as per VENDOR --------------------------------------------------------
         # all tracked orders
@@ -276,16 +278,16 @@ def cod_report(request):
             sum_of_cod_collected = item['sum_of_cod_collected']
             sum_of_cod_amount = item['sum_of_cod_amount']
             cod_with_vendor = cod_with_vendor + \
-                              "\nVendor: %s           sum of cod collected = %s            sum of cod amount = %s" % \
+                              "\nVendor: %s\nsum of cod collected = %s \nsum of cod amount = %s" % \
                               (vendor, sum_of_cod_collected, sum_of_cod_amount)
         # -----------------------------------------------------------------------------------
-        email_body = email_body + "\n----------------------------------------------------------------------------------------------------------------------------------------------\n"
+        email_body = email_body + "\n-----------------------\n"
         email_body = email_body + "\nVENDOR wise COD: \n* COD of pending and attempted orders are not considered."
         email_body = email_body + "\n\n" + cod_with_vendor
 
         # COD as per DG
         # dict of all DGs for tracked orders
-        email_body = email_body + "\n----------------------------------------------------------------------------------------------------------------------------------------------\n"
+        email_body = email_body + "\n-----------------------\n"
         email_body = email_body + "\nDG wise COD: \n* COD of pending and attempted orders are not considered."
 
         dg_tracked = delivery_statuses_tracked_queryset.values('delivery_guy__user__username'). \
@@ -303,7 +305,7 @@ def cod_report(request):
             else:
                 dg_full_name = 'Unassigned'
 
-            cod_with_dg = "\nDG: %s                sum of cod collected = %s            sum of cod amount = %s" % \
+            cod_with_dg = "\nDG: %s\nsum of cod collected = %s\nsum of cod amount = %s" % \
                          (dg_full_name, sum_of_cod_collected, sum_of_cod_amount)
             email_body = email_body + "\n\n" + cod_with_dg
             # ===============================================================
@@ -320,12 +322,12 @@ def cod_report(request):
                 sum_of_cod_amount = item['sum_of_cod_amount']
 
                 cod_with_vendor = ''
-                cod_with_vendor = "\nVendor: %s           sum of cod collected = %s            sum of cod amount = %s" % \
+                cod_with_vendor = "\nVendor: %s\nsum of cod collected = %s\nsum of cod amount = %s" % \
                                   (vendor_name, sum_of_cod_collected, sum_of_cod_amount)
                 email_body = email_body + "\n" + cod_with_vendor
 
         # ---------------------------------------------------------------------------
-        email_body = email_body + "\n----------------------------------------------------------------------------------------------------------------------------------------------"
+        email_body = email_body + "\n----------------------------"
         email_body = email_body + "\n\n- YourGuy BOT"
 
         send_email(constants.EMAIL_COD_REPORT, email_subject, email_body)
@@ -396,8 +398,8 @@ def dg_report(request):
             orders_executed_tracked = orders_executed.filter(delivery_guy__user__username=single_dg['delivery_guy__user__username'])
             no_of_executed_orders = len(orders_executed_tracked)
 
-            email_body = email_body + "\n\n DG Name: %s, DG Phone Number: %s, Number of Orders Assigned: %s, " \
-                                      "Number of Orders executed: %s, COD collected: %s, COD to be collected: %s" % \
+            email_body = email_body + "\n\n DG Name: %s\nDG Phone Number: %s\nNumber of Orders Assigned: %s" \
+                                      "\nNumber of Orders executed: %s\nCOD collected: %s\nCOD to be collected: %s" % \
                                       (dg_full_name, dg_ph_number, no_of_assigned_orders, no_of_executed_orders,
                                        cod_collected, cod_to_be_collected)
             email_body = email_body + "\n-----------------------------------"
