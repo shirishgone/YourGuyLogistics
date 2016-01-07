@@ -7,7 +7,7 @@ from rest_framework.response import Response
 
 from api_v3 import constants
 from api_v3.utils import send_email, ist_day_start, ist_day_end
-from yourguy.models import DeliveryGuy, OrderDeliveryStatus, DGAttendance, Vendor, Order
+from yourguy.models import DeliveryGuy, OrderDeliveryStatus, DGAttendance, Vendor
 
 
 @api_view(['GET'])
@@ -197,6 +197,9 @@ def cod_report(request):
         return Response(status=status.HTTP_200_OK)
     else:
         # COD as per ORDER_STATUS --------------------------------------------------------
+        import pdb
+        pdb.set_trace()
+
         orders_pending_queryset = delivery_statuses_today.filter(Q(order_status=constants.ORDER_STATUS_QUEUED) |
                                                                  Q(order_status=constants.ORDER_STATUS_INTRANSIT))
         orders_pending = orders_pending_queryset.aggregate(sum_of_cod_amount=Sum('order__cod_amount'))
@@ -218,6 +221,14 @@ def cod_report(request):
         if cancelled_cod_amount is None:
             cancelled_cod_amount = 0
 
+        orders_executed_queryset = delivery_statuses_today.filter(order_status=constants.ORDER_STATUS_DELIVERED)
+        orders_executed = orders_executed_queryset.aggregate(sum_of_cod_collected=Sum('cod_collected_amount'),sum_of_cod_amount=Sum('order__cod_amount'))
+        delivered_cod_collected = orders_executed['sum_of_cod_collected']
+        delivered_cod_amount = orders_executed['sum_of_cod_amount']
+
+        pending_cod = delivered_cod_amount - delivered_cod_collected
+        pending_cod_amount = pending_cod_amount + pending_cod
+
         delivery_statuses_tracked_queryset = delivery_statuses_today.filter(
             Q(order_status=constants.ORDER_STATUS_QUEUED) |
             Q(order_status=constants.ORDER_STATUS_INTRANSIT) |
@@ -232,6 +243,7 @@ def cod_report(request):
 
         total_cod = delivery_statuses_tracked_queryset.aggregate(total_cod=Sum('order__cod_amount'))
         total_cod_amount = total_cod['total_cod']
+
         # -------------------------------------------------------------------------------
 
         today_string = datetime.now().strftime("%Y %b %d")
@@ -284,11 +296,18 @@ def cod_report(request):
         cod_with_dg = ''
         # for each DG, display his total collection and amount supposed to be collected
         for single_dg in dg_tracked:
-            dg_username = single_dg['delivery_guy__user__username']
+            dg_ph_number = single_dg['delivery_guy__user__username']
             sum_of_cod_collected = single_dg['sum_of_cod_collected']
             sum_of_cod_amount = single_dg['sum_of_cod_amount']
+
+            if dg_ph_number is not None:
+                dg = DeliveryGuy.objects.get(user__username=dg_ph_number)
+                dg_full_name = dg.user.first_name + dg.user.last_name
+            else:
+                dg_full_name = "unassigned"
+
             cod_with_dg = "\nDG: %s                sum of cod collected = %s            sum of cod amount = %s" % \
-                          (dg_username, sum_of_cod_collected, sum_of_cod_amount)
+                          (dg_full_name, sum_of_cod_collected, sum_of_cod_amount)
             email_body = email_body + "\n\n" + cod_with_dg
             # ===============================================================
             # For the same DG, specify vendor wise collection bifurcation,
@@ -332,6 +351,7 @@ def dg_report(request):
             Q(order_status=constants.ORDER_STATUS_DELIVERY_ATTEMPTED) |
             Q(order_status=constants.ORDER_STATUS_DELIVERED)
             )
+    delivery_statuses_today = delivery_statuses_today.exclude(delivery_guy=None)
 
     all_dgs = delivery_statuses_today.values('delivery_guy__user__username').\
         annotate(sum_of_cod_collected=Sum('cod_collected_amount'), sum_of_cod_amount=Sum('order__cod_amount'))
