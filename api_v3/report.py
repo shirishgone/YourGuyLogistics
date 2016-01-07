@@ -363,7 +363,8 @@ def dg_report(request):
         email_subject = 'DG Report : %s' % (today_string)
 
         email_body = "Good Evening Guys, \n\nPlease find the dg report of the day."
-        email_body = email_body + "\n\nTotal dgs working today = %s" % (dg_total_count)
+        # TODO: We need to check whether the DG has checked in or not and then show whether they are working or not
+        #email_body = email_body + "\n\nTotal dgs working today = %s" % (dg_total_count)
         email_body = email_body + "\n\nDELIVERY BOY DETAILS -------\n* COD of Cancelled orders are not considered."
 
         orders_executed = delivery_statuses_today.filter(order_status=constants.ORDER_STATUS_DELIVERED)
