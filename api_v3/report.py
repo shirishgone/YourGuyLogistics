@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from django.db.models import Sum, Q
+from django.db.models import Sum, Q, F
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -201,22 +201,25 @@ def cod_report(request):
                                                                  Q(order_status=constants.ORDER_STATUS_INTRANSIT))
         orders_pending = orders_pending_queryset.aggregate(sum_of_cod_amount=Sum('order__cod_amount'))
         pending_cod_amount = orders_pending['sum_of_cod_amount']
-        if pending_cod_amount is None:
-            pending_cod_amount = 0
 
         orders_attempted_queryset = delivery_statuses_today.filter(
             Q(order_status=constants.ORDER_STATUS_PICKUP_ATTEMPTED) |
             Q(order_status=constants.ORDER_STATUS_DELIVERY_ATTEMPTED))
         orders_attempted = orders_attempted_queryset.aggregate(sum_of_cod_amount=Sum('order__cod_amount'))
         attempted_cod_amount = orders_attempted['sum_of_cod_amount']
-        if attempted_cod_amount is None:
-            attempted_cod_amount = 0
 
         orders_cancelled_queryset = delivery_statuses_today.filter(order_status=constants.ORDER_STATUS_CANCELLED)
         orders_cancelled = orders_cancelled_queryset.aggregate(sum_of_cod_amount=Sum('order__cod_amount'))
         cancelled_cod_amount = orders_cancelled['sum_of_cod_amount']
-        if cancelled_cod_amount is None:
-            cancelled_cod_amount = 0
+ 
+        orders_executed_queryset = delivery_statuses_today.filter(Q(order_status=constants.ORDER_STATUS_DELIVERED) &
+                                                                Q(cod_collected_amount__lt=F('order__cod_amount')))
+        orders_executed = orders_executed_queryset.aggregate(sum_of_cod_collected=Sum('cod_collected_amount'),sum_of_cod_amount=Sum('order__cod_amount'))
+        delivered_cod_collected = orders_executed['sum_of_cod_collected']
+        delivered_cod_amount = orders_executed['sum_of_cod_amount']
+
+        pending_cod = delivered_cod_amount - delivered_cod_collected
+        pending_cod_amount = pending_cod_amount + pending_cod
 
         delivery_statuses_tracked_queryset = delivery_statuses_today.filter(
             Q(order_status=constants.ORDER_STATUS_QUEUED) |
@@ -365,6 +368,8 @@ def dg_report(request):
         email_body = "Good Evening Guys, \n\nPlease find the dg report of the day."
         # TODO: We need to check whether the DG has checked in or not and then show whether they are working or not
         #email_body = email_body + "\n\nTotal dgs working today = %s" % (dg_total_count)
+        
+        # TODO 2: Add Pickup Guy details as well.
         email_body = email_body + "\n\nDELIVERY BOY DETAILS -------\n* COD of Cancelled orders are not considered."
 
         orders_executed = delivery_statuses_today.filter(order_status=constants.ORDER_STATUS_DELIVERED)
