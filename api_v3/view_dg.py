@@ -8,6 +8,8 @@ from rest_framework import status, authentication
 from rest_framework import viewsets
 from rest_framework.decorators import api_view
 from rest_framework.decorators import detail_route, list_route
+from rest_framework.decorators import authentication_classes, permission_classes
+from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
@@ -324,23 +326,25 @@ class DGViewSet(viewsets.ModelViewSet):
         }
         return Response(content, status=status.HTTP_200_OK)
     
-    @detail_route(methods=['get'])
-    def profile(self, request, pk = None):
-        role = user_role(request.user)
-        if role == constants.DELIVERY_GUY:
-            delivery_guy = get_object_or_404(DeliveryGuy, user = request.user)
-            detail_dict = dg_details_dict(delivery_guy)
-            response_content = { "data": detail_dict}
-            return Response(response_content, status = status.HTTP_200_OK)
-        else:
-            content = {
-            'error':'You dont have permissions to view delivery guy info'
-            }
-            return Response(content, status = status.HTTP_405_METHOD_NOT_ALLOWED)
-
 @api_view(['GET'])
 def dg_app_version(request):
     response_content = { 
         "app_version": constants.LATEST_DG_APP_VERSION
         }
     return Response(response_content, status = status.HTTP_200_OK)            
+
+@api_view(['GET'])
+@authentication_classes((TokenAuthentication,))
+@permission_classes((IsAuthenticated,))
+def profile(request):
+    role = user_role(request.user)
+    if role == constants.DELIVERY_GUY:
+        delivery_guy = get_object_or_404(DeliveryGuy, user = request.user)
+        detail_dict = dg_details_dict(delivery_guy)
+        response_content = { "data": detail_dict}
+        return Response(response_content, status = status.HTTP_200_OK)
+    else:
+        content = {
+        'error':'You dont have permissions to view delivery guy info'
+        }
+        return Response(content, status = status.HTTP_405_METHOD_NOT_ALLOWED)
