@@ -21,6 +21,8 @@ EMAIL_ERRORS = ['tech@yourguy.in', 'vinit@yourguy.in ', 'aquid@yourguy.in', 'pra
 if settings.ENVIRONMENT == 'PRODUCTION':
     EMAIL_UNASSIGNED_ORDERS = ['tech@yourguy.in', 'alay@yourguy.in', 'ops@yourguy.in']
     EMAIL_DAILY_REPORT = ['tech@yourguy.in', 'alay@yourguy.in', 'ops@yourguy.in', 'bd@yourguy.in']
+    EMAIL_COD_REPORT = ['tech@yourguy.in', 'alay@yourguy.in', 'ops@yourguy.in', 'bd@yourguy.in']
+    EMAIL_DG_REPORT = ['tech@yourguy.in', 'alay@yourguy.in', 'ops@yourguy.in', 'bd@yourguy.in']
     EMAIL_REPORTED_ORDERS = ['ops@yourguy.in', 'cs@yourguy.in']
     EMAIL_WEBSITE = ['tech@yourguy.in', 'alay@yourguy.in', 'bd@yourguy.in', 'cs@yourguy.in']
     EMAIL_ADDITIONAL_ORDERS = ['ops@yourguy.in', 'cs@yourguy.in']
@@ -37,6 +39,8 @@ if settings.ENVIRONMENT == 'PRODUCTION':
 else:
     EMAIL_UNASSIGNED_ORDERS = TEST_GROUP_EMAILS
     EMAIL_DAILY_REPORT = TEST_GROUP_EMAILS
+    EMAIL_COD_REPORT = TEST_GROUP_EMAILS
+    EMAIL_DG_REPORT = TEST_GROUP_EMAILS
     EMAIL_REPORTED_ORDERS = TEST_GROUP_EMAILS
     EMAIL_WEBSITE = TEST_GROUP_EMAILS
     EMAIL_ADDITIONAL_ORDERS = TEST_GROUP_EMAILS
