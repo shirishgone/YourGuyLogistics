@@ -201,17 +201,23 @@ def cod_report(request):
                                                                  Q(order_status=constants.ORDER_STATUS_INTRANSIT))
         orders_pending = orders_pending_queryset.aggregate(sum_of_cod_amount=Sum('order__cod_amount'))
         pending_cod_amount = orders_pending['sum_of_cod_amount']
-
+        if pending_cod_amount is None:
+            pending_cod_amount = 0
+        
         orders_attempted_queryset = delivery_statuses_today.filter(
             Q(order_status=constants.ORDER_STATUS_PICKUP_ATTEMPTED) |
             Q(order_status=constants.ORDER_STATUS_DELIVERY_ATTEMPTED))
         orders_attempted = orders_attempted_queryset.aggregate(sum_of_cod_amount=Sum('order__cod_amount'))
         attempted_cod_amount = orders_attempted['sum_of_cod_amount']
+        if attempted_cod_amount is None:
+            attempted_cod_amount = 0
 
         orders_cancelled_queryset = delivery_statuses_today.filter(order_status=constants.ORDER_STATUS_CANCELLED)
         orders_cancelled = orders_cancelled_queryset.aggregate(sum_of_cod_amount=Sum('order__cod_amount'))
         cancelled_cod_amount = orders_cancelled['sum_of_cod_amount']
- 
+        if cancelled_cod_amount is None:
+            cancelled_cod_amount = 0
+        
         orders_executed_queryset = delivery_statuses_today.filter(Q(order_status=constants.ORDER_STATUS_DELIVERED) &
                                                                 Q(cod_collected_amount__lt=F('order__cod_amount')))
         orders_executed = orders_executed_queryset.aggregate(sum_of_cod_collected=Sum('cod_collected_amount'),sum_of_cod_amount=Sum('order__cod_amount'))
