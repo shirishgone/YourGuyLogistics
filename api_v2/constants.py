@@ -10,7 +10,7 @@ DELIVERY_GUY = 'deliveryguy'
 OPS_PHONE_NUMBER = '+919820252216'
 FROM_MAIL_ID = 'hi@yourguy.in'
 
-TEST_GROUP_EMAILS = ['tech@yourguy.in', 'vinit@yourguy.in','prajakta@yourguy.in', 'aquid@yourguy.in']
+TEST_GROUP_EMAILS = ['tech@yourguy.in', 'vinit@yourguy.in', 'prajakta@yourguy.in', 'aquid@yourguy.in', 'harshvardhan@yourguy.in']
 
 if settings.ENVIRONMENT == 'PRODUCTION':
 	EMAIL_UNASSIGNED_ORDERS = ['tech@yourguy.in', 'alay@yourguy.in','ops@yourguy.in']

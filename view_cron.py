@@ -62,7 +62,7 @@ def daily_report():
         print('send_daily_report : ERROR')
 
 
-@scheduler.scheduled_job('cron', id='cod_report_job', hour=17)
+@scheduler.scheduled_job('cron', id='cod_report_job', hour=18)
 def cod_report():
     try:
         url = base_url()
@@ -72,7 +72,7 @@ def cod_report():
         print('send_cod_report : ERROR')
 
 
-@scheduler.scheduled_job('cron', id='dg_report_job', hour=17)
+@scheduler.scheduled_job('cron', id='dg_report_job', hour=18)
 def dg_report():
     try:
         url = base_url()

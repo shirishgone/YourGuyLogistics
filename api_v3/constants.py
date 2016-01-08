@@ -13,7 +13,7 @@ DELIVERY_GUY = 'deliveryguy'
 # CONTACTS CONSTANTS
 OPS_PHONE_NUMBER = '+919820252216'
 FROM_MAIL_ID = 'hi@yourguy.in'
-TEST_GROUP_EMAILS = ['tech@yourguy.in', 'vinit@yourguy.in', 'prajakta@yourguy.in', 'aquid@yourguy.in']
+TEST_GROUP_EMAILS = ['tech@yourguy.in', 'vinit@yourguy.in', 'prajakta@yourguy.in', 'aquid@yourguy.in', 'harshvardhan@yourguy.in']
 SALES_EMAIL = ['sameet@yourguy.in', 'winston@yourguy.in']
 EMAIL_SIGNATURE = "- \n Team YourGuy \nhttp://www.yourguy.in"
 EMAIL_ERRORS = ['tech@yourguy.in', 'vinit@yourguy.in ', 'aquid@yourguy.in', 'prajakta@yourguy.in']
