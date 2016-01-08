@@ -197,9 +197,6 @@ def cod_report(request):
         return Response(status=status.HTTP_200_OK)
     else:
         # COD as per ORDER_STATUS --------------------------------------------------------
-        import pdb
-        pdb.set_trace()
-
         orders_pending_queryset = delivery_statuses_today.filter(Q(order_status=constants.ORDER_STATUS_QUEUED) |
                                                                  Q(order_status=constants.ORDER_STATUS_INTRANSIT))
         orders_pending = orders_pending_queryset.aggregate(sum_of_cod_amount=Sum('order__cod_amount'))
@@ -326,6 +323,9 @@ def cod_report(request):
             orders_tracked = OrderDeliveryStatus.objects.filter(
                 delivery_guy__user__username=single_dg['delivery_guy__user__username'], date__gte=day_start,
                 date__lte=day_end)
+            orders_tracked = orders_tracked.filter(Q(order_status=constants.ORDER_STATUS_QUEUED) |
+                                                   Q(order_status=constants.ORDER_STATUS_INTRANSIT) |
+                                                   Q(order_status=constants.ORDER_STATUS_DELIVERED))
             vendor_tracked_per_order = orders_tracked.values('order__vendor__store_name').annotate(
                 sum_of_cod_collected=Sum('cod_collected_amount'), sum_of_cod_amount=Sum('order__cod_amount'))
             for item in vendor_tracked_per_order:
