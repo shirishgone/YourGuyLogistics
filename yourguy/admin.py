@@ -1,7 +1,11 @@
 from django.contrib import admin
 
 # Register your models here.
-from models import Address, Area, OrderItem, Order, OrderDeliveryStatus, DeliveryGuy, DGAttendance, Employee, Industry, Vendor, VendorAgent, VendorAccount, Consumer, Group, UserGroup, Suggestion, Message, Account, Product, ProductCategory
+from models import Address, Area
+from models import OrderItem, Order, OrderDeliveryStatus
+from models import Product, ProductCategory
+from models import DeliveryGuy, DGAttendance, Employee
+from models import Vendor, VendorAgent, Industry, VendorAccount, Consumer
 from models import ProofOfDelivery, Picture
 from models import TimeSlot
 
@@ -33,9 +37,3 @@ admin.site.register(Employee)
 
 admin.site.register(Picture)
 admin.site.register(ProofOfDelivery)
-
-# admin.site.register(UserGroup)
-# admin.site.register(Group)
-# admin.site.register(Suggestion)
-# admin.site.register(Message)
-# admin.site.register(Account)
