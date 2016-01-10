@@ -1,0 +1,218 @@
+@font-face {
+  font-family: "Roboto";
+  src: url('/static/assets/fonts/Roboto-Regular.ttf') format('truetype');
+}
+/* line 5, ../sass/app.scss */
+html {
+  height: 100%;
+}
+
+/* line 8, ../sass/app.scss */
+body {
+  min-height: 100%;
+}
+
+/* line 13, ../sass/app.scss */
+.bagde {
+  min-width: 50px;
+  text-align: center;
+  color: #ffffff;
+  padding: 3px 5px;
+  -moz-border-radius: 3px;
+  -webkit-border-radius: 3px;
+  border-radius: 3px;
+  font-size: 10px;
+  background-color: #9C27B0;
+}
+
+/* line 23, ../sass/app.scss */
+.bagde-warn {
+  background-color: #FF5722;
+}
+
+/* line 27, ../sass/app.scss */
+.login-page {
+  height: 100%;
+  height: 100vh;
+  background-image: url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4gPHN2ZyB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJncmFkIiBncmFkaWVudFVuaXRzPSJvYmplY3RCb3VuZGluZ0JveCIgeDE9IjAuNSIgeTE9IjAuMCIgeDI9IjAuNSIgeTI9IjEuMCI+PHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZjYzA2YSIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzM2MzYzNiIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHg9IjAiIHk9IjAiIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JhZCkiIC8+PC9zdmc+IA==');
+  background-size: 100%;
+  background-image: -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #fcc06a), color-stop(100%, #363636));
+  background-image: -moz-linear-gradient(#fcc06a, #363636);
+  background-image: -webkit-linear-gradient(#fcc06a, #363636);
+  background-image: linear-gradient(#fcc06a, #363636);
+}
+/* line 31, ../sass/app.scss */
+.login-page .login-error-message {
+  margin: 15px 10px;
+  color: #FE5E64;
+}
+
+/* line 37, ../sass/app.scss */
+.site-sidenav {
+  background-color: #ffffff;
+  color: #9C27B0;
+  max-width: 280px;
+}
+/* line 41, ../sass/app.scss */
+.site-sidenav .tab-liks {
+  color: #9C27B0;
+  text-decoration: none;
+}
+/* line 45, ../sass/app.scss */
+.site-sidenav md-list {
+  padding: 0px;
+  color: #9C27B0;
+}
+/* line 48, ../sass/app.scss */
+.site-sidenav md-list md-list-item {
+  padding: 0 30px;
+}
+/* line 50, ../sass/app.scss */
+.site-sidenav md-list md-list-item .md-avatar {
+  width: 30px;
+  height: 30px;
+}
+/* line 54, ../sass/app.scss */
+.site-sidenav md-list md-list-item .md-subhead {
+  font-size: 12px;
+}
+/* line 57, ../sass/app.scss */
+.site-sidenav md-list md-list-item:hover {
+  background-color: #F3E5F5;
+}
+/* line 61, ../sass/app.scss */
+.site-sidenav md-list md-list-item.active {
+  background-color: #E1BEE7;
+}
+/* line 65, ../sass/app.scss */
+.site-sidenav md-content {
+  background: transparent;
+  padding-bottom: 100px;
+}
+/* line 69, ../sass/app.scss */
+.site-sidenav .md-subheader {
+  background-color: #ffffff;
+  color: #6A1B9A;
+}
+/* line 73, ../sass/app.scss */
+.site-sidenav .md-subheader .md-subheader-inner {
+  padding: 10px;
+}
+
+/* line 78, ../sass/app.scss */
+.nav-header {
+  text-align: center;
+  background-image: url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4gPHN2ZyB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJncmFkIiBncmFkaWVudFVuaXRzPSJvYmplY3RCb3VuZGluZ0JveCIgeDE9IjAuNSIgeTE9IjAuMCIgeDI9IjAuNSIgeTI9IjEuMCI+PHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzhlMjRhYSIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzZhMWI5YSIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHg9IjAiIHk9IjAiIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JhZCkiIC8+PC9zdmc+IA==');
+  background-size: 100%;
+  background-image: -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #8e24aa), color-stop(100%, #6a1b9a));
+  background-image: -moz-linear-gradient(#8e24aa, #6a1b9a);
+  background-image: -webkit-linear-gradient(#8e24aa, #6a1b9a);
+  background-image: linear-gradient(#8e24aa, #6a1b9a);
+  border: #6A1B9A;
+}
+/* line 82, ../sass/app.scss */
+.nav-header a {
+  padding: 10px;
+  color: #ffffff;
+  text-decoration: none;
+}
+/* line 87, ../sass/app.scss */
+.nav-header img {
+  width: auto;
+  height: 100px;
+}
+
+/* line 93, ../sass/app.scss */
+.filter-sidenav {
+  max-width: 200px;
+  padding: 0;
+  -moz-border-radius: 3px;
+  -webkit-border-radius: 3px;
+  border-radius: 3px;
+}
+
+/* line 99, ../sass/app.scss */
+.opsOrder {
+  background-color: #F5F5F5;
+}
+/* line 101, ../sass/app.scss */
+.opsOrder .order-list {
+  padding: 0px;
+}
+/* line 103, ../sass/app.scss */
+.opsOrder .order-list .header {
+  z-index: 10;
+  padding: 5px;
+  min-height: 50px;
+}
+/* line 107, ../sass/app.scss */
+.opsOrder .order-list .header md-checkbox {
+  margin-bottom: 0;
+}
+/* line 111, ../sass/app.scss */
+.opsOrder .order-list .footer {
+  min-height: 50px;
+  padding: 5px;
+  z-index: 10;
+}
+/* line 115, ../sass/app.scss */
+.opsOrder .order-list .footer .stats {
+  margin: 0 10px;
+}
+/* line 117, ../sass/app.scss */
+.opsOrder .order-list .footer .stats p {
+  font-size: 12px;
+  color: #9E9E9E;
+  margin: 10px 10px;
+}
+/* line 124, ../sass/app.scss */
+.opsOrder .order-list .list {
+  height: 80%;
+  z-index: 9;
+  overflow-y: scroll;
+}
+/* line 128, ../sass/app.scss */
+.opsOrder .order-list .list md-card {
+  margin: 5px 0px;
+  cursor: pointer;
+}
+/* line 131, ../sass/app.scss */
+.opsOrder .order-list .list md-card .icon {
+  margin-right: 10px;
+}
+/* line 135, ../sass/app.scss */
+.opsOrder .order-list .list .card-content {
+  padding: 5px;
+}
+/* line 138, ../sass/app.scss */
+.opsOrder .order-list .list .card-content .customer p, .opsOrder .order-list .list .card-content .vendor p {
+  margin: 0;
+  font-size: 14px;
+  text-transform: uppercase;
+  color: #616161;
+}
+/* line 144, ../sass/app.scss */
+.opsOrder .order-list .list .card-content .customer span, .opsOrder .order-list .list .card-content .vendor span {
+  font-size: 12px;
+  color: #9E9E9E;
+}
+/* line 150, ../sass/app.scss */
+.opsOrder .order-list .list .card-action {
+  margin: 5px;
+}
+/* line 153, ../sass/app.scss */
+.opsOrder .order-list .list .card-action .order-time .icon, .opsOrder .order-list .list .card-action .payment .icon {
+  margin-right: 10px;
+}
+/* line 156, ../sass/app.scss */
+.opsOrder .order-list .list .card-action .order-time p, .opsOrder .order-list .list .card-action .payment p {
+  margin: 0;
+  font-size: 11px;
+  text-transform: uppercase;
+  color: #757575;
+}
+/* line 162, ../sass/app.scss */
+.opsOrder .order-list .list .card-action .order-time span, .opsOrder .order-list .list .card-action .payment span {
+  font-size: 10px;
+  color: #9E9E9E;
+}

@@ -2,19 +2,17 @@
  * Angular Material Design
  * https://github.com/angular/material
  * @license MIT
- * v0.8.3
+ * v1.0.1
  */
 @-webkit-keyframes sliderFocusThumb {
   0% {
     opacity: 0;
     -webkit-transform: scale(0);
             transform: scale(0); }
-
   50% {
     -webkit-transform: scale(1);
             transform: scale(1);
     opacity: 1; }
-
   100% {
     opacity: 0; } }
 
@@ -23,12 +21,10 @@
     opacity: 0;
     -webkit-transform: scale(0);
             transform: scale(0); }
-
   50% {
     -webkit-transform: scale(1);
             transform: scale(1);
     opacity: 1; }
-
   100% {
     opacity: 0; } }
 
@@ -50,6 +46,8 @@ md-slider {
    * The border/background that comes in when focused in non-discrete mode
    */
   /* Don't animate left/right while panning */ }
+  md-slider *, md-slider *:after {
+    box-sizing: border-box; }
   md-slider .md-slider-wrapper {
     position: relative; }
   md-slider .md-track-container {
@@ -69,6 +67,8 @@ md-slider {
     left: 0;
     right: 0;
     height: 100%; }
+  md-slider .md-track-ticks canvas {
+    width: 100%; }
   md-slider .md-thumb-container {
     position: absolute;
     left: 0;
@@ -95,7 +95,8 @@ md-slider {
       width: 32px;
       height: 32px;
       border-radius: 32px;
-      border: 3px solid; }
+      border-width: 3px;
+      border-style: solid; }
   md-slider .md-sign {
     /* Center the children (slider-thumb-text) */
     display: -webkit-flex;
@@ -125,7 +126,8 @@ md-slider {
       top: 19px;
       border-left: 14px solid transparent;
       border-right: 14px solid transparent;
-      border-top: 16px solid;
+      border-top-width: 16px;
+      border-top-style: solid;
       opacity: 0;
       -webkit-transform: translate3d(0, -8px, 0);
               transform: translate3d(0, -8px, 0);
@@ -153,11 +155,10 @@ md-slider {
     width: 48px;
     height: 48px;
     border-radius: 48px;
-    border: 2px solid #D6D6D6;
-    background-color: transparent;
     -webkit-transform: scale(0);
             transform: scale(0);
-    transition: all 0.2s linear; }
+    transition: all 0.2s linear;
+    opacity: 0.26; }
   md-slider .md-disabled-thumb {
     position: absolute;
     left: -22px;
@@ -167,7 +168,8 @@ md-slider {
     border-radius: 44px;
     -webkit-transform: scale(0.35);
             transform: scale(0.35);
-    border: 6px solid;
+    border-width: 6px;
+    border-style: solid;
     display: none; }
   md-slider.md-min .md-thumb:after {
     background-color: white; }
@@ -175,28 +177,33 @@ md-slider {
     opacity: 0; }
   md-slider:focus {
     outline: none; }
-  md-slider.dragging .md-thumb-container, md-slider.dragging .md-track-fill {
+  md-slider.md-dragging .md-thumb-container,
+  md-slider.md-dragging .md-track-fill {
     transition: none; }
   md-slider:not([md-discrete]) {
     /* Hide the sign and ticks in non-discrete mode */ }
-    md-slider:not([md-discrete]) .md-track-ticks, md-slider:not([md-discrete]) .md-sign {
+    md-slider:not([md-discrete]) .md-track-ticks,
+    md-slider:not([md-discrete]) .md-sign {
       display: none; }
     md-slider:not([md-discrete]):not([disabled]):hover .md-thumb {
       -webkit-transform: scale(0.6);
               transform: scale(0.6); }
-    md-slider:not([md-discrete]):not([disabled]):focus .md-focus-thumb, md-slider:not([md-discrete]):not([disabled]).active .md-focus-thumb {
+    md-slider:not([md-discrete]):not([disabled]):focus .md-focus-thumb, md-slider:not([md-discrete]):not([disabled]).md-active .md-focus-thumb {
       display: block; }
-    md-slider:not([md-discrete]):not([disabled]):focus .md-focus-ring, md-slider:not([md-discrete]):not([disabled]).active .md-focus-ring {
+    md-slider:not([md-discrete]):not([disabled]):focus .md-focus-ring, md-slider:not([md-discrete]):not([disabled]).md-active .md-focus-ring {
       -webkit-transform: scale(1);
               transform: scale(1); }
-    md-slider:not([md-discrete]):not([disabled]):focus .md-thumb, md-slider:not([md-discrete]):not([disabled]).active .md-thumb {
+    md-slider:not([md-discrete]):not([disabled]):focus .md-thumb, md-slider:not([md-discrete]):not([disabled]).md-active .md-thumb {
       -webkit-transform: scale(0.85);
               transform: scale(0.85); }
   md-slider[md-discrete] {
     /* Hide the focus thumb in discrete mode */ }
-    md-slider[md-discrete] .md-focus-thumb, md-slider[md-discrete] .md-focus-ring {
+    md-slider[md-discrete] .md-focus-thumb,
+    md-slider[md-discrete] .md-focus-ring {
       display: none; }
-    md-slider[md-discrete]:not([disabled]):focus .md-sign, md-slider[md-discrete]:not([disabled]):focus .md-sign:after, md-slider[md-discrete]:not([disabled]).active .md-sign, md-slider[md-discrete]:not([disabled]).active .md-sign:after {
+    md-slider[md-discrete]:not([disabled]):focus .md-sign,
+    md-slider[md-discrete]:not([disabled]):focus .md-sign:after, md-slider[md-discrete]:not([disabled]).md-active .md-sign,
+    md-slider[md-discrete]:not([disabled]).md-active .md-sign:after {
       opacity: 1;
       -webkit-transform: translate3d(0, 0, 0) scale(1);
               transform: translate3d(0, 0, 0) scale(1); }
@@ -209,3 +216,7 @@ md-slider {
             transform: scale(0.35); }
   md-slider[disabled] .md-disabled-thumb {
     display: block; }
+
+@media screen and (-ms-high-contrast: active) {
+  md-slider.md-default-theme .md-track {
+    border-bottom: 1px solid #fff; } }

@@ -55,10 +55,12 @@ module.exports = function(grunt){
 					'static/modules/login/login.js',
 					'static/modules/login/AuthService.js',
 					'static/modules/home/home.js',
+					'static/modules/forbidden/*.js',
 					'static/modules/app.js',
 					'static/modules/providers/*.js',
 					'static/modules/constants/*.js',
 					'static/modules/services/*.js',
+					'static/modules/order/*.js',
 				],
 				dest : 'static/assets/js/main.js'
 			}
@@ -67,6 +69,23 @@ module.exports = function(grunt){
 			scripts : {
 				files : 'static/modules/**/*.js',
 				tasks : ['devScripts']
+			},
+			sass : {
+				files : 'static/assets/**/sass/*scss',
+				tasks : ['compass:sass']
+			}
+		},
+		compass : {
+			sass : {
+				options : {
+					basePath:'static/assets',
+					sassDir : "sass",
+					cssDir : 'css',
+					fontsDir: 'fonts',
+					imagesDir :'images',
+					importPath : 'bower_components/angular-material-sass-files',
+					raw: 'preferred_syntax = :scss\n'
+				}
 			}
 		}
 	});

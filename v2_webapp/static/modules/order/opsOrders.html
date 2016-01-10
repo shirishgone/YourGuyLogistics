@@ -1,0 +1,128 @@
+<md-toolbar class="md-primary md-whiteframe-z2">
+	<div class="md-toolbar-tools">
+		<md-button ng-click="home.toggleSideNav()" class="md-icon-button" aria-label="Menu Icon">
+			<md-icon>menu</md-icon>
+		</md-button>
+		<p>ORDERS</p>
+		<span flex></span>
+		<md-button ng-click="opsOrder.toggleFilter()" class="md-icon-button" aria-label="Filter Button">
+			<md-icon>filter_list</md-icon>
+		</md-button>
+	</div>
+</md-toolbar>
+<md-content flex layout-padding layout="row" class="opsOrder">
+	<div flex layout="column" class="order-list">
+		<!-- <section flex="10" class="header md-whiteframe-z1" layout="row" layout-align="start center">
+			<md-checkbox class="md-warn md-align-top-bottom" ng-model="order.selected" aria-label="Checkbox">
+		    </md-checkbox>
+			<div flex="5">
+				
+			</div>
+			<div flex="20" class="customer">
+				CUSTOMER
+			</div>
+			<div flex="20" class="vendor">
+				VENDOR
+			</div>
+		</section> -->
+		<section flex="80" class="list">
+			<div ng-repeat="order in opsOrder.orders">
+				<md-card>
+		        	<md-card-content layout="row" class="card-content" layout-align="start start">
+		        		<div flex="5">
+		        			<md-checkbox class="md-accent" ng-model="order.selected" aria-label="Checkbox">
+		        			</md-checkbox>
+		        		</div>
+		        		<div flex="20" class="customer" layout="row" layout-align="start start">
+			        		<div class="icon">
+			        			<md-icon md-font-library="material-icons" ng-style="{color: '#9E9E9E','font-size':'36px', height: '36px', width: '36px'}">people</md-icon>
+			        		</div>
+		        			<div flex>
+		        				<p>{{order.customer_name}}</p>
+		        				<span>{{order.delivery_address}}</span>
+		        			</div>
+		        		</div>
+		        		<div flex="20" class="vendor" layout="row" layout-align="start start">
+		        			<div class="icon">
+			        			<md-icon md-font-library="material-icons" ng-style="{color: '#9E9E9E','font-size':'36px', height: '36px', width: '36px'}">home</md-icon>
+			        		</div>
+			        		<div flex>
+			        			<p>{{order.vendor_name}}</p>
+		        				<span>{{order.pickup_address}}</span>
+			        		</div>
+		        		</div>
+        			</md-card-content>
+        			<md-card-actions layout="row" class="card-action" layout-align="start end">
+        				<span flex="5">
+        				</span>
+        				<div flex="20" class="order-time" layout="row" layout-align="start center">
+        					<div class="icon">
+			        			<md-icon md-font-library="material-icons" ng-style="{color: '#9E9E9E','font-size':'24px', height: '24px', width: '24px'}">alarm</md-icon>
+			        		</div>
+		        			<div flex>
+		        				<p>{{order.pickup_datetime | date:'dd MMM yyyy - h:mm a'}}</p>
+		        				<!-- <span>{{order.pickup_datetime | date:'h:mm a'}}</span> -->
+		        			</div>
+        				</div>
+        				<div flex="20" class="payment" layout="row" layout-align="start center">
+        					<div class="icon">
+			        			<md-icon md-font-library="material-icons" ng-style="{color: '#9E9E9E','font-size':'24px', height: '24px', width: '24px'}">payment</md-icon>
+			        		</div>
+		        			<div flex>
+		        				<p><span>{{order.cod_collected}} Collected</span> / <span>{{order.cod_amount}} Amount</span></p>
+		        				<!-- <span>{{order.pickup_datetime | date:'h:mm a'}}</span> -->
+		        			</div>
+        				</div>
+        				<div flex="5">
+        					<span class="bagde bagde-warn ">{{order.status}}</span>
+        				</div>
+        				<span flex></span>
+						<md-button class="md-icon-button" aria-label="Favorite">
+							<md-icon ng-style="{color: '#9E9E9E','font-size':'16px', height: '16px', width: '16px'}">more_vert</md-icon>
+						</md-button>
+						<!-- <md-button class="md-icon-button" aria-label="Settings">
+							<md-icon ng-style="{color: '#9E9E9E','font-size':'24px', height: '24px', width: '24px'}">menu</md-icon>
+						</md-button>
+						<md-button class="md-icon-button" aria-label="Share">
+							<md-icon ng-style="{color: '#9E9E9E','font-size':'24px', height: '24px', width: '24px'}">menu</md-icon>
+						</md-button> -->
+					</md-card-actions>
+				</md-card>
+			</div>
+		</section>
+		<section flex="10" class="footer md-whiteframe-z2" layout="row" layout-align="start center">
+			<div class="stats" layout="row">
+				<p>Pending: {{opsOrder.pending_orders_count}} </p>
+				<p>Unassigned: {{opsOrder.unassigned_orders_count}} </p>
+				<p>Total: {{opsOrder.total_orders}} </p>
+			</div>
+			<span flex></span>
+			<div class="page-navigation">
+				<md-button  class="md-icon-button" aria-label="Menu Icon">
+						<md-icon>keyboard_arrow_left</md-icon>
+				</md-button>
+				<md-button class="md-icon-button" aria-label="Menu Icon">
+						<md-icon>keyboard_arrow_right</md-icon>
+				</md-button>
+			</div>
+		</section>
+	</div>
+	<!-- <md-content flex layout="column" class="order-list">
+		<section class="header md-whiteframe-z1">
+			<md-button class="md-raised">Hello</md-button>
+		</section>
+		<section class="list">
+			<div ng-repeat="order in opsOrder.orders">
+				{{order}}
+			</div>
+		</section>
+		<section class="footer">
+			<md-button class="md-raised">Hello</md-button>
+		</section>
+	</md-content> -->
+	<md-sidenav class="filter-sidenav md-sidenav-right md-whiteframe-z3" md-component-id="order-filter">
+		<md-toolbar class="md-accent md-whiteframe-z1">
+        	<h1 class="md-subhead md-toolbar-tools">FILTERS</h1>
+     	</md-toolbar>
+	</md-sidenav>
+</md-content>

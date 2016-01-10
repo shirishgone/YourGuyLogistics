@@ -5,6 +5,15 @@
 		var role = {
 			userrole : 'anonymous',
 			authenticated : false,
+			$resetUserRole : function(){
+				$localStorage.$reset();
+				userrole = 'anonymous';
+				authenticated = false;
+				return {
+					userrole : userrole,
+					is_authenticated : authenticated
+				};
+			},
 			$setUserRole : function(){
 				if($localStorage.token){
 					var x = $base64.decode($localStorage.token).split(':');

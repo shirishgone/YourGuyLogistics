@@ -1,7 +1,10 @@
 (function(){
 	'use strict';
 	var LoginCntrl = function ($state,AuthService,$localStorage,vendorClients){
+		this.loader = false;
 		this.userLogin = function(){
+			this.loader = true;
+			var self = this;
 			var data = {
 				username : this.username,
 				password : this.password
@@ -12,6 +15,9 @@
 					vendor.$updateuserRole();
 					$state.go('home');
 				});
+			},function (error){
+				self.loader = false;
+				self.error_message = error.data.non_field_errors[0];
 			});
 		};
 	};

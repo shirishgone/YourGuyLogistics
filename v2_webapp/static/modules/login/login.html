@@ -1,7 +1,33 @@
-<div>
-	<form>
-		<input type="text" ng-model="login.username" placeholder="Username">
-		<input type="password" ng-model="login.password" placeholder="Password">
-		<button type="button" ng-click="login.userLogin()">Login</button>
-	</form>
+<div flex class="login-page" layout="row" layout-align="center center">
+	<div flex-xs="90" flex-sm="60" flex-gt-sm="70" flex-gt-md="30" flex-gt-lg="20" class="md-whiteframe-5dp">
+		<md-content  layout-padding>
+			<form name="loginform" ng-submit="login.userLogin()">
+				<md-input-container class="md-block">
+					<label>Phone Number</label>
+					<input name="username" md-maxlength="11" minlength="10" ng-model="login.username" required>
+					<div ng-messages="loginform.username.$error" >
+						<div ng-message="required">This is required!</div>
+						<div ng-message="md-maxlength">Username should be maximum 11 digit!</div>
+						<div ng-message="minlength">Username should be minimum 10 digit!</div>
+					</div>
+				</md-input-container>
+				<md-input-container class="md-block">
+					<label>Password</label>
+					<input type="password" name="password" ng-model="login.password" required>
+					<div ng-messages="loginform.password.$error">
+						<div ng-message="required">This is required!</div>
+					</div>
+				</md-input-container>
+				<div layout="row" layout-align="space-around" ng-show="login.loader">
+					<md-progress-circular md-mode="indeterminate"></md-progress-circular>
+				</div>
+				<div layout="row" layout-align="space-around" class="login-error-message">
+					{{login.error_message}}
+				</div>
+				<div layout="row" layout-align="space-around">
+					<md-button type="submit" class=" md-primary" ng-class="{'md-raised':(loginform.$valid && loginform.$dirty)}">Login</md-button>
+				</div>
+			</form>
+		</md-content>
+	</div>
 </div>

@@ -4,13 +4,15 @@
 		var vendorClients = {};
 		var fetchVendors = function() {
 			var deferred = $q.defer();
-			Vendor.profile(function (response) {
+			Vendor.query(function (response) {
 				deferred.resolve(angular.extend(vendorClients, response, {
 					$refresh: fetchVendors,
 					$updateuserRole: function(){
 						return role.$setUserRole();
 					},
-
+					$clearUserRole: function(){
+						return role.$resetUserRole();
+					},
 					$hasRole: function(roleValue) {
 						return role.$getUserRole().userrole == roleValue;
 					},
@@ -28,6 +30,9 @@
 					$refresh : fetchVendors,
 					$updateuserRole: function(){
 						return role.$setUserRole();
+					},
+					$clearUserRole: function(){
+						return role.$resetUserRole();
 					},
 					$hasRole : function (roleValue){
 						return role,$getUserRole().userrole == roleValue;

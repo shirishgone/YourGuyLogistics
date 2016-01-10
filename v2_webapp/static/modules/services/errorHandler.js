@@ -15,6 +15,18 @@
 		};
 		return errorHandler;
 	};
+
+	var stateChangeError = function ($rootScope, Access, $state){
+		$rootScope.$on("$stateChangeError",function (event, toState, toParams, fromState, fromParams, error){
+			console.log(error);
+			if (error == Access.UNAUTHORIZED) {
+				$state.go("login");
+			} else if (error == Access.FORBIDDEN) {
+				$state.go("forbidden");
+			}
+		});
+	};
+
 	angular.module('ygVendorApp')
 	.factory('errorHandler', [
 		'$q',
@@ -24,5 +36,11 @@
 	])
 	.config(['$httpProvider',function ($httpProvider) {
 		$httpProvider.interceptors.push('errorHandler');
-	}]);
+	}])
+	.run([
+		'$rootScope',
+		'Access',
+		'$state',
+		stateChangeError
+	]);
 })();
