@@ -86,7 +86,7 @@ class VendorAgentViewSet(viewsets.ModelViewSet):
             try:
                 group = Group.objects.get(name=constants.VENDOR)
                 group.user_set.add(user)
-            except Exception, e:
+            except Exception as e:
                 log_exception(e, 'Group settings failed for vendor agent')
 
             token = create_token(user, constants.VENDOR)

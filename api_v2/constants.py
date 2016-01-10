@@ -10,7 +10,7 @@ DELIVERY_GUY = 'deliveryguy'
 OPS_PHONE_NUMBER = '+919820252216'
 FROM_MAIL_ID = 'hi@yourguy.in'
 
-TEST_GROUP_EMAILS = ['tech@yourguy.in', 'vinit@yourguy.in','prajakta@yourguy.in', 'aquid@yourguy.in']
+TEST_GROUP_EMAILS = ['tech@yourguy.in', 'vinit@yourguy.in', 'prajakta@yourguy.in', 'aquid@yourguy.in', 'harshvardhan@yourguy.in']
 
 if settings.ENVIRONMENT == 'PRODUCTION':
 	EMAIL_UNASSIGNED_ORDERS = ['tech@yourguy.in', 'alay@yourguy.in','ops@yourguy.in']
@@ -23,6 +23,7 @@ if settings.ENVIRONMENT == 'PRODUCTION':
 	OPS_EMAIL_IDS = ['tech@yourguy.in','alay@yourguy.in', 'rakesh@yourguy.in', 'santosh@yourguy.in', 'sameet@yourguy.in']
 	EMAIL_IDS_EVERYBODY = ['tech@yourguy.in', 'alay@yourguy.in', 'sameet@yourguy.in', 'winston@yourguy.in', 'rakesh@yourguy.in', 'santosh@yourguy.in', 'vinit@yourguy.in', 'aquid@yourguy.in', 'saurabh@yourguy.in', 'smit@yourguy.in', 'kenneth@yourguy.in', 'bhawna.yourguy@gmail.com', 'sonali.a@yourguy.in', 'bernard.d@yourguy.in', 'sandesh.b@yourguy.in']
 	RETAIL_EMAIL_ID = ['retail@yourguy.in']
+	LATEST_DG_APP_VERSION = '1.0.20'
 else:
 	EMAIL_UNASSIGNED_ORDERS = TEST_GROUP_EMAILS
 	EMAIL_DAILY_REPORT = TEST_GROUP_EMAILS
@@ -34,6 +35,7 @@ else:
 	OPS_EMAIL_IDS = TEST_GROUP_EMAILS
 	EMAIL_IDS_EVERYBODY = TEST_GROUP_EMAILS
 	RETAIL_EMAIL_ID = TEST_GROUP_EMAILS
+	LATEST_DG_APP_VERSION = '1.0.20'
 
 GCM_PUSH_API_KEY = 'AIzaSyCmXulcUBViokrkYZ9Z9bWJgEWgXyeNh1U'
 GCM_SENDER_ID = '559449819463'

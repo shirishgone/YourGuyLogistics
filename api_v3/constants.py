@@ -13,7 +13,7 @@ DELIVERY_GUY = 'deliveryguy'
 # CONTACTS CONSTANTS
 OPS_PHONE_NUMBER = '+919820252216'
 FROM_MAIL_ID = 'hi@yourguy.in'
-TEST_GROUP_EMAILS = ['tech@yourguy.in', 'vinit@yourguy.in', 'prajakta@yourguy.in', 'aquid@yourguy.in']
+TEST_GROUP_EMAILS = ['tech@yourguy.in', 'vinit@yourguy.in', 'prajakta@yourguy.in', 'aquid@yourguy.in', 'harshvardhan@yourguy.in']
 SALES_EMAIL = ['sameet@yourguy.in', 'winston@yourguy.in']
 EMAIL_SIGNATURE = "- \n Team YourGuy \nhttp://www.yourguy.in"
 EMAIL_ERRORS = ['tech@yourguy.in', 'vinit@yourguy.in ', 'aquid@yourguy.in', 'prajakta@yourguy.in']
@@ -21,6 +21,8 @@ EMAIL_ERRORS = ['tech@yourguy.in', 'vinit@yourguy.in ', 'aquid@yourguy.in', 'pra
 if settings.ENVIRONMENT == 'PRODUCTION':
     EMAIL_UNASSIGNED_ORDERS = ['tech@yourguy.in', 'alay@yourguy.in', 'ops@yourguy.in']
     EMAIL_DAILY_REPORT = ['tech@yourguy.in', 'alay@yourguy.in', 'ops@yourguy.in', 'bd@yourguy.in']
+    EMAIL_COD_REPORT = ['tech@yourguy.in', 'alay@yourguy.in', 'ops@yourguy.in', 'bd@yourguy.in']
+    EMAIL_DG_REPORT = ['tech@yourguy.in', 'alay@yourguy.in', 'ops@yourguy.in', 'bd@yourguy.in']
     EMAIL_REPORTED_ORDERS = ['ops@yourguy.in', 'cs@yourguy.in']
     EMAIL_WEBSITE = ['tech@yourguy.in', 'alay@yourguy.in', 'bd@yourguy.in', 'cs@yourguy.in']
     EMAIL_ADDITIONAL_ORDERS = ['ops@yourguy.in', 'cs@yourguy.in']
@@ -33,9 +35,12 @@ if settings.ENVIRONMENT == 'PRODUCTION':
                            'saurabh@yourguy.in', 'smit@yourguy.in', 'kenneth@yourguy.in', 'bhawna.yourguy@gmail.com',
                            'sonali.a@yourguy.in', 'bernard.d@yourguy.in', 'sandesh.b@yourguy.in']
     RETAIL_EMAIL_ID = ['retail@yourguy.in']
+    LATEST_DG_APP_VERSION = '1.0.20'
 else:
     EMAIL_UNASSIGNED_ORDERS = TEST_GROUP_EMAILS
     EMAIL_DAILY_REPORT = TEST_GROUP_EMAILS
+    EMAIL_COD_REPORT = TEST_GROUP_EMAILS
+    EMAIL_DG_REPORT = TEST_GROUP_EMAILS
     EMAIL_REPORTED_ORDERS = TEST_GROUP_EMAILS
     EMAIL_WEBSITE = TEST_GROUP_EMAILS
     EMAIL_ADDITIONAL_ORDERS = TEST_GROUP_EMAILS
@@ -44,6 +49,7 @@ else:
     OPS_EMAIL_IDS = TEST_GROUP_EMAILS
     EMAIL_IDS_EVERYBODY = TEST_GROUP_EMAILS
     RETAIL_EMAIL_ID = TEST_GROUP_EMAILS
+    LATEST_DG_APP_VERSION = '1.0.20'
 
 # GCM CONSTANTS
 GCM_PUSH_API_KEY = 'AIzaSyCmXulcUBViokrkYZ9Z9bWJgEWgXyeNh1U'
