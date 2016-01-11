@@ -1,0 +1,65 @@
+[
+  {
+    "model": "yourguy.NotificationType",
+    "pk": 1,
+    "fields": {
+        "title": "yg_nt_01",
+        "code": "Not Checked-In",
+        "description": ""
+    }
+  },
+  {
+    "model": "yourguy.NotificationType",
+    "pk": 2,
+    "fields": {
+        "title": "yg_nt_02",
+        "code": "Late Picked uUp",
+        "description": ""
+    }
+  },
+  {
+    "model": "yourguy.NotificationType",
+    "pk": 3,
+    "fields": {
+        "title": "yg_nt_03",
+        "code": "Late Delivery",
+        "description": ""
+    }
+  },
+  {
+    "model": "yourguy.NotificationType",
+    "pk": 4,
+    "fields": {
+        "title": "yg_nt_04",
+        "code": "Unassigned",
+        "description": ""
+    }
+  },
+  {
+    "model": "yourguy.NotificationType",
+    "pk": 5,
+    "fields": {
+        "title": "yg_nt_05",
+        "code": "Reported",
+        "description": ""
+    }
+  },
+    {
+    "model": "yourguy.NotificationType",
+    "pk": 6,
+    "fields": {
+        "title": "yg_nt_06",
+        "code": "Pickup Attempted",
+        "description": ""
+    }
+  },
+  {
+    "model": "yourguy.NotificationType",
+    "pk": 7,
+    "fields": {
+        "title": "yg_nt_07",
+        "code": "COD Discreprency",
+        "description": ""
+    }
+  }
+]
