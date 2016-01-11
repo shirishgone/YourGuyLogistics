@@ -170,12 +170,14 @@
 	.config([
 		'$urlRouterProvider',
 		'$locationProvider',
+		'$resourceProvider',
 		'$mdThemingProvider',
 		'roleProvider',
-		function ($urlRouterProvider,$locationProvider,$mdThemingProvider,roleProvider) {
+		function ($urlRouterProvider,$locationProvider,$resourceProvider,$mdThemingProvider,roleProvider) {
 		// For any unmatched url, redirect to /home
   		$urlRouterProvider.otherwise("/home");
   		$locationProvider.html5Mode(true).hashPrefix('!');
+  		$resourceProvider.defaults.stripTrailingSlashes = false;
   		roleProvider.$get().$setUserRole();
   		$mdThemingProvider.theme('purpleTheme')
   		.primaryPalette('purple')
@@ -209,8 +211,27 @@
 		}
 	};
 
+	var prodConstants = {
+		v1baseUrl: 'http://yourguy.herokuapp.com/api/v1/',
+		v2baseUrl: 'http://yourguy.herokuapp.com//api/v2/',
+		v3baseUrl: 'http://yourguy.herokuapp.com//api/v3/',
+		userRole: {
+			ADMIN : 'operations',
+			VENDOR : 'vendor'
+		}
+	};
+	var testConstants = {
+		v1baseUrl: 'https://yourguytestserver.herokuapp.com/api/v1/',
+		v2baseUrl: 'https://yourguytestserver.herokuapp.com/api/v2/',
+		v3baseUrl: 'https://yourguytestserver.herokuapp.com/api/v3/',
+		userRole: {
+			ADMIN : 'operations',
+			VENDOR : 'vendor'
+		}
+	};
+
 	angular.module('ygVendorApp')
-	.constant('constants', constants);
+	.constant('constants', prodConstants);
 })();
 (function(){
 	'use strict';
@@ -341,14 +362,22 @@
 		return errorHandler;
 	};
 
-	var stateChangeError = function ($rootScope, Access, $state){
+	var stateChangeHandler = function ($rootScope, Access, $state,$document){
 		$rootScope.$on("$stateChangeError",function (event, toState, toParams, fromState, fromParams, error){
-			console.log(error);
+			angular.element($document[0].getElementsByClassName('request-loader')).addClass('request-loader-hidden');
 			if (error == Access.UNAUTHORIZED) {
 				$state.go("login");
 			} else if (error == Access.FORBIDDEN) {
 				$state.go("forbidden");
 			}
+		});
+		$rootScope.$on("$stateChangeStart",function (event, toState, toParams, fromState, fromParams){
+			console.log("start");
+			angular.element($document[0].getElementsByClassName('request-loader')).removeClass('request-loader-hidden');
+		});
+		$rootScope.$on("$stateChangeSuccess",function (event, toState, toParams, fromState, fromParams){
+			console.log('end');
+			angular.element($document[0].getElementsByClassName('request-loader')).addClass('request-loader-hidden');
 		});
 	};
 
@@ -366,7 +395,8 @@
 		'$rootScope',
 		'Access',
 		'$state',
-		stateChangeError
+		'$document',
+		stateChangeHandler
 	]);
 })();
 (function(){
@@ -498,15 +528,42 @@
 })();
 (function(){
 	'use strict';
-	var opsOrderCntrl = function ($state,$mdSidenav,vendorClients,orderResource,orders){
+	var opsOrderCntrl = function ($state,$mdSidenav,$stateParams,vendorClients,orderResource,orders){
 		console.log(orders);
+		var self = this;
+		this.params = $stateParams;
+		this.params.date = new Date(this.params.date);
+		this.vendor_list = vendorClients.vendors;
 		this.orders = orders.data;
+		this.orderFrom = ( ( ( this.params.page -1 ) * 50 ) + 1 );
+		this.orderTo  = (this.orderFrom-1) + orders.data.length;
 		this.total_pages = orders.total_pages;
 		this.total_orders = orders.total_orders;
 		this.pending_orders_count = orders.pending_orders_count;
 		this.unassigned_orders_count = orders.unassigned_orders_count;
+
+
 		this.toggleFilter = function(){
 			$mdSidenav('order-filter').toggle();
+		};
+
+		this.pageRange = function (n){
+			return new Array(n);
+		};
+
+		this.paginate = {
+			nextpage : function(){
+				self.params.page = self.params.page + 1;
+				self.getOrders();
+			},
+			previouspage : function(){
+				self.params.page = self.params.page - 1;
+				self.getOrders();
+			}
+		};
+
+		this.getOrders = function(){
+			$state.transitionTo($state.current, self.params, { reload: true, inherit: false, notify: true });
 		};
 	};
 
@@ -518,7 +575,7 @@
 	.config(['$stateProvider',function ($stateProvider) {
 		$stateProvider
 		.state('home.opsorder', {
-			url: "^/all-orders",
+			url: "^/all-orders?date$vendor&page",
 			templateUrl: "/static/modules/order/opsOrders.html",
 			controllerAs : 'opsOrder',
     		controller: "opsOrderCntrl",
@@ -529,6 +586,8 @@
     						return Access.hasRole(constants.userRole.ADMIN); 
     					}],
     			orders: ['Order','$stateParams', function (Order,$stateParams){
+    						$stateParams.date = ($stateParams.date !== undefined) ? new Date($stateParams.date).toISOString() : new Date().toISOString();
+    						$stateParams.page = (!isNaN($stateParams.page))? parseInt($stateParams.page): 1;
     						return Order.getOrders.query($stateParams).$promise;
     					}]
     		}
@@ -549,6 +608,7 @@
 	.controller('opsOrderCntrl', [
 		'$state',
 		'$mdSidenav',
+		'$stateParams',
 		'vendorClients',
 		 'orderResource',
 		 'orders',

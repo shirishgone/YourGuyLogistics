@@ -88,5 +88,9 @@
 		</md-list>
 	</md-content>
 </md-sidenav>
-<div layout="column" flex ui-view></div>
+<div class="request-loader request-loader-hidden">
+	<md-progress-linear class="md-warn" md-mode="indeterminate"></md-progress-linear>
+</div>
+<div layout="column" flex ui-view>
+</div>
 

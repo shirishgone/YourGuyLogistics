@@ -17,12 +17,14 @@
 	.config([
 		'$urlRouterProvider',
 		'$locationProvider',
+		'$resourceProvider',
 		'$mdThemingProvider',
 		'roleProvider',
-		function ($urlRouterProvider,$locationProvider,$mdThemingProvider,roleProvider) {
+		function ($urlRouterProvider,$locationProvider,$resourceProvider,$mdThemingProvider,roleProvider) {
 		// For any unmatched url, redirect to /home
   		$urlRouterProvider.otherwise("/home");
   		$locationProvider.html5Mode(true).hashPrefix('!');
+  		$resourceProvider.defaults.stripTrailingSlashes = false;
   		roleProvider.$get().$setUserRole();
   		$mdThemingProvider.theme('purpleTheme')
   		.primaryPalette('purple')

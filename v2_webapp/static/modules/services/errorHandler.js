@@ -16,14 +16,22 @@
 		return errorHandler;
 	};
 
-	var stateChangeError = function ($rootScope, Access, $state){
+	var stateChangeHandler = function ($rootScope, Access, $state,$document){
 		$rootScope.$on("$stateChangeError",function (event, toState, toParams, fromState, fromParams, error){
-			console.log(error);
+			angular.element($document[0].getElementsByClassName('request-loader')).addClass('request-loader-hidden');
 			if (error == Access.UNAUTHORIZED) {
 				$state.go("login");
 			} else if (error == Access.FORBIDDEN) {
 				$state.go("forbidden");
 			}
+		});
+		$rootScope.$on("$stateChangeStart",function (event, toState, toParams, fromState, fromParams){
+			console.log("start");
+			angular.element($document[0].getElementsByClassName('request-loader')).removeClass('request-loader-hidden');
+		});
+		$rootScope.$on("$stateChangeSuccess",function (event, toState, toParams, fromState, fromParams){
+			console.log('end');
+			angular.element($document[0].getElementsByClassName('request-loader')).addClass('request-loader-hidden');
 		});
 	};
 
@@ -41,6 +49,7 @@
 		'$rootScope',
 		'Access',
 		'$state',
-		stateChangeError
+		'$document',
+		stateChangeHandler
 	]);
 })();

@@ -12,28 +12,15 @@
 </md-toolbar>
 <md-content flex layout-padding layout="row" class="opsOrder">
 	<div flex layout="column" class="order-list">
-		<!-- <section flex="10" class="header md-whiteframe-z1" layout="row" layout-align="start center">
-			<md-checkbox class="md-warn md-align-top-bottom" ng-model="order.selected" aria-label="Checkbox">
-		    </md-checkbox>
-			<div flex="5">
-				
-			</div>
-			<div flex="20" class="customer">
-				CUSTOMER
-			</div>
-			<div flex="20" class="vendor">
-				VENDOR
-			</div>
-		</section> -->
 		<section flex="80" class="list">
 			<div ng-repeat="order in opsOrder.orders">
 				<md-card>
 		        	<md-card-content layout="row" class="card-content" layout-align="start start">
-		        		<div flex="5">
+		        		<div flex="10">
 		        			<md-checkbox class="md-accent" ng-model="order.selected" aria-label="Checkbox">
 		        			</md-checkbox>
 		        		</div>
-		        		<div flex="20" class="customer" layout="row" layout-align="start start">
+		        		<div flex="30" class="customer" layout="row" layout-align="start start">
 			        		<div class="icon">
 			        			<md-icon md-font-library="material-icons" ng-style="{color: '#9E9E9E','font-size':'36px', height: '36px', width: '36px'}">people</md-icon>
 			        		</div>
@@ -42,7 +29,7 @@
 		        				<span>{{order.delivery_address}}</span>
 		        			</div>
 		        		</div>
-		        		<div flex="20" class="vendor" layout="row" layout-align="start start">
+		        		<div flex="30" class="vendor" layout="row" layout-align="start start">
 		        			<div class="icon">
 			        			<md-icon md-font-library="material-icons" ng-style="{color: '#9E9E9E','font-size':'36px', height: '36px', width: '36px'}">home</md-icon>
 			        		</div>
@@ -51,78 +38,115 @@
 		        				<span>{{order.pickup_address}}</span>
 			        		</div>
 		        		</div>
+		        		<div flex="30" class="dg" layout="row" layout-align="start start">
+		        			<div class="icon">
+			        			<md-icon md-font-library="material-icons" 
+			        			ng-style="order.pickupguy_name && order.deliveryguy_name && {color: '#9E9E9E','font-size':'36px', height: '36px', width: '36px'} || {color: '#FFAB91','font-size':'36px', height: '36px', width: '36px' }">assignment</md-icon>
+			        		</div>
+			        		<div flex>
+			        			<span>Pickup: {{order.pickupguy_name || 'Not Assigned'}}</span>
+			        			<br>
+		        				<span>Delivery: {{order.deliveryguy_name || 'Not Assigned'}}</span>
+			        		</div>
+		        		</div>
         			</md-card-content>
         			<md-card-actions layout="row" class="card-action" layout-align="start end">
-        				<span flex="5">
-        				</span>
-        				<div flex="20" class="order-time" layout="row" layout-align="start center">
+        				<div flex="10" layout="row" layout-align="start center">
+        					<md-icon md-font-library="material-icons" ng-style="{color: '#9E9E9E','font-size':'24px', height: '24px', width: '24px'}">bookmark_border</md-icon>
+        					<span flex class="order-id">{{order.id}}</span>
+        				</div>
+        				<div flex="30" class="order-time" layout="row" layout-align="start center">
         					<div class="icon">
 			        			<md-icon md-font-library="material-icons" ng-style="{color: '#9E9E9E','font-size':'24px', height: '24px', width: '24px'}">alarm</md-icon>
 			        		</div>
 		        			<div flex>
 		        				<p>{{order.pickup_datetime | date:'dd MMM yyyy - h:mm a'}}</p>
-		        				<!-- <span>{{order.pickup_datetime | date:'h:mm a'}}</span> -->
 		        			</div>
         				</div>
-        				<div flex="20" class="payment" layout="row" layout-align="start center">
+        				<div flex="30" class="payment" layout="row" layout-align="start center">
         					<div class="icon">
 			        			<md-icon md-font-library="material-icons" ng-style="{color: '#9E9E9E','font-size':'24px', height: '24px', width: '24px'}">payment</md-icon>
 			        		</div>
 		        			<div flex>
 		        				<p><span>{{order.cod_collected}} Collected</span> / <span>{{order.cod_amount}} Amount</span></p>
-		        				<!-- <span>{{order.pickup_datetime | date:'h:mm a'}}</span> -->
 		        			</div>
         				</div>
-        				<div flex="5">
-        					<span class="bagde bagde-warn ">{{order.status}}</span>
-        				</div>
         				<span flex></span>
+        				<md-button class="md-icon-button" aria-label="Favorite" ng-if="order.is_reverse_pickup">
+							<md-icon ng-style="{color: '#CE93D8','font-size':'24px', height: '24px', width: '24px'}">directions</md-icon>
+						</md-button>
+						<md-button class="md-icon-button" aria-label="Favorite" ng-if="order.is_recurring">
+							<md-icon ng-style="{color: '#81D4FA','font-size':'24px', height: '24px', width: '24px'}">repeat</md-icon>
+						</md-button>
 						<md-button class="md-icon-button" aria-label="Favorite">
-							<md-icon ng-style="{color: '#9E9E9E','font-size':'16px', height: '16px', width: '16px'}">more_vert</md-icon>
+							<md-icon ng-style="{color: '#9E9E9E','font-size':'24px', height: '24px', width: '24px'}">more_vert</md-icon>
 						</md-button>
-						<!-- <md-button class="md-icon-button" aria-label="Settings">
-							<md-icon ng-style="{color: '#9E9E9E','font-size':'24px', height: '24px', width: '24px'}">menu</md-icon>
-						</md-button>
-						<md-button class="md-icon-button" aria-label="Share">
-							<md-icon ng-style="{color: '#9E9E9E','font-size':'24px', height: '24px', width: '24px'}">menu</md-icon>
-						</md-button> -->
 					</md-card-actions>
 				</md-card>
+				<md-divider ></md-divider>
 			</div>
 		</section>
-		<section flex="10" class="footer md-whiteframe-z2" layout="row" layout-align="start center">
+		<section flex="10" class="footer" layout="row" layout-align="start center">
 			<div class="stats" layout="row">
 				<p>Pending: {{opsOrder.pending_orders_count}} </p>
 				<p>Unassigned: {{opsOrder.unassigned_orders_count}} </p>
 				<p>Total: {{opsOrder.total_orders}} </p>
 			</div>
 			<span flex></span>
+			<div class="pagination" layout="row" layout-align="start center">
+				<p>Page:</p>
+				<md-input-container class="md-accent">
+					<label class="hide-gt-xs">Page</label>
+					<md-select class="md-accent" ng-model="opsOrder.params.page" ng-change="opsOrder.getOrders()">
+						<md-option class="md-accent" ng-repeat="page in opsOrder.pageRange(opsOrder.total_pages) track by $index" value="{{$index + 1}}">
+							{{$index + 1}}
+						</md-option>
+					</md-select>
+				</md-input-container>
+			</div>
+			<div class="pagination" layout="row" layout-align="start center">
+				<p>{{opsOrder.orderFrom}} -- {{opsOrder.orderTo}} of {{opsOrder.total_orders}}</p>
+			</div>
 			<div class="page-navigation">
-				<md-button  class="md-icon-button" aria-label="Menu Icon">
-						<md-icon>keyboard_arrow_left</md-icon>
+				<md-button ng-disabled="opsOrder.params.page == 1" ng-click="opsOrder.paginate.previouspage();" class="md-icon-button md-accent" aria-label="Menu Icon">
+						<md-icon>arrow_backward</md-icon>
 				</md-button>
-				<md-button class="md-icon-button" aria-label="Menu Icon">
-						<md-icon>keyboard_arrow_right</md-icon>
+				<md-button ng-disabled="opsOrder.params.page == opsOrder.total_pages" ng-click="opsOrder.paginate.nextpage();" class="md-icon-button md-accent" aria-label="Menu Icon">
+						<md-icon>arrow_forward</md-icon>
 				</md-button>
 			</div>
 		</section>
 	</div>
-	<!-- <md-content flex layout="column" class="order-list">
-		<section class="header md-whiteframe-z1">
-			<md-button class="md-raised">Hello</md-button>
-		</section>
-		<section class="list">
-			<div ng-repeat="order in opsOrder.orders">
-				{{order}}
-			</div>
-		</section>
-		<section class="footer">
-			<md-button class="md-raised">Hello</md-button>
-		</section>
-	</md-content> -->
-	<md-sidenav class="filter-sidenav md-sidenav-right md-whiteframe-z3" md-component-id="order-filter">
+	<md-sidenav class="filter-sidenav md-sidenav-right md-whiteframe-z3" layout="column" md-component-id="order-filter">
 		<md-toolbar class="md-accent md-whiteframe-z1">
         	<h1 class="md-subhead md-toolbar-tools">FILTERS</h1>
      	</md-toolbar>
+     	<md-content flex layout="column">
+     		<md-list>
+     			<md-subheader>DATE</md-subheader>
+     			<md-list-item class="md-1-line">
+					<md-datepicker ng-model="opsOrder.params.date" md-placeholder="Enter date"></md-datepicker>
+				</md-list-item>
+				<md-subheader>VENDOR</md-subheader>
+     			<md-list-item class="md-1-line" flex>
+     				<form name="vendorselectform">
+     					<md-input-container>
+     						<label>Search Vendor</label>
+     						<input ng-model="opsOrder.searched_vendor.store_name">
+     					</md-input-container>
+     					<md-radio-group ng-model="opsOrder.params.vendor">
+     						<md-radio-button ng-repeat="vendor in opsOrder.vendor_list | filter: opsOrder.searched_vendor" ng-value="vendor.id">
+     							{{vendor.store_name}}
+     						</md-radio-button>
+     					</md-radio-group>
+     					<md-virtual-repeat-container id="vertical-container" flex>
+     						<div md-virtual-repeat="vendor in opsOrder.vendor_list" class="repeated-item" flex>
+     							{{vendor}}
+     						</div>
+     					</md-virtual-repeat-container>
+     				</form>
+				</md-list-item>
+     		</md-list>
+     	</md-content>
 	</md-sidenav>
 </md-content>

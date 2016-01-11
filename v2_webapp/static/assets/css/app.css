@@ -13,6 +13,29 @@ body {
 }
 
 /* line 13, ../sass/app.scss */
+.request-loader {
+  display: block !important;
+  position: absolute;
+  width: 100%;
+  height: 5px;
+  z-index: 100;
+}
+
+/* line 21, ../sass/app.scss */
+.request-loader.request-loader-hidden {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+/* line 26, ../sass/app.scss */
+.order-id {
+  color: #9E9E9E;
+  font-size: 12px;
+  font-weight: 600;
+  margin: 5px 5px;
+}
+
+/* line 33, ../sass/app.scss */
 .bagde {
   min-width: 50px;
   text-align: center;
@@ -25,12 +48,12 @@ body {
   background-color: #9C27B0;
 }
 
-/* line 23, ../sass/app.scss */
+/* line 43, ../sass/app.scss */
 .bagde-warn {
   background-color: #FF5722;
 }
 
-/* line 27, ../sass/app.scss */
+/* line 47, ../sass/app.scss */
 .login-page {
   height: 100%;
   height: 100vh;
@@ -41,65 +64,65 @@ body {
   background-image: -webkit-linear-gradient(#fcc06a, #363636);
   background-image: linear-gradient(#fcc06a, #363636);
 }
-/* line 31, ../sass/app.scss */
+/* line 51, ../sass/app.scss */
 .login-page .login-error-message {
   margin: 15px 10px;
   color: #FE5E64;
 }
 
-/* line 37, ../sass/app.scss */
+/* line 57, ../sass/app.scss */
 .site-sidenav {
   background-color: #ffffff;
   color: #9C27B0;
   max-width: 280px;
 }
-/* line 41, ../sass/app.scss */
+/* line 61, ../sass/app.scss */
 .site-sidenav .tab-liks {
   color: #9C27B0;
   text-decoration: none;
 }
-/* line 45, ../sass/app.scss */
+/* line 65, ../sass/app.scss */
 .site-sidenav md-list {
   padding: 0px;
   color: #9C27B0;
 }
-/* line 48, ../sass/app.scss */
+/* line 68, ../sass/app.scss */
 .site-sidenav md-list md-list-item {
   padding: 0 30px;
 }
-/* line 50, ../sass/app.scss */
+/* line 70, ../sass/app.scss */
 .site-sidenav md-list md-list-item .md-avatar {
   width: 30px;
   height: 30px;
 }
-/* line 54, ../sass/app.scss */
+/* line 74, ../sass/app.scss */
 .site-sidenav md-list md-list-item .md-subhead {
   font-size: 12px;
 }
-/* line 57, ../sass/app.scss */
+/* line 77, ../sass/app.scss */
 .site-sidenav md-list md-list-item:hover {
   background-color: #F3E5F5;
 }
-/* line 61, ../sass/app.scss */
+/* line 81, ../sass/app.scss */
 .site-sidenav md-list md-list-item.active {
   background-color: #E1BEE7;
 }
-/* line 65, ../sass/app.scss */
+/* line 85, ../sass/app.scss */
 .site-sidenav md-content {
   background: transparent;
   padding-bottom: 100px;
 }
-/* line 69, ../sass/app.scss */
+/* line 89, ../sass/app.scss */
 .site-sidenav .md-subheader {
   background-color: #ffffff;
   color: #6A1B9A;
 }
-/* line 73, ../sass/app.scss */
+/* line 93, ../sass/app.scss */
 .site-sidenav .md-subheader .md-subheader-inner {
   padding: 10px;
 }
 
-/* line 78, ../sass/app.scss */
+/* line 98, ../sass/app.scss */
 .nav-header {
   text-align: center;
   background-image: url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4gPHN2ZyB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJncmFkIiBncmFkaWVudFVuaXRzPSJvYmplY3RCb3VuZGluZ0JveCIgeDE9IjAuNSIgeTE9IjAuMCIgeDI9IjAuNSIgeTI9IjEuMCI+PHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzhlMjRhYSIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzZhMWI5YSIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHg9IjAiIHk9IjAiIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JhZCkiIC8+PC9zdmc+IA==');
@@ -110,108 +133,116 @@ body {
   background-image: linear-gradient(#8e24aa, #6a1b9a);
   border: #6A1B9A;
 }
-/* line 82, ../sass/app.scss */
+/* line 102, ../sass/app.scss */
 .nav-header a {
   padding: 10px;
   color: #ffffff;
   text-decoration: none;
 }
-/* line 87, ../sass/app.scss */
+/* line 107, ../sass/app.scss */
 .nav-header img {
   width: auto;
   height: 100px;
 }
 
-/* line 93, ../sass/app.scss */
+/* line 113, ../sass/app.scss */
 .filter-sidenav {
-  max-width: 200px;
+  max-width: 220px;
   padding: 0;
   -moz-border-radius: 3px;
   -webkit-border-radius: 3px;
   border-radius: 3px;
 }
 
-/* line 99, ../sass/app.scss */
+/* line 119, ../sass/app.scss */
 .opsOrder {
   background-color: #F5F5F5;
+  overflow-y: hidden;
 }
-/* line 101, ../sass/app.scss */
+/* line 122, ../sass/app.scss */
 .opsOrder .order-list {
   padding: 0px;
 }
-/* line 103, ../sass/app.scss */
+/* line 124, ../sass/app.scss */
 .opsOrder .order-list .header {
   z-index: 10;
   padding: 5px;
   min-height: 50px;
 }
-/* line 107, ../sass/app.scss */
+/* line 128, ../sass/app.scss */
 .opsOrder .order-list .header md-checkbox {
   margin-bottom: 0;
 }
-/* line 111, ../sass/app.scss */
+/* line 132, ../sass/app.scss */
 .opsOrder .order-list .footer {
+  border-top: 1px solid #E0E0E0;
   min-height: 50px;
+  max-height: 50px;
   padding: 5px;
   z-index: 10;
 }
-/* line 115, ../sass/app.scss */
-.opsOrder .order-list .footer .stats {
+/* line 138, ../sass/app.scss */
+.opsOrder .order-list .footer .stats, .opsOrder .order-list .footer .pagination {
   margin: 0 10px;
 }
-/* line 117, ../sass/app.scss */
-.opsOrder .order-list .footer .stats p {
+/* line 140, ../sass/app.scss */
+.opsOrder .order-list .footer .stats p, .opsOrder .order-list .footer .pagination p {
   font-size: 12px;
   color: #9E9E9E;
   margin: 10px 10px;
 }
-/* line 124, ../sass/app.scss */
+/* line 147, ../sass/app.scss */
 .opsOrder .order-list .list {
   height: 80%;
   z-index: 9;
   overflow-y: scroll;
 }
-/* line 128, ../sass/app.scss */
+/* line 151, ../sass/app.scss */
 .opsOrder .order-list .list md-card {
+  box-shadow: none;
   margin: 5px 0px;
   cursor: pointer;
 }
-/* line 131, ../sass/app.scss */
+/* line 155, ../sass/app.scss */
 .opsOrder .order-list .list md-card .icon {
   margin-right: 10px;
 }
-/* line 135, ../sass/app.scss */
+/* line 159, ../sass/app.scss */
 .opsOrder .order-list .list .card-content {
   padding: 5px;
 }
-/* line 138, ../sass/app.scss */
-.opsOrder .order-list .list .card-content .customer p, .opsOrder .order-list .list .card-content .vendor p {
+/* line 161, ../sass/app.scss */
+.opsOrder .order-list .list .card-content .customer, .opsOrder .order-list .list .card-content .vendor, .opsOrder .order-list .list .card-content .dg {
+  padding-right: 15px;
+}
+/* line 163, ../sass/app.scss */
+.opsOrder .order-list .list .card-content .customer p, .opsOrder .order-list .list .card-content .vendor p, .opsOrder .order-list .list .card-content .dg p {
   margin: 0;
   font-size: 14px;
   text-transform: uppercase;
   color: #616161;
 }
-/* line 144, ../sass/app.scss */
-.opsOrder .order-list .list .card-content .customer span, .opsOrder .order-list .list .card-content .vendor span {
+/* line 169, ../sass/app.scss */
+.opsOrder .order-list .list .card-content .customer span, .opsOrder .order-list .list .card-content .vendor span, .opsOrder .order-list .list .card-content .dg span {
   font-size: 12px;
   color: #9E9E9E;
 }
-/* line 150, ../sass/app.scss */
+/* line 175, ../sass/app.scss */
 .opsOrder .order-list .list .card-action {
   margin: 5px;
 }
-/* line 153, ../sass/app.scss */
+/* line 178, ../sass/app.scss */
 .opsOrder .order-list .list .card-action .order-time .icon, .opsOrder .order-list .list .card-action .payment .icon {
   margin-right: 10px;
 }
-/* line 156, ../sass/app.scss */
+/* line 181, ../sass/app.scss */
 .opsOrder .order-list .list .card-action .order-time p, .opsOrder .order-list .list .card-action .payment p {
   margin: 0;
   font-size: 11px;
   text-transform: uppercase;
   color: #757575;
 }
-/* line 162, ../sass/app.scss */
+/* line 187, ../sass/app.scss */
 .opsOrder .order-list .list .card-action .order-time span, .opsOrder .order-list .list .card-action .payment span {
   font-size: 10px;
   color: #9E9E9E;
