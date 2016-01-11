@@ -227,7 +227,7 @@ class Employee(YGUser):
     OPERATIONS_MANAGER = 'operations_manager'
     ACCOUNTS = 'accounts'
     CALLER = 'caller'
-    MANAGER = 'manager'
+    ADMIN = 'admin'
     DEPARTMENT_CHOICES = (
             (SALES, 'sales'),
             (SALES_MANAGER, 'sales_manager'),
@@ -235,7 +235,7 @@ class Employee(YGUser):
             (OPERATIONS_MANAGER, 'operations_manager'),
             (ACCOUNTS, 'accounts'),
             (CALLER, 'caller'),
-            (MANAGER, 'manager')
+            (ADMIN, 'admin')
             )
     department = models.CharField(max_length = 15, choices = DEPARTMENT_CHOICES, default = CALLER)
     serving_pincodes = models.ManyToManyField(ServiceablePincode)
