@@ -139,29 +139,31 @@ def dashboard_stats(request):
     else:
         delivery_status_queryset = OrderDeliveryStatus.objects.all()
 
-    # TOTAL COD COLLECTED ------------------------------------------------------------
-    cod_collected_dict = delivery_status_queryset.filter(date__gte=start_date, date__lte=end_date).aggregate(
-        cod_collected=Sum('cod_collected_amount'))
-    cod_collected = cod_collected_dict['cod_collected']
-
     # DATE FILTERING ---------------------------------------------------------------
     delivery_status_queryset = delivery_status_queryset.filter(date__gte=start_date, date__lte=end_date)
-
-    # TOTAL COD TO BE COLLECTED -----------------------------
-    executable_deliveries = delivery_status_queryset.filter(
-        Q(order_status=constants.ORDER_STATUS_QUEUED) | Q(order_status=constants.ORDER_STATUS_INTRANSIT) | Q(
-            order_status=constants.ORDER_STATUS_DELIVERED) | Q(
-            order_status=constants.ORDER_STATUS_DELIVERY_ATTEMPTED) | Q(
-            order_status=constants.ORDER_STATUS_PICKUP_ATTEMPTED))
-    total_cod_dict = executable_deliveries.aggregate(total_cod=Sum('order__cod_amount'))
-    total_cod = total_cod_dict['total_cod']
+    total_orders = delivery_status_queryset.filter(
+        Q(order_status=constants.ORDER_STATUS_QUEUED) | 
+        Q(order_status=constants.ORDER_STATUS_INTRANSIT) | 
+        Q(order_status=constants.ORDER_STATUS_DELIVERED) | 
+        Q(order_status=constants.ORDER_STATUS_DELIVERY_ATTEMPTED)).count()
 
     # ORDER STATUS FILTERING -------------------------------------------------------
-    total_orders = delivery_status_queryset.count()
     total_orders_executed = delivery_status_queryset.filter(
-        Q(order_status=constants.ORDER_STATUS_DELIVERED) | Q(
-            order_status=constants.ORDER_STATUS_DELIVERY_ATTEMPTED) | Q(
-            order_status=constants.ORDER_STATUS_PICKUP_ATTEMPTED)).count()
+        Q(order_status=constants.ORDER_STATUS_DELIVERED) | 
+        Q(order_status=constants.ORDER_STATUS_DELIVERY_ATTEMPTED)).count()
+    
+    # TOTAL COD TO BE COLLECTED -----------------------------
+    executable_deliveries = delivery_status_queryset.filter(
+        Q(order_status=constants.ORDER_STATUS_QUEUED) | 
+        Q(order_status=constants.ORDER_STATUS_INTRANSIT) | 
+        Q(order_status=constants.ORDER_STATUS_DELIVERED))
+    total_cod_dict = executable_deliveries.aggregate(total_cod=Sum('order__cod_amount'))
+    total_cod = total_cod_dict['total_cod']
+    
+    # TOTAL COD COLLECTED ------------------------------------
+    executed_deliveries = delivery_status_queryset.filter(Q(order_status=constants.ORDER_STATUS_DELIVERED))
+    total_cod_dict = executed_deliveries.aggregate(total_cod=Sum('order__cod_amount'))
+    cod_collected = total_cod_dict['total_cod']
 
     # FOR ORDER COUNT FOR INDIVIDUAL DATES -----------------------------------------
     fullday_timedelta = timedelta(hours=23, minutes=59)
