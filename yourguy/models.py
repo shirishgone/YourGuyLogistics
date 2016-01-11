@@ -435,4 +435,4 @@ class OrderDeliveryStatus(models.Model):
     delivery_transactions = models.ManyToManyField(DeliveryTransaction)
 
     def __unicode__(self):
-        return u"%s - %s" % (self.id, self.delivered_at)
+        return u"%s - %s" % (self.id, self.order)
