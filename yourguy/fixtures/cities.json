@@ -3,7 +3,7 @@
     "model": "yourguy.ServiceableCity",
     "pk": 1,
     "fields": {
-    	"city_code": "yg_cc_01",
+    	"city_code": "yg_sc_01",
     	"city_name": "Mumbai"
     }
   }

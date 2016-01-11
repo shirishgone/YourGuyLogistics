@@ -3,8 +3,8 @@
     "model": "yourguy.NotificationType",
     "pk": 1,
     "fields": {
-        "title": "yg_nt_01",
-        "code": "Not Checked-In",
+        "code": "yg_nt_01",
+        "title": "Not Checked-In",
         "description": ""
     }
   },
@@ -12,8 +12,8 @@
     "model": "yourguy.NotificationType",
     "pk": 2,
     "fields": {
-        "title": "yg_nt_02",
-        "code": "Late Picked uUp",
+        "code": "yg_nt_02",
+        "title": "Late Picked uUp",
         "description": ""
     }
   },
@@ -21,8 +21,8 @@
     "model": "yourguy.NotificationType",
     "pk": 3,
     "fields": {
-        "title": "yg_nt_03",
-        "code": "Late Delivery",
+        "code": "yg_nt_03",
+        "title": "Late Delivery",
         "description": ""
     }
   },
@@ -30,8 +30,8 @@
     "model": "yourguy.NotificationType",
     "pk": 4,
     "fields": {
-        "title": "yg_nt_04",
-        "code": "Unassigned",
+        "code": "yg_nt_04",
+        "title": "Unassigned",
         "description": ""
     }
   },
@@ -39,8 +39,8 @@
     "model": "yourguy.NotificationType",
     "pk": 5,
     "fields": {
-        "title": "yg_nt_05",
-        "code": "Reported",
+        "code": "yg_nt_05",
+        "title": "Reported",
         "description": ""
     }
   },
@@ -48,8 +48,8 @@
     "model": "yourguy.NotificationType",
     "pk": 6,
     "fields": {
-        "title": "yg_nt_06",
-        "code": "Pickup Attempted",
+        "code": "yg_nt_06",
+        "title": "Pickup Attempted",
         "description": ""
     }
   },
@@ -57,8 +57,8 @@
     "model": "yourguy.NotificationType",
     "pk": 7,
     "fields": {
-        "title": "yg_nt_07",
-        "code": "COD Discreprency",
+        "code": "yg_nt_07",
+        "title": "COD Discreprency",
         "description": ""
     }
   }
