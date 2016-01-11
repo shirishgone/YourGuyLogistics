@@ -14,7 +14,6 @@ from api.view_order import OrderViewSet
 from api.view_deliveryguy import DGViewSet
 from api.view_vendor import VendorViewSet
 from api.view_vendoragent import VendorAgentViewSet
-from api.view_group import GroupViewSet
 from api.view_industry import IndustryViewSet
 from api.view_product import ProductViewSet
 from api.view_productcategory import ProductCategoryViewSet
@@ -43,7 +42,6 @@ router.register(r'vendoragent', VendorAgentViewSet)
 router.register(r'deliveryguy', DGViewSet)
 router.register(r'consumer', ConsumerViewSet)
 router.register(r'order', OrderViewSet, base_name = 'orders')
-router.register(r'group', GroupViewSet)
 router.register(r'product', ProductViewSet)
 router.register(r'productcategory', ProductCategoryViewSet)
 

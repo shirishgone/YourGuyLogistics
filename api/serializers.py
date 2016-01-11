@@ -1,8 +1,10 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User, Group
 
-from yourguy.models import OrderDeliveryStatus, Order, OrderItem, Area, Address, Consumer, Industry, Vendor, DeliveryGuy, Group, UserGroup, VendorAgent, Product, ProductCategory, DGAttendance
-
+from yourguy.models import OrderDeliveryStatus, Order, OrderItem
+from yourguy.models import Area, Address
+from yourguy.models import Consumer, Industry, Vendor, VendorAgent, Product, ProductCategory
+from yourguy.models import DeliveryGuy, DGAttendance
 
 from django.contrib.auth import get_user_model
 # User = get_user_model()
@@ -66,14 +68,6 @@ class DGAttendanceSerializer(serializers.ModelSerializer):
     dg = DGSerializer(required= False)
     class Meta:
         model = DGAttendance
-
-class GroupSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Group
-
-class UserGroupSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = UserGroup
 
 class OrderSerializer(serializers.ModelSerializer):
     consumer = ConsumerSerializer(required=False)
