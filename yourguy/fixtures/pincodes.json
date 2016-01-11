@@ -1,0 +1,882 @@
+[
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 1,
+        "fields": {
+            "city": 1,
+            "pincode": "400001"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 2,
+        "fields": {
+            "city": 1,
+            "pincode": "400002"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 3,
+        "fields": {
+            "city": 1,
+            "pincode": "400003"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 4,
+        "fields": {
+            "city": 1,
+            "pincode": "400004"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 5,
+        "fields": {
+            "city": 1,
+            "pincode": "400005"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 6,
+        "fields": {
+            "city": 1,
+            "pincode": "400006"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 7,
+        "fields": {
+            "city": 1,
+            "pincode": "400007"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 8,
+        "fields": {
+            "city": 1,
+            "pincode": "400008"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 9,
+        "fields": {
+            "city": 1,
+            "pincode": "400009"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 10,
+        "fields": {
+            "city": 1,
+            "pincode": "400010"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 11,
+        "fields": {
+            "city": 1,
+            "pincode": "400011"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 12,
+        "fields": {
+            "city": 1,
+            "pincode": "400012"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 13,
+        "fields": {
+            "city": 1,
+            "pincode": "400013"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 14,
+        "fields": {
+            "city": 1,
+            "pincode": "400014"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 15,
+        "fields": {
+            "city": 1,
+            "pincode": "400015"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 16,
+        "fields": {
+            "city": 1,
+            "pincode": "400016"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 17,
+        "fields": {
+            "city": 1,
+            "pincode": "400017"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 18,
+        "fields": {
+            "city": 1,
+            "pincode": "400018"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 19,
+        "fields": {
+            "city": 1,
+            "pincode": "400019"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 20,
+        "fields": {
+            "city": 1,
+            "pincode": "400020"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 21,
+        "fields": {
+            "city": 1,
+            "pincode": "400021"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 22,
+        "fields": {
+            "city": 1,
+            "pincode": "400022"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 23,
+        "fields": {
+            "city": 1,
+            "pincode": "400023"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 24,
+        "fields": {
+            "city": 1,
+            "pincode": "400024"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 25,
+        "fields": {
+            "city": 1,
+            "pincode": "400025"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 26,
+        "fields": {
+            "city": 1,
+            "pincode": "400026"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 27,
+        "fields": {
+            "city": 1,
+            "pincode": "400027"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 28,
+        "fields": {
+            "city": 1,
+            "pincode": "400028"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 29,
+        "fields": {
+            "city": 1,
+            "pincode": "400029"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 30,
+        "fields": {
+            "city": 1,
+            "pincode": "400030"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 31,
+        "fields": {
+            "city": 1,
+            "pincode": "400031"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 32,
+        "fields": {
+            "city": 1,
+            "pincode": "400032"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 33,
+        "fields": {
+            "city": 1,
+            "pincode": "400033"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 34,
+        "fields": {
+            "city": 1,
+            "pincode": "400034"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 35,
+        "fields": {
+            "city": 1,
+            "pincode": "400035"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 36,
+        "fields": {
+            "city": 1,
+            "pincode": "400036"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 37,
+        "fields": {
+            "city": 1,
+            "pincode": "400037"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 38,
+        "fields": {
+            "city": 1,
+            "pincode": "400038"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 39,
+        "fields": {
+            "city": 1,
+            "pincode": "400039"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 40,
+        "fields": {
+            "city": 1,
+            "pincode": "400040"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 41,
+        "fields": {
+            "city": 1,
+            "pincode": "400041"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 42,
+        "fields": {
+            "city": 1,
+            "pincode": "400042"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 43,
+        "fields": {
+            "city": 1,
+            "pincode": "400043"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 44,
+        "fields": {
+            "city": 1,
+            "pincode": "400044"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 45,
+        "fields": {
+            "city": 1,
+            "pincode": "400045"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 46,
+        "fields": {
+            "city": 1,
+            "pincode": "400046"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 47,
+        "fields": {
+            "city": 1,
+            "pincode": "400047"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 48,
+        "fields": {
+            "city": 1,
+            "pincode": "400048"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 49,
+        "fields": {
+            "city": 1,
+            "pincode": "400049"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 50,
+        "fields": {
+            "city": 1,
+            "pincode": "400050"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 51,
+        "fields": {
+            "city": 1,
+            "pincode": "400051"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 52,
+        "fields": {
+            "city": 1,
+            "pincode": "400052"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 53,
+        "fields": {
+            "city": 1,
+            "pincode": "400053"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 54,
+        "fields": {
+            "city": 1,
+            "pincode": "400054"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 55,
+        "fields": {
+            "city": 1,
+            "pincode": "400055"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 56,
+        "fields": {
+            "city": 1,
+            "pincode": "400056"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 57,
+        "fields": {
+            "city": 1,
+            "pincode": "400057"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 58,
+        "fields": {
+            "city": 1,
+            "pincode": "400058"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 59,
+        "fields": {
+            "city": 1,
+            "pincode": "400059"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 60,
+        "fields": {
+            "city": 1,
+            "pincode": "400060"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 61,
+        "fields": {
+            "city": 1,
+            "pincode": "400061"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 62,
+        "fields": {
+            "city": 1,
+            "pincode": "400062"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 63,
+        "fields": {
+            "city": 1,
+            "pincode": "400063"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 64,
+        "fields": {
+            "city": 1,
+            "pincode": "400064"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 65,
+        "fields": {
+            "city": 1,
+            "pincode": "400065"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 66,
+        "fields": {
+            "city": 1,
+            "pincode": "400066"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 67,
+        "fields": {
+            "city": 1,
+            "pincode": "400067"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 68,
+        "fields": {
+            "city": 1,
+            "pincode": "400068"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 69,
+        "fields": {
+            "city": 1,
+            "pincode": "400069"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 70,
+        "fields": {
+            "city": 1,
+            "pincode": "400070"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 71,
+        "fields": {
+            "city": 1,
+            "pincode": "400071"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 72,
+        "fields": {
+            "city": 1,
+            "pincode": "400072"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 73,
+        "fields": {
+            "city": 1,
+            "pincode": "400073"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 74,
+        "fields": {
+            "city": 1,
+            "pincode": "400074"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 75,
+        "fields": {
+            "city": 1,
+            "pincode": "400075"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 76,
+        "fields": {
+            "city": 1,
+            "pincode": "400076"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 77,
+        "fields": {
+            "city": 1,
+            "pincode": "400077"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 78,
+        "fields": {
+            "city": 1,
+            "pincode": "400078"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 79,
+        "fields": {
+            "city": 1,
+            "pincode": "400079"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 80,
+        "fields": {
+            "city": 1,
+            "pincode": "400080"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 81,
+        "fields": {
+            "city": 1,
+            "pincode": "400081"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 82,
+        "fields": {
+            "city": 1,
+            "pincode": "400082"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 83,
+        "fields": {
+            "city": 1,
+            "pincode": "400083"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 84,
+        "fields": {
+            "city": 1,
+            "pincode": "400084"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 85,
+        "fields": {
+            "city": 1,
+            "pincode": "400085"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 86,
+        "fields": {
+            "city": 1,
+            "pincode": "400086"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 87,
+        "fields": {
+            "city": 1,
+            "pincode": "400087"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 88,
+        "fields": {
+            "city": 1,
+            "pincode": "400088"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 89,
+        "fields": {
+            "city": 1,
+            "pincode": "400089"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 90,
+        "fields": {
+            "city": 1,
+            "pincode": "400090"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 91,
+        "fields": {
+            "city": 1,
+            "pincode": "400091"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 92,
+        "fields": {
+            "city": 1,
+            "pincode": "400092"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 93,
+        "fields": {
+            "city": 1,
+            "pincode": "400093"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 94,
+        "fields": {
+            "city": 1,
+            "pincode": "400094"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 95,
+        "fields": {
+            "city": 1,
+            "pincode": "400095"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 96,
+        "fields": {
+            "city": 1,
+            "pincode": "400096"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 97,
+        "fields": {
+            "city": 1,
+            "pincode": "400097"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 98,
+        "fields": {
+            "city": 1,
+            "pincode": "400098"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 99,
+        "fields": {
+            "city": 1,
+            "pincode": "400099"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 100,
+        "fields": {
+            "city": 1,
+            "pincode": "400101"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 101,
+        "fields": {
+            "city": 1,
+            "pincode": "400102"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 102,
+        "fields": {
+            "city": 1,
+            "pincode": "400103"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 103,
+        "fields": {
+            "city": 1,
+            "pincode": "400104"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 104,
+        "fields": {
+            "city": 1,
+            "pincode": "400601"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 105,
+        "fields": {
+            "city": 1,
+            "pincode": "400602"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 106,
+        "fields": {
+            "city": 1,
+            "pincode": "400603"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 107,
+        "fields": {
+            "city": 1,
+            "pincode": "400604"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 108,
+        "fields": {
+            "city": 1,
+            "pincode": "400606"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 109,
+        "fields": {
+            "city": 1,
+            "pincode": "400703"
+        }
+    },
+    {
+        "model": "yourguy.ServiceablePincode",
+        "pk": 110,
+        "fields": {
+            "city": 1,
+            "pincode": "400705"
+        }
+    }
+] 
