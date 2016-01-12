@@ -222,7 +222,12 @@ def cod_report(request):
                                                                 Q(cod_collected_amount__lt=F('order__cod_amount')))
         orders_executed = orders_executed_queryset.aggregate(sum_of_cod_collected=Sum('cod_collected_amount'),sum_of_cod_amount=Sum('order__cod_amount'))
         delivered_cod_collected = orders_executed['sum_of_cod_collected']
+        if delivered_cod_collected is None:
+            delivered_cod_collected = 0
+
         delivered_cod_amount = orders_executed['sum_of_cod_amount']
+        if delivered_cod_amount is None:
+            delivered_cod_amount = 0
 
         pending_cod = delivered_cod_amount - delivered_cod_collected
         pending_cod_amount = pending_cod_amount + pending_cod
