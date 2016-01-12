@@ -287,7 +287,7 @@ def cod_report(request):
             sum_of_cod_collected = item['sum_of_cod_collected']
             sum_of_cod_amount = item['sum_of_cod_amount']
             cod_with_vendor = cod_with_vendor + \
-                              "\n%s, %s/%s" % \
+                              "\n%s - COD: %s/%s" % \
                               (vendor, sum_of_cod_collected, sum_of_cod_amount)
         # -----------------------------------------------------------------------------------
         email_body = email_body + "\n-----------------------\n"
@@ -314,7 +314,7 @@ def cod_report(request):
             else:
                 dg_full_name = 'Unassigned'
 
-            cod_with_dg = "\n%s, %s/%s" % \
+            cod_with_dg = "\n%s - COD: %s/%s" % \
                          (dg_full_name, sum_of_cod_collected, sum_of_cod_amount)
             email_body = email_body + "\n\n" + cod_with_dg
             # ===============================================================
@@ -353,14 +353,8 @@ def dg_report(request):
     day_end = ist_day_end(date)
 
     # Number of dgs working today ----------------------------------------------------------------------
-    dg_working_today_count = 0
-    attendance = DGAttendance.objects.all()
-    for single in attendance:
-        attendance_status = single.status
-        if attendance_status == constants.DG_STATUS_WORKING:
-            dg_working_today_count = dg_working_today_count + 1
-        else:
-            pass
+    dg_working_today_count = DGAttendance.objects.filter(date__gte=day_start, date__lte=day_end).count()
+    
     # --------------------------------------------
     delivery_statuses_today = OrderDeliveryStatus.objects.filter(date__gte=day_start, date__lte=day_end)
     delivery_statuses_today = delivery_statuses_today.filter(
@@ -414,7 +408,7 @@ def dg_report(request):
             orders_executed_tracked = orders_executed.filter(delivery_guy__user__username=single_pickup_guy['pickup_guy__user__username'])
             no_of_executed_orders = len(orders_executed_tracked)
 
-            email_body = email_body + "\n\n%s, %s/%s" %(pickup_guy_full_name, no_of_executed_orders, no_of_assigned_orders)
+            email_body = email_body + "\n\n%s - Orders: %s/%s" %(pickup_guy_full_name, no_of_executed_orders, no_of_assigned_orders)
             email_body = email_body + "\n-----------------------------------"
 
 
@@ -436,7 +430,7 @@ def dg_report(request):
             orders_executed_tracked = orders_executed.filter(delivery_guy__user__username=single_dg['delivery_guy__user__username'])
             no_of_executed_orders = len(orders_executed_tracked)
 
-            email_body = email_body + "\n\n%s, %s/%s, %s/%s" %(dg_full_name, no_of_executed_orders,
+            email_body = email_body + "\n\n%s - Orders: %s/%s, COD: %s/%s" %(dg_full_name, no_of_executed_orders,
                                                         no_of_assigned_orders, cod_collected, cod_to_be_collected)
             email_body = email_body + "\n-----------------------------------"
 
