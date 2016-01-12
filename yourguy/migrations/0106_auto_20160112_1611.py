@@ -11,9 +11,8 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterField(
+        migrations.RemoveField(
             model_name='product',
             name='category',
-            field=models.ForeignKey(blank=True, to='yourguy.ProductCategory', null=True),
         ),
     ]

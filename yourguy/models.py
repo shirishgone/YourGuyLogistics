@@ -296,7 +296,6 @@ class Product(models.Model):
     cost = models.FloatField(default = 0.0)
     vendor = models.ForeignKey(Vendor, blank = True, null = True)
     timeslots = models.ManyToManyField(TimeSlot, blank = True)
-    category = models.ForeignKey(ProductCategory, blank = True, null = True)
     
     def __unicode__(self):
         return u"%s - %s" % (self.name, self.vendor)
