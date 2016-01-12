@@ -226,6 +226,8 @@ def cod_report(request):
 
         pending_cod = delivered_cod_amount - delivered_cod_collected
         pending_cod_amount = pending_cod_amount + pending_cod
+        if pending_cod_amount is None:
+            pending_cod_amount = 0
 
         orders_executed_queryset = delivery_statuses_today.filter(order_status=constants.ORDER_STATUS_DELIVERED)
         orders_executed = orders_executed_queryset.aggregate(sum_of_cod_collected=Sum('cod_collected_amount'),sum_of_cod_amount=Sum('order__cod_amount'))
