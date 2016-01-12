@@ -89,7 +89,9 @@ def daily_report(request):
         # TOTAL COD COLLECTED Vs SUPPOSSED TO BE COLLECTED ----------------------------------
         total_cod_collected = delivery_statuses_today.aggregate(Sum('cod_collected_amount'))
         total_cod_collected = total_cod_collected['cod_collected_amount__sum']
-
+        if total_cod_collected is None:
+            total_cod_collected = 0
+        
         executable_deliveries = delivery_statuses_today.filter(
             Q(order_status=constants.ORDER_STATUS_QUEUED) |
             Q(order_status=constants.ORDER_STATUS_INTRANSIT) |
@@ -98,6 +100,8 @@ def daily_report(request):
             Q(order_status=constants.ORDER_STATUS_PICKUP_ATTEMPTED))
         total_cod_dict = executable_deliveries.aggregate(total_cod=Sum('order__cod_amount'))
         total_cod_to_be_collected = total_cod_dict['total_cod']
+        if total_cod_to_be_collected is None:
+            total_cod_to_be_collected = 0
 
         if total_cod_to_be_collected > 0:
             cod_collected_percentage = "{0:.0f}%".format(
@@ -115,6 +119,8 @@ def daily_report(request):
         for item in cod_with_delivery_boys:
             delivery_guy = item['delivery_guy__user__first_name']
             total = item['total']
+            if total is None:
+                total = 0
             cod_with_dg_string = cod_with_dg_string + "\n%s = %s" % (delivery_guy, total)
         # -----------------------------------------------------------------------------------
 
@@ -237,7 +243,12 @@ def cod_report(request):
         orders_executed_queryset = delivery_statuses_today.filter(order_status=constants.ORDER_STATUS_DELIVERED)
         orders_executed = orders_executed_queryset.aggregate(sum_of_cod_collected=Sum('cod_collected_amount'),sum_of_cod_amount=Sum('order__cod_amount'))
         delivered_cod_collected = orders_executed['sum_of_cod_collected']
+        if delivered_cod_collected is None:
+            delivered_cod_collected = 0
+
         delivered_cod_amount = orders_executed['sum_of_cod_amount']
+        if delivered_cod_amount is None:
+            delivered_cod_amount = 0
 
         pending_cod = delivered_cod_amount - delivered_cod_collected
         pending_cod_amount = pending_cod_amount + pending_cod
@@ -292,7 +303,13 @@ def cod_report(request):
         for item in vendors_tracked:
             vendor = item['order__vendor__store_name']
             sum_of_cod_collected = item['sum_of_cod_collected']
+            if sum_of_cod_collected is None:
+                sum_of_cod_collected = 0
+
             sum_of_cod_amount = item['sum_of_cod_amount']
+            if sum_of_cod_amount is None:
+                sum_of_cod_amount = 0
+
             cod_with_vendor = cod_with_vendor + \
                               "\n%s - COD: %s/%s" % \
                               (vendor, sum_of_cod_collected, sum_of_cod_amount)
@@ -313,7 +330,12 @@ def cod_report(request):
         for single_dg in dg_tracked:
             dg_ph_number = single_dg['delivery_guy__user__username']
             sum_of_cod_collected = single_dg['sum_of_cod_collected']
+            if sum_of_cod_collected is None:
+                sum_of_cod_collected = 0
+
             sum_of_cod_amount = single_dg['sum_of_cod_amount']
+            if sum_of_cod_amount is None:
+                sum_of_cod_amount = 0
 
             if dg_ph_number is not None:
                 dg = DeliveryGuy.objects.get(user__username=dg_ph_number)
@@ -339,9 +361,15 @@ def cod_report(request):
             for item in vendor_tracked_per_order:
                 vendor_name = item['order__vendor__store_name']
                 sum_of_cod_collected = item['sum_of_cod_collected']
+                if sum_of_cod_collected is None:
+                    sum_of_cod_collected = 0
+
                 sum_of_cod_amount = item['sum_of_cod_amount']
+                if sum_of_cod_amount is None:
+                    sum_of_cod_amount = 0
+
                 cod_with_vendor = ''
-                cod_with_vendor = "\n  %s, %s/%s" %(vendor_name, sum_of_cod_collected, sum_of_cod_amount)
+                cod_with_vendor = "\n  %s- COD: %s/%s" %(vendor_name, sum_of_cod_collected, sum_of_cod_amount)
                 email_body = email_body + "\n" + cod_with_vendor
 
         # ---------------------------------------------------------------------------
@@ -424,7 +452,12 @@ def dg_report(request):
         for single_dg in all_dgs:
             dg_ph_number = single_dg['delivery_guy__user__username']
             cod_collected = single_dg['sum_of_cod_collected']
+            if cod_collected is None:
+                cod_collected = 0
+
             cod_to_be_collected = single_dg['sum_of_cod_amount']
+            if cod_to_be_collected is None:
+                cod_to_be_collected = 0
 
             dg = DeliveryGuy.objects.get(user__username=dg_ph_number)
             dg_first_name = dg.user.first_name
