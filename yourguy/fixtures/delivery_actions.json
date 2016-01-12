@@ -1,0 +1,51 @@
+[
+  {
+    "model": "yourguy.DeliveryAction",
+    "pk": 1,
+    "fields": {
+        "title": "PickedUp"
+    }
+  },
+  {
+    "model": "yourguy.DeliveryAction",
+    "pk": 2,
+    "fields": {
+        "title": "Delivered"
+    }
+  },
+  {
+    "model": "yourguy.DeliveryAction",
+    "pk": 3,
+    "fields": {
+        "title": "Reported"
+    }
+  },
+  {
+    "model": "yourguy.DeliveryAction",
+    "pk": 4,
+    "fields": {
+        "title": "Resolved"
+    }
+  },
+  {
+    "model": "yourguy.DeliveryAction",
+    "pk": 5,
+    "fields": {
+        "title": "PickupAttempted"
+    }
+  },
+  {
+    "model": "yourguy.DeliveryAction",
+    "pk": 6,
+    "fields": {
+        "title": "DeveliveryAttempted"
+    }
+  },
+  {
+    "model": "yourguy.DeliveryAction",
+    "pk": 7,
+    "fields": {
+        "title": "Cancelled"
+    }
+  }
+]

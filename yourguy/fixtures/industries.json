@@ -1,0 +1,33 @@
+[
+  {
+    "model": "yourguy.Industry",
+    "pk": 1,
+    "fields": {
+        "name": "ECommerce"
+    }
+  },
+  {
+    "model": "yourguy.Industry",
+    "pk": 2,
+    "fields": {
+        "name": "Laundry"
+    }
+  },
+  {
+    "model": "yourguy.Industry",
+    "pk": 3,
+    "fields": {
+        "name": "Pharma"
+    }
+  },
+  {
+    "model": "yourguy.Industry",
+    "pk": 4,
+    "fields": {
+        "name": "Aggregator"
+    }
+  }
+]
+
+
+
