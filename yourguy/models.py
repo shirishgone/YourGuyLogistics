@@ -98,7 +98,7 @@ class YGUser(models.Model):
     user = models.OneToOneField(User)
     # Optional Fields
     profile_picture = models.ForeignKey(Picture, blank = True, null = True)
-    notifications = models.ManyToManyField(Notification)
+    notifications = models.ManyToManyField(Notification, blank = True)
     class Meta:
         abstract = True
 
@@ -157,8 +157,8 @@ class DeliveryGuy(YGUser):
 
 class DeliveryTeamLead(models.Model):
     delivery_guy = models.ForeignKey(DeliveryGuy, related_name='current_delivery_guy')
-    associate_delivery_guys = models.ManyToManyField(DeliveryGuy, related_name ='associate_delivery_guys')
-    serving_pincodes = models.ManyToManyField(ServiceablePincode)
+    associate_delivery_guys = models.ManyToManyField(DeliveryGuy, blank = True, related_name ='associate_delivery_guys')
+    serving_pincodes = models.ManyToManyField(ServiceablePincode, blank = True)
     def __unicode__(self):
         return u"%s - %s" % (self.delivery_guy.user.username, self.delivery_guy.user.first_name)
         
@@ -187,9 +187,9 @@ class Vendor(models.Model):
     email = models.EmailField(max_length = 50)
     phone_number = models.CharField(max_length = 15, blank = True, null = True)
     alternate_phone_number = models.CharField(max_length = 15, blank = True, null = True)
-    industries = models.ManyToManyField(Industry)
+    industries = models.ManyToManyField(Industry, blank = True)
 
-    addresses = models.ManyToManyField(Address)
+    addresses = models.ManyToManyField(Address, blank = True)
     is_retail = models.BooleanField(default = False)
     account = models.ForeignKey(VendorAccount, related_name='account', blank = True, null = True)
 
@@ -238,7 +238,7 @@ class Employee(YGUser):
             (ADMIN, 'admin')
             )
     department = models.CharField(max_length = 15, choices = DEPARTMENT_CHOICES, default = CALLER)
-    serving_pincodes = models.ManyToManyField(ServiceablePincode)
+    serving_pincodes = models.ManyToManyField(ServiceablePincode, blank = True)
     city = models.ForeignKey(ServiceableCity, blank = True, null = True)
     def __unicode__(self):
         return unicode(self.user.username)
@@ -249,7 +249,7 @@ class Consumer(YGUser):
     full_name = models.CharField(max_length = 100, blank = True, null = True)
     associated_vendor = models.ManyToManyField(Vendor, blank = True)
     phone_verified = models.BooleanField(blank = True, default = False)
-    addresses  = models.ManyToManyField(Address)
+    addresses  = models.ManyToManyField(Address, blank = True)
 
     def __unicode__(self):
         return unicode(self.user.first_name)
@@ -287,7 +287,7 @@ class Product(models.Model):
     description = models.CharField(max_length = 500, blank = True, null = True)
     cost = models.FloatField(default = 0.0)
     vendor = models.ForeignKey(Vendor, blank = True, null = True)
-    timeslots = models.ManyToManyField(TimeSlot)
+    timeslots = models.ManyToManyField(TimeSlot, blank = True)
 
     # Optional Fields
     category = models.CharField(max_length = 50, blank = True, null = True)
@@ -318,7 +318,7 @@ class ProofOfDelivery(models.Model):
     date_time = models.DateTimeField(auto_now_add = True)
     receiver_name = models.CharField(max_length = 100)
     signature = models.ForeignKey(Picture, related_name = 'pod_signature', blank = True, null = True)
-    pictures = models.ManyToManyField(Picture)
+    pictures = models.ManyToManyField(Picture, blank = True)
 
     def __unicode__(self):
         return u"%s" % self.id
@@ -330,7 +330,7 @@ class Order(models.Model):
     vendor = models.ForeignKey(Vendor)
     consumer = models.ForeignKey(Consumer)
 
-    order_items = models.ManyToManyField(OrderItem)
+    order_items = models.ManyToManyField(OrderItem, blank = True)
     total_cost = models.FloatField(default = 0.0)
 
     pickup_datetime = models.DateTimeField()
@@ -432,7 +432,7 @@ class OrderDeliveryStatus(models.Model):
 
     cod_collected_amount = models.FloatField(default = 0.0)
     cod_remarks = models.CharField(max_length = 500, blank = True)
-    delivery_transactions = models.ManyToManyField(DeliveryTransaction)
+    delivery_transactions = models.ManyToManyField(DeliveryTransaction, blank = True)
 
     def __unicode__(self):
         return u"%s - %s" % (self.id, self.order)
