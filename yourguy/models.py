@@ -279,7 +279,15 @@ class DGAttendance(models.Model):
 
     def __unicode__(self):
         return u"%s %s" % (self.dg.user.username, self.status)
-                        
+   
+
+class ProductCategory(models.Model):
+    category_name = models.CharField(max_length = 100)
+    details = models.CharField(max_length = 500, blank = True, null = True)
+
+    def __unicode__(self):
+        return u"%s" % self.category_name
+
 class Product(models.Model):
 
     # Mandatory Fields
@@ -288,23 +296,11 @@ class Product(models.Model):
     cost = models.FloatField(default = 0.0)
     vendor = models.ForeignKey(Vendor, blank = True, null = True)
     timeslots = models.ManyToManyField(TimeSlot, blank = True)
-
-    # Optional Fields
-    category = models.CharField(max_length = 50, blank = True, null = True)
-
+    category = models.ForeignKey(ProductCategory, blank = True, null = True)
+    
     def __unicode__(self):
         return u"%s - %s" % (self.name, self.vendor)
 
-class ProductCategory(models.Model):
-
-    # Mandatory Fields
-    category_name = models.CharField(max_length = 100)
-
-    # Optional Fields
-    details = models.CharField(max_length = 500, blank = True, null = True)
-
-    def __unicode__(self):
-        return u"%s" % self.category_name
 
 class OrderItem(models.Model):
     product = models.ForeignKey(Product, blank = True, null = True)
