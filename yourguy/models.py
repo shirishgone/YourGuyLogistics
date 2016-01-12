@@ -11,10 +11,29 @@ from rest_framework.authtoken.models import Token
 import datetime
 from recurrence.fields import RecurrenceField
 
+class Location(models.Model):
+    latitude = models.CharField(max_length = 50)
+    longitude = models.CharField(max_length = 50)
+    
+    def __unicode__(self):
+        return u"%s - %s" % (self.latitude, self.longitude)
+    
+class ServiceableCity(models.Model):
+    city_code = models.CharField(max_length = 10, unique = True)
+    city_name = models.CharField(max_length = 100)
+    def __unicode__(self):
+        return u"%s" % (self.city_name)        
+
+class ServiceablePincode(models.Model):
+    pincode = models.CharField(max_length = 10, unique = True)
+    city = models.ForeignKey(ServiceableCity)
+    
+    def __unicode__(self):
+        return u"%s" % (self.pincode)
+
 class TimeSlot(models.Model):
     start_time = models.TimeField()
     end_time = models.TimeField()
-
     def __unicode__(self):
         return u"%s - %s" % (self.start_time, self.end_time)
 
@@ -57,10 +76,29 @@ class Address(models.Model):
     def __unicode__(self):
         return u"%s - %s" % (self.full_address, self.pin_code)                
 
+class NotificationType(models.Model):
+    title = models.CharField(max_length = 100)
+    code = models.CharField(max_length = 50, unique = True)
+    description = models.CharField(max_length = 500, blank = True, null = True)
+    
+    def __unicode__(self):
+        return unicode(self.title)
+
+class Notification(models.Model):
+    notification_type = models.ForeignKey(NotificationType)
+    delivery_id = models.CharField(max_length = 25, blank = True, null = True)
+    message = models.CharField(max_length = 500, blank = True, null = True)
+    time_stamp = models.DateTimeField(auto_now_add = True)
+    read = models.BooleanField(default = False)
+    
+    def __unicode__(self):
+        return unicode(self.notification_type)
+
 class YGUser(models.Model):
     user = models.OneToOneField(User)
     # Optional Fields
     profile_picture = models.ForeignKey(Picture, blank = True, null = True)
+    notifications = models.ManyToManyField(Notification)
     class Meta:
         abstract = True
 
@@ -112,11 +150,18 @@ class DeliveryGuy(YGUser):
         (CAR_DRIVER, 'CAR_DRIVER'),
     )
     transportation_mode = models.CharField(max_length = 50, choices = TRANSPORTATION_MODE_CHOICES, default = WALKER)
-
-
+    is_teamlead = models.BooleanField(default = False)
+    
     def __unicode__(self):
         return u"%s - %s" % (self.user.username, self.user.first_name)                
 
+class DeliveryTeamLead(models.Model):
+    delivery_guy = models.ForeignKey(DeliveryGuy, related_name='current_delivery_guy')
+    associate_delivery_guys = models.ManyToManyField(DeliveryGuy, related_name ='associate_delivery_guys')
+    serving_pincodes = models.ManyToManyField(ServiceablePincode)
+    def __unicode__(self):
+        return u"%s - %s" % (self.delivery_guy.user.username, self.delivery_guy.user.first_name)
+        
 class VendorAccount(models.Model):
     # Mandatory Fields
     pricing = models.FloatField(default = 0.0)
@@ -135,7 +180,6 @@ class Industry(models.Model):
 
     def __unicode__(self):
         return u"%s" % self.name
-
 
 class Vendor(models.Model):
     # Mandatory Fields
@@ -176,26 +220,33 @@ class Employee(YGUser):
     
     # Mandatory Fields
     employee_code = models.CharField(max_length = 20)
-
+    
     SALES = 'sales'
+    SALES_MANAGER = 'sales_manager'
     OPERATIONS = 'operations'
+    OPERATIONS_MANAGER = 'operations_manager'
+    ACCOUNTS = 'accounts'
     CALLER = 'caller'
-    MANAGER = 'manager'
+    ADMIN = 'admin'
     DEPARTMENT_CHOICES = (
             (SALES, 'sales'),
+            (SALES_MANAGER, 'sales_manager'),
             (OPERATIONS, 'operations'),
+            (OPERATIONS_MANAGER, 'operations_manager'),
+            (ACCOUNTS, 'accounts'),
             (CALLER, 'caller'),
-            (MANAGER, 'manager')
+            (ADMIN, 'admin')
             )
     department = models.CharField(max_length = 15, choices = DEPARTMENT_CHOICES, default = CALLER)
-
+    serving_pincodes = models.ManyToManyField(ServiceablePincode)
+    city = models.ForeignKey(ServiceableCity, blank = True, null = True)
     def __unicode__(self):
         return unicode(self.user.username)
 
-
 class Consumer(YGUser):
-    
     # Optional Fields
+    phone_number = models.CharField(max_length = 100, blank = True, null = True)
+    full_name = models.CharField(max_length = 100, blank = True, null = True)
     associated_vendor = models.ManyToManyField(Vendor, blank = True)
     phone_verified = models.BooleanField(blank = True, default = False)
     addresses  = models.ManyToManyField(Address)
@@ -222,6 +273,9 @@ class DGAttendance(models.Model):
     # Optional Fields
     login_time = models.DateTimeField(blank = True, null = True)
     logout_time = models.DateTimeField(blank = True, null = True)
+
+    checkin_location = models.ForeignKey(Location, related_name = 'checkin_location', blank = True, null = True)
+    checkout_location = models.ForeignKey(Location, related_name = 'checkout_location', blank = True, null = True)
 
     def __unicode__(self):
         return u"%s %s" % (self.dg.user.username, self.status)
@@ -307,6 +361,20 @@ class Order(models.Model):
     def __unicode__(self):
         return u"%s - %s - %s" % (self.id, self.vendor.store_name, self.consumer.user.first_name)
 
+class DeliveryAction(models.Model):
+    title = models.CharField(max_length = 100)
+    def __unicode__(self):
+        return u"%s" % (self.title)
+
+class DeliveryTransaction(models.Model):
+    action = models.ForeignKey(DeliveryAction)
+    by_user = models.ForeignKey(User, blank = True, null = True)
+    time_stamp = models.DateTimeField(blank = True, null = True)
+    location = models.ForeignKey(Location, blank = True, null = True)
+    remarks = models.CharField(max_length = 500, blank = True)
+    def __unicode__(self):
+        return u"%s" % (self.action)
+
 class OrderDeliveryStatus(models.Model):
     date = models.DateTimeField()
     order = models.ForeignKey(Order, related_name = 'order', blank = True, null = True)
@@ -364,6 +432,7 @@ class OrderDeliveryStatus(models.Model):
 
     cod_collected_amount = models.FloatField(default = 0.0)
     cod_remarks = models.CharField(max_length = 500, blank = True)
-    
+    delivery_transactions = models.ManyToManyField(DeliveryTransaction)
+
     def __unicode__(self):
         return u"%s - %s" % (self.id, self.order)
