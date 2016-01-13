@@ -10,6 +10,7 @@ from api_v2 import utils
 from api_v2 import views
 from api_v2 import mail
 from api_v2 import view_dg
+from api_v2 import view_notifications
 
 urlpatterns = patterns(
 	'',
@@ -24,6 +25,7 @@ urlpatterns = patterns(
 	url(r'^fill_full_address/', utils.fill_full_address, name = 'fill_full_address'),
 	url(r'^dg_app_version/', view_dg.dg_app_version, name='dg_app_version'),
 	url(r'^delivery_guy/profile/', view_dg.profile, name='dg_profile'),
+	url(r'^notifications/', view_notifications.my_notifications, name = 'my_notifications'),
 )
 router = DefaultRouter()
 router.register(r'consumer', ConsumerViewSet)
