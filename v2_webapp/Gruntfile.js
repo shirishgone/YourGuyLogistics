@@ -60,6 +60,7 @@ module.exports = function(grunt){
 					'static/modules/providers/*.js',
 					'static/modules/constants/*.js',
 					'static/modules/services/*.js',
+					'static/modules/order/orders.js',
 					'static/modules/order/*.js',
 				],
 				dest : 'static/assets/js/main.js'

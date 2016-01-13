@@ -199,7 +199,47 @@
 	.constant('UserData', userdata);
 })();
 (function(){
-	'use strice';
+	'use strict';
+	var STATUS_OBJECT = [
+    	{status:'Intransit',value:'INTRANSIT'},
+    	{status:'Queued',value:'QUEUED',selected:false},
+    	{status:'Delivered',value:'DELIVERED',selected:false},
+    	{status:'Order Placed',value:'ORDER_PLACED',selected:false},
+    	{status:'Pickup Attempted',value:'PICKUPATTEMPTED',selected:false},
+    	{status:'Deliver Attempted',value:'DELIVERYATTEMPTED',selected:false},
+    	{status:'Cancelled',value:'CANCELLED',selected:false},
+    	{status:'Rejected',value:'REJECTED',selected:false},
+  	];
+  	var time_data = [
+	  	{
+	  		value : "00 AM - 06 AM ",
+	  		time: {
+	  			start_time: 1,
+	  			end_time:6
+	  		}
+	  	},
+	  	{
+	  		value : "06 AM - 12 PM",
+	  		time: {
+	  			start_time: 6,
+	  			end_time:12
+	  		}
+	  	},
+	  	{
+	  		value : "12 PM - 06 PM",
+	  		time: {
+	  			start_time: 12,
+	  			end_time:18
+	  		}
+	  	},
+	  	{
+	  		value : "06 PM - 12 AM",
+	  		time: {
+	  			start_time: 18,
+	  			end_time:23
+	  		}
+	  	}
+  	];
 
 	var constants = {
 		v1baseUrl: '/api/v1/',
@@ -208,17 +248,20 @@
 		userRole: {
 			ADMIN : 'operations',
 			VENDOR : 'vendor'
-		}
+		},
+		status : STATUS_OBJECT,
+		time:time_data
 	};
-
 	var prodConstants = {
 		v1baseUrl: 'http://yourguy.herokuapp.com/api/v1/',
-		v2baseUrl: 'http://yourguy.herokuapp.com//api/v2/',
-		v3baseUrl: 'http://yourguy.herokuapp.com//api/v3/',
+		v2baseUrl: 'http://yourguy.herokuapp.com/api/v2/',
+		v3baseUrl: 'http://yourguy.herokuapp.com/api/v3/',
 		userRole: {
 			ADMIN : 'operations',
 			VENDOR : 'vendor'
-		}
+		},
+		status : STATUS_OBJECT,
+		time:time_data
 	};
 	var testConstants = {
 		v1baseUrl: 'https://yourguytestserver.herokuapp.com/api/v1/',
@@ -227,7 +270,9 @@
 		userRole: {
 			ADMIN : 'operations',
 			VENDOR : 'vendor'
-		}
+		},
+		status : STATUS_OBJECT,
+		time:time_data
 	};
 
 	angular.module('ygVendorApp')
@@ -293,6 +338,32 @@
 })();
 (function(){
 	'use strict';
+	var DeliverGuy = function ($resource,constants){
+		return {
+			dgListQuery : $resource(constants.v1baseUrl+'deliveryguy/:id',{id:"@id"},{
+				query :{
+					method: 'GET',
+					isArray: true
+				}
+			}),
+			dgPageQuery : $resource(constants.v2baseUrl+'delivery_guy/:id/',{id:"@id"},{
+				query :{
+					method: 'GET',
+					isArray: false
+				}
+			})
+		};
+	};
+	
+	angular.module('ygVendorApp')
+	.factory('DeliverGuy', [
+		'$resource',
+		'constants', 
+		DeliverGuy
+	]);
+})();
+(function(){
+	'use strict';
 	var Order = function ($resource,constants){
 		return {
 			getOrders : $resource(constants.v2baseUrl+'order/:id/',{id:"@id"},{
@@ -342,6 +413,35 @@
 		'$resource',
 		'constants', 
 		Vendor
+	]);
+})();
+(function(){
+	'use strict';
+	var DgList = function ($q,DeliverGuy){
+		var deliveryguy = {};
+		var fetchdg = function() {
+			var deferred = $q.defer();
+			DeliverGuy.dgListQuery.query(function (response) {
+				deferred.resolve(angular.extend(deliveryguy, {
+					dgs : response,
+					$refresh: fetchdg,
+				}));
+
+			}, function (error){
+				deferred.reject(angular.extend(deliveryguy , error ,{
+					$refresh : fetchdg,
+				}));
+			});
+			return deferred.promise;
+		};
+		return fetchdg();
+	};
+
+	angular.module('ygVendorApp')
+	.factory('DgList', [
+		'$q',
+		'DeliverGuy', 
+		DgList
 	]);
 })();
 (function(){
@@ -528,12 +628,18 @@
 })();
 (function(){
 	'use strict';
-	var opsOrderCntrl = function ($state,$mdSidenav,$stateParams,vendorClients,orderResource,orders){
-		console.log(orders);
+	var opsOrderCntrl = function ($state,$mdSidenav,$stateParams,vendorClients,orderResource,orders,DeliverGuy,constants,orderSelection){
+		/*
+			 Variable definations
+		*/
 		var self = this;
 		this.params = $stateParams;
+		this.statusArray = ($stateParams.dg === undefined) ? [] : $stateParams.dg.split(',');
 		this.params.date = new Date(this.params.date);
 		this.vendor_list = vendorClients.vendors;
+		/*
+			 scope Orders variable assignments are done from this section for the controller
+		*/
 		this.orders = orders.data;
 		this.orderFrom = ( ( ( this.params.page -1 ) * 50 ) + 1 );
 		this.orderTo  = (this.orderFrom-1) + orders.data.length;
@@ -541,16 +647,31 @@
 		this.total_orders = orders.total_orders;
 		this.pending_orders_count = orders.pending_orders_count;
 		this.unassigned_orders_count = orders.unassigned_orders_count;
-
-
+		/*
+			@ status_list: scope order status for eg: 'INTRANSIT' ,'DELIVERED' variable assignments.
+			@ time_list: scope order time for time filer variable assignments.
+		*/
+		this.status_list = constants.status;
+		this.time_list = constants.time;
+		/*
+			@ All method defination for the controller starts from here on.
+		*/
+		/*
+			 @ toggleFilter : main sidenav toggle function, this function toggle the sidebar of the filets of the orders page page.
+		*/
 		this.toggleFilter = function(){
 			$mdSidenav('order-filter').toggle();
 		};
-
+		/*
+			@pagerange: funxtion for total pages generations for pagination
+		*/
 		this.pageRange = function (n){
 			return new Array(n);
 		};
-
+		/*
+			@paginate is a function to paginate to the next and previous page of the order list
+			@statusSelection is a fucntion to select or unselect the status data in order filter
+		*/
 		this.paginate = {
 			nextpage : function(){
 				self.params.page = self.params.page + 1;
@@ -561,7 +682,65 @@
 				self.getOrders();
 			}
 		};
+		this.statusSelection = {
+			toggle : function (item , list){
+				var idx = list.indexOf(item.value);
+        		if (idx > -1) list.splice(idx, 1);
+        		else list.push(item.value);
+			},
+			exists : function (item, list) {
+        		return list.indexOf(item.value) > -1;
 
+      		}
+		};
+		/*
+			@dgSearchTextChange is a function for Delivery guy search for filter. When ever the filtered dg change, 
+			this function is called.
+
+			@selectedDgChange is a callback function after delivery guy selection in the filter.
+		*/
+		this.dgSearchTextChange = function(text){
+			var search = {
+				search : text
+			};
+			return DeliverGuy.dgPageQuery.query(search).$promise.then(function (response){
+				return response.data;
+			});
+		};
+		this.selectedDgChange = function(dg){
+			if(dg){
+				self.params.dg = dg.phone_number;
+			}
+			else{
+				self.params.dg = undefined;
+			}
+			self.getOrders();
+		};
+		/*
+			@getOrders rleoads the order controller according too the filter to get the new filtered data.
+		*/
+		this.handleOrdeSelection = {
+			selectActive : orderSelection.isSelected(),
+			numberOfSelectedOrder : orderSelection.slectedItemLength(),
+			update : function () {
+				self.handleOrdeSelection.selectActive = orderSelection.isSelected();
+				self.handleOrdeSelection.numberOfSelectedOrder = orderSelection.slectedItemLength();
+			},
+			toggle : function(item){
+				orderSelection.toggle(item);
+				self.handleOrdeSelection.update();
+			},
+			exists : function(item){
+				return orderSelection.exists(item);
+			},
+			clear : function (){
+				orderSelection.clearAll();
+				self.handleOrdeSelection.update();
+			}
+		};
+		/*
+			@getOrders rleoads the order controller according too the filter to get the new filtered data.
+		*/
 		this.getOrders = function(){
 			$state.transitionTo($state.current, self.params, { reload: true, inherit: false, notify: true });
 		};
@@ -575,13 +754,14 @@
 	.config(['$stateProvider',function ($stateProvider) {
 		$stateProvider
 		.state('home.opsorder', {
-			url: "^/all-orders?date$vendor&page",
+			url: "^/all-orders?date&vendor&dg&status&page",
 			templateUrl: "/static/modules/order/opsOrders.html",
 			controllerAs : 'opsOrder',
     		controller: "opsOrderCntrl",
     		resolve: {
     			vendorClients : 'vendorClients',
     			orderResource : 'Order',
+    			DeliverGuy : 'DeliverGuy',
     			access: ["Access","constants", function (Access,constants) { 
     						return Access.hasRole(constants.userRole.ADMIN); 
     					}],
@@ -589,7 +769,7 @@
     						$stateParams.date = ($stateParams.date !== undefined) ? new Date($stateParams.date).toISOString() : new Date().toISOString();
     						$stateParams.page = (!isNaN($stateParams.page))? parseInt($stateParams.page): 1;
     						return Order.getOrders.query($stateParams).$promise;
-    					}]
+    					}],
     		}
 		})
 		.state('home.order', {
@@ -610,12 +790,106 @@
 		'$mdSidenav',
 		'$stateParams',
 		'vendorClients',
-		 'orderResource',
-		 'orders',
+		'orderResource',
+		'orders',
+		'DeliverGuy',
+		'constants',
+		'orderSelection',
 		opsOrderCntrl
 	])
 	.controller('vendorOrderCntrl', [
 		'$state',
 		vendorOrderCntrl
 	]);
+})();
+(function(){
+	'use strict';
+	var orderFilter = function(){
+		var orderfilter = {
+			filter : {
+				date : null,
+				vendor : null,
+				dg : null,
+				cod : false,
+				status : [],
+				time : null,
+				search : null
+			},
+			setFilter : function (object){
+				object.date = orderfilter.date;
+				object.vendor = orderfilter.vendor;
+				object.dg = orderfilter.dg;
+				object.cod = orderfilter.cod;
+				object.status = orderfilter.status;
+				object.time = orderfilter.time;
+				object.search = orderfilter.search;
+			},
+			getFilter : function (){
+				return orderfilter.filter;
+			}
+
+		};
+		return orderFilter;
+	};
+
+	angular.module('order')
+	.factory('orderFilter', [
+		orderFilter
+
+	]);
+
+})();
+(function(){
+	'use strict';
+	var orderSelection = function(){
+		var orderselection = {
+			selectedItemArray : [],
+			toggle : function (item){
+				var idx = orderselection.selectedItemArray.indexOf(item);
+        		if (idx > -1) orderselection.selectedItemArray.splice(idx, 1);
+        		else orderselection.selectedItemArray.push(item);
+			},
+			exists : function (item) {
+        		return orderselection.selectedItemArray.indexOf(item) > -1;
+
+      		},
+			addItem : function(item){
+				item.selected = true;
+				orderselection.selectedItemArray.push(item);
+			},
+			removeItem : function (item){
+				var index = selectedItemArray.indexOf(item);
+				if(index > -1) {
+					item.selected = false;
+					orderselection.selectedItemArray.splice(index,1);
+					return true;
+				}
+				else{
+					return false;
+				}
+			},
+			isSelected : function(){
+				if(orderselection.selectedItemArray.length > 0){
+					return true;
+				}
+				else {
+					return false;
+				}
+			},
+			clearAll : function (){
+				orderselection.selectedItemArray = [];
+				return orderselection.selectedItemArray;
+			},
+			slectedItemLength : function (){
+				return orderselection.selectedItemArray.length;
+			}
+		};
+		return orderselection;
+	};
+
+	angular.module('order')
+	.factory('orderSelection', [
+		orderSelection
+	]);
+
 })();

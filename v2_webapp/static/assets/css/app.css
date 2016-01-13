@@ -146,34 +146,62 @@ body {
 }
 
 /* line 113, ../sass/app.scss */
+.order-toolbar.selected {
+  background-color: #BA68C8 !important;
+  color: #ffffff !important;
+}
+
+/* line 118, ../sass/app.scss */
 .filter-sidenav {
-  max-width: 220px;
+  max-width: 240px;
   padding: 0;
   -moz-border-radius: 3px;
   -webkit-border-radius: 3px;
   border-radius: 3px;
 }
-
-/* line 119, ../sass/app.scss */
-.opsOrder {
-  background-color: #F5F5F5;
-  overflow-y: hidden;
-}
 /* line 122, ../sass/app.scss */
-.opsOrder .order-list {
-  padding: 0px;
+.filter-sidenav md-input-container {
+  margin: 10px 0;
 }
-/* line 124, ../sass/app.scss */
+/* line 125, ../sass/app.scss */
+.filter-sidenav .vendor-list, .filter-sidenav .dg-list {
+  padding: 10px 10px;
+}
+/* line 128, ../sass/app.scss */
+.filter-sidenav .status-list, .filter-sidenav .time-list {
+  padding-top: 10px;
+  font-size: 12px;
+}
+/* line 132, ../sass/app.scss */
+.filter-sidenav .cod {
+  font-size: 12px;
+}
+/* line 134, ../sass/app.scss */
+.filter-sidenav .cod md-switch {
+  margin: 10px 10px;
+}
+
+/* line 140, ../sass/app.scss */
+.opsOrder {
+  background-color: #F5F5F5 !important;
+  overflow-y: hidden;
+  padding: 0;
+}
+/* line 144, ../sass/app.scss */
+.opsOrder .order-list {
+  padding: 0;
+}
+/* line 146, ../sass/app.scss */
 .opsOrder .order-list .header {
   z-index: 10;
   padding: 5px;
   min-height: 50px;
 }
-/* line 128, ../sass/app.scss */
+/* line 150, ../sass/app.scss */
 .opsOrder .order-list .header md-checkbox {
   margin-bottom: 0;
 }
-/* line 132, ../sass/app.scss */
+/* line 154, ../sass/app.scss */
 .opsOrder .order-list .footer {
   border-top: 1px solid #E0E0E0;
   min-height: 50px;
@@ -181,69 +209,72 @@ body {
   padding: 5px;
   z-index: 10;
 }
-/* line 138, ../sass/app.scss */
+/* line 160, ../sass/app.scss */
 .opsOrder .order-list .footer .stats, .opsOrder .order-list .footer .pagination {
   margin: 0 10px;
 }
-/* line 140, ../sass/app.scss */
+/* line 162, ../sass/app.scss */
 .opsOrder .order-list .footer .stats p, .opsOrder .order-list .footer .pagination p {
   font-size: 12px;
-  color: #9E9E9E;
+  color: #616161;
   margin: 10px 10px;
 }
-/* line 147, ../sass/app.scss */
+/* line 169, ../sass/app.scss */
 .opsOrder .order-list .list {
   height: 80%;
   z-index: 9;
   overflow-y: scroll;
+  padding: 5px 10px;
 }
-/* line 151, ../sass/app.scss */
+/* line 174, ../sass/app.scss */
 .opsOrder .order-list .list md-card {
-  box-shadow: none;
-  margin: 5px 0px;
+  -moz-border-radius: 0px;
+  -webkit-border-radius: 0px;
+  border-radius: 0px;
+  margin: 10px 0px;
   cursor: pointer;
 }
-/* line 155, ../sass/app.scss */
+/* line 178, ../sass/app.scss */
 .opsOrder .order-list .list md-card .icon {
   margin-right: 10px;
 }
-/* line 159, ../sass/app.scss */
+/* line 182, ../sass/app.scss */
 .opsOrder .order-list .list .card-content {
   padding: 5px;
 }
-/* line 161, ../sass/app.scss */
+/* line 184, ../sass/app.scss */
 .opsOrder .order-list .list .card-content .customer, .opsOrder .order-list .list .card-content .vendor, .opsOrder .order-list .list .card-content .dg {
   padding-right: 15px;
 }
-/* line 163, ../sass/app.scss */
+/* line 186, ../sass/app.scss */
 .opsOrder .order-list .list .card-content .customer p, .opsOrder .order-list .list .card-content .vendor p, .opsOrder .order-list .list .card-content .dg p {
   margin: 0;
   font-size: 14px;
   text-transform: uppercase;
   color: #616161;
 }
-/* line 169, ../sass/app.scss */
+/* line 192, ../sass/app.scss */
 .opsOrder .order-list .list .card-content .customer span, .opsOrder .order-list .list .card-content .vendor span, .opsOrder .order-list .list .card-content .dg span {
   font-size: 12px;
-  color: #9E9E9E;
+  color: #757575;
 }
-/* line 175, ../sass/app.scss */
+/* line 198, ../sass/app.scss */
 .opsOrder .order-list .list .card-action {
   margin: 5px;
 }
-/* line 178, ../sass/app.scss */
+/* line 201, ../sass/app.scss */
 .opsOrder .order-list .list .card-action .order-time .icon, .opsOrder .order-list .list .card-action .payment .icon {
   margin-right: 10px;
 }
-/* line 181, ../sass/app.scss */
+/* line 204, ../sass/app.scss */
 .opsOrder .order-list .list .card-action .order-time p, .opsOrder .order-list .list .card-action .payment p {
   margin: 0;
   font-size: 11px;
   text-transform: uppercase;
-  color: #757575;
+  color: #616161;
 }
-/* line 187, ../sass/app.scss */
+/* line 210, ../sass/app.scss */
 .opsOrder .order-list .list .card-action .order-time span, .opsOrder .order-list .list .card-action .payment span {
   font-size: 10px;
-  color: #9E9E9E;
+  color: #757575;
 }

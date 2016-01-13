@@ -110,17 +110,39 @@ body {
 	}
 }
 
+.order-toolbar.selected {
+	background-color: primary-color('300') !important;
+	color: $white-color !important;
+}
+
 .filter-sidenav {
-	max-width:220px;
+	max-width:240px;
 	padding: 0;
 	@include border-radius(3px);
+	md-input-container {
+		margin: 10px 0;
+	}
+	.vendor-list ,.dg-list {
+		padding: 10px 10px;
+	}
+	.status-list,.time-list {
+		padding-top:10px;
+		font-size: 12px;
+	}
+	.cod {
+		font-size: 12px;
+		md-switch {
+			margin: 10px 10px;
+		}
+	}
 }
 
 .opsOrder{
-	background-color:grey-color('100');
+	background-color:grey-color('100') !important;
 	overflow-y: hidden;
+	padding: 0;
 	.order-list {
-		padding: 0px;
+		padding: 0;
 		.header {
 			z-index: 10;
 			padding: 5px;
@@ -139,7 +161,7 @@ body {
 				margin: 0 10px;
 				p {
 					font-size: 12px;
-					color: grey-color('500');
+					color: grey-color('700');
 					margin: 10px 10px;
 				}
 			}
@@ -148,9 +170,10 @@ body {
 			height: 80%;
 			z-index: 9;
 			overflow-y: scroll;
+			padding: 5px 10px;
 			md-card {
-				box-shadow: none;
-				margin: 5px 0px;
+				@include border-radius(0px);
+				margin: 10px 0px;
 				cursor: pointer;
 				.icon {
 					margin-right:10px;
@@ -168,7 +191,7 @@ body {
 					}
 					span {
 						font-size: 12px;
-						color: grey-color('500');
+						color: grey-color('600');
 					}
 				}
 			}
@@ -182,11 +205,11 @@ body {
 						margin: 0;
 						font-size: 11px;
 						text-transform: uppercase;
-						color: grey-color('600');
+						color: grey-color('700');
 					}
 					span {
 						font-size: 10px;
-						color: grey-color('500');
+						color: grey-color('600');
 					}
 				}
 			}
