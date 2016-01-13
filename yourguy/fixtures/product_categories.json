@@ -1,0 +1,58 @@
+[
+  {
+    "model": "yourguy.ProductCategory",
+    "pk": 1,
+    "fields": {
+        "category_name": "Beverages",
+        "details": ""
+    }
+  },
+  {
+    "model": "yourguy.ProductCategory",
+    "pk": 2,
+    "fields": {
+        "category_name": "Books",
+        "details": ""
+    }
+  },
+  {
+    "model": "yourguy.ProductCategory",
+    "pk": 3,
+    "fields": {
+        "category_name": "Documents",
+        "details": ""
+    }
+  },
+  {
+    "model": "yourguy.ProductCategory",
+    "pk": 4,
+    "fields": {
+        "category_name": "Laundry",
+        "details": ""
+    }
+  },
+  {
+    "model": "yourguy.ProductCategory",
+    "pk": 5,
+    "fields": {
+        "category_name": "Medicines",
+        "details": ""
+    }
+  },
+  {
+    "model": "yourguy.ProductCategory",
+    "pk": 6,
+    "fields": {
+        "category_name": "Meals",
+        "details": ""
+    }
+  },
+  {
+    "model": "yourguy.ProductCategory",
+    "pk": 7,
+    "fields": {
+        "category_name": "Other",
+        "details": ""
+    }
+  }
+]
