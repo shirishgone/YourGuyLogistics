@@ -4,10 +4,14 @@ from django.contrib import admin
 from models import Address, Area
 from models import OrderItem, Order, OrderDeliveryStatus
 from models import Product, ProductCategory
-from models import DeliveryGuy, DGAttendance, Employee
+from models import DeliveryGuy, DeliveryTeamLead, DGAttendance, Employee
 from models import Vendor, VendorAgent, Industry, VendorAccount, Consumer
 from models import ProofOfDelivery, Picture
 from models import TimeSlot
+from models import Location, ServiceableCity, ServiceablePincode
+from models import NotificationType, Notification
+from models import DeliveryAction, DeliveryTransaction
+
 
 admin.site.register(TimeSlot)
 
@@ -37,3 +41,12 @@ admin.site.register(Employee)
 
 admin.site.register(Picture)
 admin.site.register(ProofOfDelivery)
+
+admin.site.register(ServiceableCity)
+admin.site.register(ServiceablePincode)
+
+admin.site.register(DeliveryTeamLead)
+admin.site.register(NotificationType)
+admin.site.register(Notification)
+admin.site.register(DeliveryAction)
+admin.site.register(DeliveryTransaction)
