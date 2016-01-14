@@ -612,6 +612,7 @@
 	bottom: 0px;
 	z-index: 9;
 	background-color: #FE5E64;
+	text-align: center;
 }
 
 .order .reported-small {
@@ -628,8 +629,11 @@
 }
 
 .order .reported img {
-	height: 100%;
-	width: 50px;
+	height: 25px;
+	width: 25px;
+	position: relative;
+	top: 50%;
+	margin-top: -13px;
 }
 
 .order .tooltip-inner{
