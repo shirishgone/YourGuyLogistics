@@ -219,7 +219,7 @@
                             {{order.status}}
                         <span>
 					</div>
-					<div class="wid-18 sm-hide" ng-click="$event.stopPropagation();asignSingleOrder(order)">
+					<div class="wid-15 sm-hide" ng-click="$event.stopPropagation();asignSingleOrder(order)">
 						<div style="float:left;" ng-hide="!order.deliveryguy_name && !order.pickupguy_name">
 							<span>
 								<img src="/static/webapp/images/Pickup.png" style="width:12px;height:auto;">&nbsp;&nbsp;
@@ -252,7 +252,7 @@
 						<h4>DELIVERY ADDRESS</h4>
 						{{order.delivery_address}}
 					</div>
-					<div class="wid-18 sm-hide">
+					<div class="wid-15 sm-hide">
 						<h4>COD</h4>
 						<span ng-class="compareCOD(order)">{{order.cod_collected}}rs</span>/{{order.cod_amount}}rs
 					</div>
@@ -297,7 +297,8 @@
 					<img src="/static/webapp/images/recurring_order.png" >
 				</div>
 				<div class="reported sm-hide" ng-if="order.is_reported" tooltip="Reported Order" tooltip-placement="left">
-					<img src="/static/webapp/images/reported.png" >
+					<!-- <div>hello</div> -->
+					<!-- <img src="/static/webapp/images/reported.png" > -->
 				</div>
 				<div class="reported-small md-hide" ng-if="order.is_reported" tooltip="Reported Order" tooltip-placement="left">
 					<img src="/static/webapp/images/reported-small.png" >

@@ -606,10 +606,12 @@
 
 .order .reported {
 	position: absolute;
+	width: 50px;
 	height: 100%;
 	right: 0px;
 	bottom: 0px;
 	z-index: 9;
+	background-color: #FE5E64;
 }
 
 .order .reported-small {
