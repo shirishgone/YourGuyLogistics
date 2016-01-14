@@ -274,6 +274,7 @@ def cod_report(request):
         email_subject = "COD Report : %s" % (today_string)
 
         email_body = "Good Evening Guys, \nPlease find the COD report of the day."
+        email_body = email_body + "\n-----------------------\n"
 
         email_body = email_body + "\nDELIVERY STATUS wise COD"
         email_body = email_body + "\n-----------------------"
@@ -286,6 +287,7 @@ def cod_report(request):
         email_body = email_body + "\nTOTAL COD amount: %0.0f" % (total_cod_amount)
 
         email_body = email_body + "\nCOLLECTED COD amount: %0.0f" % (total_cod_collected)
+        email_body = email_body + "\n-----------------------\n"
 
         # COD as per VENDOR --------------------------------------------------------
         # all tracked orders
@@ -312,16 +314,15 @@ def cod_report(request):
                               "\n%s - COD: %s/%s" % \
                               (vendor, sum_of_cod_collected, sum_of_cod_amount)
         # -----------------------------------------------------------------------------------
-        
-        email_body = email_body + "\nVENDOR wise COD: \n* COD of pending and attempted orders are not considered."
         email_body = email_body + "\n-----------------------\n"
-        email_body = email_body + "\n" + cod_with_vendor
+        email_body = email_body + "\nVENDOR wise COD: \n* COD of pending and attempted orders are not considered."
+        email_body = email_body + "\n\n" + cod_with_vendor
 
         # COD as per DG
         # dict of all DGs for tracked orders
-        
-        email_body = email_body + "\n\nDG wise COD: \n* COD of pending and attempted orders are not considered."
         email_body = email_body + "\n-----------------------"
+        email_body = email_body + "\nDG wise COD: \n* COD of pending and attempted orders are not considered."
+
         dg_tracked = delivery_statuses_tracked_queryset.values('delivery_guy__user__username'). \
             annotate(sum_of_cod_collected=Sum('cod_collected_amount'), sum_of_cod_amount=Sum('order__cod_amount'))
         cod_with_dg = ''
@@ -368,8 +369,8 @@ def cod_report(request):
                     sum_of_cod_amount = 0
 
                 cod_with_vendor = ''
-                cod_with_vendor = "\n-->%s- COD: %s/%s" %(vendor_name, sum_of_cod_collected, sum_of_cod_amount)
-                email_body = email_body + cod_with_vendor
+                cod_with_vendor = "\n  %s- COD: %s/%s" %(vendor_name, sum_of_cod_collected, sum_of_cod_amount)
+                email_body = email_body + "\n" + cod_with_vendor
 
         # ---------------------------------------------------------------------------
         email_body = email_body + "\n----------------------------"
@@ -442,7 +443,8 @@ def dg_report(request):
             orders_executed_tracked = orders_executed.filter(delivery_guy__user__username=single_pickup_guy['pickup_guy__user__username'])
             no_of_executed_orders = len(orders_executed_tracked)
 
-            email_body = email_body + "\n%s - Orders: %s/%s" %(pickup_guy_full_name, no_of_executed_orders, no_of_assigned_orders)
+            email_body = email_body + "\n\n%s - Orders: %s/%s" %(pickup_guy_full_name, no_of_executed_orders, no_of_assigned_orders)
+            email_body = email_body + "\n-----------------------------------"
 
 
         email_body = email_body + "\n\nDELIVERY BOY DETAILS -------\n* COD of Cancelled orders are not considered."
@@ -468,8 +470,9 @@ def dg_report(request):
             orders_executed_tracked = orders_executed.filter(delivery_guy__user__username=single_dg['delivery_guy__user__username'])
             no_of_executed_orders = len(orders_executed_tracked)
 
-            email_body = email_body + "\n%s - Orders: %s/%s, COD: %s/%s" %(dg_full_name, no_of_executed_orders,
+            email_body = email_body + "\n\n%s - Orders: %s/%s, COD: %s/%s" %(dg_full_name, no_of_executed_orders,
                                                         no_of_assigned_orders, cod_collected, cod_to_be_collected)
+            email_body = email_body + "\n-----------------------------------"
 
         email_body = email_body + "\n-----------------------------------"
         email_body = email_body + "\n\n- YourGuy BOT"
