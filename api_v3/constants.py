@@ -22,7 +22,7 @@ if settings.ENVIRONMENT == 'PRODUCTION':
     EMAIL_UNASSIGNED_ORDERS = ['tech@yourguy.in', 'alay@yourguy.in', 'ops@yourguy.in']
     EMAIL_DAILY_REPORT = ['tech@yourguy.in', 'alay@yourguy.in', 'ops@yourguy.in', 'bd@yourguy.in']
     EMAIL_COD_REPORT = ['tech@yourguy.in', 'alay@yourguy.in', 'ops@yourguy.in', 'bd@yourguy.in']
-    EMAIL_DG_REPORT = ['tech@yourguy.in', 'alay@yourguy.in', 'ops@yourguy.in', 'bd@yourguy.in']
+    EMAIL_DG_REPORT = ['tech@yourguy.in', 'alay@yourguy.in', 'ops@yourguy.in', 'bd@yourguy.in', 'kenneth@yourguy.in']
     EMAIL_REPORTED_ORDERS = ['ops@yourguy.in', 'cs@yourguy.in']
     EMAIL_WEBSITE = ['tech@yourguy.in', 'alay@yourguy.in', 'bd@yourguy.in', 'cs@yourguy.in']
     EMAIL_ADDITIONAL_ORDERS = ['ops@yourguy.in', 'cs@yourguy.in']
