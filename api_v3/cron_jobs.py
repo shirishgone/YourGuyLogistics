@@ -95,7 +95,7 @@ def assign_dg(request):
     email_subject = 'Unassigned orders for %s' % (today_string)
 
     email_body = "Hello, \nPlease find the unassigned orders for the day. " \
-                 "\nUnassigned pickups: \n%s \n\nUnassigned deliveries: \n%s \n\nPlease assign manually. \n\n- Team YourGuy" \s
+                 "\nUnassigned pickups: \n%s \n\nUnassigned deliveries: \n%s \n\nPlease assign manually. \n\n- Team YourGuy" \
                  % (unassigned_pickups_string, unassigned_deliveries_string)
     send_email(constants.EMAIL_UNASSIGNED_ORDERS, email_subject, email_body)
 
