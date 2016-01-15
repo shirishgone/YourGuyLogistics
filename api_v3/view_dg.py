@@ -49,7 +49,7 @@ def dg_details_dict(delivery_guy):
         'shift_end_datetime': delivery_guy.shift_end_datetime,
         'current_load': delivery_guy.current_load,
         'capacity': delivery_guy.capacity,
-        'area': delivery_guy.area,
+        'area': '',
         'battery_percentage': delivery_guy.battery_percentage,
         'last_connected_time': delivery_guy.last_connected_time,
         'assignment_type': delivery_guy.assignment_type,
