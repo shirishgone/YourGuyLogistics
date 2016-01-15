@@ -238,7 +238,7 @@ class Employee(YGUser):
             (CALLER, 'caller'),
             (ADMIN, 'admin')
             )
-    department = models.CharField(max_length = 15, choices = DEPARTMENT_CHOICES, default = CALLER)
+    department = models.CharField(max_length = 50, choices = DEPARTMENT_CHOICES, default = CALLER)
     serving_pincodes = models.ManyToManyField(ServiceablePincode, blank = True)
     city = models.ForeignKey(ServiceableCity, blank = True, null = True)
 
