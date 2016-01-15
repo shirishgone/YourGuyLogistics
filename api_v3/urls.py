@@ -1,10 +1,8 @@
 from django.conf.urls import url, patterns
 from rest_framework.routers import DefaultRouter
 
-from api_v3 import mail, views, view_user, view_freshdesk, view_address, view_dashboard, report, cron_jobs, \
-    view_internals
+from api_v3 import mail, views, view_user, view_freshdesk, view_address, view_dashboard, view_internals
 from api_v3.view_consumer import ConsumerViewSet
-#from api_v3.view_dg import DGViewSet
 from api_v3.view_order import OrderViewSet
 from api_v3.view_product import ProductViewSet
 from api_v3.view_vendor import VendorViewSet
@@ -28,7 +26,6 @@ urlpatterns = patterns(
     url(r'^freshdesk/add_note', view_freshdesk.add_note, name='freshdesk_add_note'),
     url(r'^freshdesk/resolve', view_freshdesk.resolve, name='freshdesk_resolve'),
     url(r'^website_email/', mail.website_email, name='website_email'),
-    url(r'^assign_dg/', cron_jobs.assign_dg, name='assign_dg'),
     url(r'^dg_app_version/', view_dg.dg_app_version, name='dg_app_version'),
     url(r'^deliveryguy/profile/', view_dg.profile, name='dg_profile'),
     
