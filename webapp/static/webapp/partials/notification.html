@@ -1,0 +1,16 @@
+<div id="content">
+	<div class="menubar fixed">
+		<div class="sidebar-toggler visible-xs" ng-click="$parent.open_sidebar = !$parent.open_sidebar">
+			<i class="ion-navicon"></i>
+		</div>
+		<div class="page-title">
+			NOTIFICATION
+		</div>
+	</div>
+	<div class="content-wrapper">
+		<div ng-repeat="notice in notification_list">
+			{{notice.message}}
+		</div>
+		
+	</div>
+</div>

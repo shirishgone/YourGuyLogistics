@@ -334,6 +334,14 @@ ygVendors.config(function ($stateProvider, $urlRouterProvider, $httpProvider,cfp
       requireLogin:true
     }
   })
+  .state('home.notification', {
+    url: "/notification",
+    templateUrl: "/static/webapp/partials/notification.html",
+    controller: "notificationCntrl",
+    data :{
+      requireLogin:true
+    }
+  })
 })
 
 ygVendors.controller('loginCntrl',function ($scope,$http,AuthService,StoreSession,$location,$base64){
@@ -2851,6 +2859,17 @@ ygVendors.controller('tutorialCntrl',function ($scope,$stateParams){
   for (var i=0; i<5; i++) {
     $scope.addSlide();
   }
+})
+
+ygVendors.controller('notificationCntrl', function ($scope,$stateParams,notification,Errorhandler){
+  $scope.getNotification = function(){
+    notification.getNotification().finally(function(){
+      var status = Errorhandler.getStatus();
+      $scope.notification_list = status.data.data;
+      console.log(status);
+    });
+  }
+  $scope.getNotification();
 })
 
 
