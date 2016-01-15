@@ -9,6 +9,8 @@ from api_v3.view_order import OrderViewSet
 from api_v3.view_product import ProductViewSet
 from api_v3.view_vendor import VendorViewSet
 from api_v3.view_vendoragent import VendorAgentViewSet
+from api_v3.view_notifications import NotificationViewSet
+
 from api_v3 import view_dg
 from api_v3 import view_notifications
 
@@ -35,7 +37,6 @@ urlpatterns = patterns(
     url(r'^dg_app_version/', view_dg.dg_app_version, name='dg_app_version'),
     url(r'^deliveryguy/profile/', view_dg.profile, name='dg_profile'),
     
-    url(r'^notifications/', view_notifications.my_notifications, name = 'my_notifications'),
     # STAFF METHODS -----------------------------------------
     url(r'^new_order_id_for_old_order_id/', view_internals.new_order_id_for_old_order_id,
         name='new_order_id_for_old_order_id'),
@@ -53,6 +54,7 @@ router.register(r'deliveryguy', view_dg.DGViewSet)
 router.register(r'consumer', ConsumerViewSet)
 router.register(r'order', OrderViewSet, base_name='orders')
 router.register(r'product', ProductViewSet)
+router.register(r'notification', NotificationViewSet)
 
 urlpatterns += router.urls
 # urlpatterns = format_suffix_patterns(urlpatterns)
