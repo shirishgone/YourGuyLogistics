@@ -220,7 +220,7 @@ class VendorAgent(YGUser):
 class Employee(YGUser):
     
     # Mandatory Fields
-    employee_code = models.CharField(max_length = 20)
+    employee_code = models.CharField(max_length = 20, blank = True, null = True)
     
     SALES = 'sales'
     SALES_MANAGER = 'sales_manager'
