@@ -4,3 +4,5 @@ venv
 staticfiles
 .idea/*
 *.sqlite3
+*.pid
+celerybeat-schedule.db

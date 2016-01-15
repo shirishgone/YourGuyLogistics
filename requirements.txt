@@ -19,4 +19,5 @@ python-gcm
 boto
 python-dateutil
 APScheduler==3.0.0
+Celery
 

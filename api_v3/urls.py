@@ -1,10 +1,8 @@
 from django.conf.urls import url, patterns
 from rest_framework.routers import DefaultRouter
 
-from api_v3 import mail, views, view_user, view_freshdesk, view_address, view_dashboard, report, cron_jobs, \
-    view_internals
+from api_v3 import mail, views, view_user, view_freshdesk, view_address, view_dashboard, report, cron_jobs, view_internals
 from api_v3.view_consumer import ConsumerViewSet
-#from api_v3.view_dg import DGViewSet
 from api_v3.view_order import OrderViewSet
 from api_v3.view_product import ProductViewSet
 from api_v3.view_vendor import VendorViewSet
