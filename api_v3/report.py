@@ -1,12 +1,12 @@
 from datetime import datetime
 
 from django.db.models import Sum, Q, F, Count
-
+from rest_framework.decorators import api_view
 from api_v3 import constants
 from api_v3.utils import send_email, ist_day_start, ist_day_end
 from yourguy.models import DeliveryGuy, OrderDeliveryStatus, DGAttendance, Vendor
 
-
+@api_view(['GET'])
 def daily_report():
     date = datetime.today()
     day_start = ist_day_start(date)
@@ -170,7 +170,7 @@ def daily_report():
         send_email(constants.EMAIL_DAILY_REPORT, email_subject, email_body)
         # ------------------------------------------------------------------------------------------------
 
-
+@api_view(['GET'])
 def cod_report():
     date = datetime.today()
     day_start = ist_day_start(date)
@@ -371,7 +371,7 @@ def cod_report():
         send_email(constants.EMAIL_COD_REPORT, email_subject, email_body)
         # ------------------------------------------------------------------------------------------------
 
-
+@api_view(['GET'])
 def dg_report():
     date = datetime.today()
     day_start = ist_day_start(date)
@@ -475,7 +475,7 @@ def dg_report():
 
         send_email(constants.EMAIL_DG_REPORT, email_subject, email_body)
 
-
+@api_view(['GET'])
 def vendor_report():
     date = datetime.today()
     day_start = ist_day_start(date)

@@ -51,35 +51,35 @@ def auto_assign5():
 
 # ----------------------------------------------------------------
 
-# # REPORTING SCHEDULER --------------------------------------------
-# @scheduler.scheduled_job('cron', id='daily_report_job', hour=17)
-# def daily_report():
-#     try:
-#         url = base_url()
-#         url = url + '/api/v3/daily_report/'
-#         result = requests.get(url)
-#     except:
-#         print('send_daily_report : ERROR')
-#
-#
-# @scheduler.scheduled_job('cron', id='cod_report_job', hour=18)
-# def cod_report():
-#     try:
-#         url = base_url()
-#         url = url + '/api/v3/cod_report/'
-#         result = requests.get(url)
-#     except:
-#         print('send_cod_report : ERROR')
-#
-#
-# @scheduler.scheduled_job('cron', id='dg_report_job', hour=18)
-# def dg_report():
-#     try:
-#         url = base_url()
-#         url = url + '/api/v3/dg_report/'
-#         result = requests.get(url)
-#     except:
-#         print('send_dg_report : ERROR')
+# REPORTING SCHEDULER --------------------------------------------
+@scheduler.scheduled_job('cron', id='daily_report_job', hour=17)
+def daily_report():
+    try:
+        url = base_url()
+        url = url + '/api/v3/daily_report/'
+        result = requests.get(url)
+    except:
+        print('send_daily_report : ERROR')
+
+
+@scheduler.scheduled_job('cron', id='cod_report_job', hour=18)
+def cod_report():
+    try:
+        url = base_url()
+        url = url + '/api/v3/cod_report/'
+        result = requests.get(url)
+    except:
+        print('send_cod_report : ERROR')
+
+
+@scheduler.scheduled_job('cron', id='dg_report_job', hour=18)
+def dg_report():
+    try:
+        url = base_url()
+        url = url + '/api/v3/dg_report/'
+        result = requests.get(url)
+    except:
+        print('send_dg_report : ERROR')
 
 # ----------------------------------------------------------------
 scheduler.start()
