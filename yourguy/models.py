@@ -244,7 +244,7 @@ class Employee(YGUser):
 
     associate_delivery_guys = models.ManyToManyField(DeliveryGuy, blank = True, related_name ='ops_associate_delivery_guys')
     def __unicode__(self):
-        return unicode(self.user.username, self.user.first_name)
+        return u"%s - %s" % (self.user.username, self.user.first_name)
 
 class Consumer(YGUser):
     # Optional Fields
