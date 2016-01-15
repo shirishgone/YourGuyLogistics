@@ -154,7 +154,7 @@ class DeliveryGuy(YGUser):
     is_active = models.BooleanField(default = False)
     
     def __unicode__(self):
-        return u"%s - %s" % (self.user.username, self.user.first_name)                
+        return u"%s - %s" % (self.user.first_name, self.user.username)                
 
 class DeliveryTeamLead(models.Model):
     delivery_guy = models.ForeignKey(DeliveryGuy, related_name='current_delivery_guy')
