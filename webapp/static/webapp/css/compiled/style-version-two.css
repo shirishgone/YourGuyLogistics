@@ -1352,6 +1352,7 @@
 }
 
 .notification .notice {
+	cursor: pointer;
 	padding: 10px;
 	border-bottom: 1px solid #B3B8BD;
 	overflow: auto;
@@ -1379,7 +1380,14 @@
 }
 
 .notification .notice .notification-text h4 {
-	margin: 0px;
+	float: left;
+	margin: 0;
+	margin-right: 10px;
 	font-size: 16px;
 	font-weight: 600;
+}
+
+.notification .notice .notification-text .notice-time {
+	font-size: 14px;
+	color: #9d9ea2;
 }

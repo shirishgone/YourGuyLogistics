@@ -215,7 +215,7 @@ ygVendors.config(function ($stateProvider, $urlRouterProvider, $httpProvider,cfp
     }
   })
   .state('home.order_details', {
-    url: "/order/:orderId&:dateId",
+    url: "/order/:orderId?dateId",
     templateUrl: "/static/webapp/partials/order_details.html",
     controller: "orderDetailsCntrl",
     data :{
@@ -335,7 +335,8 @@ ygVendors.config(function ($stateProvider, $urlRouterProvider, $httpProvider,cfp
     }
   })
   .state('home.notification', {
-    url: "/notification",
+    url: "/notification?page",
+    reloadOnSearch : false,
     templateUrl: "/static/webapp/partials/notification.html",
     controller: "notificationCntrl",
     data :{
@@ -417,7 +418,7 @@ ygVendors.controller('signupCntrl',function ($scope,$http,$state,AuthService,Cod
   }
 })
 
-ygVendors.controller('homeCntrl', function ($state,$scope,StoreSession,$q,$modal,GetJsonData,DG,Vendors,Codes,baseURl,Errorhandler){
+ygVendors.controller('homeCntrl', function ($state,$scope,$interval,StoreSession,$q,$modal,GetJsonData,baseURl,Errorhandler,notification){
   Date.prototype.addHours= function(h){
     this.setHours(this.getHours()+h);
     this.setMinutes(0)
@@ -507,6 +508,17 @@ ygVendors.controller('homeCntrl', function ($state,$scope,StoreSession,$q,$modal
     } 
   }
   $scope.getUsername()
+
+  $scope.getCount = function(){
+    notification.pendingNotificationCount().finally(function(){
+      var status = Errorhandler.getStatus();
+      $scope.count = status.data.count;
+    })
+  };
+
+  $scope.getCount();
+
+  $interval($scope.getCount , 120000)
 })
 
 ygVendors.controller('newOrderCntrl',function ($scope,$stateParams,$state,$location,$modal,cfpLoadingBar,Orders,baseURl,Errorhandler,$timeout){
@@ -2861,15 +2873,40 @@ ygVendors.controller('tutorialCntrl',function ($scope,$stateParams){
   }
 })
 
-ygVendors.controller('notificationCntrl', function ($scope,$stateParams,notification,Errorhandler){
+ygVendors.controller('notificationCntrl', function ($scope,$state,$stateParams,$location,notification,baseURl,Errorhandler){
+  $scope.itemsByPage = baseURl.ItemByPage
+  $scope.params = $stateParams;
+  $scope.params.page = (!isNaN($stateParams.page))? parseInt($stateParams.page): 1;
+  $location.search($scope.params);
   $scope.getNotification = function(){
-    notification.getNotification().finally(function(){
+    $scope.total_notifications = false;
+    notification.getNotification($scope.params).finally(function(){
       var status = Errorhandler.getStatus();
       $scope.notification_list = status.data.data;
-      console.log(status);
+      $scope.total_notifications = status.data.total_notifications
+      console.log($scope.notification_list);
     });
-  }
+  };
+
   $scope.getNotification();
+
+  $scope.makeAsRead = function(notice){
+    notification.markAsRead(notice).finally(function(){
+      var status = Errorhandler.getStatus();
+      console.log(status);
+      if(status.has_error){
+        alert("Error reading notification");
+      }
+      else{
+        $scope.getCount();
+        if(notice.delivery_id){
+          $state.go('home.order_details',{orderId:notice.delivery_id});
+        }
+      }
+    })
+  }
+
+  
 })
 
 

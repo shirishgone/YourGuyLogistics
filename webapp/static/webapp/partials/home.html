@@ -15,7 +15,7 @@
                     <li>
                         <a ui-sref="home.notification" ng-click="hideSidebar()" style="cursor:pointer;" ui-sref-active="active">
                             <img class="sidebar-image" src="/static/webapp/images/menubar-icons/notification.png">&nbsp;&nbsp;
-                            Notifications
+                            Notifications &nbsp; <span class="label label-danger" ng-if="count > 0">{{count}}</span>
                         </a>
                     </li>
                 </ul>

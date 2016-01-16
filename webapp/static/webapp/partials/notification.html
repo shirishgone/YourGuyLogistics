@@ -9,18 +9,23 @@
 	</div>
 	<div class="content-wrapper">
 		<div class="notification">
-			<div class="notice" ng-repeat="notice in notification_list" ng-class="{'unread' : !notice.read}">
+			<div class="notice" ng-repeat="notice in notification_list" ng-class="{'unread' : !notice.read}" ng-click="makeAsRead(notice)">
 				<div class="notification-image">
-					<img ng-src="/static/webapp/images/notification/{{notice.notification_type.id}}.png">
+					<img ng-src="/static/webapp/images/notification/{{notice.notification_type.type_id}}.png"> 
 				</div>
 				<div class="notification-text">
-					<div>
-						<h4>{{notice.notification_type.title}}</h4>
+					<div class="col-md-12">
+						<h4>{{notice.notification_type.title}}</h4> <span class="notice-time">{{notice.time_stamp | fromNow}}</span>
 					</div>
-					<div>
+					<div class="col-md-12">
 						<p>{{notice.message}}</p>
 					</div>
 				</div>
+			</div>
+		</div>
+		<div ng-if="total_notifications">
+			<div class="text-center">
+				<pagination total-items="total_notifications" ng-model="params.page" items-per-page="itemsByPage" max-size="8" boundary-links="true" rotate="false" ng-change="getNotification()"></pagination>
 			</div>
 		</div>
 	</div>

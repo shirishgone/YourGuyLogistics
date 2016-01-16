@@ -519,9 +519,19 @@ ygVendors.factory('StoreSessionData', function (){
 
 ygVendors.factory('notification', ['$http','baseURl','Errorhandler', function ($http,baseURl,Errorhandler){
     var notify = {};
-    notify.getNotification =  function (){
+    notify.getNotification =  function (data){
         Errorhandler.clear();
-        return $http.get(baseURl.V2apiURL+'/notification/').then(Errorhandler.successStatus,Errorhandler.errorStatus);
+        return $http.get(baseURl.V2apiURL+'/notification/?page='+data.page).then(Errorhandler.successStatus,Errorhandler.errorStatus);
+    };
+
+    notify.pendingNotificationCount = function(){
+        Errorhandler.clear();
+        return $http.get(baseURl.V2apiURL+'/notification/pending/').then(Errorhandler.successStatus,Errorhandler.errorStatus);
+    };
+
+    notify.markAsRead = function(data){
+        Errorhandler.clear();
+        return $http.post(baseURl.V2apiURL+'/notification/'+data.notification_id+'/read/').then(Errorhandler.successStatus,Errorhandler.errorStatus);
     };
 
     return notify;
