@@ -2,15 +2,13 @@ from datetime import datetime
 
 from django.db.models import Sum, Q, F, Count
 from rest_framework import status
-from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from api_v3 import constants
 from api_v3.utils import send_email, ist_day_start, ist_day_end
 from yourguy.models import DeliveryGuy, OrderDeliveryStatus, DGAttendance, Vendor
 
 
-@api_view(['GET'])
-def daily_report(request):
+def daily_report():
     date = datetime.today()
     day_start = ist_day_start(date)
     day_end = ist_day_end(date)
@@ -30,8 +28,6 @@ def daily_report(request):
         email_body = email_body + "\n\n- YourGuy BOT"
 
         send_email(constants.EMAIL_IDS_EVERYBODY, email_subject, email_body)
-        return Response(status=status.HTTP_200_OK)
-
     else:
         # TOTAL ORDERS ASSIGNED vs UNASSIGNED ORDERS ----------------------------------------
         orders_unassigned_count = delivery_statuses_today.filter(delivery_guy=None).count()
@@ -173,11 +169,8 @@ def daily_report(request):
 
         send_email(constants.EMAIL_DAILY_REPORT, email_subject, email_body)
         # ------------------------------------------------------------------------------------------------
-        return Response(status=status.HTTP_200_OK)
 
-
-@api_view(['GET'])
-def cod_report(request):
+def cod_report():
     date = datetime.today()
     day_start = ist_day_start(date)
     day_end = ist_day_end(date)
@@ -197,7 +190,6 @@ def cod_report(request):
         email_body = email_body + "\n\n- YourGuy BOT"
 
         send_email(constants.EMAIL_COD_REPORT, email_subject, email_body)
-        return Response(status=status.HTTP_200_OK)
     else:
         # COD as per ORDER_STATUS --------------------------------------------------------
         orders_pending_queryset = delivery_statuses_today.filter(Q(order_status=constants.ORDER_STATUS_QUEUED) |
@@ -376,12 +368,10 @@ def cod_report(request):
         email_body = email_body + "\n\n- YourGuy BOT"
 
         send_email(constants.EMAIL_COD_REPORT, email_subject, email_body)
-        return Response(status=status.HTTP_200_OK)
         # ------------------------------------------------------------------------------------------------
 
 
-@api_view(['GET'])
-def dg_report(request):
+def dg_report():
     date = datetime.today()
     day_start = ist_day_start(date)
     day_end = ist_day_end(date)
@@ -482,11 +472,9 @@ def dg_report(request):
         email_body = email_body + "\n\n- YourGuy BOT"
 
         send_email(constants.EMAIL_DG_REPORT, email_subject, email_body)
-        return Response(status=status.HTTP_200_OK)
 
 
-@api_view(['GET'])
-def vendor_report(request):
+def vendor_report():
     date = datetime.today()
     day_start = ist_day_start(date)
     day_end = ist_day_end(date)
@@ -533,7 +521,6 @@ def vendor_report(request):
             email_body = email_body + "\n\n- YourGuy BOT"
 
             send_email(vendor_mail_id, email_subject, email_body)
-            return Response(status=status.HTTP_200_OK)
         else:
             orders_for_this_vendor = OrderDeliveryStatus.objects.filter(date__gte=day_start, date__lte=day_end,
                                                                         order__vendor=vendors)
@@ -563,4 +550,3 @@ def vendor_report(request):
             email_body = email_body + "\n\n- YourGuy BOT"
 
             send_email(vendor_mail_id, email_subject, email_body)
-            return Response(status=status.HTTP_200_OK)

@@ -72,7 +72,7 @@ class NotificationViewSet(viewsets.ViewSet):
         role = user_role(request.user)
         if role == constants.OPERATIONS:        
             employee = get_object_or_404(Employee, user = request.user)
-            notifications = employee.notifications.all().select_related('notification_type')
+            notifications = employee.notifications.all().select_related('notification_type').order_by('-time_stamp')
             notifications_count = len(notifications)
             total_pages =  int(notifications_count/constants.PAGINATION_PAGE_SIZE) + 1
             if page > total_pages or page<=0:

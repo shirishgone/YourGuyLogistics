@@ -11,8 +11,7 @@ from api_v3.utils import ist_day_start, ist_day_end, send_email
 from yourguy.models import OrderDeliveryStatus
 
 
-@api_view(['GET'])
-def assign_dg(request):
+def assign_dg():
     # FETCH ALL TODAY ORDERS --------------------------------------------
 
     date = datetime.today()
@@ -103,4 +102,4 @@ def assign_dg(request):
 
     # TODO
     # inform_dgs_about_orders_assigned()
-    return Response(status=status.HTTP_200_OK)
+
