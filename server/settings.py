@@ -34,10 +34,10 @@ if ENVIRONMENT == 'LOCAL':
     BROKER_URL = 'amqp://guest:guest@localhost/myvhost:5672//'
 elif ENVIRONMENT == 'STAGE':
     BROKER_POOL_LIMIT = 1
-    BROKER_URL = os.environ['CLOUDAMQP_URL']
+    BROKER_URL = os.environ.get('CLOUDAMQP_URL')
 else:
     BROKER_POOL_LIMIT = 1
-    BROKER_URL = os.environ['CLOUDAMQP_URL']
+    BROKER_URL = os.environ.get('CLOUDAMQP_URL')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
