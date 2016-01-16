@@ -1,13 +1,12 @@
 from datetime import datetime
 
-from django.db.models import Sum, Q, F
+from django.db.models import Sum, Q, F, Count
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-
 from api_v3 import constants
 from api_v3.utils import send_email, ist_day_start, ist_day_end
-from yourguy.models import DeliveryGuy, OrderDeliveryStatus, DGAttendance
+from yourguy.models import DeliveryGuy, OrderDeliveryStatus, DGAttendance, Vendor
 
 
 @api_view(['GET'])
@@ -91,7 +90,7 @@ def daily_report(request):
         total_cod_collected = total_cod_collected['cod_collected_amount__sum']
         if total_cod_collected is None:
             total_cod_collected = 0
-        
+
         executable_deliveries = delivery_statuses_today.filter(
             Q(order_status=constants.ORDER_STATUS_QUEUED) |
             Q(order_status=constants.ORDER_STATUS_INTRANSIT) |
@@ -123,8 +122,6 @@ def daily_report(request):
                 total = 0
             cod_with_dg_string = cod_with_dg_string + "\n%s = %s" % (delivery_guy, total)
         # -----------------------------------------------------------------------------------
-
-        # SEND AN EMAIL SAYING CANT FIND APPROPRAITE DELIVERY GUY FOR THIS ORDER. PLEASE ASSIGN MANUALLY
         today_string = datetime.now().strftime("%Y %b %d")
         email_subject = 'Daily Report : %s' % (today_string)
 
@@ -176,7 +173,6 @@ def daily_report(request):
 
         send_email(constants.EMAIL_DAILY_REPORT, email_subject, email_body)
         # ------------------------------------------------------------------------------------------------
-        
         return Response(status=status.HTTP_200_OK)
 
 
@@ -187,7 +183,8 @@ def cod_report(request):
     day_end = ist_day_end(date)
 
     # TOTAL ORDERS ----------------------------------------------------------------------
-    delivery_statuses_today = OrderDeliveryStatus.objects.filter(date__gte=day_start, date__lte=day_end, order__cod_amount__gt = 0)
+    delivery_statuses_today = OrderDeliveryStatus.objects.filter(date__gte=day_start, date__lte=day_end,
+                                                                 order__cod_amount__gt=0)
     orders_total_count = len(delivery_statuses_today)
     # -----------------------------------------------------------------------------------
 
@@ -209,7 +206,7 @@ def cod_report(request):
         pending_cod_amount = orders_pending['sum_of_cod_amount']
         if pending_cod_amount is None:
             pending_cod_amount = 0
-        
+
         orders_attempted_queryset = delivery_statuses_today.filter(
             Q(order_status=constants.ORDER_STATUS_PICKUP_ATTEMPTED) |
             Q(order_status=constants.ORDER_STATUS_DELIVERY_ATTEMPTED))
@@ -223,10 +220,11 @@ def cod_report(request):
         cancelled_cod_amount = orders_cancelled['sum_of_cod_amount']
         if cancelled_cod_amount is None:
             cancelled_cod_amount = 0
-        
+
         orders_executed_queryset = delivery_statuses_today.filter(Q(order_status=constants.ORDER_STATUS_DELIVERED) &
-                                                                Q(cod_collected_amount__lt=F('order__cod_amount')))
-        orders_executed = orders_executed_queryset.aggregate(sum_of_cod_collected=Sum('cod_collected_amount'),sum_of_cod_amount=Sum('order__cod_amount'))
+                                                                  Q(cod_collected_amount__lt=F('order__cod_amount')))
+        orders_executed = orders_executed_queryset.aggregate(sum_of_cod_collected=Sum('cod_collected_amount'),
+                                                             sum_of_cod_amount=Sum('order__cod_amount'))
         delivered_cod_collected = orders_executed['sum_of_cod_collected']
         if delivered_cod_collected is None:
             delivered_cod_collected = 0
@@ -241,7 +239,8 @@ def cod_report(request):
             pending_cod_amount = 0
 
         orders_executed_queryset = delivery_statuses_today.filter(order_status=constants.ORDER_STATUS_DELIVERED)
-        orders_executed = orders_executed_queryset.aggregate(sum_of_cod_collected=Sum('cod_collected_amount'),sum_of_cod_amount=Sum('order__cod_amount'))
+        orders_executed = orders_executed_queryset.aggregate(sum_of_cod_collected=Sum('cod_collected_amount'),
+                                                             sum_of_cod_amount=Sum('order__cod_amount'))
         delivered_cod_collected = orders_executed['sum_of_cod_collected']
         if delivered_cod_collected is None:
             delivered_cod_collected = 0
@@ -344,7 +343,7 @@ def cod_report(request):
                 dg_full_name = 'Unassigned'
 
             cod_with_dg = "\n%s - COD: %s/%s" % \
-                         (dg_full_name, sum_of_cod_collected, sum_of_cod_amount)
+                          (dg_full_name, sum_of_cod_collected, sum_of_cod_amount)
             email_body = email_body + "\n\n" + cod_with_dg
             # ===============================================================
             # For the same DG, specify vendor wise collection bifurcation,
@@ -369,7 +368,7 @@ def cod_report(request):
                     sum_of_cod_amount = 0
 
                 cod_with_vendor = ''
-                cod_with_vendor = "\n  %s- COD: %s/%s" %(vendor_name, sum_of_cod_collected, sum_of_cod_amount)
+                cod_with_vendor = "\n  %s- COD: %s/%s" % (vendor_name, sum_of_cod_collected, sum_of_cod_amount)
                 email_body = email_body + "\n" + cod_with_vendor
 
         # ---------------------------------------------------------------------------
@@ -378,7 +377,7 @@ def cod_report(request):
 
         send_email(constants.EMAIL_COD_REPORT, email_subject, email_body)
         return Response(status=status.HTTP_200_OK)
-    # ------------------------------------------------------------------------------------------------
+        # ------------------------------------------------------------------------------------------------
 
 
 @api_view(['GET'])
@@ -389,22 +388,23 @@ def dg_report(request):
 
     # Number of dgs working today ----------------------------------------------------------------------
     dg_working_today_count = DGAttendance.objects.filter(date__gte=day_start, date__lte=day_end).count()
-    
+
     # --------------------------------------------
     delivery_statuses_today = OrderDeliveryStatus.objects.filter(date__gte=day_start, date__lte=day_end)
     delivery_statuses_today = delivery_statuses_today.filter(
-            Q(order_status=constants.ORDER_STATUS_QUEUED) |
-            Q(order_status=constants.ORDER_STATUS_INTRANSIT) |
-            Q(order_status=constants.ORDER_STATUS_PICKUP_ATTEMPTED) |
-            Q(order_status=constants.ORDER_STATUS_DELIVERY_ATTEMPTED) |
-            Q(order_status=constants.ORDER_STATUS_DELIVERED)
-            )
+        Q(order_status=constants.ORDER_STATUS_QUEUED) |
+        Q(order_status=constants.ORDER_STATUS_INTRANSIT) |
+        Q(order_status=constants.ORDER_STATUS_PICKUP_ATTEMPTED) |
+        Q(order_status=constants.ORDER_STATUS_DELIVERY_ATTEMPTED) |
+        Q(order_status=constants.ORDER_STATUS_DELIVERED)
+    )
     delivery_statuses_today = delivery_statuses_today.exclude(delivery_guy=None)
     delivery_statuses_today = delivery_statuses_today.exclude(pickup_guy=None)
-    all_dgs = delivery_statuses_today.values('delivery_guy__user__username').\
+    all_dgs = delivery_statuses_today.values('delivery_guy__user__username'). \
         annotate(sum_of_cod_collected=Sum('cod_collected_amount'), sum_of_cod_amount=Sum('order__cod_amount'))
 
-    all_pickup_guys = delivery_statuses_today.values('pickup_guy__user__username').annotate(sum_of_cod_amount=Sum('order__cod_amount'))
+    all_pickup_guys = delivery_statuses_today.values('pickup_guy__user__username').annotate(
+        sum_of_cod_amount=Sum('order__cod_amount'))
 
     # -----------------------------------------------------------------------------------
 
@@ -418,7 +418,6 @@ def dg_report(request):
 
         send_email(constants.EMAIL_DG_REPORT, email_subject, email_body)
         return Response(status=status.HTTP_200_OK)
-
     else:
         # DG details for today
         today_string = datetime.now().strftime("%Y %b %d")
@@ -437,15 +436,17 @@ def dg_report(request):
             pickup_guy = DeliveryGuy.objects.get(user__username=pickup_guy_ph_number)
             pickup_guy_full_name = pickup_guy.user.first_name + pickup_guy.user.last_name
 
-            orders_assigned_tracked = delivery_statuses_today.filter(delivery_guy__user__username=single_pickup_guy['pickup_guy__user__username'])
+            orders_assigned_tracked = delivery_statuses_today.filter(
+                delivery_guy__user__username=single_pickup_guy['pickup_guy__user__username'])
             no_of_assigned_orders = len(orders_assigned_tracked)
 
-            orders_executed_tracked = orders_executed.filter(delivery_guy__user__username=single_pickup_guy['pickup_guy__user__username'])
+            orders_executed_tracked = orders_executed.filter(
+                delivery_guy__user__username=single_pickup_guy['pickup_guy__user__username'])
             no_of_executed_orders = len(orders_executed_tracked)
 
-            email_body = email_body + "\n\n%s - Orders: %s/%s" %(pickup_guy_full_name, no_of_executed_orders, no_of_assigned_orders)
+            email_body = email_body + "\n\n%s - Orders: %s/%s" % (
+            pickup_guy_full_name, no_of_executed_orders, no_of_assigned_orders)
             email_body = email_body + "\n-----------------------------------"
-
 
         email_body = email_body + "\n\nDELIVERY BOY DETAILS -------\n* COD of Cancelled orders are not considered."
 
@@ -464,14 +465,17 @@ def dg_report(request):
             dg_last_name = dg.user.last_name
             dg_full_name = dg_first_name + dg_last_name
 
-            orders_assigned_tracked = delivery_statuses_today.filter(delivery_guy__user__username=single_dg['delivery_guy__user__username'])
+            orders_assigned_tracked = delivery_statuses_today.filter(
+                delivery_guy__user__username=single_dg['delivery_guy__user__username'])
             no_of_assigned_orders = len(orders_assigned_tracked)
 
-            orders_executed_tracked = orders_executed.filter(delivery_guy__user__username=single_dg['delivery_guy__user__username'])
+            orders_executed_tracked = orders_executed.filter(
+                delivery_guy__user__username=single_dg['delivery_guy__user__username'])
             no_of_executed_orders = len(orders_executed_tracked)
 
-            email_body = email_body + "\n\n%s - Orders: %s/%s, COD: %s/%s" %(dg_full_name, no_of_executed_orders,
-                                                        no_of_assigned_orders, cod_collected, cod_to_be_collected)
+            email_body = email_body + "\n\n%s - Orders: %s/%s, COD: %s/%s" % (dg_full_name, no_of_executed_orders,
+                                                                              no_of_assigned_orders, cod_collected,
+                                                                              cod_to_be_collected)
             email_body = email_body + "\n-----------------------------------"
 
         email_body = email_body + "\n-----------------------------------"
@@ -479,3 +483,84 @@ def dg_report(request):
 
         send_email(constants.EMAIL_DG_REPORT, email_subject, email_body)
         return Response(status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+def vendor_report(request):
+    date = datetime.today()
+    day_start = ist_day_start(date)
+    day_end = ist_day_end(date)
+
+    # TOTAL ORDERS ----------------------------------------------------------------------
+    # filter on today
+    # filter on all orders statues
+    # then group by vendor name to get sum_of_cod_collected and sum_of_cod_amount
+    # iterate over this list and for each vendor check length of orders
+
+    delivery_statuses_today = OrderDeliveryStatus.objects.filter(date__gte=day_start, date__lte=day_end)
+    delivery_statuses_today = delivery_statuses_today.filter(
+        Q(order_status=constants.ORDER_STATUS_QUEUED) |
+        Q(order_status=constants.ORDER_STATUS_INTRANSIT) |
+        Q(order_status=constants.ORDER_STATUS_PICKUP_ATTEMPTED) |
+        Q(order_status=constants.ORDER_STATUS_DELIVERY_ATTEMPTED) |
+        Q(order_status=constants.ORDER_STATUS_DELIVERED) |
+        Q(order_status=constants.ORDER_STATUS_CANCELLED)
+    )
+    delivery_statuses_cancelled_today = delivery_statuses_today.filter(order_status=constants.ORDER_STATUS_CANCELLED)
+    delivery_statuses_executed_today = delivery_statuses_today.filter(order_status=constants.ORDER_STATUS_DELIVERED)
+
+    vendors_tracked = delivery_statuses_today.values('order__vendor__store_name'). \
+        annotate(sum_of_cod_collected=Sum('cod_collected_amount'), sum_of_cod_amount=Sum('order__cod_amount'),
+                 total_orders=Count('order'))
+
+    for item in vendors_tracked:
+        vendor_name = item['order__vendor__store_name']
+        sum_of_cod_collected = item['sum_of_cod_collected']
+        sum_of_cod_amount = item['sum_of_cod_amount']
+        orders_total_count = item['total_orders']
+
+        vendors = Vendor.objects.get(store_name=vendor_name)
+        vendor_mail_id = [vendors.email]
+
+        # -----------------------------------------------------------------------------------
+
+        if orders_total_count == 0:
+            today_string = datetime.now().strftime("%Y %b %d")
+            email_subject = 'YourGuy Vendor Report for %s: %s' % (vendor_name, today_string)
+
+            email_body = "Good Evening,"
+            email_body = email_body + "\n\n You have no orders today."
+            email_body = email_body + "\n\n- YourGuy BOT"
+
+            send_email(vendor_mail_id, email_subject, email_body)
+            return Response(status=status.HTTP_200_OK)
+        else:
+            orders_for_this_vendor = OrderDeliveryStatus.objects.filter(date__gte=day_start, date__lte=day_end,
+                                                                        order__vendor=vendors)
+            list_of_orders = []
+            for single_order in orders_for_this_vendor:
+                order_ids = single_order.id
+                list_of_orders.append(order_ids)
+
+            cancelled_orders = delivery_statuses_cancelled_today.filter(order__vendor__store_name=vendor_name)
+            count_cancelled_orders = len(cancelled_orders)
+
+            executed_orders = delivery_statuses_executed_today.filter(order__vendor__store_name=vendor_name)
+            count_executed_orders = len(executed_orders)
+
+            today_string = datetime.now().strftime("%Y %b %d")
+            email_subject = 'YourGuy Vendor Report for %s: %s' % (vendor_name, today_string)
+
+            email_body = "Good Evening Guys, \n\nPlease find the vendor report of the day."
+            email_body = email_body + "\nTotal orders = %s" % (orders_total_count)
+            email_body = email_body + "\nCancelled orders = %s" % (count_cancelled_orders)
+            email_body = email_body + "\nExecuted orders = %s" % (count_executed_orders)
+            email_body = email_body + "\nCOD supposed to be collected: %s" % (sum_of_cod_amount)
+            email_body = email_body + "\nCOD collected: %s" % (sum_of_cod_collected)
+            email_body = email_body + "\nAll order numbers: %s" % (list_of_orders)
+
+            email_body = email_body + "\n-----------------------------------"
+            email_body = email_body + "\n\n- YourGuy BOT"
+
+            send_email(vendor_mail_id, email_subject, email_body)
+            return Response(status=status.HTTP_200_OK)
