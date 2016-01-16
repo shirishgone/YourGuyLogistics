@@ -8,12 +8,12 @@ from celery.schedules import crontab
 from celery.task import periodic_task
 
 
-@periodic_task(run_every=(crontab(minute=0, hour=17)), name="dailyreport")
+@periodic_task(run_every=(crontab(minute='*/10')), name="dailyreport")
 def dailyreport_task():
     daily_report()
 
 
-@periodic_task(run_every=(crontab(minute=0, hour=18)), name="codreport")
+@periodic_task(run_every=(crontab(minute=30, hour=11)), name="codreport")
 def cod_task():
     cod_report()
 
