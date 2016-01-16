@@ -1341,3 +1341,45 @@
 .panel-danger.panel-default .panel-heading , .panel-danger.panel-default .panel-title{
 	background: #FE5E64;
 }
+
+.notification-content {
+	padding: 0px !important;
+	padding-top: 63px !important;
+}
+
+.notification-content .content-wrapper {
+	margin-top: 0px !important;
+}
+
+.notification .notice {
+	padding: 10px;
+	border-bottom: 1px solid #B3B8BD;
+	overflow: auto;
+}
+
+.notification .notice.unread {
+	background-color: #EAF2FD;
+}
+
+.notification .notice .notification-image {
+	max-width: 60px;
+	width: 20%;
+	padding: 10px;
+	float: left;
+}
+
+.notification .notice .notification-text {
+	width: 80%;
+	float: left;
+}
+
+.notification .notice .notification-image img {
+	height: 40px;
+	width: 40px;
+}
+
+.notification .notice .notification-text h4 {
+	margin: 0px;
+	font-size: 16px;
+	font-weight: 600;
+}

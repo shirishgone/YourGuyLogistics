@@ -521,7 +521,7 @@ ygVendors.factory('notification', ['$http','baseURl','Errorhandler', function ($
     var notify = {};
     notify.getNotification =  function (){
         Errorhandler.clear();
-        return $http.get(baseURl.V2apiURL+'/notifications/').then(Errorhandler.successStatus,Errorhandler.errorStatus);
+        return $http.get(baseURl.V2apiURL+'/notification/').then(Errorhandler.successStatus,Errorhandler.errorStatus);
     };
 
     return notify;

@@ -1,4 +1,4 @@
-<div id="content">
+<div id="content" class="notification-content">
 	<div class="menubar fixed">
 		<div class="sidebar-toggler visible-xs" ng-click="$parent.open_sidebar = !$parent.open_sidebar">
 			<i class="ion-navicon"></i>
@@ -8,9 +8,20 @@
 		</div>
 	</div>
 	<div class="content-wrapper">
-		<div ng-repeat="notice in notification_list">
-			{{notice.message}}
+		<div class="notification">
+			<div class="notice" ng-repeat="notice in notification_list" ng-class="{'unread' : !notice.read}">
+				<div class="notification-image">
+					<img ng-src="/static/webapp/images/notification/{{notice.notification_type.id}}.png">
+				</div>
+				<div class="notification-text">
+					<div>
+						<h4>{{notice.notification_type.title}}</h4>
+					</div>
+					<div>
+						<p>{{notice.message}}</p>
+					</div>
+				</div>
+			</div>
 		</div>
-		
 	</div>
 </div>
