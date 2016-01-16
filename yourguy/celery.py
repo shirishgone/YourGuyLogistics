@@ -10,7 +10,7 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'server.settings'
 
 from django.conf import settings
 
-app = Celery('yourguy', broker = settings.BROKER_URL)
+app = Celery('yourguy')
 app.autodiscover_tasks(lambda: settings.INSTALLED_APPS)
 
 
