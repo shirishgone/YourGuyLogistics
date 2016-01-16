@@ -2873,18 +2873,19 @@ ygVendors.controller('tutorialCntrl',function ($scope,$stateParams){
   }
 })
 
-ygVendors.controller('notificationCntrl', function ($scope,$state,$stateParams,$location,notification,baseURl,Errorhandler){
+ygVendors.controller('notificationCntrl', function ($scope,$state,$stateParams,$location,notification,baseURl,Errorhandler,cfpLoadingBar){
   $scope.itemsByPage = baseURl.ItemByPage
   $scope.params = $stateParams;
   $scope.params.page = (!isNaN($stateParams.page))? parseInt($stateParams.page): 1;
-  $location.search($scope.params);
   $scope.getNotification = function(){
+    $location.search($scope.params);
     $scope.total_notifications = false;
+    cfpLoadingBar.start();
     notification.getNotification($scope.params).finally(function(){
+      cfpLoadingBar.complete();
       var status = Errorhandler.getStatus();
       $scope.notification_list = status.data.data;
-      $scope.total_notifications = status.data.total_notifications
-      console.log($scope.notification_list);
+      $scope.total_notifications = status.data.total_notifications;
     });
   };
 
@@ -2904,9 +2905,7 @@ ygVendors.controller('notificationCntrl', function ($scope,$state,$stateParams,$
         }
       }
     })
-  }
-
-  
+  }  
 })
 
 

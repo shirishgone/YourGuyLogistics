@@ -1354,7 +1354,7 @@
 .notification .notice {
 	cursor: pointer;
 	padding: 10px;
-	border-bottom: 1px solid #B3B8BD;
+	border-bottom: 1px solid #ddd;
 	overflow: auto;
 }
 
