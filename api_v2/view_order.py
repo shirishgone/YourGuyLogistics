@@ -1383,9 +1383,6 @@ class OrderViewSet(viewsets.ViewSet):
             
             # INFORM OPERATIONS IF THERE IS ANY COD DISCREPENCIES -------------------
             try:
-                import pdb
-                pdb.set_trace()
-
                 delivery_guy = get_object_or_404(DeliveryGuy, user = request.user)
                 ops_managers = ops_manager_for_dg(delivery_guy)
                 if ops_managers.count() == 0:
