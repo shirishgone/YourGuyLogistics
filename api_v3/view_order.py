@@ -17,9 +17,29 @@ from api_v3 import constants
 from api_v3.push import send_push
 from api_v3.utils import log_exception, send_sms, ist_datetime, user_role, address_string, ist_day_start, ist_day_end, \
     paginate, is_correct_pincode, is_pickup_time_acceptable, timedelta, is_userexists, is_consumerexists, \
-    is_consumer_has_same_address_already, days_in_int, send_email, is_today_date, is_vendor_has_same_address_already
+    is_consumer_has_same_address_already, days_in_int, send_email, is_today_date, is_vendor_has_same_address_already, \
+    ops_manager_for_dg, notification_type_for_code
 from yourguy.models import User, Vendor, DeliveryGuy, VendorAgent, Picture, ProofOfDelivery, OrderDeliveryStatus, \
-    Consumer, Address, Order, Product, OrderItem
+    Consumer, Address, Order, Product, OrderItem, Notification
+
+def send_cod_discrepency_email(delivery_status, user):
+    try:
+        if float(delivery_status.order.cod_amount) > 0.0 and delivery_status.cod_collected_amount is not None and (float(delivery_status.cod_collected_amount) < float(delivery_status.order.cod_amount) or float(delivery_status.cod_collected_amount) > float(delivery_status.order.cod_amount) ):
+            subject = 'COD discrepancy with order: %s' % delivery_status.id
+            body = 'Hello Ops,'
+            body = body + '\n\nThere is some discrepancy in COD collection for following order.'
+            body = body + '\n\nOrder no: %s' % (delivery_status.id)
+            body = body + '\nVendor: %s' % (delivery_status.order.vendor.store_name)
+            body = body + '\nCustomer name: %s' % (delivery_status.order.consumer.user.first_name)
+            body = body + '\nCOD to be collected: %s' % (delivery_status.order.cod_amount)
+            body = body + '\nCOD collected: %s' % (delivery_status.cod_collected_amount)
+            body = body + '\nDeliveryGuy: %s'% (user.first_name)
+            body = body + '\nReason added: %s'% (delivery_status.cod_remarks)
+            body = body + '\n\nPlease clear the discrepancy with the DeliveryBoy and Vendor soon.'
+            body = body + '\n\n- Thanks \nYourGuy BOT'            
+            send_email(constants.EMAIL_COD_DISCREPENCY, subject, body)
+    except Exception, e:
+        log_exception(e, 'order_delivered COD discrepancy email')
 
 def retail_order_send_email(vendor, new_order_ids):
     client_name = vendor.store_name
@@ -1315,26 +1335,23 @@ class OrderViewSet(viewsets.ViewSet):
 
         # INFORM OPERATIONS IF THERE IS ANY COD DISCREPENCIES -------------------
         try:
-            if float(delivery_status.order.cod_amount) > 0.0 and cod_collected_amount is not None and (
-                            float(cod_collected_amount) < float(delivery_status.order.cod_amount) or float(
-                        cod_collected_amount) > float(delivery_status.order.cod_amount)):
-                subject = 'COD discrepancy with order: %s' % delivery_status.id
-                body = 'Hello Ops,'
-                body = body + '\n\nThere is some discrepancy in COD collection for following order.'
-                body = body + '\n\nOrder no: %s' % (delivery_status.id)
-                body = body + '\nVendor: %s' % (delivery_status.order.vendor.store_name)
-                body = body + '\nCustomer name: %s' % (delivery_status.order.consumer.user.first_name)
-                body = body + '\nCOD to be collected: %s' % (delivery_status.order.cod_amount)
-                body = body + '\nCOD collected: %s' % (cod_collected_amount)
-                body = body + '\nDeliveryGuy: %s' % (request.user.first_name)
-                body = body + '\nReason added: %s' % (delivery_remarks)
-                body = body + '\n\nPlease clear the discrepancy with the DeliveryBoy and Vendor soon.'
-                body = body + '\n\n- Thanks \nYourGuy BOT'
-                send_email(constants.EMAIL_COD_DISCREPENCY, subject, body)
-        except Exception as e:
-            log_exception(e, 'order_delivered COD discrepancy email')
-        # -----------------------------------------------------------------------
+            delivery_guy = get_object_or_404(DeliveryGuy, user = request.user)
+            ops_managers = ops_manager_for_dg(delivery_guy)
+            if ops_managers.count() == 0:
+                send_cod_discrepency_email(delivery_status, request.user)
+            else:
+                notification_type = notification_type_for_code(constants.NOTIFICATION_CODE_COD_DISPRENCY)
+                notification_message = constants.NOTIFICATION_MESSAGE_COD_DISCREPENCY%(request.user.first_name, delivery_status.cod_collected_amount, delivery_status.order.cod_amount, delivery_status.id)
+                new_notification = Notification.objects.create(notification_type = notification_type, 
+                    delivery_id = pk, 
+                    message = notification_message)
+                for ops_manager in ops_managers:
+                    ops_manager.notifications.add(new_notification)
+                    ops_manager.save()
 
+        except Exception, e:
+            send_cod_discrepency_email(delivery_status, request.user)
+        # -----------------------------------------------------------------------       
 
         # Final Response ---------------------------------------------------------
         if is_order_updated:

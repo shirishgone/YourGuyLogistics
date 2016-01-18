@@ -91,3 +91,17 @@ DG_STATUS_AVAILABLE = 'AVAILABLE'
 DG_STATUS_UN_AVAILABLE = 'UN_AVAILABLE'
 DG_STATUS_BUSY = 'BUSY'
 # ---------------------------------------
+
+# NOTIFICATION CODES --------------------
+NOTIFICATION_CODE_NOT_CHECKED_IN 	= 'yg_nt_01'
+NOTIFICATION_CODE_LATE_PICKED_UP 	= 'yg_nt_02'
+NOTIFICATION_CODE_LATE_DELIVERY 	= 'yg_nt_03'
+NOTIFICATION_CODE_UNASSIGNED 		= 'yg_nt_04'
+NOTIFICATION_CODE_PICKUP_ATTEMPTED 	= 'yg_nt_05'
+NOTIFICATION_CODE_REPORTED 			= 'yg_nt_06'
+NOTIFICATION_CODE_COD_DISPRENCY 	= 'yg_nt_07'
+# ---------------------------------------
+
+# NOTIFICATION MESSAGES -----------------
+NOTIFICATION_MESSAGE_COD_DISCREPENCY = 'Delivery boy %s, has collected different COD amount %s / %s for the order no %s. Please contact the delivery boy immediately.'
+# ---------------------------------------
