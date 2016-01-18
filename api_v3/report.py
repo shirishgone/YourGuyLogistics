@@ -538,7 +538,7 @@ def vendor_report():
             today_string = datetime.now().strftime("%Y %b %d")
             email_subject = 'YourGuy Vendor Report for %s: %s' % (vendor_name, today_string)
 
-            email_body = "Good Evening Guys, \n\nPlease find the vendor report of the day."
+            email_body = "Good Evening Guys, \n\nPlease find the report of the day."
             email_body = email_body + "\nTotal orders = %s" % (orders_total_count)
             email_body = email_body + "\nCancelled orders = %s" % (count_cancelled_orders)
             email_body = email_body + "\nExecuted orders = %s" % (count_executed_orders)
