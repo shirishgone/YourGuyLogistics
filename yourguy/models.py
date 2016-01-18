@@ -360,6 +360,7 @@ class Order(models.Model):
         return u"%s - %s - %s" % (self.id, self.vendor.store_name, self.consumer.user.first_name)
 
 class DeliveryAction(models.Model):
+    code = models.CharField(max_length=10, blank=True)
     title = models.CharField(max_length = 100)
     def __unicode__(self):
         return u"%s" % (self.title)

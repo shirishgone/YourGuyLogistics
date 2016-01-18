@@ -15,7 +15,7 @@ from rest_framework.response import Response
 
 from api_v3 import constants
 from api_v3.utils import paginate, user_role
-from yourguy.models import DeliveryGuy, DGAttendance
+from yourguy.models import DeliveryGuy, DGAttendance, Location
 
 
 def dg_list_dict(delivery_guy, attendance):
@@ -213,7 +213,11 @@ class DGViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['put'])
     def check_in(self, request, pk=None):
         app_version = request.data.get('app_version')
+        latitude = request.data.get('latitude')
+        longitude = request.data.get('longitude')
+
         dg = get_object_or_404(DeliveryGuy, user=request.user)
+
         dg.status = constants.DG_STATUS_AVAILABLE
         if app_version is not None:
             dg.app_version = app_version
@@ -224,6 +228,7 @@ class DGViewSet(viewsets.ModelViewSet):
 
         attendance_list = DGAttendance.objects.filter(dg=dg, date__year=today.year, date__month=today.month,
                                                       date__day=today.day)
+
         if len(attendance_list) > 0:
             is_today_checkedIn = True
 
@@ -232,6 +237,10 @@ class DGViewSet(viewsets.ModelViewSet):
             attendance.status = constants.DG_STATUS_WORKING
             attendance.save()
             is_today_checkedIn = True
+
+        if latitude is not None and longitude is not None:
+            checkin_location = Location.objects.create(latitude=latitude, longitude=longitude)
+            attendance.checkin_location = checkin_location
 
         if is_today_checkedIn is True:
             content = {
@@ -248,6 +257,8 @@ class DGViewSet(viewsets.ModelViewSet):
     def check_out(self, request, pk=None):
         dg = get_object_or_404(DeliveryGuy, user=request.user)
         today_now = datetime.now()
+        latitude = request.data.get('latitude')
+        longitude = request.data.get('longitude')
         try:
             try:
                 attendance = DGAttendance.objects.filter(dg=dg, date__year=today_now.year, date__month=today_now.month,
@@ -264,6 +275,12 @@ class DGViewSet(viewsets.ModelViewSet):
             # UPDATE DG AS UNAVAILABLE
             dg.status = constants.DG_STATUS_UN_AVAILABLE
             dg.save()
+
+            if latitude is not None and longitude is not None:
+                checkout_location = Location.objects.create(latitude=latitude, longitude=longitude)
+                attendance = DGAttendance.objects.filter(dg=dg, date__year=today_now.year, date__month=today_now.month,
+                                                         date__day=today_now.day).latest('date')
+                attendance.checkin_location = checkout_location
 
             content = {
                 'description': 'Thanks for checking out.'

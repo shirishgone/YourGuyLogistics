@@ -13,7 +13,7 @@ from rest_framework.authtoken.models import Token
 
 from api_v3 import constants
 from server import settings
-from yourguy.models import Order, OrderDeliveryStatus, VendorAgent, Consumer
+from yourguy.models import Order, OrderDeliveryStatus, VendorAgent, Consumer, DeliveryAction
 
 
 def s3_connection():
@@ -233,3 +233,8 @@ def is_pickup_time_acceptable(pickup_datetime):
 def inform_dgs_about_orders_assigned():
     pass
     # TODO
+
+
+def delivery_actions(code):
+    return DeliveryAction.objects.get(code=code)
+
