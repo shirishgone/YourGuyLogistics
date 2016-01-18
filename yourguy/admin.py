@@ -1,16 +1,16 @@
 from django.contrib import admin
 
 # Register your models here.
-from models import Address, Area
-from models import OrderItem, Order, OrderDeliveryStatus
-from models import Product, ProductCategory
-from models import DeliveryGuy, DeliveryTeamLead, DGAttendance, Employee
-from models import Vendor, VendorAgent, Industry, VendorAccount, Consumer
-from models import ProofOfDelivery, Picture
-from models import TimeSlot
-from models import Location, ServiceableCity, ServiceablePincode
-from models import NotificationType, Notification
-from models import DeliveryAction, DeliveryTransaction
+from yourguy.models import Address, Area
+from yourguy.models import OrderItem, Order, OrderDeliveryStatus
+from yourguy.models import Product, ProductCategory
+from yourguy.models import DeliveryGuy, DeliveryTeamLead, DGAttendance, Employee
+from yourguy.models import Vendor, VendorAgent, Industry, VendorAccount, Consumer
+from yourguy.models import ProofOfDelivery, Picture
+from yourguy.models import TimeSlot
+from yourguy.models import Location, ServiceableCity, ServiceablePincode
+from yourguy.models import NotificationType, Notification
+from yourguy.models import DeliveryAction, DeliveryTransaction
 
 
 admin.site.register(TimeSlot)

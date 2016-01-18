@@ -151,9 +151,10 @@ class DeliveryGuy(YGUser):
     )
     transportation_mode = models.CharField(max_length = 50, choices = TRANSPORTATION_MODE_CHOICES, default = WALKER)
     is_teamlead = models.BooleanField(default = False)
+    is_active = models.BooleanField(default = False)
     
     def __unicode__(self):
-        return u"%s - %s" % (self.user.username, self.user.first_name)                
+        return u"%s - %s" % (self.user.first_name, self.user.username)                
 
 class DeliveryTeamLead(models.Model):
     delivery_guy = models.ForeignKey(DeliveryGuy, related_name='current_delivery_guy')
@@ -219,7 +220,7 @@ class VendorAgent(YGUser):
 class Employee(YGUser):
     
     # Mandatory Fields
-    employee_code = models.CharField(max_length = 20)
+    employee_code = models.CharField(max_length = 20, blank = True, null = True)
     
     SALES = 'sales'
     SALES_MANAGER = 'sales_manager'
@@ -237,11 +238,13 @@ class Employee(YGUser):
             (CALLER, 'caller'),
             (ADMIN, 'admin')
             )
-    department = models.CharField(max_length = 15, choices = DEPARTMENT_CHOICES, default = CALLER)
+    department = models.CharField(max_length = 50, choices = DEPARTMENT_CHOICES, default = CALLER)
     serving_pincodes = models.ManyToManyField(ServiceablePincode, blank = True)
     city = models.ForeignKey(ServiceableCity, blank = True, null = True)
+
+    associate_delivery_guys = models.ManyToManyField(DeliveryGuy, blank = True, related_name ='ops_associate_delivery_guys')
     def __unicode__(self):
-        return unicode(self.user.username)
+        return u"%s - %s" % (self.user.username, self.user.first_name)
 
 class Consumer(YGUser):
     # Optional Fields

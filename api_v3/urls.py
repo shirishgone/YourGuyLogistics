@@ -1,15 +1,16 @@
 from django.conf.urls import url, patterns
 from rest_framework.routers import DefaultRouter
 
-from api_v3 import mail, views, view_user, view_freshdesk, view_address, view_dashboard, report, cron_jobs, \
-    view_internals
+from api_v3 import mail, views, view_user, view_freshdesk, view_address, view_dashboard, report, cron_jobs, view_internals
 from api_v3.view_consumer import ConsumerViewSet
-#from api_v3.view_dg import DGViewSet
 from api_v3.view_order import OrderViewSet
 from api_v3.view_product import ProductViewSet
 from api_v3.view_vendor import VendorViewSet
 from api_v3.view_vendoragent import VendorAgentViewSet
+from api_v3.view_notifications import NotificationViewSet
+
 from api_v3 import view_dg
+from api_v3 import view_notifications
 
 urlpatterns = patterns(
     'api_v3.views',
@@ -51,6 +52,7 @@ router.register(r'deliveryguy', view_dg.DGViewSet)
 router.register(r'consumer', ConsumerViewSet)
 router.register(r'order', OrderViewSet, base_name='orders')
 router.register(r'product', ProductViewSet)
+router.register(r'notification', NotificationViewSet)
 
 urlpatterns += router.urls
 # urlpatterns = format_suffix_patterns(urlpatterns)

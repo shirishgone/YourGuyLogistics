@@ -1,2 +1,2 @@
 web: gunicorn server.wsgi --log-file -
-clock: python view_cron.py
+worker: celery -A yourguy worker -B

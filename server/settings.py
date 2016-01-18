@@ -29,6 +29,16 @@ SECRET_KEY = 'vtyju!_%klrjx-_y=@@1@v8p$4(jvr5#6t@nty#$yd8qfpdr(c'
 # ENVIRONMENT = PRODUCTION/ STAGE/ LOCAL
 ENVIRONMENT = 'STAGE'
 
+# Broker Settings for PRODUCTION/ STAGE/ LOCAL
+if ENVIRONMENT == 'LOCAL':
+    BROKER_URL = 'amqp://guest:guest@localhost/myvhost:5672//'
+elif ENVIRONMENT == 'STAGE':
+    BROKER_POOL_LIMIT = 1
+    BROKER_URL = os.environ.get('CLOUDAMQP_URL')
+else:
+    BROKER_POOL_LIMIT = 1
+    BROKER_URL = os.environ.get('CLOUDAMQP_URL')
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
