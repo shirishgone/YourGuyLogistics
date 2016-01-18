@@ -510,9 +510,11 @@ ygVendors.controller('homeCntrl', function ($state,$scope,$interval,StoreSession
   $scope.getUsername()
 
   $scope.getCount = function(){
-    notification.pendingNotificationCount().finally(function(){
-      var status = Errorhandler.getStatus();
-      $scope.count = status.data.count;
+    notification.pendingNotificationCount().then(function(response){
+      if($scope.count!== undefined && $scope.count != response.data.count){
+        $scope.$broadcast('notificationUpdated')
+      }
+      $scope.count = response.data.count;
     })
   };
 
@@ -2890,11 +2892,11 @@ ygVendors.controller('notificationCntrl', function ($scope,$state,$stateParams,$
   };
 
   $scope.getNotification();
+  $scope.$on('notificationUpdated',$scope.getNotification);
 
   $scope.makeAsRead = function(notice){
     notification.markAsRead(notice).finally(function(){
       var status = Errorhandler.getStatus();
-      console.log(status);
       if(status.has_error){
         alert("Error reading notification");
       }
@@ -2905,7 +2907,7 @@ ygVendors.controller('notificationCntrl', function ($scope,$state,$stateParams,$
         }
       }
     })
-  }  
+  }; 
 })
 
 
