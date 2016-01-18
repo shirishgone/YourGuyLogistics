@@ -606,15 +606,34 @@
 
 .order .reported {
 	position: absolute;
+	width: 50px;
+	height: 100%;
+	right: 0px;
+	bottom: 0px;
+	z-index: 9;
+	background-color: #FE5E64;
+	text-align: center;
+}
+
+.order .reported-small {
+	position: absolute;
 	height: 100%;
 	right: 0px;
 	bottom: 0px;
 	z-index: 9;
 }
 
+.order .reported-small img {
+	height: auto;
+	width: 50px; 
+}
+
 .order .reported img {
-	height: 100%;
-	width: 50px;
+	height: 25px;
+	width: 25px;
+	position: relative;
+	top: 50%;
+	margin-top: -13px;
 }
 
 .order .tooltip-inner{
@@ -647,6 +666,16 @@
 	}
 	.tab-hide {
 		display: none;
+	}
+	.wid-tab-13{
+		width: 13%;
+		float: left;
+		padding: 5px;
+	}
+	.wid-tab-52{
+		width: 52%;
+		float: left;
+		padding: 5px;
 	}
 }
 
@@ -1306,4 +1335,9 @@
 	#sidebar-default {
 		position: absolute;
 	}
+}
+
+
+.panel-danger.panel-default .panel-heading , .panel-danger.panel-default .panel-title{
+	background: #FE5E64;
 }
