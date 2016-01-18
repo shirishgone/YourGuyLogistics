@@ -36,6 +36,17 @@ from api.push import send_push
 from django.db.models import Prefetch
 import string
 
+def send_reported_email(user, email_orders, reported_reason):
+    subject = '%s Reported Issue'% (user.first_name)
+    
+    body = 'Hello,\n\n%s has reported an issue about the following orders. \n\nIssue: %s\n'% (user.first_name, reported_reason)
+    for email_order in email_orders:
+        string = '\nOrder no: %s | Client Name: %s | Customer Name: %s'% (email_order['order_id'], email_order['vendor'], email_order['customer_name'])
+        body = body + string
+    
+    body = body + '\n\nThanks \n-YourGuy BOT'
+    send_email(constants.EMAIL_REPORTED_ORDERS, subject, body)
+
 def send_cod_discrepency_email(delivery_status, user):
     try:
         if float(delivery_status.order.cod_amount) > 0.0 and delivery_status.cod_collected_amount is not None and (float(delivery_status.cod_collected_amount) < float(delivery_status.order.cod_amount) or float(delivery_status.cod_collected_amount) > float(delivery_status.order.cod_amount) ):
@@ -1370,18 +1381,26 @@ class OrderViewSet(viewsets.ViewSet):
                 }
                 email_orders.append(order_detail)
             
-            # SEND AN EMAIL TO OPERATIONS ---------------------------------------------
-            delivery_guy = get_object_or_404(DeliveryGuy, user = request.user)
-            subject = '%s Reported Issue'% (delivery_guy.user.first_name)
-            
-            body = 'Hello,\n\n%s has reported an issue about the following orders. \n\nIssue: %s\n'% (delivery_guy.user.first_name, reported_reason)
-            for email_order in email_orders:
-                string = '\nOrder no: %s | Client Name: %s | Customer Name: %s'% (email_order['order_id'], email_order['vendor'], email_order['customer_name'])
-                body = body + string
-            
-            body = body + '\n\nThanks \n-YourGuy BOT'
-            send_email(constants.EMAIL_REPORTED_ORDERS, subject, body)
-            # --------------------------------------------------------------------------
+            # INFORM OPERATIONS IF THERE IS ANY COD DISCREPENCIES -------------------
+            try:
+                import pdb
+                pdb.set_trace()
+
+                delivery_guy = get_object_or_404(DeliveryGuy, user = request.user)
+                ops_managers = ops_manager_for_dg(delivery_guy)
+                if ops_managers.count() == 0:
+                    send_reported_email(delivery_guy.user, email_orders, reported_reason)
+                else:
+                    delivery_ids = ','.join(str(v) for v in order_ids)
+                    notification_message = constants.NOTIFICATION_MESSAGE_REPORTED%(request.user.first_name, reported_reason, delivery_ids)
+                    notification_type = notification_type_for_code(constants.NOTIFICATION_CODE_REPORTED)
+                    new_notification = Notification.objects.create(notification_type = notification_type, message = notification_message, delivery_id = delivery_ids)
+                    for ops_manager in ops_managers:
+                        ops_manager.notifications.add(new_notification)
+                        ops_manager.save()
+            except Exception, e:
+                send_reported_email(delivery_guy.user, email_orders, reported_reason)
+            # -----------------------------------------------------------------------       
             
             content = {
             'data':'Successfully reported'
