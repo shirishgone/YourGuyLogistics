@@ -13,7 +13,19 @@ from rest_framework.authtoken.models import Token
 
 from api_v3 import constants
 from server import settings
-from yourguy.models import Order, OrderDeliveryStatus, VendorAgent, Consumer
+from yourguy.models import Order, OrderDeliveryStatus, VendorAgent, Consumer, Employee, NotificationType, ServiceablePincode
+
+def ops_managers_for_pincode(pincode):
+    serving_pincode = get_object_or_404(ServiceablePincode, pincode = pincode)
+    employees = Employee.objects.filter(serving_pincodes__in = [serving_pincode])
+    return employees
+
+def ops_manager_for_dg(dg):
+    employees = Employee.objects.filter(associate_delivery_guys__in = [dg])
+    return employees
+
+def notification_type_for_code(code):
+    return get_object_or_404(NotificationType, code = code)
 
 
 def s3_connection():
