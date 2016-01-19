@@ -215,7 +215,7 @@ ygVendors.config(function ($stateProvider, $urlRouterProvider, $httpProvider,cfp
     }
   })
   .state('home.order_details', {
-    url: "/order/:orderId&:dateId",
+    url: "/order/:orderId?dateId",
     templateUrl: "/static/webapp/partials/order_details.html",
     controller: "orderDetailsCntrl",
     data :{
@@ -334,6 +334,15 @@ ygVendors.config(function ($stateProvider, $urlRouterProvider, $httpProvider,cfp
       requireLogin:true
     }
   })
+  .state('home.notification', {
+    url: "/notification?page",
+    reloadOnSearch : false,
+    templateUrl: "/static/webapp/partials/notification.html",
+    controller: "notificationCntrl",
+    data :{
+      requireLogin:true
+    }
+  })
 })
 
 ygVendors.controller('loginCntrl',function ($scope,$http,AuthService,StoreSession,$location,$base64){
@@ -409,7 +418,7 @@ ygVendors.controller('signupCntrl',function ($scope,$http,$state,AuthService,Cod
   }
 })
 
-ygVendors.controller('homeCntrl', function ($state,$scope,StoreSession,$q,$modal,GetJsonData,DG,Vendors,Codes,baseURl,Errorhandler){
+ygVendors.controller('homeCntrl', function ($state,$scope,$interval,StoreSession,$q,$modal,GetJsonData,baseURl,Errorhandler,notification){
   Date.prototype.addHours= function(h){
     this.setHours(this.getHours()+h);
     this.setMinutes(0)
@@ -499,6 +508,19 @@ ygVendors.controller('homeCntrl', function ($state,$scope,StoreSession,$q,$modal
     } 
   }
   $scope.getUsername()
+
+  $scope.getCount = function(){
+    notification.pendingNotificationCount().then(function(response){
+      if($scope.count!== undefined && $scope.count != response.data.count){
+        $scope.$broadcast('notificationUpdated')
+      }
+      $scope.count = response.data.count;
+    })
+  };
+
+  $scope.getCount();
+
+  $interval($scope.getCount , 120000)
 })
 
 ygVendors.controller('newOrderCntrl',function ($scope,$stateParams,$state,$location,$modal,cfpLoadingBar,Orders,baseURl,Errorhandler,$timeout){
@@ -2851,6 +2873,41 @@ ygVendors.controller('tutorialCntrl',function ($scope,$stateParams){
   for (var i=0; i<5; i++) {
     $scope.addSlide();
   }
+})
+
+ygVendors.controller('notificationCntrl', function ($scope,$state,$stateParams,$location,notification,baseURl,Errorhandler,cfpLoadingBar){
+  $scope.itemsByPage = baseURl.ItemByPage
+  $scope.params = $stateParams;
+  $scope.params.page = (!isNaN($stateParams.page))? parseInt($stateParams.page): 1;
+  $scope.getNotification = function(){
+    $location.search($scope.params);
+    $scope.total_notifications = false;
+    cfpLoadingBar.start();
+    notification.getNotification($scope.params).finally(function(){
+      cfpLoadingBar.complete();
+      var status = Errorhandler.getStatus();
+      $scope.notification_list = status.data.data;
+      $scope.total_notifications = status.data.total_notifications;
+    });
+  };
+
+  $scope.getNotification();
+  $scope.$on('notificationUpdated',$scope.getNotification);
+
+  $scope.makeAsRead = function(notice){
+    notification.markAsRead(notice).finally(function(){
+      var status = Errorhandler.getStatus();
+      if(status.has_error){
+        alert("Error reading notification");
+      }
+      else{
+        $scope.getCount();
+        if(notice.delivery_id){
+          $state.go('home.order_details',{orderId:notice.delivery_id});
+        }
+      }
+    })
+  }; 
 })
 
 
