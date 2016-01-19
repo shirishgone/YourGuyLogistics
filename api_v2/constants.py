@@ -23,7 +23,7 @@ if settings.ENVIRONMENT == 'PRODUCTION':
 	OPS_EMAIL_IDS = ['tech@yourguy.in','alay@yourguy.in', 'rakesh@yourguy.in', 'santosh@yourguy.in', 'sameet@yourguy.in']
 	EMAIL_IDS_EVERYBODY = ['tech@yourguy.in', 'alay@yourguy.in', 'sameet@yourguy.in', 'winston@yourguy.in', 'rakesh@yourguy.in', 'santosh@yourguy.in', 'vinit@yourguy.in', 'aquid@yourguy.in', 'saurabh@yourguy.in', 'smit@yourguy.in', 'kenneth@yourguy.in', 'bhawna.yourguy@gmail.com', 'sonali.a@yourguy.in', 'bernard.d@yourguy.in', 'sandesh.b@yourguy.in']
 	RETAIL_EMAIL_ID = ['retail@yourguy.in']
-	LATEST_DG_APP_VERSION = '1.0.21'
+	LATEST_DG_APP_VERSION = '1.0.22'
 else:
 	EMAIL_UNASSIGNED_ORDERS = TEST_GROUP_EMAILS
 	EMAIL_DAILY_REPORT = TEST_GROUP_EMAILS
@@ -35,7 +35,7 @@ else:
 	OPS_EMAIL_IDS = TEST_GROUP_EMAILS
 	EMAIL_IDS_EVERYBODY = TEST_GROUP_EMAILS
 	RETAIL_EMAIL_ID = TEST_GROUP_EMAILS
-	LATEST_DG_APP_VERSION = '1.0.21'
+	LATEST_DG_APP_VERSION = '1.0.22'
 
 GCM_PUSH_API_KEY = 'AIzaSyCmXulcUBViokrkYZ9Z9bWJgEWgXyeNh1U'
 GCM_SENDER_ID = '559449819463'
@@ -90,4 +90,19 @@ DG_STATUS_UNKNOWN = 'UNKNOWN'
 DG_STATUS_AVAILABLE = 'AVAILABLE'
 DG_STATUS_UN_AVAILABLE = 'UN_AVAILABLE'
 DG_STATUS_BUSY = 'BUSY'
+# ---------------------------------------
+
+# NOTIFICATION CODES --------------------
+NOTIFICATION_CODE_NOT_CHECKED_IN 	= 'yg_nt_01'
+NOTIFICATION_CODE_LATE_PICKED_UP 	= 'yg_nt_02'
+NOTIFICATION_CODE_LATE_DELIVERY 	= 'yg_nt_03'
+NOTIFICATION_CODE_UNASSIGNED 		= 'yg_nt_04'
+NOTIFICATION_CODE_REPORTED 			= 'yg_nt_05'
+NOTIFICATION_CODE_PICKUP_ATTEMPTED 	= 'yg_nt_06'
+NOTIFICATION_CODE_COD_DISPRENCY 	= 'yg_nt_07'
+# ---------------------------------------
+
+# NOTIFICATION MESSAGES -----------------
+NOTIFICATION_MESSAGE_COD_DISCREPENCY = 'Delivery boy %s, has collected different COD amount %s / %s for the order no %s. Please contact the delivery boy immediately.'
+NOTIFICATION_MESSAGE_REPORTED = 'Delivery boy %s, has reported an issue "%s" , for the orders : %s. Please contact the delivery boy immediately.'
 # ---------------------------------------
