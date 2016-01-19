@@ -982,16 +982,18 @@ class OrderViewSet(viewsets.ViewSet):
             # message = constants.ORDER_CANCELLED_MESSAGE_CLIENT.format(delivery_status.order.consumer.user.first_name, order.id)
             # send_sms(order.vendor.phone_number, message)
 
-            delivery_transaction = DeliveryTransaction.objects.create(action=delivery_actions(constants.CANCELLED_CODE),
-                                                                      by_user=request.user, time_stamp=timestamp)
-            if latitude is not None and longitude is not None:
-                cancelled_location = Location.objects.create(latitude=latitude, longitude=longitude)
-
-                if cancelled_location is not None:
+            action = delivery_actions(constants.CANCELLED_CODE)
+            if action is not None:
+                delivery_transaction = DeliveryTransaction.objects.create(action=action, by_user=request.user,
+                                                                          time_stamp=timestamp)
+                if latitude is not None and longitude is not None:
+                    cancelled_location = Location.objects.create(latitude=latitude, longitude=longitude)
                     delivery_transaction.location = cancelled_location
 
-            if cancelled_remarks is not None:
-                delivery_transaction.remarks = cancelled_remarks
+                if cancelled_remarks is not None:
+                    delivery_transaction.remarks = cancelled_remarks
+
+                delivery_transaction.save()
             content = {
                 'description': 'Order has been canceled'
             }
@@ -1047,17 +1049,18 @@ class OrderViewSet(viewsets.ViewSet):
             body = body + '\n\nThanks \n-YourGuy BOT'
             send_email(constants.EMAIL_REPORTED_ORDERS, subject, body)
             # --------------------------------------------------------------------------
-            delivery_transaction = DeliveryTransaction.objects.create(action=delivery_actions(constants.REPORTED_CODE),
-                                                                  by_user=request.user, time_stamp=timestamp)
-            if latitude is not None and longitude is not None:
-                reported_location = Location.objects.create(latitude=latitude, longitude=longitude)
-
-                if reported_location is not None:
+            action = delivery_actions(constants.REPORTED_CODE)
+            if action is not None:
+                delivery_transaction = DeliveryTransaction.objects.create(action=action, by_user=request.user,
+                                                                          time_stamp=timestamp)
+                if latitude is not None and longitude is not None:
+                    reported_location = Location.objects.create(latitude=latitude, longitude=longitude)
                     delivery_transaction.location = reported_location
 
-            if reported_reason is not None:
-                delivery_transaction.remarks = reported_reason
+                if reported_reason is not None:
+                    delivery_transaction.remarks = reported_reason
 
+                delivery_transaction.save()
             content = {
                 'data': 'Successfully reported'
             }
@@ -1105,16 +1108,18 @@ class OrderViewSet(viewsets.ViewSet):
 
                 if can_updated_order(delivery_status, constants.ORDER_STATUS_PICKUP_ATTEMPTED):
                     update_delivery_status_pickup_attempted(delivery_status, delivery_remarks, pickedup_datetime)
-                    delivery_transaction = DeliveryTransaction.objects.create(action=delivery_actions(constants.PICKUP_ATTEMPTED_CODE),
-                                                                  by_user=request.user, time_stamp=pickedup_datetime)
-                    if latitude is not None and longitude is not None:
-                        pickup_attempted_location = Location.objects.create(latitude=latitude, longitude=longitude)
-
-                        if pickup_attempted_location is not None:
+                    action = delivery_actions(constants.PICKUP_ATTEMPTED_CODE)
+                    if action is not None:
+                        delivery_transaction = DeliveryTransaction.objects.create(action=action, by_user=request.user,
+                                                                                  time_stamp=pickedup_datetime)
+                        if latitude is not None and longitude is not None:
+                            pickup_attempted_location = Location.objects.create(latitude=latitude, longitude=longitude)
                             delivery_transaction.location = pickup_attempted_location
 
-                    if delivery_remarks is not None:
-                        delivery_transaction.remarks = delivery_remarks
+                        if delivery_remarks is not None:
+                            delivery_transaction.remarks = delivery_remarks
+
+                        delivery_transaction.save()
                 else:
                     content = {
                         'error': "Order already processed cant attempt the pickup now"
@@ -1187,17 +1192,18 @@ class OrderViewSet(viewsets.ViewSet):
                         new_pop = create_proof(pop_dict)
                     # ----------------------------------------------------------------------------
                     update_delivery_status_pickedup(delivery_status, pickedup_datetime, new_pop, delivery_remarks)
-
-                    delivery_transaction = DeliveryTransaction.objects.create(action=delivery_actions(constants.PICKEDUP_CODE),
-                                                                  by_user=request.user, time_stamp=pickedup_datetime)
-                    if latitude is not None and longitude is not None:
-                        pickedup_location = Location.objects.create(latitude=latitude, longitude=longitude)
-
-                        if pickedup_location is not None:
+                    action = delivery_actions(constants.PICKEDUP_CODE)
+                    if action is not None:
+                        delivery_transaction = DeliveryTransaction.objects.create(action=action, by_user=request.user,
+                                                                                  time_stamp=pickedup_datetime)
+                        if latitude is not None and longitude is not None:
+                            pickedup_location = Location.objects.create(latitude=latitude, longitude=longitude)
                             delivery_transaction.location = pickedup_location
 
-                    if delivery_remarks is not None:
-                        delivery_transaction.remarks = delivery_remarks
+                        if delivery_remarks is not None:
+                            delivery_transaction.remarks = delivery_remarks
+
+                        delivery_transaction.save()
                 else:
                     content = {
                         'error': "Can\'t update as the order is not queued"
@@ -1258,16 +1264,18 @@ class OrderViewSet(viewsets.ViewSet):
         if can_updated_order(delivery_status, constants.ORDER_STATUS_INTRANSIT):
             if pickup_attempted is not None and pickup_attempted == True:
                 update_delivery_status_pickup_attempted(delivery_status, delivery_remarks, pickedup_datetime)
-                delivery_transaction = DeliveryTransaction.objects.create(action=delivery_actions(constants.PICKUP_ATTEMPTED_CODE),
-                                                                  by_user=request.user, time_stamp=pickedup_datetime)
-                if latitude is not None and longitude is not None:
-                    pickup_attempted_location = Location.objects.create(latitude=latitude, longitude=longitude)
-
-                    if pickup_attempted_location is not None:
+                action = delivery_actions(constants.PICKUP_ATTEMPTED_CODE)
+                if action is not None:
+                    delivery_transaction = DeliveryTransaction.objects.create(action=action, by_user=request.user,
+                                                                              time_stamp=pickedup_datetime)
+                    if latitude is not None and longitude is not None:
+                        pickup_attempted_location = Location.objects.create(latitude=latitude, longitude=longitude)
                         delivery_transaction.location = pickup_attempted_location
 
-                if delivery_remarks is not None:
-                    delivery_transaction.remarks = delivery_remarks
+                    if delivery_remarks is not None:
+                        delivery_transaction.remarks = delivery_remarks
+
+                    delivery_transaction.save()
                 is_order_updated = True
                 is_order_picked_up = False
             else:
@@ -1277,18 +1285,18 @@ class OrderViewSet(viewsets.ViewSet):
                     new_pop = create_proof(pop_dict)
                 # ----------------------------------------------------------------------------
                 update_delivery_status_pickedup(delivery_status, pickedup_datetime, new_pop, delivery_remarks)
-
-                delivery_transaction = DeliveryTransaction.objects.create(action=delivery_actions(constants.PICKEDUP_CODE),
-                                                                  by_user=request.user, time_stamp=pickedup_datetime)
-                if latitude is not None and longitude is not None:
-                    pickedup_location = Location.objects.create(latitude=latitude, longitude=longitude)
-
-                    if pickedup_location is not None:
+                action = delivery_actions(constants.PICKEDUP_CODE)
+                if action is not None:
+                    delivery_transaction = DeliveryTransaction.objects.create(action=action, by_user=request.user,
+                                                                              time_stamp=pickedup_datetime)
+                    if latitude is not None and longitude is not None:
+                        pickedup_location = Location.objects.create(latitude=latitude, longitude=longitude)
                         delivery_transaction.location = pickedup_location
 
-                if delivery_remarks is not None:
-                    delivery_transaction.remarks = delivery_remarks
+                    if delivery_remarks is not None:
+                        delivery_transaction.remarks = delivery_remarks
 
+                    delivery_transaction.save()
                 is_order_updated = True
                 is_order_picked_up = True
         else:
@@ -1380,30 +1388,33 @@ class OrderViewSet(viewsets.ViewSet):
                 # ----------------------------------------------------------------
                 if order_status == constants.ORDER_STATUS_DELIVERY_ATTEMPTED:
                     update_delivery_status_delivery_attempted(delivery_status, delivery_remarks, delivered_datetime)
-
-                    delivery_transaction = DeliveryTransaction.objects.create(action=delivery_actions(constants.DELIVERY_ATTEMPTED_CODE),
-                                                                  by_user=request.user, time_stamp=timestamp)
-                    if latitude is not None and longitude is not None:
-                        delivery_attempted_location = Location.objects.create(latitude=latitude, longitude=longitude)
-
-                        if delivery_attempted_location is not None:
+                    action = delivery_actions(constants.DELIVERY_ATTEMPTED_CODE)
+                    if action is not None:
+                        delivery_transaction = DeliveryTransaction.objects.create(action=action, by_user=request.user,
+                                                                                  time_stamp=timestamp)
+                        if latitude is not None and longitude is not None:
+                            delivery_attempted_location = Location.objects.create(latitude=latitude, longitude=longitude)
                             delivery_transaction.location = delivery_attempted_location
 
-                    if delivery_remarks is not None:
-                        delivery_transaction.remarks = delivery_remarks
+                        if delivery_remarks is not None:
+                            delivery_transaction.remarks = delivery_remarks
+
+                        delivery_transaction.save()
                 else:
                     update_delivery_status_delivered(delivery_status, delivered_at, delivered_datetime,
                                                      is_cod_collected, new_pod, delivery_remarks, cod_collected_amount)
-                    delivery_transaction = DeliveryTransaction.objects.create(action=delivery_actions(constants.DELIVERED_CODE),
-                                                                  by_user=request.user, time_stamp=timestamp)
-                    if latitude is not None and longitude is not None:
-                        delivered_location = Location.objects.create(latitude=latitude, longitude=longitude)
-
-                        if delivered_location is not None:
+                    action = delivery_actions(constants.DELIVERED_CODE)
+                    if action is not None:
+                        delivery_transaction = DeliveryTransaction.objects.create(action=action, by_user=request.user,
+                                                                                  time_stamp=timestamp)
+                        if latitude is not None and longitude is not None:
+                            delivered_location = Location.objects.create(latitude=latitude, longitude=longitude)
                             delivery_transaction.location = delivered_location
 
-                    if delivery_remarks is not None:
-                        delivery_transaction.remarks = delivery_remarks
+                        if delivery_remarks is not None:
+                            delivery_transaction.remarks = delivery_remarks
+
+                        delivery_transaction.save()
                 is_order_updated = True
             except Exception as e:
                 log_exception(e, 'order_delivered')

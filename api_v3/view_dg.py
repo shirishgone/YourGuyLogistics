@@ -278,9 +278,7 @@ class DGViewSet(viewsets.ModelViewSet):
 
             if latitude is not None and longitude is not None:
                 checkout_location = Location.objects.create(latitude=latitude, longitude=longitude)
-                attendance = DGAttendance.objects.filter(dg=dg, date__year=today_now.year, date__month=today_now.month,
-                                                         date__day=today_now.day).latest('date')
-                attendance.checkin_location = checkout_location
+                attendance.checkout_location = checkout_location
 
             content = {
                 'description': 'Thanks for checking out.'
