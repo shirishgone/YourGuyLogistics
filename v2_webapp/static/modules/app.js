@@ -12,6 +12,7 @@
 		'login',
 		'home',
 		'order',
+		'deliveryguy',
 		'forbidden'
 	])
 	.config([

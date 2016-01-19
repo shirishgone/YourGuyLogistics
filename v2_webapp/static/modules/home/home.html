@@ -9,82 +9,82 @@
 	<md-content flex>
 		<md-list>
 			<md-subheader>GENERAL</md-subheader>
-			<a class="tab-liks" href="">
-				<md-list-item md-ink-ripple class="md-1-line">
+			<md-list-item md-ink-ripple class="md-1-line" ui-sref-active="active">
+				<a flex ui-sref="home.opsorder" class="tab-liks"  layout="row">
 					<img ng-src="/static/assets/images/cart.png" class="md-avatar" alt="{{item.who}}" />
 					<h1 class="md-subhead">Orders</h1>
-				</md-list-item>
+				</a>
 				<md-divider ></md-divider>
-			</a>
-			<a class="tab-liks" href="" ng-if="home.vendor" >
-				<md-list-item md-ink-ripple class="md-1-line md-whiteframe-2dp">
+			</md-list-item>
+			<md-list-item md-ink-ripple class="md-1-line" ng-if="home.vendor" ui-sref-active="active">
+				<a flex class="tab-liks"  layout="row">
 					<img ng-src="/static/assets/images/contacts.png" class="md-avatar" alt="{{item.who}}" />
 					<h1 class="md-subhead">Customers</h1>
-				</md-list-item>
+				</a>
 				<md-divider ></md-divider>
-			</a>
-			<a class="tab-liks" href="" ng-if="home.vendor">
-				<md-list-item md-ink-ripple class="md-1-line" >
+			</md-list-item>
+			<md-list-item md-ink-ripple class="md-1-line" ng-if="home.vendor" ui-sref-active="active">
+				<a flex class="tab-liks"  layout="row">
 					<img ng-src="/static/assets/images/present.png" class="md-avatar" alt="{{item.who}}" />
 					<h1 class="md-subhead">Products</h1>
-				</md-list-item>
+				</a>
 				<md-divider ></md-divider>
-			</a>
-			<a class="tab-liks" href="" ng-if="home.admin">
-				<md-list-item md-ink-ripple class="active md-1-line">
+			</md-list-item>
+			<md-list-item md-ink-ripple class="md-1-line" ui-sref-active="active" ng-if="home.admin">
+				<a flex ui-sref="home.dgList" class="tab-liks" layout="row" >
 					<img ng-src="/static/assets/images/biker.png" class="md-avatar" alt="{{item.who}}" />
 					<h1 class="md-subhead">Delivery Guy</h1>
-				</md-list-item>
+				</a>
 				<md-divider ></md-divider>
-			</a>
-			<a class="tab-liks" href="" ng-if="home.admin">
-				<md-list-item md-ink-ripple class="md-1-line">
+			</md-list-item>
+			<md-list-item md-ink-ripple class="md-1-line" ui-sref-active="active" ng-if="home.admin">
+				<a flex class="tab-liks" layout="row" >
 					<img ng-src="/static/assets/images/briefcase.png" class="md-avatar" alt="{{item.who}}" />
 					<h1 class="md-subhead">Vendors</h1>
-				</md-list-item>
+				</a>
 				<md-divider ></md-divider>
-			</a>
-			<a class="tab-liks" href="">
-				<md-list-item md-ink-ripple class="md-1-line">
+			</md-list-item>
+			<md-list-item md-ink-ripple class="md-1-line" ui-sref-active="active">
+				<a flex class="tab-liks"  layout="row">
 					<img ng-src="/static/assets/images/pie-chart.png" class="md-avatar" alt="{{item.who}}" />
 					<h1 class="md-subhead">Reports</h1>
-				</md-list-item>
+				</a>
 				<md-divider ></md-divider>
-			</a>
+			</md-list-item>
 		</md-list>
 		<md-list>
 			<md-subheader>HELP</md-subheader>
-			<a class="tab-liks" href="">
-				<md-list-item md-ink-ripple class="md-1-line">
+			<md-list-item md-ink-ripple class="md-1-line" ui-sref-active="active">
+				<a flex class="tab-liks"  layout="row">
 					<img ng-src="/static/assets/images/phone.png" class="md-avatar" alt="{{item.who}}" />
 					<h1 class="md-subhead">Feedback</h1>
-				</md-list-item>
+				</a>
 				<md-divider ></md-divider>
-			</a>
-			<a class="tab-liks" href="">
-				<md-list-item md-ink-ripple class="md-1-line">
+			</md-list-item>
+			<md-list-item md-ink-ripple class="md-1-line" ui-sref-active="active">
+				<a flex class="tab-liks"  layout="row">
 					<img ng-src="/static/assets/images/magnifyingglass.png" class="md-avatar" alt="{{item.who}}" />
 					<h1 class="md-subhead">Tutorial</h1>
-				</md-list-item>
+				</a>
 				<md-divider ></md-divider>
-			</a>
+			</md-list-item>
 		</md-list>
 		<md-list>
 			<md-subheader>ACCOUNT</md-subheader>
-			<a class="tab-liks" href="" ng-if="home.vendor">
-				<md-list-item md-ink-ripple class="md-1-line">
+			<md-list-item md-ink-ripple class="md-1-line" ui-sref-active="active" ng-if="home.vendor">
+				<a flex class="tab-liks"  layout="row">
 					<img ng-src="/static/assets/images/settings.png" class="md-avatar" alt="{{item.who}}" />
 					<h1 class="md-subhead">Settings</h1>
-				</md-list-item>
+				</a>
 				<md-divider ></md-divider>
-			</a>
-			<a class="tab-liks" id="logout-button" href="" ng-click="home.showLogoutDialog($event)">
-				<md-list-item md-ink-ripple class="md-1-line">
+			</md-list-item>
+			<md-list-item md-ink-ripple id="logout-button" class="md-1-line">
+				<a flex class="tab-liks" layout="row"  ng-click="home.showLogoutDialog($event)">
 					<img ng-src="/static/assets/images/unlocked.png" class="md-avatar" alt="{{item.who}}" />
 					<h1 class="md-subhead">Logout</h1>
-				</md-list-item>
+				</a>
 				<md-divider ></md-divider>
-			</a>
+			</md-list-item>
 		</md-list>
 	</md-content>
 </md-sidenav>
