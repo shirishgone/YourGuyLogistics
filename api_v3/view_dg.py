@@ -241,6 +241,7 @@ class DGViewSet(viewsets.ModelViewSet):
         if latitude is not None and longitude is not None:
             checkin_location = Location.objects.create(latitude=latitude, longitude=longitude)
             attendance.checkin_location = checkin_location
+            attendance.save()
 
         if is_today_checkedIn is True:
             content = {
@@ -279,6 +280,7 @@ class DGViewSet(viewsets.ModelViewSet):
             if latitude is not None and longitude is not None:
                 checkout_location = Location.objects.create(latitude=latitude, longitude=longitude)
                 attendance.checkout_location = checkout_location
+                attendance.save()
 
             content = {
                 'description': 'Thanks for checking out.'
