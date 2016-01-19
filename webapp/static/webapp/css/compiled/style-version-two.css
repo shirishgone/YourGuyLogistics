@@ -1326,6 +1326,7 @@
 
 @media (max-width: 767px){
 	#sidebar-default {
+		overflow: auto;
 		position: absolute;
 	}
 }
@@ -1333,6 +1334,7 @@
 
 @media (max-width: 991px){
 	#sidebar-default {
+		overflow: visible;
 		position: absolute;
 	}
 }
