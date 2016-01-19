@@ -3010,7 +3010,7 @@ body {
   border-right: 1px solid #3C434D;
   left: 0;
   top: 0;
-  position: fixed;
+  position: absolute;
   width: 230px;
   z-index: 999;
   -webkit-transition: all 0.2s linear;
