@@ -105,4 +105,5 @@ NOTIFICATION_CODE_COD_DISPRENCY 	= 'yg_nt_07'
 # NOTIFICATION MESSAGES -----------------
 NOTIFICATION_MESSAGE_COD_DISCREPENCY = 'Delivery boy %s, has collected different COD amount %s / %s for the order no %s. Please contact the delivery boy immediately.'
 NOTIFICATION_MESSAGE_REPORTED = 'Delivery boy %s, has reported an issue "%s" , for the orders : %s. Please contact the delivery boy immediately.'
+NOTIFICATION_MESSAGE_ORDER_PICKEUP_WITHOUT_DELIVERYGUY_ASSIGNED = 'Dear %s, order no %s has been picked up by %s and still a delivery boy is not been assigned. Pickup boy can\'t deliver with out delivery guy. Please assign immediately'
 # ---------------------------------------
