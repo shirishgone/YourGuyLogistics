@@ -7,6 +7,16 @@ from yourguy.models import Order, Address, Consumer, OrderDeliveryStatus
 import json
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
+from yourguy.models import NotificationType
+from django.shortcuts import get_object_or_404
+from yourguy.models import Employee
+
+def ops_manager_for_dg(dg):
+	employees = Employee.objects.filter(associate_delivery_guys__in = [dg])
+	return employees
+
+def notification_type_for_code(code):
+	return get_object_or_404(NotificationType, code = code)
 
 def is_correct_pincode(pincode):
 	if pincode.isdigit() and len(pincode) == 6:
