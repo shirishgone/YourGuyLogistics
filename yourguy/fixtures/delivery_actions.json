@@ -3,49 +3,48 @@
     "model": "yourguy.DeliveryAction",
     "pk": 1,
     "fields": {
-        "title": "PickedUp"
+      "code": "yg_da_01",
+      "title": "PickedUp"
     }
   },
   {
     "model": "yourguy.DeliveryAction",
     "pk": 2,
     "fields": {
-        "title": "Delivered"
+      "code": "yg_da_02",
+      "title": "Delivered"
     }
   },
   {
     "model": "yourguy.DeliveryAction",
     "pk": 3,
     "fields": {
-        "title": "Reported"
+      "code": "yg_da_03",
+      "title": "Reported"
     }
   },
   {
     "model": "yourguy.DeliveryAction",
     "pk": 4,
     "fields": {
-        "title": "Resolved"
+      "code": "yg_da_04",
+      "title": "PickupAttempted"
     }
   },
   {
     "model": "yourguy.DeliveryAction",
     "pk": 5,
     "fields": {
-        "title": "PickupAttempted"
+      "code": "yg_da_05",
+      "title": "DeliveryAttempted"
     }
   },
   {
     "model": "yourguy.DeliveryAction",
     "pk": 6,
     "fields": {
-        "title": "DeveliveryAttempted"
-    }
-  },
-  {
-    "model": "yourguy.DeliveryAction",
-    "pk": 7,
-    "fields": {
-        "title": "Cancelled"
+      "code": "yg_da_06",
+      "title": "Cancelled"
     }
   }
 ]
