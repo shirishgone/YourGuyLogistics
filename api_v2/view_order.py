@@ -1701,27 +1701,31 @@ class OrderViewSet(viewsets.ViewSet):
             }
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
         # -----------------------------------------------------------------------        
-        
+
         # INFORM OPERATIONS IF THERE IS ANY COD DISCREPENCIES -------------------
-        try:
-            delivery_guy = get_object_or_404(DeliveryGuy, user = request.user)
-            ops_managers = ops_manager_for_dg(delivery_guy)
-            if ops_managers.count() == 0:
+        import pdb
+        pdb.set_trace()
+        
+        if is_order_updated is True and float(delivery_status.order.cod_amount) > 0.0 and cod_collected_amount is not None and (float(cod_collected_amount) < float(delivery_status.order.cod_amount) or float(cod_collected_amount) > float(delivery_status.order.cod_amount) ):
+            try:
+                delivery_guy = get_object_or_404(DeliveryGuy, user = request.user)
+                ops_managers = ops_manager_for_dg(delivery_guy)
+                if ops_managers.count() == 0:
+                    send_cod_discrepency_email(delivery_status, request.user)
+                else:
+                    notification_type = notification_type_for_code(constants.NOTIFICATION_CODE_COD_DISPRENCY)
+                    notification_message = constants.NOTIFICATION_MESSAGE_COD_DISCREPENCY%(request.user.first_name, delivery_status.cod_collected_amount, delivery_status.order.cod_amount, delivery_status.id)
+                    new_notification = Notification.objects.create(notification_type = notification_type, 
+                        delivery_id = pk, 
+                        message = notification_message)
+                    for ops_manager in ops_managers:
+                        ops_manager.notifications.add(new_notification)
+                        ops_manager.save()
+
+            except Exception as e:
                 send_cod_discrepency_email(delivery_status, request.user)
-            else:
-                notification_type = notification_type_for_code(constants.NOTIFICATION_CODE_COD_DISPRENCY)
-                notification_message = constants.NOTIFICATION_MESSAGE_COD_DISCREPENCY%(request.user.first_name, delivery_status.cod_collected_amount, delivery_status.order.cod_amount, delivery_status.id)
-                new_notification = Notification.objects.create(notification_type = notification_type, 
-                    delivery_id = pk, 
-                    message = notification_message)
-                for ops_manager in ops_managers:
-                    ops_manager.notifications.add(new_notification)
-                    ops_manager.save()
-
-        except Exception, e:
-            send_cod_discrepency_email(delivery_status, request.user)
         # -----------------------------------------------------------------------       
-
+        
         # Final Response ---------------------------------------------------------
         if is_order_updated:            
             # CONFIRMATION MESSAGE TO CUSTOMER --------------------------------------
