@@ -1,5 +1,6 @@
 from datetime import datetime
 
+import pytz
 from django.db.models import Q
 from django.db.models.functions import Lower
 from django.shortcuts import get_object_or_404
@@ -14,18 +15,21 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from api_v3 import constants
-from api_v3.utils import paginate, user_role
-from yourguy.models import DeliveryGuy, DGAttendance, Location
+from api_v3.utils import paginate, user_role, ist_day_start, ist_day_end
+from yourguy.models import DeliveryGuy, DGAttendance, Location, OrderDeliveryStatus
 
 
-def dg_list_dict(delivery_guy, attendance):
+def dg_list_dict(delivery_guy, attendance, no_of_assigned_orders, no_of_executed_orders, worked_hours):
     dg_list_dict = {
         'id': delivery_guy.id,
-        'name': delivery_guy.user.first_name,
+        'name': delivery_guy.user.first_name + delivery_guy.user.last_name,
         'phone_number': delivery_guy.user.username,
         'app_version': delivery_guy.app_version,
         'status': delivery_guy.status,
-        'employee_code': delivery_guy.employee_code
+        'employee_code': delivery_guy.employee_code,
+        'no_of_assigned_orders': no_of_assigned_orders,
+        'no_of_executed_orders': no_of_executed_orders,
+        'worked_hours': worked_hours
     }
     if attendance is not None:
         dg_list_dict['check_in'] = attendance.login_time
@@ -73,6 +77,8 @@ def dg_attendance_list_dict(dg_attendance):
 
     return dg_attendance_dict
 
+# def total_working_hours():
+#     pass
 
 class DGViewSet(viewsets.ModelViewSet):
     """
@@ -118,6 +124,10 @@ class DGViewSet(viewsets.ModelViewSet):
             date = parse_datetime(date_string)
         else:
             date = datetime.today()
+
+        day_start = ist_day_start(date)
+        day_end = ist_day_end(date)
+        now = datetime.now(pytz.utc)
         # ---------------------------------------------------------------------------
 
         if page is not None:
@@ -154,7 +164,6 @@ class DGViewSet(viewsets.ModelViewSet):
                                              Q(employee_code=search_query) |
                                              Q(app_version=search_query))
             # ---------------------------------------------------------------------------
-
             # FILTERING BY ATTENDANCE STATUS ---------------------------------------------------
             final_dgs = []
             if attendance_status is not None:
@@ -192,6 +201,19 @@ class DGViewSet(viewsets.ModelViewSet):
             else:
                 result_dgs = paginate(final_dgs, page)
 
+            # -------------------------------------------------------------------------------------
+            delivery_statuses_today = OrderDeliveryStatus.objects.filter(date__gte=day_start, date__lte=day_end)
+            assigned_orders_today = delivery_statuses_today.filter(
+                Q(order_status=constants.ORDER_STATUS_QUEUED) |
+                Q(order_status=constants.ORDER_STATUS_INTRANSIT) |
+                Q(order_status=constants.ORDER_STATUS_PICKUP_ATTEMPTED) |
+                Q(order_status=constants.ORDER_STATUS_DELIVERY_ATTEMPTED) |
+                Q(order_status=constants.ORDER_STATUS_DELIVERED)
+            )
+            assigned_orders_today = assigned_orders_today.exclude(delivery_guy=None)
+            executed_orders_today= delivery_statuses_today.filter(order_status=constants.ORDER_STATUS_DELIVERED)
+            executed_orders_today = executed_orders_today.exclude(delivery_guy=None)
+
             # Attendance for the DG of the day -----------------------------------------------------
             result = []
             for delivery_guy in result_dgs:
@@ -201,7 +223,25 @@ class DGViewSet(viewsets.ModelViewSet):
                 except Exception as e:
                     attendance = None
 
-                result.append(dg_list_dict(delivery_guy, attendance))
+                # append cod, executed, assigned for that dg
+                orders_assigned_tracked = assigned_orders_today.filter(delivery_guy=delivery_guy)
+                no_of_assigned_orders = len(orders_assigned_tracked)
+
+                orders_executed_tracked = executed_orders_today.filter(delivery_guy=delivery_guy)
+                no_of_executed_orders = len(orders_executed_tracked)
+
+                if attendance is not None:
+                    if attendance.login_time is not None:
+                        worked_hours = (now - attendance.login_time)
+                        total_seconds_worked = int(worked_hours.total_seconds())
+                        hours, remainder = divmod(total_seconds_worked,60*60)
+                        minutes, seconds = divmod(remainder,60)
+
+                        worked_hours = "%d:%d:%d" %(hours, minutes, seconds)
+                else:
+                    worked_hours = 0
+
+                result.append(dg_list_dict(delivery_guy, attendance, no_of_assigned_orders, no_of_executed_orders, worked_hours))
 
             content = {
                 "data": result,
