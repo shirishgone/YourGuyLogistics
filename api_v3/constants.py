@@ -120,7 +120,7 @@ ORDER_STATUS_NOT_DELIVERED = 'NOT_DELIVERED'
 
 # NOTIFICATION CODES --------------------
 NOTIFICATION_CODE_NOT_CHECKED_IN  = 'yg_nt_01'
-NOTIFICATION_CODE_LATE_PICKED_UP  = 'yg_nt_02'
+NOTIFICATION_CODE_LATE_PICKUP  = 'yg_nt_02'
 NOTIFICATION_CODE_LATE_DELIVERY   = 'yg_nt_03'
 NOTIFICATION_CODE_UNASSIGNED    = 'yg_nt_04'
 NOTIFICATION_CODE_REPORTED      = 'yg_nt_05'
@@ -134,4 +134,5 @@ NOTIFICATION_MESSAGE_REPORTED = 'Delivery boy %s, has reported an issue "%s" , f
 NOTIFICATION_MESSAGE_UNASSIGNED = 'Dear %s, no delivery boy has been assigned for the following deliveries: %s. Please assign them asap.'
 NOTIFICATION_MESSAGE_ORDER_PICKEUP_WITHOUT_DELIVERYGUY_ASSIGNED = 'Dear %s, order no %s has been picked up by %s and still a delivery boy is not been assigned. Pickup boy can\'t deliver with out delivery guy. Please assign immediately'
 NOTIFICATION_MESSAGE_DELIVERY_DELAY = 'Dear %s, order no: %s has been delayed in delivery. Please contact the delivery guy and complete the delivery asap.'
+NOTIFICATION_MESSAGE_PICKUP_DELAY = 'Dear %s, order no: %s has been delayed in pickup. Please contact the pickup guy and complete the pickup asap.'
 # ---------------------------------------
