@@ -1,0 +1,41 @@
+html {
+	height: 100%;
+}
+body {
+	min-height : 100%;
+	// font-family: "Roboto";
+}
+
+.request-loader {
+	display : block !important;
+	position :absolute;
+	width:100%;
+	height: 5px;
+	z-index: 100;
+}
+
+.request-loader.request-loader-hidden {
+	display: none !important;
+	visibility: hidden !important;
+}
+
+.order-id {
+	color: grey-color('500');
+	font-size: 12px;
+	font-weight: 600;
+	margin: 5px 5px;
+}
+
+.bagde {
+	min-width: 50px;
+	text-align: center;
+	color: $white-color;
+	padding: 3px 5px;;
+	@include border-radius(3px);
+	font-size: 10px;
+	background-color: primary-color('500');
+}
+
+.bagde-warn {
+	background-color: $warn-color;
+}

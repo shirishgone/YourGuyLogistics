@@ -69,11 +69,11 @@
 		// Redirect to admin or vendor page accorfing to the credentials.
 		if(vendorClients.$hasRole(constants.userRole.ADMIN)){
 			this.admin = true;
-			$state.go('home.opsorder');
+			// $state.go('home.opsorder');
 		}
 		else if(vendorClients.$hasRole(constants.userRole.VENDOR)){
 			this.vendor = true;
-			$state.go('home.order');
+			// $state.go('home.order');
 		}
 		// Controller logic for common items between vendor and admin.
 		var self = this;
@@ -629,6 +629,85 @@
 })();
 (function(){
 	'use strict';
+	angular.module('ygVendorApp')
+	.directive('ydPagination', [function(){
+		// Runs during compile
+		return {
+			// name: '',
+			// priority: 1,
+			// terminal: true,
+			// template: '',
+			// templateUrl: '',
+			// replace: true,
+			// transclude: true,
+			// compile: function(tElement, tAttrs, function transclude(function(scope, cloneLinkingFn){ return function linking(scope, elm, attrs){}})),
+			// controller: function($scope, $element, $attrs, $transclude) {},
+			// require: 'ngModel', // Array = multiple requires, ? = optional, ^ = check parent elements
+			/*
+				scope {
+					@total      : total data count to show as total data.
+					@totalPage  : total number of pages the present.
+					@params     : all the params that needs to be sent, like page, date etc. it should be a object with madatory page property.
+					@listLength : total count of current data list.
+					@paginate   : object which contains two function to paginate to next and previous page.
+					@pending    : optional! number of pending data which aren't executed yet.
+					@unassigned : optional! number of unassigned data which aren't assagined yet.
+					@getData    : a function of parent controller to reload the data as params changes. 
+				}
+			*/
+			scope: {
+				total       : '@',
+				totalPage   : '@',
+				params      : '=',
+				listLength  : '@',
+				paginate    : '=',
+				pending     : '@?',
+				unassigned  : '@?',
+				getData     : '&',
+			}, // {} = isolate, true = child, false/undefined = no change
+			restrict: 'AE', // E = Element, A = Attribute, C = Class, M = Comment
+			link: function($scope, iElm, iAttrs, controller) {
+				$scope.orderFrom = ( ( ( $scope.params.page -1 ) * 50 ) + 1 );
+				$scope.orderTo  = ($scope.orderFrom-1) + parseInt($scope.listLength);
+				$scope.pageRange = function (){
+					return new Array(parseInt($scope.totalPage));
+				};
+			},
+			template : [
+				'<div class="ydPagination" layout="row" layout-align="start center">',
+					'<div class="stats" layout="row">',
+						'<p ng-if="pending">Pending: {{pending}} </p>',
+						'<p ng-if="unassigned">Unassigned: {{unassigned}} </p>',
+						'<p>Total: {{total}} </p>',
+					'</div>',
+					'<span flex></span>',
+					'<div class="pagination" layout="row" layout-align="start center">',
+						'<p>Page:</p>',
+						'<md-input-container class="md-accent">',
+							'<label class="hide-gt-xs">Page</label>',
+							'<md-select class="md-accent" ng-model="params.page" ng-change="getData()">',
+								'<md-option class="md-accent" ng-repeat="page in pageRange() track by $index" value="{{$index + 1}}">{{$index + 1}}</md-option>',
+							'</md-select>',
+						'</md-input-container>',
+					'</div>',
+					'<div class="pagination" layout="row" layout-align="start center">',
+						'<p>{{orderFrom}} -- {{orderTo}} of {{total}}</p>',
+					'</div>',
+					'<div class="page-navigation">',
+						'<md-button ng-disabled="params.page == 1" ng-click="paginate.previouspage();" class="md-icon-button md-accent" aria-label="Menu Icon">',
+								'<md-icon>arrow_backward</md-icon>',
+						'</md-button>',
+						'<md-button ng-disabled="params.page == totalPage" ng-click="paginate.nextpage();" class="md-icon-button md-accent" aria-label="Menu Icon">',
+								'<md-icon>arrow_forward</md-icon>',
+						'</md-button>',
+					'</div>',
+				'</div>',
+			].join('')
+		};
+	}]);
+})();
+(function(){
+	'use strict';
 	var opsOrderCntrl = function ($state,$mdSidenav,$stateParams,vendorClients,orderResource,orders,DeliverGuy,constants,orderSelection){
 		/*
 			 Variable definations
@@ -900,22 +979,84 @@
 	.config(['$stateProvider',function ($stateProvider) {
 		$stateProvider
 		.state('home.dgList', {
-			url: "^/deliveryguy/list?date&page",
+			url: "^/deliveryguy/list?date&search&page",
 			templateUrl: "/static/modules/deliveryguy/list/list.html",
 			controllerAs : 'dgList',
     		controller: "dgListCntrl",
-		})
-		.state('home.dgCreate', {
-			url: "^/deliveryguy/create",
-			templateUrl: "/static/modules/deliveryguy/create/create.html",
-			controllerAs : 'dgList',
-    		controller: "dgListCntrl",
-		})
-		.state('home.dgDetail', {
-			url: "^/deliveryguy/detail",
-			templateUrl: "/static/modules/deliveryguy/detail/detail.html",
-			controllerAs : 'dgList',
-    		controller: "dgListCntrl",
+    		resolve : {
+    			dgs: ['DeliverGuy','$stateParams', function (DeliverGuy,$stateParams){
+    						$stateParams.date = ($stateParams.date !== undefined) ? new Date($stateParams.date).toISOString() : new Date().toISOString();
+    						$stateParams.page = (!isNaN($stateParams.page))? parseInt($stateParams.page): 1;
+    						return DeliverGuy.dgPageQuery.query($stateParams).$promise;
+    					}],
+    		}
 		});
+		// .state('home.dgCreate', {
+		// 	url: "^/deliveryguy/create",
+		// 	templateUrl: "/static/modules/deliveryguy/create/create.html",
+		// 	controllerAs : 'dgList',
+  //   		controller: "dgListCntrl",
+		// })
+		// .state('home.dgDetail', {
+		// 	url: "^/deliveryguy/detail",
+		// 	templateUrl: "/static/modules/deliveryguy/detail/detail.html",
+		// 	controllerAs : 'dgList',
+  //   		controller: "dgListCntrl",
+		// });
 	}]);
+})();
+(function(){
+	'use strict';
+	/*
+		dgListCntrl is the controller for the delivery guy lst page. 
+		Its resolved after loading all the dgs from the server.
+			
+	*/
+	var dgListCntrl = function($state,$mdSidenav,$stateParams,dgs){
+		var self = this;
+		this.params = $stateParams;
+		/*
+			@dgs: resolved dgs list accordign to the url prameters.
+		*/
+		this.dgs = dgs.data;
+		this.total_pages = dgs.total_pages;
+		this.total_dgs = dgs.total_dg_count;
+
+		/*
+			 @ toggleFilter : main sidenav toggle function, this function toggle the sidebar of the filets of the orders page page.
+		*/
+		this.toggleFilter = function(){
+			$mdSidenav('dgList-filter').toggle();
+		};
+		/*
+			@paginate is a function to paginate to the next and previous page of the order list
+			@statusSelection is a fucntion to select or unselect the status data in order filter
+		*/
+		this.paginate = {
+			nextpage : function(){
+				self.params.page = self.params.page + 1;
+				self.getDgs();
+			},
+			previouspage : function(){
+				self.params.page = self.params.page - 1;
+				self.getDgs();
+			}
+		};
+		/*
+			@getOrders rleoads the order controller according too the filter to get the new filtered data.
+		*/
+		this.getDgs = function(){
+			$state.transitionTo($state.current, self.params, { reload: true, inherit: false, notify: true });
+		};
+
+	};
+
+	angular.module('deliveryguy')
+	.controller('dgListCntrl', [
+		'$state',
+		'$mdSidenav',
+		'$stateParams',
+		'dgs',
+		dgListCntrl 
+	]);
 })();

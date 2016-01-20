@@ -4,11 +4,11 @@
 		// Redirect to admin or vendor page accorfing to the credentials.
 		if(vendorClients.$hasRole(constants.userRole.ADMIN)){
 			this.admin = true;
-			$state.go('home.opsorder');
+			// $state.go('home.opsorder');
 		}
 		else if(vendorClients.$hasRole(constants.userRole.VENDOR)){
 			this.vendor = true;
-			$state.go('home.order');
+			// $state.go('home.order');
 		}
 		// Controller logic for common items between vendor and admin.
 		var self = this;

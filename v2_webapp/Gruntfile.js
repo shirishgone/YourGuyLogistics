@@ -60,10 +60,11 @@ module.exports = function(grunt){
 					'static/modules/providers/*.js',
 					'static/modules/constants/*.js',
 					'static/modules/services/*.js',
+					'static/modules/directives/*.js',
 					'static/modules/order/orders.js',
 					'static/modules/order/*.js',
 					'static/modules/deliveryguy/deliveryguy.js',
-					'static/modules/deliveryguy/**/*.js',
+					'static/modules/deliveryguy/list/*.js',
 				],
 				dest : 'static/assets/js/main.js'
 			}
@@ -74,7 +75,7 @@ module.exports = function(grunt){
 				tasks : ['devScripts']
 			},
 			sass : {
-				files : 'static/assets/**/sass/*scss',
+				files : 'static/assets/**/sass/**/*scss',
 				tasks : ['compass:sass']
 			}
 		},

@@ -1,0 +1,15 @@
+.dgList {
+	padding : 0px;
+	overflow-y: hidden;
+	.dg-list {
+		padding: 0px;
+		.list {
+			z-index: 9;
+			overflow-y: auto;
+			padding: 5px 10px;
+		}
+		.footer {
+			z-index: 10;
+		}
+	}
+}

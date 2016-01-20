@@ -1,1 +1,24 @@
-delivery guy
+<md-toolbar class="order-toolbar md-primary md-whiteframe-z2" ng-class="{'selected':opsOrder.handleOrdeSelection.selectActive}">
+	<div class="md-toolbar-tools" ng-if="!(opsOrder.handleOrdeSelection.selectActive)">
+		<md-button ng-click="home.toggleSideNav()" class="md-icon-button" aria-label="Menu Icon">
+			<md-icon>menu</md-icon>
+		</md-button>
+		<p>Deliver Boy</p>
+		<span flex></span>
+		<md-button ng-click="dgList.toggleFilter()" class="md-icon-button" aria-label="Filter Button">
+			<md-icon>filter_list</md-icon>
+		</md-button>
+	</div>
+</md-toolbar>
+<md-content flex layout-padding layout="row" class="dgList">
+	<div flex layout="column" class="dg-list">
+		<section flex="90" class="list">
+			 {{dgList.dgs}}
+		</section>
+		<section flex="10" class="footer">
+			<div yd-pagination total="{{dgList.total_dgs}}" total-page="{{dgList.total_pages}}" params="dgList.params" list-length="{{dgList.dgs.length}}" paginate="dgList.paginate" get-data="dgList.getDgs()"></div>
+		</section>
+	</div>
+	<md-sidenav class="filter-sidenav md-sidenav-right md-whiteframe-z3" layout="column" md-component-id="dgList-filter">
+	</md-sidenav>
+</md-content>
