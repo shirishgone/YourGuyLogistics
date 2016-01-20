@@ -93,6 +93,14 @@ ORDER_STATUS_DELIVERY_ATTEMPTED = 'DELIVERYATTEMPTED'
 ORDER_STATUS_CANCELLED = 'CANCELLED'
 ORDER_STATUS_REJECTED = 'REJECTED'
 
+# DELIVERY ACTIONS CONSTANTS
+PICKEDUP_CODE = 'yg_da_01'
+DELIVERED_CODE = 'yg_da_02'
+REPORTED_CODE = 'yg_da_03'
+PICKUP_ATTEMPTED_CODE = 'yg_da_04'
+DELIVERY_ATTEMPTED_CODE = 'yg_da_05'
+CANCELLED_CODE = 'yg_da_06'
+
 # DG WORKING STATUS CONSTANTS
 DG_STATUS_WORKING = 'WORKING'
 DG_STATUS_LEAVE = 'LEAVE'
@@ -124,4 +132,5 @@ NOTIFICATION_CODE_COD_DISPRENCY   = 'yg_nt_07'
 NOTIFICATION_MESSAGE_COD_DISCREPENCY = 'Delivery boy %s, has collected different COD amount %s / %s for the order no %s. Please contact the delivery boy immediately.'
 NOTIFICATION_MESSAGE_REPORTED = 'Delivery boy %s, has reported an issue "%s" , for the orders : %s. Please contact the delivery boy immediately.'
 NOTIFICATION_MESSAGE_UNASSIGNED = 'Dear %s, no delivery boy has been assigned for the following deliveries: %s. Please assign them asap.'
+NOTIFICATION_MESSAGE_ORDER_PICKEUP_WITHOUT_DELIVERYGUY_ASSIGNED = 'Dear %s, order no %s has been picked up by %s and still a delivery boy is not been assigned. Pickup boy can\'t deliver with out delivery guy. Please assign immediately'
 # ---------------------------------------
