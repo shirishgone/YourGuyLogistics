@@ -19,7 +19,7 @@ from api.views import user_role, ist_day_start, ist_day_end, is_userexists, is_c
 from api.views import is_today_date, log_exception, ist_datetime
 
 from api_v2.utils import is_pickup_time_acceptable, is_consumer_has_same_address_already, is_correct_pincode, is_vendor_has_same_address_already
-from api_v2.utils import notification_type_for_code, ops_manager_for_dg
+from api_v2.utils import notification_type_for_code, ops_manager_for_dg, ops_managers_for_pincode
 from api_v2.views import paginate
 
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
@@ -35,6 +35,27 @@ from dateutil.rrule import rrule, WEEKLY
 from api.push import send_push
 from django.db.models import Prefetch
 import string
+
+def is_deliveryguy_assigned(delivery):
+    if delivery.delivery_guy is not None:
+        return True
+    else:
+        return False    
+
+def notif_unassigned(delivery):
+    pincode = delivery.order.delivery_address.pin_code
+    ops_managers = ops_managers_for_pincode(pincode)
+    if len(ops_managers) > 0:
+        notification_type = notification_type_for_code(constants.NOTIFICATION_CODE_UNASSIGNED)
+        for ops_manager in ops_managers:
+            notification_message = constants.NOTIFICATION_MESSAGE_ORDER_PICKEUP_WITHOUT_DELIVERYGUY_ASSIGNED%(ops_manager.user.first_name, delivery.id, delivery.pickup_guy.user.first_name)
+            new_notification = Notification.objects.create(notification_type = notification_type, 
+                delivery_id = delivery.id, message = notification_message)
+            ops_manager.notifications.add(new_notification)
+            ops_manager.save()
+    else:
+        # CANT FIND APPROPRIATE OPS_EXECUTIVE FOR THE ABOVE PINCODE
+        pass                
 
 def send_reported_email(user, email_orders, reported_reason):
     subject = '%s Reported Issue'% (user.first_name)
@@ -1583,8 +1604,15 @@ class OrderViewSet(viewsets.ViewSet):
             'error': "Cant update as the order is not queued"
             }
             return Response(content, status = status.HTTP_400_BAD_REQUEST)        
-        
+
         if is_order_updated:
+            # NOTIFY OPERATIONS IF DELVIERYGUY IS NOT ASSIGNED EVEN AFTER PIKCKUP --
+            try:
+                if is_deliveryguy_assigned(delivery_status) is False:
+                    notif_unassigned(delivery_status)
+            except Exception as e:
+                pass
+            # ---------------------------------------------------------------------
             if is_order_picked_up is True and delivery_status.order.is_reverse_pickup is True:
                 # SEND A CONFIRMATION MESSAGE TO THE CUSTOMER
                 end_consumer_phone_number = delivery_status.order.consumer.user.username
