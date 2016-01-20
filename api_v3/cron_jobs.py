@@ -7,8 +7,11 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from api_v3 import constants
-from api_v3.utils import ist_day_start, ist_day_end, send_email
-from yourguy.models import OrderDeliveryStatus
+from api_v3.utils import ist_day_start, ist_day_end, send_email, ops_managers_for_pincode
+from yourguy.models import OrderDeliveryStatus, Notification
+
+from datetime import time, datetime, timedelta
+from api_v3.utils import notification_type_for_code
 
 
 def assign_dg():
@@ -103,3 +106,36 @@ def assign_dg():
     # TODO
     # inform_dgs_about_orders_assigned()
 
+def notify_unassigned_deliveries():
+    date = datetime.today()
+    day_start = ist_day_start(date)
+    day_end = ist_day_end(date)
+
+    delivery_status_queryset = OrderDeliveryStatus.objects.filter(date__gte=day_start, date__lte=day_end)
+    delivery_status_queryset = delivery_status_queryset.filter(Q(delivery_guy=None))
+    delivery_status_queryset = delivery_status_queryset.filter(
+        Q(order_status=constants.ORDER_STATUS_PLACED) |
+        Q(order_status=constants.ORDER_STATUS_QUEUED) |
+        Q(order_status=constants.ORDER_STATUS_INTRANSIT))
+
+    notif_datetime = datetime.now() + timedelta(hours=2, minutes=0)
+    delivery_status_queryset = delivery_status_queryset.filter(order__delivery_datetime__lte=notif_datetime)
+    
+    deliveries_pincode_wise = delivery_status_queryset.values('order__delivery_address__pin_code').annotate(total_pincodes=Count('order__delivery_address__pin_code'))
+    for delivery_dict in deliveries_pincode_wise:
+        pincode = delivery_dict['order__delivery_address__pin_code']
+        pincode_wise_delivery_ids = delivery_status_queryset.filter(order__delivery_address__pin_code= pincode).values_list('id', flat=True)
+        delivery_ids = ','.join(str(v) for v in pincode_wise_delivery_ids)
+
+        ops_managers = ops_managers_for_pincode(pincode)
+        if len(ops_managers) > 0:
+            notification_type = notification_type_for_code(constants.NOTIFICATION_CODE_UNASSIGNED)
+            for ops_manager in ops_managers:
+                notification_message = constants.NOTIFICATION_MESSAGE_UNASSIGNED%(ops_manager.user.first_name, delivery_ids)
+                new_notification = Notification.objects.create(notification_type = notification_type, 
+                    delivery_id = delivery_ids, message = notification_message)
+                ops_manager.notifications.add(new_notification)
+                ops_manager.save()
+        else:
+            # CANT FIND APPROPRIATE OPS_EXECUTIVE FOR THE ABOVE PINCODE
+            pass                

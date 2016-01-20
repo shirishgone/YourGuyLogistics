@@ -1065,20 +1065,8 @@ class OrderViewSet(viewsets.ViewSet):
                     'customer_name': delivery_status.order.consumer.user.first_name
                 }
                 email_orders.append(order_detail)
-            # SEND AN EMAIL TO OPERATIONS ---------------------------------------------
-            delivery_guy = get_object_or_404(DeliveryGuy, user=request.user)
-            subject = '%s Reported Issue' % (delivery_guy.user.first_name)
-
-            body = 'Hello,\n\n%s has reported an issue about the following orders. \n\nIssue: %s\n' % (
-                delivery_guy.user.first_name, reported_reason)
-            for email_order in email_orders:
-                string = '\nOrder no: %s | Client Name: %s | Customer Name: %s' % (
-                    email_order['order_id'], email_order['vendor'], email_order['customer_name'])
-                body = body + string
-
-            body = body + '\n\nThanks \n-YourGuy BOT'
-            send_email(constants.EMAIL_REPORTED_ORDERS, subject, body)
-            # --------------------------------------------------------------------------
+            
+            # CREATE DELIVERY TRANSACTION REPORTED ---------------------------            
             action = delivery_actions(constants.REPORTED_CODE)
             if action is not None:
                 delivery_transaction = DeliveryTransaction.objects.create(action=action, by_user=request.user,
@@ -1091,6 +1079,7 @@ class OrderViewSet(viewsets.ViewSet):
                     delivery_transaction.remarks = reported_reason
 
                 delivery_transaction.save()
+            
             # INFORM OPERATIONS IF THERE IS ANY COD DISCREPENCIES -------------------
             try:
                 delivery_guy = get_object_or_404(DeliveryGuy, user = request.user)

@@ -3006,6 +3006,7 @@ body {
                 color: #000; }
 
 #sidebar-default {
+  overflow-y :auto;
   background: #2a313a;
   border-right: 1px solid #3C434D;
   left: 0;

@@ -1326,6 +1326,7 @@
 
 @media (max-width: 767px){
 	#sidebar-default {
+		overflow: auto;
 		position: absolute;
 	}
 }
@@ -1333,6 +1334,7 @@
 
 @media (max-width: 991px){
 	#sidebar-default {
+		overflow: visible;
 		position: absolute;
 	}
 }
@@ -1340,4 +1342,54 @@
 
 .panel-danger.panel-default .panel-heading , .panel-danger.panel-default .panel-title{
 	background: #FE5E64;
+}
+
+.notification-content {
+	padding: 0px !important;
+	padding-top: 63px !important;
+}
+
+.notification-content .content-wrapper {
+	margin-top: 0px !important;
+}
+
+.notification .notice {
+	cursor: pointer;
+	padding: 10px;
+	border-bottom: 1px solid #ddd;
+	overflow: auto;
+}
+
+.notification .notice.unread {
+	background-color: #EAF2FD;
+}
+
+.notification .notice .notification-image {
+	max-width: 60px;
+	width: 20%;
+	padding: 10px;
+	float: left;
+}
+
+.notification .notice .notification-text {
+	width: 80%;
+	float: left;
+}
+
+.notification .notice .notification-image img {
+	height: 40px;
+	width: 40px;
+}
+
+.notification .notice .notification-text h4 {
+	float: left;
+	margin: 0;
+	margin-right: 10px;
+	font-size: 16px;
+	font-weight: 600;
+}
+
+.notification .notice .notification-text .notice-time {
+	font-size: 14px;
+	color: #9d9ea2;
 }
