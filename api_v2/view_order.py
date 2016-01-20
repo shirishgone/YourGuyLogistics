@@ -1702,10 +1702,7 @@ class OrderViewSet(viewsets.ViewSet):
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
         # -----------------------------------------------------------------------        
 
-        # INFORM OPERATIONS IF THERE IS ANY COD DISCREPENCIES -------------------
-        import pdb
-        pdb.set_trace()
-        
+        # INFORM OPERATIONS IF THERE IS ANY COD DISCREPENCIES -------------------        
         if is_order_updated is True and float(delivery_status.order.cod_amount) > 0.0 and cod_collected_amount is not None and (float(cod_collected_amount) < float(delivery_status.order.cod_amount) or float(cod_collected_amount) > float(delivery_status.order.cod_amount) ):
             try:
                 delivery_guy = get_object_or_404(DeliveryGuy, user = request.user)
