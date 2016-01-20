@@ -77,9 +77,6 @@ def dg_attendance_list_dict(dg_attendance):
 
     return dg_attendance_dict
 
-# def total_working_hours():
-#     pass
-
 class DGViewSet(viewsets.ModelViewSet):
     """
     DeliveryGuy viewset that provides the standard actions
