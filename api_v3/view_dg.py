@@ -221,11 +221,8 @@ class DGViewSet(viewsets.ModelViewSet):
                     attendance = None
 
                 # append cod, executed, assigned for that dg
-                orders_assigned_tracked = assigned_orders_today.filter(delivery_guy=delivery_guy)
-                no_of_assigned_orders = len(orders_assigned_tracked)
-
-                orders_executed_tracked = executed_orders_today.filter(delivery_guy=delivery_guy)
-                no_of_executed_orders = len(orders_executed_tracked)
+                no_of_assigned_orders = assigned_orders_today.filter(delivery_guy=delivery_guy).count()
+                no_of_executed_orders = executed_orders_today.filter(delivery_guy=delivery_guy).count()
 
                 if attendance is not None:
                     if attendance.login_time is not None:
