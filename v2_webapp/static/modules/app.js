@@ -27,11 +27,11 @@
   		$locationProvider.html5Mode(true).hashPrefix('!');
   		$resourceProvider.defaults.stripTrailingSlashes = false;
   		roleProvider.$get().$setUserRole();
-  		$mdThemingProvider.theme('purpleTheme')
-  		.primaryPalette('purple')
-        .accentPalette('blue')
-        .warnPalette('deep-orange');
-        $mdThemingProvider.setDefaultTheme('purpleTheme');
+  		$mdThemingProvider.theme('blueTheme')
+  		.primaryPalette('blue')
+        .accentPalette('grey')
+        .warnPalette('orange');
+        $mdThemingProvider.setDefaultTheme('blueTheme');
 	}]);
 
 })();

@@ -29,7 +29,7 @@ body {
 
 /* line 22, ../sass/modules/_components.scss */
 .order-id {
-  color: #9E9E9E;
+  color: #607D8B;
   font-size: 12px;
   font-weight: 600;
   margin: 5px 5px;
@@ -45,7 +45,7 @@ body {
   -webkit-border-radius: 3px;
   border-radius: 3px;
   font-size: 10px;
-  background-color: #9C27B0;
+  background-color: #2196F3;
 }
 
 /* line 39, ../sass/modules/_components.scss */
@@ -73,18 +73,18 @@ body {
 /* line 1, ../sass/modules/_home.scss */
 .site-sidenav {
   background-color: #ffffff;
-  color: #9C27B0;
+  color: #2196F3;
   max-width: 280px;
 }
 /* line 5, ../sass/modules/_home.scss */
 .site-sidenav .tab-liks {
-  color: #9C27B0;
+  color: #455A64;
   text-decoration: none;
 }
 /* line 9, ../sass/modules/_home.scss */
 .site-sidenav md-list {
   padding: 0px;
-  color: #9C27B0;
+  color: #2196F3;
 }
 /* line 12, ../sass/modules/_home.scss */
 .site-sidenav md-list md-list-item {
@@ -101,11 +101,11 @@ body {
 }
 /* line 21, ../sass/modules/_home.scss */
 .site-sidenav md-list md-list-item:hover {
-  background-color: #F3E5F5;
+  background-color: #E3F2FD;
 }
 /* line 25, ../sass/modules/_home.scss */
 .site-sidenav md-list md-list-item.active {
-  background-color: #E1BEE7;
+  background-color: #BBDEFB;
 }
 /* line 29, ../sass/modules/_home.scss */
 .site-sidenav md-content {
@@ -115,7 +115,7 @@ body {
 /* line 33, ../sass/modules/_home.scss */
 .site-sidenav .md-subheader {
   background-color: #ffffff;
-  color: #6A1B9A;
+  color: #1565C0;
 }
 /* line 37, ../sass/modules/_home.scss */
 .site-sidenav .md-subheader .md-subheader-inner {
@@ -125,13 +125,13 @@ body {
 /* line 42, ../sass/modules/_home.scss */
 .nav-header {
   text-align: center;
-  background-image: url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4gPHN2ZyB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJncmFkIiBncmFkaWVudFVuaXRzPSJvYmplY3RCb3VuZGluZ0JveCIgeDE9IjAuNSIgeTE9IjAuMCIgeDI9IjAuNSIgeTI9IjEuMCI+PHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzhlMjRhYSIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzZhMWI5YSIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHg9IjAiIHk9IjAiIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JhZCkiIC8+PC9zdmc+IA==');
+  background-image: url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4gPHN2ZyB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJncmFkIiBncmFkaWVudFVuaXRzPSJvYmplY3RCb3VuZGluZ0JveCIgeDE9IjAuNSIgeTE9IjAuMCIgeDI9IjAuNSIgeTI9IjEuMCI+PHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzFlODhlNSIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzE1NjVjMCIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHg9IjAiIHk9IjAiIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JhZCkiIC8+PC9zdmc+IA==');
   background-size: 100%;
-  background-image: -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #8e24aa), color-stop(100%, #6a1b9a));
-  background-image: -moz-linear-gradient(#8e24aa, #6a1b9a);
-  background-image: -webkit-linear-gradient(#8e24aa, #6a1b9a);
-  background-image: linear-gradient(#8e24aa, #6a1b9a);
-  border: #6A1B9A;
+  background-image: -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #1e88e5), color-stop(100%, #1565c0));
+  background-image: -moz-linear-gradient(#1e88e5, #1565c0);
+  background-image: -webkit-linear-gradient(#1e88e5, #1565c0);
+  background-image: linear-gradient(#1e88e5, #1565c0);
+  border: #1565C0;
 }
 /* line 46, ../sass/modules/_home.scss */
 .nav-header a {
@@ -147,7 +147,7 @@ body {
 
 /* line 1, ../sass/modules/_opsOrder.scss */
 .order-toolbar.selected {
-  background-color: #BA68C8 !important;
+  background-color: #64B5F6 !important;
   color: #ffffff !important;
 }
 
@@ -183,7 +183,7 @@ body {
 
 /* line 28, ../sass/modules/_opsOrder.scss */
 .opsOrder {
-  background-color: #F5F5F5 !important;
+  background-color: #CFD8DC !important;
   overflow-y: hidden;
   padding: 0;
 }
@@ -203,7 +203,7 @@ body {
 }
 /* line 42, ../sass/modules/_opsOrder.scss */
 .opsOrder .order-list .footer {
-  border-top: 1px solid #E0E0E0;
+  border-top: 1px solid #90A4AE;
   min-height: 50px;
   max-height: 50px;
   padding: 5px;
@@ -216,7 +216,7 @@ body {
 /* line 50, ../sass/modules/_opsOrder.scss */
 .opsOrder .order-list .footer .stats p, .opsOrder .order-list .footer .pagination p {
   font-size: 12px;
-  color: #616161;
+  color: #455A64;
   margin: 10px 10px;
 }
 /* line 57, ../sass/modules/_opsOrder.scss */
@@ -251,12 +251,12 @@ body {
   margin: 0;
   font-size: 14px;
   text-transform: uppercase;
-  color: #616161;
+  color: #455A64;
 }
 /* line 80, ../sass/modules/_opsOrder.scss */
 .opsOrder .order-list .list .card-content .customer span, .opsOrder .order-list .list .card-content .vendor span, .opsOrder .order-list .list .card-content .dg span {
   font-size: 12px;
-  color: #757575;
+  color: #546E7A;
 }
 /* line 86, ../sass/modules/_opsOrder.scss */
 .opsOrder .order-list .list .card-action {
@@ -271,18 +271,18 @@ body {
   margin: 0;
   font-size: 11px;
   text-transform: uppercase;
-  color: #616161;
+  color: #455A64;
 }
 /* line 98, ../sass/modules/_opsOrder.scss */
 .opsOrder .order-list .list .card-action .order-time span, .opsOrder .order-list .list .card-action .payment span {
   font-size: 10px;
-  color: #757575;
+  color: #546E7A;
 }
 
 /* line 1, ../sass/modules/_pagination.scss */
 .ydPagination {
-  background-color: #F5F5F5 !important;
-  border-top: 1px solid #E0E0E0;
+  background-color: #ECEFF1 !important;
+  border-top: 1px solid #90A4AE;
   min-height: 50px;
   max-height: 50px;
   padding: 5px;
@@ -295,7 +295,7 @@ body {
 /* line 10, ../sass/modules/_pagination.scss */
 .ydPagination .stats p, .ydPagination .pagination p {
   font-size: 12px;
-  color: #616161;
+  color: #455A64;
   margin: 10px 10px;
 }
 

@@ -180,11 +180,11 @@
   		$locationProvider.html5Mode(true).hashPrefix('!');
   		$resourceProvider.defaults.stripTrailingSlashes = false;
   		roleProvider.$get().$setUserRole();
-  		$mdThemingProvider.theme('purpleTheme')
-  		.primaryPalette('purple')
-        .accentPalette('blue')
-        .warnPalette('deep-orange');
-        $mdThemingProvider.setDefaultTheme('purpleTheme');
+  		$mdThemingProvider.theme('blueTheme')
+  		.primaryPalette('blue')
+        .accentPalette('grey')
+        .warnPalette('orange');
+        $mdThemingProvider.setDefaultTheme('blueTheme');
 	}]);
 
 })();
@@ -685,7 +685,7 @@
 						'<p>Page:</p>',
 						'<md-input-container class="md-accent">',
 							'<label class="hide-gt-xs">Page</label>',
-							'<md-select class="md-accent" ng-model="params.page" ng-change="getData()">',
+							'<md-select class="md-warn" ng-model="params.page" ng-change="getData()">',
 								'<md-option class="md-accent" ng-repeat="page in pageRange() track by $index" value="{{$index + 1}}">{{$index + 1}}</md-option>',
 							'</md-select>',
 						'</md-input-container>',
@@ -694,10 +694,10 @@
 						'<p>{{orderFrom}} -- {{orderTo}} of {{total}}</p>',
 					'</div>',
 					'<div class="page-navigation">',
-						'<md-button ng-disabled="params.page == 1" ng-click="paginate.previouspage();" class="md-icon-button md-accent" aria-label="Menu Icon">',
+						'<md-button ng-disabled="params.page == 1" ng-click="paginate.previouspage();" class="md-icon-button md-primary" aria-label="Menu Icon">',
 								'<md-icon>arrow_backward</md-icon>',
 						'</md-button>',
-						'<md-button ng-disabled="params.page == totalPage" ng-click="paginate.nextpage();" class="md-icon-button md-accent" aria-label="Menu Icon">',
+						'<md-button ng-disabled="params.page == totalPage" ng-click="paginate.nextpage();" class="md-icon-button md-primary" aria-label="Menu Icon">',
 								'<md-icon>arrow_forward</md-icon>',
 						'</md-button>',
 					'</div>',
