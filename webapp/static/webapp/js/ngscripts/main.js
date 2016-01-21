@@ -467,7 +467,7 @@ ygVendors.controller('homeCntrl', function ($state,$scope,$interval,StoreSession
     modalInstance.result.then(function (data) {
       $scope.logout()
     }, function () {
-      console.log("Closed")
+      // console.log("Closed")
     });
   }
 
@@ -822,7 +822,7 @@ ygVendors.controller('newOrderCntrl',function ($scope,$stateParams,$state,$locat
     modalInstance.result.then(function (data) {
        $scope.assign_dgs(data)
     }, function () {
-      console.log("Closed")
+      // console.log("Closed")
     });
   }
 
@@ -887,7 +887,7 @@ ygVendors.controller('newOrderCntrl',function ($scope,$stateParams,$state,$locat
       modalInstance.result.then(function (data) {
          $scope.changeOrderStatus(data)
        }, function () {
-        console.log("Closed")
+        // console.log("Closed")
       });
     }
   }
@@ -1178,7 +1178,7 @@ ygVendors.controller('createOrderCntrl',function ($scope,$state,$modal,$timeout,
     custModalInstance.result.then(function (data) {
       $scope.create_params.consumers.push(data)
     }, function () {
-      console.log("Closed")
+      // console.log("Closed")
     });
   }
 
@@ -1213,7 +1213,7 @@ ygVendors.controller('createOrderCntrl',function ($scope,$state,$modal,$timeout,
         }
       })
     }, function () {
-      console.log("Closed")
+      // console.log("Closed")
     });
   }
 
@@ -1242,7 +1242,7 @@ ygVendors.controller('createOrderCntrl',function ($scope,$state,$modal,$timeout,
     }
     delete $scope.create_params.is_recurring
     $scope.create_params.order_date = $scope.create_params.order_date.addHours(6).toISOString()
-    console.log($scope.create_params)
+    // console.log($scope.create_params)
     cfpLoadingBar.start()
     Orders.createOrder($scope.create_params).finally(function(){
       var status = Errorhandler.getStatus()
@@ -1374,7 +1374,7 @@ ygVendors.controller('userCntrl',function ($scope,$http,StoreSession,$location,$
     modalInstance.result.then(function (user) {
       $scope.deleteConsumer(user)
     }, function () {
-      console.log("Closed")
+      // console.log("Closed")
     });
   }
 })
@@ -1594,7 +1594,7 @@ ygVendors.controller('orderDetailsCntrl',function ($scope,$state,$stateParams,$m
         $scope.order_approval(data)
       }
     }, function () {
-      console.log("Closed")
+      // console.log("Closed")
     });
   }
 
@@ -1759,7 +1759,7 @@ ygVendors.controller('orderDetailsCntrl',function ($scope,$state,$stateParams,$m
     modalInstance.result.then(function (data) {
       $scope.assign_dg(data,order.id)
     }, function () {
-      console.log("Closed")
+      // console.log("Closed")
     });
   }
 
@@ -2018,7 +2018,7 @@ ygVendors.controller('dgCntrl',function ($scope,$state,DG,$filter,$stateParams,$
     modalInstance.result.then(function (dg) {
       $scope.deleteDg(dg)
     }, function () {
-      console.log("Closed")
+      // console.log("Closed")
     });
   }
 })
@@ -2253,7 +2253,7 @@ ygVendors.controller('customerDetailsCntrl',function ($scope,$stateParams,$timeo
     modalInstance.result.then(function (data) {
       $scope.addAddress(data)
     }, function () {
-      console.log("Closed")
+      // console.log("Closed")
     });
   }
 
@@ -2291,7 +2291,7 @@ ygVendors.controller('customerDetailsCntrl',function ($scope,$stateParams,$timeo
     modalInstance.result.then(function (address_id) {
       $scope.deleteAddress(address_id)
     }, function () {
-      console.log("Closed")
+      // console.log("Closed")
     });
   }
 }) 
@@ -2329,7 +2329,7 @@ ygVendors.controller('accountSettingCntrl', function ($scope,$modal,Vendors,Erro
     modalInstance.result.then(function (data) {
       $scope.addAddress(data)
     }, function () {
-      console.log("Closed")
+      // console.log("Closed")
     });
   }
 
@@ -2365,7 +2365,7 @@ ygVendors.controller('accountSettingCntrl', function ($scope,$modal,Vendors,Erro
     modalInstance.result.then(function (address_id) {
       $scope.deleteAddress(address_id)
     }, function () {
-      console.log("Closed")
+      // console.log("Closed")
     });
   }
 })
@@ -2882,12 +2882,23 @@ ygVendors.controller('notificationCntrl', function ($scope,$state,$stateParams,$
   $scope.getNotification = function(){
     $location.search($scope.params);
     $scope.total_notifications = false;
+    $scope.show_notification_msg = false;
     cfpLoadingBar.start();
     notification.getNotification($scope.params).finally(function(){
       cfpLoadingBar.complete();
       var status = Errorhandler.getStatus();
-      $scope.notification_list = status.data.data;
-      $scope.total_notifications = status.data.total_notifications;
+      // console.log(status)
+      if(status.has_error){
+        $scope.show_notification_msg = true;
+        $scope.notification_msg = status.error;
+      }
+      else if(status.data.total_notifications == 0){
+        $scope.show_notification_msg = true;
+      }
+      else{
+        $scope.notification_list = status.data.data;
+        $scope.total_notifications = status.data.total_notifications;
+      }
     });
   };
 
