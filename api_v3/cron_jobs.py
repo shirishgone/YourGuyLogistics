@@ -15,7 +15,7 @@ from api_v3.utils import notification_type_for_code
 
 def notify_delivery_ids(pincode_wise_delivery_ids):
     if len (pincode_wise_delivery_ids) > 2:
-        sub_array = pincode_wise_delivery_ids[0:1]
+        sub_array = pincode_wise_delivery_ids[0:2]
         delivery_ids_string = ','.join(str(delivery_id) for delivery_id in sub_array)
         delivery_ids_string = delivery_ids_string + '& more..'
     else:
