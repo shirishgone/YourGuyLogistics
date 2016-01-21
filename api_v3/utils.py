@@ -19,6 +19,17 @@ def ops_managers_for_pincode(pincode):
     result = []
     try:
         serving_pincode = get_object_or_404(ServiceablePincode, pincode = pincode)
+        result = Employee.objects.filter(Q(serving_pincodes__in=[serving_pincode]) &
+            Q(department='operations_manager'))
+        
+        return result
+    except Exception as e:
+        return result
+
+def ops_executive_for_pincode(pincode):
+    result = []
+    try:
+        serving_pincode = get_object_or_404(ServiceablePincode, pincode = pincode)
         result = Employee.objects.filter(serving_pincodes__in = [serving_pincode])
         return result
     except Exception as e:

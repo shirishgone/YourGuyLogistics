@@ -7,21 +7,11 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from api_v3 import constants
-from api_v3.utils import ist_day_start, ist_day_end, send_email, ops_managers_for_pincode
+from api_v3.utils import ist_day_start, ist_day_end, send_email, ops_managers_for_pincode, ops_executive_for_pincode
 from yourguy.models import OrderDeliveryStatus, Notification
 
 from datetime import time, datetime, timedelta
 from api_v3.utils import notification_type_for_code
-
-def notify_delivery_ids(pincode_wise_delivery_ids):
-    if len (pincode_wise_delivery_ids) > 2:
-        sub_array = pincode_wise_delivery_ids[0:2]
-        delivery_ids_string = ','.join(str(delivery_id) for delivery_id in sub_array)
-        delivery_ids_string = delivery_ids_string + '& more..'
-    else:
-        delivery_ids_string = ','.join(str(delivery_id) for delivery_id in pincode_wise_delivery_ids)
-
-    return delivery_ids_string
 
 def assign_dg():
     # FETCH ALL TODAY ORDERS --------------------------------------------
@@ -115,6 +105,33 @@ def assign_dg():
     # TODO
     # inform_dgs_about_orders_assigned()
 
+def delivery_ids_string(pincode_wise_delivery_ids):
+    if len (pincode_wise_delivery_ids) > 2:
+        sub_array = pincode_wise_delivery_ids[0:2]
+        delivery_ids_string = ','.join(str(delivery_id) for delivery_id in sub_array)
+        delivery_ids_string = delivery_ids_string + '& more..'
+    else:
+        delivery_ids_string = ','.join(str(delivery_id) for delivery_id in pincode_wise_delivery_ids)
+
+    return delivery_ids_string
+
+def create_notif_for_no_ops_exec_for_pincode(pincode):
+    ops_managers = ops_managers_for_pincode(pincode)
+    if ops_managers.count() > 0:
+        notification_type = notification_type_for_code(constants.NOTIFICATION_CODE_NO_OPS_EXECUTIVE_FOR_PINCODE)
+        for ops_manager in ops_managers:
+            notification_message = constants.NOTIFICATION_MESSAGE_NO_OPS_EXEC_FOR_PINCODE%(ops_manager.user.first_name, pincode)
+            new_notification = Notification.objects.create(notification_type = notification_type, message = notification_message)
+            ops_manager.notifications.add(new_notification)
+            ops_manager.save()
+
+def check_if_notification_already_exists(notification_type, ops_executive, delivery_ids):
+    all_notifications = ops_executive.notifications.all()
+    for notification in all_notifications:
+        if notification.notification_type == notification_type and notification.delivery_id == delivery_ids:
+            return True
+    return False
+
 def notify_unassigned_deliveries():
     date = datetime.today()
     day_start = ist_day_start(date)
@@ -133,19 +150,19 @@ def notify_unassigned_deliveries():
     pincodes = delivery_status_queryset.values_list('order__delivery_address__pin_code', flat = True).distinct()
     for pincode in pincodes:
         pincode_wise_delivery_ids = delivery_status_queryset.filter(order__delivery_address__pin_code= pincode).values_list('id', flat = True)
-        delivery_ids = notify_delivery_ids(pincode_wise_delivery_ids)
-        ops_managers = ops_managers_for_pincode(pincode)
+        delivery_ids = delivery_ids_string(pincode_wise_delivery_ids)
+        ops_managers = ops_executive_for_pincode(pincode)
         if ops_managers.count() > 0:
-            notification_type = notification_type_for_code(constants.NOTIFICATION_CODE_UNASSIGNED)
+            notification_type = notification_type_for_code(constants.NOTIFICATION_CODE_UNASSIGNED)            
             for ops_manager in ops_managers:
-                notification_message = constants.NOTIFICATION_MESSAGE_UNASSIGNED%(ops_manager.user.first_name, delivery_ids)
-                new_notification = Notification.objects.create(notification_type = notification_type, 
-                    delivery_id = delivery_ids, message = notification_message)
-                ops_manager.notifications.add(new_notification)
-                ops_manager.save()
+                if check_if_notification_already_exists(notification_type, ops_manager, delivery_ids) is False:
+                    notification_message = constants.NOTIFICATION_MESSAGE_UNASSIGNED%(ops_manager.user.first_name, delivery_ids)
+                    new_notification = Notification.objects.create(notification_type = notification_type, 
+                        delivery_id = delivery_ids, message = notification_message)
+                    ops_manager.notifications.add(new_notification)
+                    ops_manager.save()
         else:
-            # CANT FIND APPROPRIATE OPS_EXECUTIVE FOR THE ABOVE PINCODE
-            pass 
+            create_notif_for_no_ops_exec_for_pincode()
 
 def notify_delivery_delay():
     date = datetime.today()
@@ -164,19 +181,19 @@ def notify_delivery_delay():
     pincodes = delivery_status_queryset.values_list('order__delivery_address__pin_code', flat = True).distinct()
     for pincode in pincodes:
         pincode_wise_delivery_ids = delivery_status_queryset.filter(order__delivery_address__pin_code= pincode).values_list('id', flat = True)
-        delivery_ids = notify_delivery_ids(pincode_wise_delivery_ids)
-        ops_managers = ops_managers_for_pincode(pincode)
+        delivery_ids = delivery_ids_string(pincode_wise_delivery_ids)
+        ops_managers = ops_executive_for_pincode(pincode)
         if ops_managers.count() > 0:
             notification_type = notification_type_for_code(constants.NOTIFICATION_CODE_LATE_DELIVERY)
             for ops_manager in ops_managers:
-                notification_message = constants.NOTIFICATION_MESSAGE_DELIVERY_DELAY%(ops_manager.user.first_name, delivery_ids)
-                new_notification = Notification.objects.create(notification_type = notification_type, 
-                    delivery_id = delivery_ids, message = notification_message)
-                ops_manager.notifications.add(new_notification)
-                ops_manager.save()
+                if check_if_notification_already_exists(notification_type, ops_manager, delivery_ids) is False:
+                    notification_message = constants.NOTIFICATION_MESSAGE_DELIVERY_DELAY%(ops_manager.user.first_name, delivery_ids)
+                    new_notification = Notification.objects.create(notification_type = notification_type, 
+                        delivery_id = delivery_ids, message = notification_message)
+                    ops_manager.notifications.add(new_notification)
+                    ops_manager.save()
         else:
-            # CANT FIND APPROPRIATE OPS_EXECUTIVE FOR THE ABOVE PINCODE
-            pass 
+            create_notif_for_no_ops_exec_for_pincode()
 
 def notify_pickup_delay():
     date = datetime.today()
@@ -194,16 +211,16 @@ def notify_pickup_delay():
     pincodes = delivery_status_queryset.values_list('order__pickup_address__pin_code', flat = True).distinct()
     for pincode in pincodes:
         pincode_wise_delivery_ids = delivery_status_queryset.filter(order__pickup_address__pin_code= pincode).values_list('id', flat = True)
-        delivery_ids = notify_delivery_ids(pincode_wise_delivery_ids)
-        ops_managers = ops_managers_for_pincode(pincode)
+        delivery_ids = delivery_ids_string(pincode_wise_delivery_ids)
+        ops_managers = ops_executive_for_pincode(pincode)
         if ops_managers.count() > 0:
             notification_type = notification_type_for_code(constants.NOTIFICATION_CODE_LATE_PICKUP)
             for ops_manager in ops_managers:
-                notification_message = constants.NOTIFICATION_MESSAGE_PICKUP_DELAY%(ops_manager.user.first_name, delivery_ids)
-                new_notification = Notification.objects.create(notification_type = notification_type, 
-                    delivery_id = delivery_ids, message = notification_message)
-                ops_manager.notifications.add(new_notification)
-                ops_manager.save()
+                if check_if_notification_already_exists(notification_type, ops_manager, delivery_ids) is False:
+                    notification_message = constants.NOTIFICATION_MESSAGE_PICKUP_DELAY%(ops_manager.user.first_name, delivery_ids)
+                    new_notification = Notification.objects.create(notification_type = notification_type, 
+                        delivery_id = delivery_ids, message = notification_message)
+                    ops_manager.notifications.add(new_notification)
+                    ops_manager.save()
         else:
-            # CANT FIND APPROPRIATE OPS_EXECUTIVE FOR THE ABOVE PINCODE
-            pass 
+            create_notif_for_no_ops_exec_for_pincode()

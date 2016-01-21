@@ -19,7 +19,7 @@ from api.views import user_role, ist_day_start, ist_day_end, is_userexists, is_c
 from api.views import is_today_date, log_exception, ist_datetime
 
 from api_v2.utils import is_pickup_time_acceptable, is_consumer_has_same_address_already, is_correct_pincode, is_vendor_has_same_address_already
-from api_v2.utils import notification_type_for_code, ops_manager_for_dg, ops_managers_for_pincode
+from api_v2.utils import notification_type_for_code, ops_manager_for_dg, ops_executive_for_pincode
 from api_v2.views import paginate
 
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
@@ -44,7 +44,7 @@ def is_deliveryguy_assigned(delivery):
 
 def notif_unassigned(delivery):
     pincode = delivery.order.delivery_address.pin_code
-    ops_managers = ops_managers_for_pincode(pincode)
+    ops_managers = ops_executive_for_pincode(pincode)
     if len(ops_managers) > 0:
         notification_type = notification_type_for_code(constants.NOTIFICATION_CODE_UNASSIGNED)
         for ops_manager in ops_managers:

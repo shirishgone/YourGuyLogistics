@@ -61,5 +61,14 @@
         "title": "COD Discrepancy",
         "description": ""
     }
+  },
+    {
+    "model": "yourguy.NotificationType",
+    "pk": 8,
+    "fields": {
+        "code": "yg_nt_08",
+        "title": "No Ops Executive for Pincode",
+        "description": ""
+    }
   }
 ]
