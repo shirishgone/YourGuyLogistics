@@ -170,6 +170,7 @@ def notify_delivery_delay():
             pass 
 
 def notify_pickup_delay(request):
+    send_email(constants.EMAIL_UNASSIGNED_ORDERS, 'test pickup delay cron', 'test body')
     date = datetime.today()
     day_start = ist_day_start(date)
     day_end = ist_day_end(date)
