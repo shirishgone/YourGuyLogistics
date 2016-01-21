@@ -13,6 +13,15 @@ from yourguy.models import OrderDeliveryStatus, Notification
 from datetime import time, datetime, timedelta
 from api_v3.utils import notification_type_for_code
 
+def notify_delivery_ids(pincode_wise_delivery_ids):
+    if len (pincode_wise_delivery_ids) > 3:
+        sub_array = pincode_wise_delivery_ids[0:3]
+        delivery_ids_string = ','.join(str(delivery_id) for delivery_id in sub_array)
+        delivery_ids_string = delivery_ids_string + 'and more..'
+    else:
+        delivery_ids_string = ','.join(str(delivery_id) for delivery_id in pincode_wise_delivery_ids)
+
+    return delivery_ids_string
 
 def assign_dg():
     # FETCH ALL TODAY ORDERS --------------------------------------------
@@ -124,7 +133,7 @@ def notify_unassigned_deliveries():
     pincodes = delivery_status_queryset.values_list('order__delivery_address__pin_code', flat = True).distinct()
     for pincode in pincodes:
         pincode_wise_delivery_ids = delivery_status_queryset.filter(order__delivery_address__pin_code= pincode).values_list('id', flat = True)
-        delivery_ids = ','.join(str(delivery_id) for delivery_id in pincode_wise_delivery_ids)
+        delivery_ids = notify_delivery_ids(pincode_wise_delivery_ids)
         ops_managers = ops_managers_for_pincode(pincode)
         if ops_managers.count() > 0:
             notification_type = notification_type_for_code(constants.NOTIFICATION_CODE_UNASSIGNED)
@@ -155,7 +164,7 @@ def notify_delivery_delay():
     pincodes = delivery_status_queryset.values_list('order__delivery_address__pin_code', flat = True).distinct()
     for pincode in pincodes:
         pincode_wise_delivery_ids = delivery_status_queryset.filter(order__delivery_address__pin_code= pincode).values_list('id', flat = True)
-        delivery_ids = ','.join(str(delivery_id) for delivery_id in pincode_wise_delivery_ids)
+        delivery_ids = notify_delivery_ids(pincode_wise_delivery_ids)
         ops_managers = ops_managers_for_pincode(pincode)
         if ops_managers.count() > 0:
             notification_type = notification_type_for_code(constants.NOTIFICATION_CODE_LATE_DELIVERY)
@@ -170,7 +179,6 @@ def notify_delivery_delay():
             pass 
 
 def notify_pickup_delay():
-    send_email(constants.EMAIL_UNASSIGNED_ORDERS, 'test pickup delay cron', 'test body')
     date = datetime.today()
     day_start = ist_day_start(date)
     day_end = ist_day_end(date)
@@ -186,7 +194,7 @@ def notify_pickup_delay():
     pincodes = delivery_status_queryset.values_list('order__pickup_address__pin_code', flat = True).distinct()
     for pincode in pincodes:
         pincode_wise_delivery_ids = delivery_status_queryset.filter(order__pickup_address__pin_code= pincode).values_list('id', flat = True)
-        delivery_ids = ','.join(str(delivery_id) for delivery_id in pincode_wise_delivery_ids)
+        delivery_ids = notify_delivery_ids(pincode_wise_delivery_ids)
         ops_managers = ops_managers_for_pincode(pincode)
         if ops_managers.count() > 0:
             notification_type = notification_type_for_code(constants.NOTIFICATION_CODE_LATE_PICKUP)
