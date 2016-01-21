@@ -7,9 +7,14 @@ from yourguy.models import Order, Address, Consumer, OrderDeliveryStatus
 import json
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
-from yourguy.models import NotificationType
+from yourguy.models import NotificationType, ServiceablePincode
 from django.shortcuts import get_object_or_404
 from yourguy.models import Employee
+
+def ops_managers_for_pincode(pincode):
+    serving_pincode = get_object_or_404(ServiceablePincode, pincode = pincode)
+    employees = Employee.objects.filter(serving_pincodes__in = [serving_pincode])
+    return employees
 
 def ops_manager_for_dg(dg):
 	employees = Employee.objects.filter(associate_delivery_guys__in = [dg])

@@ -28,7 +28,9 @@ admin.site.register(VendorAccount)
 
 admin.site.register(Consumer)
 
-admin.site.register(Order)
+class OrderAdmin(admin.ModelAdmin):
+    raw_id_fields = ('vendor','consumer','order_items','pickup_address','delivery_address','created_by_user')
+admin.site.register(Order, OrderAdmin)
 
 class DeliveryStatusAdmin(admin.ModelAdmin):
     raw_id_fields = ('order','pickup_guy','delivery_guy','pickup_proof','delivery_proof')

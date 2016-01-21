@@ -3,7 +3,7 @@ import os
 os.environ['DJANGO_SETTINGS_MODULE'] = 'server.settings'
 
 from api_v3.report import daily_report, cod_report, dg_report, vendor_report
-from api_v3.cron_jobs import assign_dg
+from api_v3.cron_jobs import assign_dg, notify_unassigned_deliveries
 from celery.schedules import crontab
 from celery.task import periodic_task
 
@@ -32,3 +32,6 @@ def vendor_task():
 def assign_dg_task():
     assign_dg()
 
+@periodic_task(run_every=(crontab(minute='*/30')), name="notify_unassigned_deliveries")
+def notify_unassigned_deliveries_task():
+    notify_unassigned_deliveries()
