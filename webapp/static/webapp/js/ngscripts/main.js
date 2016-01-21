@@ -2882,12 +2882,17 @@ ygVendors.controller('notificationCntrl', function ($scope,$state,$stateParams,$
   $scope.getNotification = function(){
     $location.search($scope.params);
     $scope.total_notifications = false;
+    $scope.show_notification_msg = false;
     cfpLoadingBar.start();
     notification.getNotification($scope.params).finally(function(){
       cfpLoadingBar.complete();
       var status = Errorhandler.getStatus();
       console.log(status)
-      if(status.data.total_notifications == 0){
+      if(status.has_error){
+        $scope.show_notification_msg = true;
+        $scope.notification_msg = status.error;
+      }
+      else if(status.data.total_notifications == 0){
         $scope.show_notification_msg = true;
       }
       else{
