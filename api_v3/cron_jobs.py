@@ -169,7 +169,7 @@ def notify_delivery_delay():
             # CANT FIND APPROPRIATE OPS_EXECUTIVE FOR THE ABOVE PINCODE
             pass 
 
-def notify_pickup_delay(request):
+def notify_pickup_delay():
     send_email(constants.EMAIL_UNASSIGNED_ORDERS, 'test pickup delay cron', 'test body')
     date = datetime.today()
     day_start = ist_day_start(date)
