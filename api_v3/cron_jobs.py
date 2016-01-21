@@ -117,7 +117,7 @@ def delivery_ids_string(pincode_wise_delivery_ids):
 
 def create_notif_for_no_ops_exec_for_pincode(pincode):
     ops_managers = ops_managers_for_pincode(pincode)
-    if ops_managers.count() > 0:
+    if len(ops_managers) > 0:
         notification_type = notification_type_for_code(constants.NOTIFICATION_CODE_NO_OPS_EXECUTIVE_FOR_PINCODE)
         for ops_manager in ops_managers:
             notification_message = constants.NOTIFICATION_MESSAGE_NO_OPS_EXEC_FOR_PINCODE%(ops_manager.user.first_name, pincode)
@@ -152,7 +152,7 @@ def notify_unassigned_deliveries():
         pincode_wise_delivery_ids = delivery_status_queryset.filter(order__delivery_address__pin_code= pincode).values_list('id', flat = True)
         delivery_ids = delivery_ids_string(pincode_wise_delivery_ids)
         ops_managers = ops_executive_for_pincode(pincode)
-        if ops_managers.count() > 0:
+        if len(ops_managers)  > 0:
             notification_type = notification_type_for_code(constants.NOTIFICATION_CODE_UNASSIGNED)            
             for ops_manager in ops_managers:
                 if check_if_notification_already_exists(notification_type, ops_manager, delivery_ids) is False:
@@ -183,7 +183,7 @@ def notify_delivery_delay():
         pincode_wise_delivery_ids = delivery_status_queryset.filter(order__delivery_address__pin_code= pincode).values_list('id', flat = True)
         delivery_ids = delivery_ids_string(pincode_wise_delivery_ids)
         ops_managers = ops_executive_for_pincode(pincode)
-        if ops_managers.count() > 0:
+        if len(ops_managers)  > 0:
             notification_type = notification_type_for_code(constants.NOTIFICATION_CODE_LATE_DELIVERY)
             for ops_manager in ops_managers:
                 if check_if_notification_already_exists(notification_type, ops_manager, delivery_ids) is False:
@@ -213,7 +213,7 @@ def notify_pickup_delay():
         pincode_wise_delivery_ids = delivery_status_queryset.filter(order__pickup_address__pin_code= pincode).values_list('id', flat = True)
         delivery_ids = delivery_ids_string(pincode_wise_delivery_ids)
         ops_managers = ops_executive_for_pincode(pincode)
-        if ops_managers.count() > 0:
+        if len(ops_managers) > 0:
             notification_type = notification_type_for_code(constants.NOTIFICATION_CODE_LATE_PICKUP)
             for ops_manager in ops_managers:
                 if check_if_notification_already_exists(notification_type, ops_manager, delivery_ids) is False:
