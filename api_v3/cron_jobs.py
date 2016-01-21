@@ -128,7 +128,7 @@ def create_notif_for_no_ops_exec_for_pincode(pincode):
 def check_if_notification_already_exists(notification_type, ops_executive, delivery_ids):
     all_notifications = ops_executive.notifications.all()
     for notification in all_notifications:
-        if notification.notification_type == notification_type and notification.delivery_id == delivery_ids:
+        if notification.notification_type == notification_type and notification.delivery_id == delivery_ids and notification.read == False:
             return True
     return False
 
@@ -162,7 +162,7 @@ def notify_unassigned_deliveries():
                     ops_manager.notifications.add(new_notification)
                     ops_manager.save()
         else:
-            create_notif_for_no_ops_exec_for_pincode()
+            create_notif_for_no_ops_exec_for_pincode(pincode)
 
 def notify_delivery_delay():
     date = datetime.today()
@@ -193,7 +193,7 @@ def notify_delivery_delay():
                     ops_manager.notifications.add(new_notification)
                     ops_manager.save()
         else:
-            create_notif_for_no_ops_exec_for_pincode()
+            create_notif_for_no_ops_exec_for_pincode(pincode)
 
 def notify_pickup_delay():
     date = datetime.today()
@@ -223,4 +223,4 @@ def notify_pickup_delay():
                     ops_manager.notifications.add(new_notification)
                     ops_manager.save()
         else:
-            create_notif_for_no_ops_exec_for_pincode()
+            create_notif_for_no_ops_exec_for_pincode(pincode)
