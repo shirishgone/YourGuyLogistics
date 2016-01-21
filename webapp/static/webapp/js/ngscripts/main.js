@@ -2886,8 +2886,14 @@ ygVendors.controller('notificationCntrl', function ($scope,$state,$stateParams,$
     notification.getNotification($scope.params).finally(function(){
       cfpLoadingBar.complete();
       var status = Errorhandler.getStatus();
-      $scope.notification_list = status.data.data;
-      $scope.total_notifications = status.data.total_notifications;
+      console.log(status)
+      if(status.data.total_notifications == 0){
+        $scope.show_notification_msg = true;
+      }
+      else{
+        $scope.notification_list = status.data.data;
+        $scope.total_notifications = status.data.total_notifications;
+      }
     });
   };
 
