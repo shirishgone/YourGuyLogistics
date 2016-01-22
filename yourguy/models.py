@@ -86,7 +86,7 @@ class NotificationType(models.Model):
 
 class Notification(models.Model):
     notification_type = models.ForeignKey(NotificationType)
-    delivery_id = models.CharField(max_length = 25, blank = True, null = True)
+    delivery_id = models.CharField(max_length = 1000, blank = True, null = True)
     message = models.CharField(max_length = 500, blank = True, null = True)
     time_stamp = models.DateTimeField(auto_now_add = True)
     read = models.BooleanField(default = False)

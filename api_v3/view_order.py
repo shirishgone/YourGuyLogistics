@@ -504,6 +504,7 @@ class OrderViewSet(viewsets.ViewSet):
         filter_time_start = request.QUERY_PARAMS.get('time_start', None)
         filter_time_end = request.QUERY_PARAMS.get('time_end', None)
         is_cod = request.QUERY_PARAMS.get('is_cod', None)
+        order_ids = request.QUERY_PARAMS.get('order_ids', None)
 
         # ORDER STATUS CHECK --------------------------------------------------
         order_statuses = []
@@ -604,6 +605,12 @@ class OrderViewSet(viewsets.ViewSet):
         # SEARCH KEYWORD FILTERING ---------------------------------------------------
         if search_query is not None:
             delivery_status_queryset = search_order(request.user, search_query)
+        # ----------------------------------------------------------------------------
+
+        # SPECIFIC ORDER IDs-----------------------------------------------------------
+        if order_ids is not None:
+            order_ids_array = order_ids.split(',')
+            delivery_status_queryset = OrderDeliveryStatus.objects.filter(id__in=order_ids_array)
         # ----------------------------------------------------------------------------
 
         total_orders_count = len(delivery_status_queryset)

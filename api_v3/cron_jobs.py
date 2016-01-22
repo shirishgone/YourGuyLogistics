@@ -106,13 +106,11 @@ def assign_dg():
     # inform_dgs_about_orders_assigned()
 
 def delivery_ids_string(pincode_wise_delivery_ids):
-    if len (pincode_wise_delivery_ids) > 2:
-        sub_array = pincode_wise_delivery_ids[0:2]
+    if len(pincode_wise_delivery_ids) > 100:
+        sub_array = pincode_wise_delivery_ids[0:100]
         delivery_ids_string = ','.join(str(delivery_id) for delivery_id in sub_array)
-        delivery_ids_string = delivery_ids_string + '& more..'
     else:
         delivery_ids_string = ','.join(str(delivery_id) for delivery_id in pincode_wise_delivery_ids)
-
     return delivery_ids_string
 
 def create_notif_for_no_ops_exec_for_pincode(pincode):
