@@ -3,8 +3,8 @@ angular.module('development',[]).constant('baseURl',{
 });
 
 angular.module('stage',[]).constant('baseURl',{
-  apiURL:'/api/v1'
-  ,V2apiURL:'/api/v2'
+  apiURL:'http://yourguytestserver.herokuapp.com/api/v1'
+  ,V2apiURL:'http://yourguytestserver.herokuapp.com/api/v2'
   ,VENDOR:'vendor'
   ,OPS:'operations'
   ,STATUS : {
@@ -167,7 +167,7 @@ ygVendors.config(function ($stateProvider, $urlRouterProvider, $httpProvider,cfp
     }
   })
   .state('home.order', {
-    url: "/order?date&vendor&dg&status&start_time&end_time&cod&page&search",
+    url: "/order?date&vendor&dg&status&start_time&end_time&cod&page&search&order_ids",
     reloadOnSearch : false,
     data :{
       requireLogin:true
@@ -643,6 +643,7 @@ ygVendors.controller('newOrderCntrl',function ($scope,$stateParams,$state,$locat
     $scope.order_time = null
     $scope.order_params.cod = undefined
     $scope.order_params.status = []
+    $scope.order_params.order_ids = undefined
     $scope.unselectOrderStatus()
   }
 
@@ -2887,7 +2888,6 @@ ygVendors.controller('notificationCntrl', function ($scope,$state,$stateParams,$
     notification.getNotification($scope.params).finally(function(){
       cfpLoadingBar.complete();
       var status = Errorhandler.getStatus();
-      // console.log(status)
       if(status.has_error){
         $scope.show_notification_msg = true;
         $scope.notification_msg = status.error;
@@ -2906,6 +2906,7 @@ ygVendors.controller('notificationCntrl', function ($scope,$state,$stateParams,$
   $scope.$on('notificationUpdated',$scope.getNotification);
 
   $scope.makeAsRead = function(notice){
+    cfpLoadingBar.start();
     notification.markAsRead(notice).finally(function(){
       var status = Errorhandler.getStatus();
       if(status.has_error){
@@ -2913,8 +2914,15 @@ ygVendors.controller('notificationCntrl', function ($scope,$state,$stateParams,$
       }
       else{
         $scope.getCount();
-        if(notice.delivery_id){
-          $state.go('home.order_details',{orderId:notice.delivery_id});
+        notice.delivery_id = notice.delivery_id.split(',');
+        if(notice.delivery_id.length == 1 && notice.delivery_id.indexOf("") === -1){
+          $state.go('home.order_details',{orderId:notice.delivery_id.join()});
+        }
+        else if(notice.delivery_id.length > 1) {
+          $state.go('home.order',{order_ids:notice.delivery_id.join()});
+        }
+        else {
+          $scope.getNotification();
         }
       }
     })
