@@ -643,6 +643,7 @@ ygVendors.controller('newOrderCntrl',function ($scope,$stateParams,$state,$locat
     $scope.order_time = null
     $scope.order_params.cod = undefined
     $scope.order_params.status = []
+    $scope.order_params.order_ids = undefined
     $scope.unselectOrderStatus()
   }
 
@@ -2887,7 +2888,6 @@ ygVendors.controller('notificationCntrl', function ($scope,$state,$stateParams,$
     notification.getNotification($scope.params).finally(function(){
       cfpLoadingBar.complete();
       var status = Errorhandler.getStatus();
-      // console.log(status)
       if(status.has_error){
         $scope.show_notification_msg = true;
         $scope.notification_msg = status.error;
@@ -2906,6 +2906,7 @@ ygVendors.controller('notificationCntrl', function ($scope,$state,$stateParams,$
   $scope.$on('notificationUpdated',$scope.getNotification);
 
   $scope.makeAsRead = function(notice){
+    cfpLoadingBar.start();
     notification.markAsRead(notice).finally(function(){
       var status = Errorhandler.getStatus();
       if(status.has_error){
@@ -2914,12 +2915,14 @@ ygVendors.controller('notificationCntrl', function ($scope,$state,$stateParams,$
       else{
         $scope.getCount();
         notice.delivery_id = notice.delivery_id.split(',');
-        console.log(notice.delivery_id.length == 1);
-        if(notice.delivery_id){
-          $state.go('home.order_details',{orderId:notice.delivery_id});
+        if(notice.delivery_id.length == 1 && notice.delivery_id.indexOf("") === -1){
+          $state.go('home.order_details',{orderId:notice.delivery_id.join()});
+        }
+        else if(notice.delivery_id.length > 1) {
+          $state.go('home.order',{order_ids:notice.delivery_id.join()});
         }
         else {
-          $state.go('home.order',{order_ids:notice.delivery_id.join()});
+          $scope.getNotification();
         }
       }
     })
