@@ -3,8 +3,8 @@ angular.module('development',[]).constant('baseURl',{
 });
 
 angular.module('stage',[]).constant('baseURl',{
-  apiURL:'/api/v1'
-  ,V2apiURL:'/api/v2'
+  apiURL:'http://yourguytestserver.herokuapp.com/api/v1'
+  ,V2apiURL:'http://yourguytestserver.herokuapp.com/api/v2'
   ,VENDOR:'vendor'
   ,OPS:'operations'
   ,STATUS : {
@@ -81,7 +81,7 @@ angular.module('production',[]).constant('baseURl',{
 });
 
 var ygVendors = angular.module('ygwebapp',['ui.router','ngCookies','ngStorage','ngAnimate','cfp.loadingBar',
-  'base64','smart-table','ui.bootstrap','gm.datepickerMultiSelect','ng-fusioncharts','ngMaterial','production'
+  'base64','smart-table','ui.bootstrap','gm.datepickerMultiSelect','ng-fusioncharts','ngMaterial','stage'
 ]);
 
 ygVendors.run(function ($rootScope, $location, $state, $localStorage,$templateCache) {
@@ -167,7 +167,7 @@ ygVendors.config(function ($stateProvider, $urlRouterProvider, $httpProvider,cfp
     }
   })
   .state('home.order', {
-    url: "/order?date&vendor&dg&status&start_time&end_time&cod&page&search",
+    url: "/order?date&vendor&dg&status&start_time&end_time&cod&page&search&order_ids",
     reloadOnSearch : false,
     data :{
       requireLogin:true
@@ -2913,8 +2913,13 @@ ygVendors.controller('notificationCntrl', function ($scope,$state,$stateParams,$
       }
       else{
         $scope.getCount();
+        notice.delivery_id = notice.delivery_id.split(',');
+        console.log(notice.delivery_id.length == 1);
         if(notice.delivery_id){
           $state.go('home.order_details',{orderId:notice.delivery_id});
+        }
+        else {
+          $state.go('home.order',{order_ids:notice.delivery_id.join()});
         }
       }
     })
