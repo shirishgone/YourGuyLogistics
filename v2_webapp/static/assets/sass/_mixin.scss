@@ -1,21 +1,34 @@
 $primary-blue-colors: (
-  '50'    :#E3F2FD,
-  '100'   :#BBDEFB,
-  '200'   :#90CAF9,
-  '300'   :#64B5F6,
-  '400'   :#42A5F5,
-  '500'   :#2196F3,
-  '600'   :#1E88E5,
-  '700'   :#1976D2,
-  '800'   :#1565C0,
-  '900'   :#0D47A1,
-  'A100'  :#82B1FF,
-  'A200'  :#448AFF,
-  'A400'  :#2979FF,
-  'A700'  :#2962FF,
+  '50'  : #E7FAFF,
+  '100' : #D3F5FF,
+  '200' : #B3EEFF,
+  '300' : #89DAF1,
+  '400' : #6DD2ED,
+  '500' : #52C9EA,
+  '600' : #37C0E7,
+  '700' : #1CB8E3,
+  '800' : #18A2CB,
+  '900' : #158CAD,
+  'A100': #C4EEF9,
+  'A200': #78D7EF,
+  'A400': #1FC0E7,
+  'A700': #31AEF7,
 );
 
 $grey-colors: (
+  '50'  :#FAFAFA,
+  '100' :#F5F5F5,
+  '200' :#EEEEEE,
+  '300' :#E0E0E0,
+  '400' :#BDBDBD,
+  '500' :#9E9E9E,
+  '600' :#757575,
+  '700' :#616161,
+  '800' :#424242,
+  '900' :#212121
+);
+
+$blue-grey-colors: (
   '50' : #ECEFF1, 
   '100': #CFD8DC,
   '200': #B0BEC5,
@@ -28,10 +41,35 @@ $grey-colors: (
   '900': #263238
 );
 
+$orange-accent-color : (
+    '50'  : #FFF9F1,
+    '100' : #FFEFDA,
+    '200' : #FFEED6,
+    '300' : #FDD9A6,
+    '400' : #FDCD88,
+    '500' : #FCC06A,
+    '600' : #FBB34C,
+    '700' : #FBA72E,
+    '800' : #FA9A10,
+    '900' : #E78A05,
+    'A100': #FFF6CF,
+    'A200': #FFF0C7,
+    'A400': #FDD393,
+    'A700': #FBB134,
+);
+
 @function primary-color($key: '500') {
   @return map-get($primary-blue-colors, $key);
 }
 
 @function grey-color($key: '500') {
   @return map-get($grey-colors, $key);
+}
+
+@function blue-grey-color($key: '500') {
+  @return map-get($blue-grey-colors, $key);
+}
+
+@function orange-accent-color($key: '500') {
+  @return map-get($orange-accent-color, $key);
 }

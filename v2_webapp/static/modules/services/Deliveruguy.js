@@ -8,7 +8,7 @@
 					isArray: true
 				}
 			}),
-			dgPageQuery : $resource(constants.v2baseUrl+'delivery_guy/:id/',{id:"@id"},{
+			dgPageQuery : $resource(constants.v3baseUrl+'deliveryguy/:id/',{id:"@id"},{
 				query :{
 					method: 'GET',
 					isArray: false

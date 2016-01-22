@@ -39,3 +39,39 @@ body {
 .bagde-warn {
 	background-color: $warn-color;
 }
+
+
+.table-list {
+	width: 100%;
+	.table-header {
+		width: 100%;
+		padding: 0 20px;
+		background-color: orange-accent-color('400');;
+		tr {
+			th {
+				text-align: left;
+				padding: 15px;
+				color: grey-color('600');
+				font-size: 14px;
+			}
+		}
+	}
+	.table-body {
+		overflow-y: auto;
+		width: 100%;
+		tr {
+			padding-left: 20px;
+			border-bottom: 1px solid grey-color('300');
+			cursor: pointer;
+			td {
+				text-align: left;
+				padding: 15px;
+				color: grey-color('600');
+				font-size: 12px;
+			}
+			&:hover { 
+				background-color: orange-accent-color('100');
+			}
+		}
+	}
+}

@@ -19,11 +19,11 @@
 				font-size: 12px;
 			}
 			&:hover {
-				background-color: primary-color('50');
+				background-color: primary-color('100');
 			}
 		}
 		md-list-item.active {
-			background-color: primary-color('100');
+			background-color: primary-color('200');
 		}
 	}
 	md-content,{

@@ -29,7 +29,7 @@ body {
 
 /* line 22, ../sass/modules/_components.scss */
 .order-id {
-  color: #607D8B;
+  color: #9E9E9E;
   font-size: 12px;
   font-weight: 600;
   margin: 5px 5px;
@@ -45,12 +45,52 @@ body {
   -webkit-border-radius: 3px;
   border-radius: 3px;
   font-size: 10px;
-  background-color: #2196F3;
+  background-color: #52C9EA;
 }
 
 /* line 39, ../sass/modules/_components.scss */
 .bagde-warn {
-  background-color: #FF5722;
+  background-color: #FFCC80;
+}
+
+/* line 44, ../sass/modules/_components.scss */
+.table-list {
+  width: 100%;
+}
+/* line 46, ../sass/modules/_components.scss */
+.table-list .table-header {
+  width: 100%;
+  padding: 0 20px;
+  background-color: #FDCD88;
+}
+/* line 51, ../sass/modules/_components.scss */
+.table-list .table-header tr th {
+  text-align: left;
+  padding: 15px;
+  color: #757575;
+  font-size: 14px;
+}
+/* line 59, ../sass/modules/_components.scss */
+.table-list .table-body {
+  overflow-y: auto;
+  width: 100%;
+}
+/* line 62, ../sass/modules/_components.scss */
+.table-list .table-body tr {
+  padding-left: 20px;
+  border-bottom: 1px solid #E0E0E0;
+  cursor: pointer;
+}
+/* line 66, ../sass/modules/_components.scss */
+.table-list .table-body tr td {
+  text-align: left;
+  padding: 15px;
+  color: #757575;
+  font-size: 12px;
+}
+/* line 72, ../sass/modules/_components.scss */
+.table-list .table-body tr:hover {
+  background-color: #FFEFDA;
 }
 
 /* line 1, ../sass/modules/_login.scss */
@@ -73,18 +113,18 @@ body {
 /* line 1, ../sass/modules/_home.scss */
 .site-sidenav {
   background-color: #ffffff;
-  color: #2196F3;
+  color: #52C9EA;
   max-width: 280px;
 }
 /* line 5, ../sass/modules/_home.scss */
 .site-sidenav .tab-liks {
-  color: #455A64;
+  color: #616161;
   text-decoration: none;
 }
 /* line 9, ../sass/modules/_home.scss */
 .site-sidenav md-list {
   padding: 0px;
-  color: #2196F3;
+  color: #52C9EA;
 }
 /* line 12, ../sass/modules/_home.scss */
 .site-sidenav md-list md-list-item {
@@ -101,11 +141,11 @@ body {
 }
 /* line 21, ../sass/modules/_home.scss */
 .site-sidenav md-list md-list-item:hover {
-  background-color: #E3F2FD;
+  background-color: #D3F5FF;
 }
 /* line 25, ../sass/modules/_home.scss */
 .site-sidenav md-list md-list-item.active {
-  background-color: #BBDEFB;
+  background-color: #B3EEFF;
 }
 /* line 29, ../sass/modules/_home.scss */
 .site-sidenav md-content {
@@ -115,7 +155,7 @@ body {
 /* line 33, ../sass/modules/_home.scss */
 .site-sidenav .md-subheader {
   background-color: #ffffff;
-  color: #1565C0;
+  color: #18A2CB;
 }
 /* line 37, ../sass/modules/_home.scss */
 .site-sidenav .md-subheader .md-subheader-inner {
@@ -125,13 +165,13 @@ body {
 /* line 42, ../sass/modules/_home.scss */
 .nav-header {
   text-align: center;
-  background-image: url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4gPHN2ZyB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJncmFkIiBncmFkaWVudFVuaXRzPSJvYmplY3RCb3VuZGluZ0JveCIgeDE9IjAuNSIgeTE9IjAuMCIgeDI9IjAuNSIgeTI9IjEuMCI+PHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzFlODhlNSIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzE1NjVjMCIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHg9IjAiIHk9IjAiIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JhZCkiIC8+PC9zdmc+IA==');
+  background-image: url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4gPHN2ZyB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJncmFkIiBncmFkaWVudFVuaXRzPSJvYmplY3RCb3VuZGluZ0JveCIgeDE9IjAuNSIgeTE9IjAuMCIgeDI9IjAuNSIgeTI9IjEuMCI+PHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzM3YzBlNyIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzE4YTJjYiIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHg9IjAiIHk9IjAiIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JhZCkiIC8+PC9zdmc+IA==');
   background-size: 100%;
-  background-image: -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #1e88e5), color-stop(100%, #1565c0));
-  background-image: -moz-linear-gradient(#1e88e5, #1565c0);
-  background-image: -webkit-linear-gradient(#1e88e5, #1565c0);
-  background-image: linear-gradient(#1e88e5, #1565c0);
-  border: #1565C0;
+  background-image: -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #37c0e7), color-stop(100%, #18a2cb));
+  background-image: -moz-linear-gradient(#37c0e7, #18a2cb);
+  background-image: -webkit-linear-gradient(#37c0e7, #18a2cb);
+  background-image: linear-gradient(#37c0e7, #18a2cb);
+  border: #18A2CB;
 }
 /* line 46, ../sass/modules/_home.scss */
 .nav-header a {
@@ -147,7 +187,7 @@ body {
 
 /* line 1, ../sass/modules/_opsOrder.scss */
 .order-toolbar.selected {
-  background-color: #64B5F6 !important;
+  background-color: #89DAF1 !important;
   color: #ffffff !important;
 }
 
@@ -183,7 +223,7 @@ body {
 
 /* line 28, ../sass/modules/_opsOrder.scss */
 .opsOrder {
-  background-color: #CFD8DC !important;
+  background-color: #F5F5F5 !important;
   overflow-y: hidden;
   padding: 0;
 }
@@ -203,7 +243,7 @@ body {
 }
 /* line 42, ../sass/modules/_opsOrder.scss */
 .opsOrder .order-list .footer {
-  border-top: 1px solid #90A4AE;
+  border-top: 1px solid #E0E0E0;
   min-height: 50px;
   max-height: 50px;
   padding: 5px;
@@ -216,7 +256,7 @@ body {
 /* line 50, ../sass/modules/_opsOrder.scss */
 .opsOrder .order-list .footer .stats p, .opsOrder .order-list .footer .pagination p {
   font-size: 12px;
-  color: #455A64;
+  color: #616161;
   margin: 10px 10px;
 }
 /* line 57, ../sass/modules/_opsOrder.scss */
@@ -251,12 +291,12 @@ body {
   margin: 0;
   font-size: 14px;
   text-transform: uppercase;
-  color: #455A64;
+  color: #616161;
 }
 /* line 80, ../sass/modules/_opsOrder.scss */
 .opsOrder .order-list .list .card-content .customer span, .opsOrder .order-list .list .card-content .vendor span, .opsOrder .order-list .list .card-content .dg span {
   font-size: 12px;
-  color: #546E7A;
+  color: #757575;
 }
 /* line 86, ../sass/modules/_opsOrder.scss */
 .opsOrder .order-list .list .card-action {
@@ -271,18 +311,18 @@ body {
   margin: 0;
   font-size: 11px;
   text-transform: uppercase;
-  color: #455A64;
+  color: #616161;
 }
 /* line 98, ../sass/modules/_opsOrder.scss */
 .opsOrder .order-list .list .card-action .order-time span, .opsOrder .order-list .list .card-action .payment span {
   font-size: 10px;
-  color: #546E7A;
+  color: #757575;
 }
 
 /* line 1, ../sass/modules/_pagination.scss */
 .ydPagination {
-  background-color: #ECEFF1 !important;
-  border-top: 1px solid #90A4AE;
+  background-color: #F5F5F5 !important;
+  border-top: 1px solid #E0E0E0;
   min-height: 50px;
   max-height: 50px;
   padding: 5px;
@@ -295,7 +335,7 @@ body {
 /* line 10, ../sass/modules/_pagination.scss */
 .ydPagination .stats p, .ydPagination .pagination p {
   font-size: 12px;
-  color: #455A64;
+  color: #616161;
   margin: 10px 10px;
 }
 
@@ -303,18 +343,25 @@ body {
 .dgList {
   padding: 0px;
   overflow-y: hidden;
+  height: 100%;
+  background-color: #F5F5F5 !important;
 }
-/* line 4, ../sass/modules/_dgList.scss */
+/* line 6, ../sass/modules/_dgList.scss */
 .dgList .dg-list {
   padding: 0px;
 }
-/* line 6, ../sass/modules/_dgList.scss */
+/* line 8, ../sass/modules/_dgList.scss */
 .dgList .dg-list .list {
   z-index: 9;
-  overflow-y: auto;
-  padding: 5px 10px;
+  overflow: hidden;
+  padding: 10px;
 }
-/* line 11, ../sass/modules/_dgList.scss */
+/* line 12, ../sass/modules/_dgList.scss */
+.dgList .dg-list .list md-content {
+  overflow: hidden;
+}
+/* line 16, ../sass/modules/_dgList.scss */
 .dgList .dg-list .footer {
+  height: 50px;
   z-index: 10;
 }
