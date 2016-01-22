@@ -132,6 +132,38 @@ def check_if_notification_already_exists(notification_type, ops_executive, deliv
             return True
     return False
 
+def notify_unassigned_pickup():
+    date = datetime.today()
+    day_start = ist_day_start(date)
+    day_end = ist_day_end(date)
+
+    delivery_status_queryset = OrderDeliveryStatus.objects.filter(date__gte=day_start, date__lte=day_end)
+    delivery_status_queryset = delivery_status_queryset.filter(Q(pickup_guy=None))
+    delivery_status_queryset = delivery_status_queryset.filter(
+        Q(order_status=constants.ORDER_STATUS_PLACED) |
+        Q(order_status=constants.ORDER_STATUS_QUEUED) )
+
+    notif_datetime = datetime.now() + timedelta(hours=2, minutes=0)
+    delivery_status_queryset = delivery_status_queryset.filter(order__pickup_datetime__lte=notif_datetime)
+
+    pincodes = delivery_status_queryset.values_list('order__pickup_address__pin_code', flat = True).distinct()
+    for pincode in pincodes:
+        pincode_wise_delivery_ids = delivery_status_queryset.filter(order__pickup_address__pin_code= pincode).values_list('id', flat = True)
+        delivery_ids = delivery_ids_string(pincode_wise_delivery_ids)
+        ops_managers = ops_executive_for_pincode(pincode)
+        if len(ops_managers)  > 0:
+            notification_type = notification_type_for_code(constants.NOTIFICATION_CODE_UNASSIGNED_PICKUP)
+            for ops_manager in ops_managers:
+                if check_if_notification_already_exists(notification_type, ops_manager, delivery_ids) is False:
+                    notification_message = constants.NOTIFICATION_MESSAGE_UNASSIGNED_PICKUP%(ops_manager.user.first_name, delivery_ids)
+                    new_notification = Notification.objects.create(notification_type = notification_type, 
+                        delivery_id = delivery_ids, message = notification_message)
+                    ops_manager.notifications.add(new_notification)
+                    ops_manager.save()
+        else:
+            create_notif_for_no_ops_exec_for_pincode(pincode)
+
+
 def notify_unassigned_deliveries():
     date = datetime.today()
     day_start = ist_day_start(date)
@@ -153,10 +185,10 @@ def notify_unassigned_deliveries():
         delivery_ids = delivery_ids_string(pincode_wise_delivery_ids)
         ops_managers = ops_executive_for_pincode(pincode)
         if len(ops_managers)  > 0:
-            notification_type = notification_type_for_code(constants.NOTIFICATION_CODE_UNASSIGNED)            
+            notification_type = notification_type_for_code(constants.NOTIFICATION_CODE_UNASSIGNED_DELIVERY)            
             for ops_manager in ops_managers:
                 if check_if_notification_already_exists(notification_type, ops_manager, delivery_ids) is False:
-                    notification_message = constants.NOTIFICATION_MESSAGE_UNASSIGNED%(ops_manager.user.first_name, delivery_ids)
+                    notification_message = constants.NOTIFICATION_MESSAGE_UNASSIGNED_DELIVERY%(ops_manager.user.first_name, delivery_ids)
                     new_notification = Notification.objects.create(notification_type = notification_type, 
                         delivery_id = delivery_ids, message = notification_message)
                     ops_manager.notifications.add(new_notification)
