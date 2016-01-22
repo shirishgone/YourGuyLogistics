@@ -168,7 +168,7 @@ class VendorAccount(models.Model):
     pricing = models.FloatField(default = 0.0)
     
     pan = models.CharField(max_length = 50, blank = True)
-    billing_address = models.ForeignKey(Address, related_name='billing_address', on_delete = models.CASCADE, null = True)
+    billing_address = models.ForeignKey(Address, related_name='billing_address', null = True)
     last_update_date = models.DateTimeField(auto_now_add = True)
     
     # Optional Fields
@@ -334,8 +334,8 @@ class Order(models.Model):
     pickup_datetime = models.DateTimeField()
     delivery_datetime = models.DateTimeField(blank = True, null = True)
     
-    pickup_address = models.ForeignKey(Address, related_name='pickup_address', on_delete = models.CASCADE)
-    delivery_address = models.ForeignKey(Address, related_name='delivery_address', on_delete = models.CASCADE)
+    pickup_address = models.ForeignKey(Address, related_name='pickup_address')
+    delivery_address = models.ForeignKey(Address, related_name='delivery_address')
     
     # Auto Generated Fields =====
     created_date_time = models.DateTimeField(auto_now_add = True)
