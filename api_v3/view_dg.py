@@ -5,8 +5,7 @@ from django.db.models import Q
 from django.db.models.functions import Lower
 from django.shortcuts import get_object_or_404
 from django.utils.dateparse import parse_datetime
-from rest_framework import status, authentication
-from rest_framework import viewsets
+from rest_framework import status, authentication, viewsets
 from rest_framework.decorators import api_view
 from rest_framework.decorators import detail_route, list_route
 from rest_framework.decorators import authentication_classes, permission_classes
@@ -15,8 +14,9 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from api_v3 import constants
-from api_v3.utils import paginate, user_role, ist_day_start, ist_day_end
-from yourguy.models import DeliveryGuy, DGAttendance, Location, OrderDeliveryStatus
+from api_v3.utils import paginate, user_role, ist_day_start, ist_day_end, is_userexists, create_token, assign_usergroup
+from yourguy.models import DeliveryGuy, DGAttendance, Location, OrderDeliveryStatus, User, Employee, DeliveryTeamLead, \
+    Area, Picture
 
 
 def dg_list_dict(delivery_guy, attendance, no_of_assigned_orders, no_of_executed_orders, worked_hours):
@@ -246,6 +246,100 @@ class DGViewSet(viewsets.ModelViewSet):
                 "total_dg_count": total_dg_count
             }
             return Response(content, status=status.HTTP_200_OK)
+
+    def create(self, request):
+        role = user_role(request.user)
+        if role == constants.OPERATIONS:
+
+            try:
+                role = request.data['role']
+                phone_number = request.data['phone_number']
+                password = request.data['password']
+                name = request.data['name']
+                area_ids = request.data.get('area_ids')
+                shift_start_datetime = request.data.get('shift_start_datetime')
+                shift_end_datetime = request.data.get('shift_end_datetime')
+                transportation_mode = request.data.get('transportation_mode')
+                ops_manager_ids = request.data.get('ops_manager_ids')
+                team_lead_ids = request.data.get('team_lead_ids')
+                profile_picture = request.data.get('profile_pic_name')
+
+            except Exception as e:
+                content = {
+                    'error': 'Incomplete params',
+                    'description': 'MANDATORY: role, phone_number, password, name. '
+                                   'OPTIONAL: area_ids, shift_start_datetime, shift_end_datetime, '
+                                   'transportation_mode, ops_manager_ids, team_lead_ids, profile_picture'
+                }
+                return Response(content, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            content = {
+                'error': 'API Access limited.',
+                'description': 'You cant access this API'
+            }
+            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+
+        # CHECK IF USER EXISTS  -----------------------------------
+        if is_userexists(phone_number):
+            content = {
+                'error': 'User already exists',
+                'description': 'User with same phone number already exists'
+            }
+            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+        # ---------------------------------------------------------------
+        user = User.objects.create_user(username=phone_number, password=password, first_name=name)
+        user.save()
+
+        if role == constants.DELIVERY_GUY:
+            token = create_token(user, constants.DELIVERY_GUY)
+            delivery_guy = DeliveryGuy.objects.create(user=user)
+            assign_usergroup(user)
+
+            delivery_guy.is_active = True
+            delivery_guy.save()
+
+            if len(area_ids) != 0:
+                for single_area_id in area_ids:
+                    area_id = single_area_id
+                    area = get_object_or_404(Area, id=area_id)
+                    delivery_guy.area = area
+
+            if shift_start_datetime is not None:
+                delivery_guy.shift_start_datetime = shift_start_datetime
+
+            if shift_end_datetime is not None:
+                delivery_guy.shift_end_datetime = shift_end_datetime
+
+            if transportation_mode is not None:
+                delivery_guy.transportation_mode = transportation_mode
+
+            if len(ops_manager_ids) != 0:
+                for single_ops_manager_id in ops_manager_ids:
+                    ops_manager_id = single_ops_manager_id
+                    ops_manager = get_object_or_404(Employee, id=ops_manager_id)
+                    ops_manager.associate_delivery_guys.add(delivery_guy)
+
+            if len(team_lead_ids) != 0 and delivery_guy.is_teamlead is False:
+                for single_team_lead_id in team_lead_ids:
+                    team_lead_id = single_team_lead_id
+                    team_lead = get_object_or_404(DeliveryTeamLead, id=team_lead_id)
+                    team_lead.associate_delivery_guys.add(delivery_guy)
+
+            if profile_picture is not None:
+                profile_pic = Picture.objects.create(name=profile_picture)
+                delivery_guy.profile_picture = profile_pic
+
+            delivery_guy.save()
+        else:
+            token = None
+
+        if token is not None:
+            content = {'auth_token': token.key}
+        else:
+            content = {'auth_token': None,
+                       'user created for group: ': role}
+
+        return Response(content, status=status.HTTP_201_CREATED)
 
     @detail_route(methods=['put'])
     def check_in(self, request, pk=None):
