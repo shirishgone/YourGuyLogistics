@@ -339,6 +339,41 @@ class DGViewSet(viewsets.ModelViewSet):
         return Response(content, status=status.HTTP_201_CREATED)
 
     @detail_route(methods=['put'])
+    def deactivate(self, request, pk=None):
+        role = user_role(request.user)
+        try:
+            deactivate_reason = request.data['deactivate_reason']
+        except Exception as e:
+                content = {
+                    'error': 'Incomplete params',
+                    'description': 'MANDATORY: deactivate_reason'
+                }
+                return Response(content, status=status.HTTP_400_BAD_REQUEST)
+
+        if role == constants.OPERATIONS:
+            delivery_guy = get_object_or_404(DeliveryGuy, id=pk)
+            if delivery_guy.is_active is True:
+                delivery_guy.is_active = False
+                delivery_guy.save()
+                content = {
+                    'delivery_guy': '%s %s is deactivated' %(delivery_guy.user.first_name, delivery_guy.user.last_name),
+                    'deactivate_reason': deactivate_reason
+                }
+                return Response(content, status=status.HTTP_200_OK)
+            else:
+                content = {
+                    'error': 'DG already deactivated',
+                    'description': 'This dg had already been deactivated'
+                }
+                return Response(content, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            content = {
+                'error': 'API Access limited.',
+                'description': 'You cant access this API'
+            }
+            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+
+    @detail_route(methods=['put'])
     def check_in(self, request, pk=None):
         app_version = request.data.get('app_version')
         latitude = request.data.get('latitude')
