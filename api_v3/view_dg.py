@@ -365,6 +365,92 @@ class DGViewSet(viewsets.ModelViewSet):
         return Response(content, status=status.HTTP_201_CREATED)
 
     @detail_route(methods=['put'])
+    def edit_dg_details(self, request, pk=None):
+        try:
+            role = user_role(request.user)
+            first_name = request.data.get('first_name')
+            last_name = request.data.get('last_name')
+            area_ids = request.data.get('area_ids')
+            shift_start_datetime = request.data.get('shift_start_datetime')
+            shift_end_datetime = request.data.get('shift_end_datetime')
+            transportation_mode = request.data.get('transportation_mode')
+            ops_manager_ids = request.data.get('ops_manager_ids')
+            team_lead_ids = request.data.get('team_lead_ids')
+            profile_picture = request.data.get('profile_pic_name')
+        except Exception as e:
+                content = {
+                    'error': 'Only following params can be edited',
+                    'description': 'OPTIONAL: first_name, last_name, area_ids, shift_start_datetime, '
+                                   'shift_end_datetime, transportation_mode, ops_manager_ids, team_lead_ids, '
+                                   'profile_picture'
+                }
+                return Response(content, status=status.HTTP_400_BAD_REQUEST)
+
+        if role == constants.VENDOR:
+            content = {
+                'error': 'You don\'t have permissions to view delivery guy info'
+            }
+            return Response(content, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        else:
+            delivery_guy = get_object_or_404(DeliveryGuy, id=pk)
+
+            if delivery_guy.is_active:
+                if first_name is not None:
+                    delivery_guy.user.first_name = first_name
+                    delivery_guy.user.save()
+
+                if last_name is not None:
+                    delivery_guy.user.last_name = last_name
+                    delivery_guy.user.save()
+
+                if area_ids is not None:
+                    for single_area_id in area_ids:
+                        area_id = single_area_id
+                        area = get_object_or_404(Area, id=area_id)
+                        delivery_guy.area = area
+                        delivery_guy.area.save()
+
+                if shift_start_datetime is not None:
+                    delivery_guy.shift_start_datetime = shift_start_datetime
+
+                if shift_end_datetime is not None:
+                    delivery_guy.shift_end_datetime = shift_end_datetime
+
+                if transportation_mode is not None:
+                    delivery_guy.transportation_mode = transportation_mode
+
+                if ops_manager_ids is not None:
+                    for single_ops_manager_id in ops_manager_ids:
+                        ops_manager_id = single_ops_manager_id
+                        ops_manager = get_object_or_404(Employee, id=ops_manager_id)
+                        ops_manager.associate_delivery_guys.add(delivery_guy)
+                        ops_manager.save()
+
+                if team_lead_ids is not None and delivery_guy.is_teamlead is False:
+                    for single_team_lead_id in team_lead_ids:
+                        team_lead_id = single_team_lead_id
+                        team_lead = get_object_or_404(DeliveryTeamLead, id=team_lead_id)
+                        team_lead.associate_delivery_guys.add(delivery_guy)
+                        team_lead.save()
+
+                if profile_picture is not None:
+                    profile_pic = Picture.objects.create(name=profile_picture)
+                    delivery_guy.profile_picture = profile_pic
+
+                delivery_guy.save()
+
+                content = {
+                    "description": 'Delivery guy updated'
+                }
+                return Response(content, status=status.HTTP_200_OK)
+
+            else:
+                content = {
+                    'error': "You can only edit active dg"
+                }
+                return Response(content, status=status.HTTP_400_BAD_REQUEST)
+
+    @detail_route(methods=['put'])
     def deactivate(self, request, pk=None):
         role = user_role(request.user)
         try:
