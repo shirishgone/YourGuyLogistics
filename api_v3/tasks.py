@@ -3,7 +3,7 @@ import os
 os.environ['DJANGO_SETTINGS_MODULE'] = 'server.settings'
 
 from api_v3.report import daily_report, cod_report, dg_report, vendor_report
-from api_v3.cron_jobs import assign_dg, notify_unassigned_deliveries
+from api_v3.cron_jobs import assign_dg, notify_unassigned_deliveries, notify_delivery_delay, notify_pickup_delay, notify_unassigned_pickup
 from celery.schedules import crontab
 from celery.task import periodic_task
 
@@ -35,3 +35,15 @@ def assign_dg_task():
 @periodic_task(run_every=(crontab(minute='*/30')), name="notify_unassigned_deliveries")
 def notify_unassigned_deliveries_task():
     notify_unassigned_deliveries()
+
+@periodic_task(run_every=(crontab(minute='*/10')), name="notify_delivery_delay")
+def notify_delivery_delay_task():
+    notify_delivery_delay()
+
+@periodic_task(run_every=(crontab(minute='*/10')), name="notify_pickup_delay")
+def notify_pickup_delay_task():
+    notify_pickup_delay()  
+
+@periodic_task(run_every=(crontab(minute='*/30')), name="notify_unassigned_pickup")
+def notify_unassigned_pickup_task():
+	notify_unassigned_pickup()

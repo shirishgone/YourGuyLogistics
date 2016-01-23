@@ -16,9 +16,24 @@ from server import settings
 from yourguy.models import Order, OrderDeliveryStatus, VendorAgent, Consumer, Employee, NotificationType, DeliveryAction, ServiceablePincode
 
 def ops_managers_for_pincode(pincode):
-    serving_pincode = get_object_or_404(ServiceablePincode, pincode = pincode)
-    employees = Employee.objects.filter(serving_pincodes__in = [serving_pincode])
-    return employees
+    result = []
+    try:
+        serving_pincode = get_object_or_404(ServiceablePincode, pincode = pincode)
+        result = Employee.objects.filter(Q(serving_pincodes__in=[serving_pincode]) &
+            Q(department='operations_manager'))
+        
+        return result
+    except Exception as e:
+        return result
+
+def ops_executive_for_pincode(pincode):
+    result = []
+    try:
+        serving_pincode = get_object_or_404(ServiceablePincode, pincode = pincode)
+        result = Employee.objects.filter(serving_pincodes__in = [serving_pincode])
+        return result
+    except Exception as e:
+        return result
 
 def ops_manager_for_dg(dg):
     employees = Employee.objects.filter(associate_delivery_guys__in = [dg])
