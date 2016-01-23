@@ -19,7 +19,7 @@ from api.views import user_role, ist_day_start, ist_day_end, is_userexists, is_c
 from api.views import is_today_date, log_exception, ist_datetime
 
 from api_v2.utils import is_pickup_time_acceptable, is_consumer_has_same_address_already, is_correct_pincode, is_vendor_has_same_address_already
-from api_v2.utils import notification_type_for_code, ops_manager_for_dg, ops_managers_for_pincode
+from api_v2.utils import notification_type_for_code, ops_manager_for_dg, ops_executive_for_pincode
 from api_v2.views import paginate
 
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
@@ -44,7 +44,7 @@ def is_deliveryguy_assigned(delivery):
 
 def notif_unassigned(delivery):
     pincode = delivery.order.delivery_address.pin_code
-    ops_managers = ops_managers_for_pincode(pincode)
+    ops_managers = ops_executive_for_pincode(pincode)
     if len(ops_managers) > 0:
         notification_type = notification_type_for_code(constants.NOTIFICATION_CODE_UNASSIGNED)
         for ops_manager in ops_managers:
@@ -557,6 +557,7 @@ class OrderViewSet(viewsets.ViewSet):
         filter_time_start = request.QUERY_PARAMS.get('time_start', None)
         filter_time_end = request.QUERY_PARAMS.get('time_end', None)
         is_cod = request.QUERY_PARAMS.get('is_cod', None)
+        order_ids = request.QUERY_PARAMS.get('order_ids', None)
 
         # ORDER STATUS CHECK --------------------------------------------------        
         order_statuses = []
@@ -646,6 +647,12 @@ class OrderViewSet(viewsets.ViewSet):
         if search_query is not None:
             delivery_status_queryset = search_order(request.user, search_query)
         # ----------------------------------------------------------------------------             
+
+        # SPECIFIC ORDER IDs-----------------------------------------------------------
+        if order_ids is not None:
+            order_ids_array = order_ids.split(',')
+            delivery_status_queryset = OrderDeliveryStatus.objects.filter(id__in=order_ids_array)
+        # ----------------------------------------------------------------------------
 
         total_orders_count = len(delivery_status_queryset)
         unassigned_orders_count = delivery_status_queryset.filter(Q(pickup_guy = None) & Q(delivery_guy = None)).count()
@@ -1701,27 +1708,28 @@ class OrderViewSet(viewsets.ViewSet):
             }
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
         # -----------------------------------------------------------------------        
-        
-        # INFORM OPERATIONS IF THERE IS ANY COD DISCREPENCIES -------------------
-        try:
-            delivery_guy = get_object_or_404(DeliveryGuy, user = request.user)
-            ops_managers = ops_manager_for_dg(delivery_guy)
-            if ops_managers.count() == 0:
+
+        # INFORM OPERATIONS IF THERE IS ANY COD DISCREPENCIES -------------------        
+        if is_order_updated is True and float(delivery_status.order.cod_amount) > 0.0 and cod_collected_amount is not None and (float(cod_collected_amount) < float(delivery_status.order.cod_amount) or float(cod_collected_amount) > float(delivery_status.order.cod_amount) ):
+            try:
+                delivery_guy = get_object_or_404(DeliveryGuy, user = request.user)
+                ops_managers = ops_manager_for_dg(delivery_guy)
+                if ops_managers.count() == 0:
+                    send_cod_discrepency_email(delivery_status, request.user)
+                else:
+                    notification_type = notification_type_for_code(constants.NOTIFICATION_CODE_COD_DISPRENCY)
+                    notification_message = constants.NOTIFICATION_MESSAGE_COD_DISCREPENCY%(request.user.first_name, delivery_status.cod_collected_amount, delivery_status.order.cod_amount, delivery_status.id)
+                    new_notification = Notification.objects.create(notification_type = notification_type, 
+                        delivery_id = pk, 
+                        message = notification_message)
+                    for ops_manager in ops_managers:
+                        ops_manager.notifications.add(new_notification)
+                        ops_manager.save()
+
+            except Exception as e:
                 send_cod_discrepency_email(delivery_status, request.user)
-            else:
-                notification_type = notification_type_for_code(constants.NOTIFICATION_CODE_COD_DISPRENCY)
-                notification_message = constants.NOTIFICATION_MESSAGE_COD_DISCREPENCY%(request.user.first_name, delivery_status.cod_collected_amount, delivery_status.order.cod_amount, delivery_status.id)
-                new_notification = Notification.objects.create(notification_type = notification_type, 
-                    delivery_id = pk, 
-                    message = notification_message)
-                for ops_manager in ops_managers:
-                    ops_manager.notifications.add(new_notification)
-                    ops_manager.save()
-
-        except Exception, e:
-            send_cod_discrepency_email(delivery_status, request.user)
         # -----------------------------------------------------------------------       
-
+        
         # Final Response ---------------------------------------------------------
         if is_order_updated:            
             # CONFIRMATION MESSAGE TO CUSTOMER --------------------------------------
