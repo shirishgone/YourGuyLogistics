@@ -45,7 +45,7 @@ def dg_details_dict(delivery_guy):
     dg_detail_dict = {
         'id': delivery_guy.id,
         'employee_code': delivery_guy.employee_code,
-        'name': delivery_guy.user.first_name,
+        'name': "%s %s" %(delivery_guy.user.first_name, delivery_guy.user.last_name),
         'phone_number': delivery_guy.user.username,
         'app_version': delivery_guy.app_version,
         'status': delivery_guy.status,
@@ -53,11 +53,14 @@ def dg_details_dict(delivery_guy):
         'shift_end_datetime': delivery_guy.shift_end_datetime,
         'current_load': delivery_guy.current_load,
         'capacity': delivery_guy.capacity,
-        'area': '',
         'battery_percentage': delivery_guy.battery_percentage,
         'last_connected_time': delivery_guy.last_connected_time,
         'assignment_type': delivery_guy.assignment_type,
-        'transportation_mode': delivery_guy.assignment_type
+        'transportation_mode': delivery_guy.transportation_mode,
+        'profile_picture':'',
+        'area': [],
+        'ops_managers': [],
+        'team_leads': []
     }
     return dg_detail_dict
 
@@ -102,8 +105,31 @@ class DGViewSet(viewsets.ModelViewSet):
             }
             return Response(content, status=status.HTTP_405_METHOD_NOT_ALLOWED)
         else:
-            delivery_guy = get_object_or_404(DeliveryGuy, id = pk)
+            delivery_guy = get_object_or_404(DeliveryGuy, id=pk)
             detail_dict = dg_details_dict(delivery_guy)
+
+            if delivery_guy.area is not None:
+                associated_areas = Area.objects.filter(pin_code=delivery_guy.area.pin_code)
+                for single_area in associated_areas:
+                    detail_dict['area'].append(single_area.pin_code)
+
+            if delivery_guy.profile_picture is not None:
+                detail_dict['profile_picture'] = delivery_guy.profile_picture.name
+
+            associated_tl = DeliveryTeamLead.objects.filter(
+                associate_delivery_guys__user__username=delivery_guy.user.username)
+            if associated_tl is not None:
+                for single_tl in associated_tl:
+                    detail_dict['team_leads'].append('%s %s' %(single_tl.delivery_guy.user.first_name,
+                                                               single_tl.delivery_guy.user.last_name))
+
+            associated_ops_mngr = Employee.objects.filter(
+                associate_delivery_guys__user__username=delivery_guy.user.username)
+            if associated_ops_mngr is not None:
+                for single_ops_mngr in associated_ops_mngr:
+                    detail_dict['ops_managers'].append('%s %s' %(single_ops_mngr.user.first_name,
+                                                                 single_ops_mngr.user.last_name))
+
             content = {
                 "data": detail_dict
             }
