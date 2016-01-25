@@ -123,32 +123,34 @@ def delivery_ids_message_string(pincode_wise_delivery_ids):
         delivery_ids_string = ','.join(str(delivery_id) for delivery_id in pincode_wise_delivery_ids)
     return delivery_ids_string
 
-def create_notif_for_no_ops_exec_for_delivery_guy(delivery_guy):
-    ops_managers = ops_manager_for_dg(delivery_guy)
-    if len(ops_managers) > 0:
-        notification_type = notification_type_for_code(constants.NOTIFICATION_CODE_NO_OPS_EXECUTIVE_FOR_DELIVERY_BOY)
-        for ops_manager in ops_managers:
-            notification_message = constants.NOTIFICATION_MESSAGE_NO_OPS_EXEC_FOR_DELIVERY_GUY%(ops_manager.user.first_name, delivery_guy.user.first_name)
-            new_notification = Notification.objects.create(notification_type = notification_type, message = notification_message)
-            ops_manager.notifications.add(new_notification)
-            ops_manager.save()
-
-def create_notif_for_no_ops_exec_for_pincode(pincode):
-    ops_managers = ops_managers_for_pincode(pincode)
-    if len(ops_managers) > 0:
-        notification_type = notification_type_for_code(constants.NOTIFICATION_CODE_NO_OPS_EXECUTIVE_FOR_PINCODE)
-        for ops_manager in ops_managers:
-            notification_message = constants.NOTIFICATION_MESSAGE_NO_OPS_EXEC_FOR_PINCODE%(ops_manager.user.first_name, pincode)
-            new_notification = Notification.objects.create(notification_type = notification_type, message = notification_message)
-            ops_manager.notifications.add(new_notification)
-            ops_manager.save()
-
 def check_if_notification_already_exists(notification_type, ops_executive, delivery_ids):
     all_notifications = ops_executive.notifications.all()
     for notification in all_notifications:
         if notification.notification_type == notification_type and notification.delivery_id == delivery_ids and notification.read == False:
             return True
     return False
+
+def create_notif_for_no_ops_exec_for_delivery_guy(delivery_guy):
+    ops_managers = ops_manager_for_dg(delivery_guy)
+    if len(ops_managers) > 0:
+        notification_type = notification_type_for_code(constants.NOTIFICATION_CODE_NO_OPS_EXECUTIVE_FOR_DELIVERY_BOY)
+        for ops_manager in ops_managers:
+            if check_if_notification_already_exists(notification_type, ops_manager, '') is False:
+                notification_message = constants.NOTIFICATION_MESSAGE_NO_OPS_EXEC_FOR_DELIVERY_GUY%(ops_manager.user.first_name, delivery_guy.user.first_name)
+                new_notification = Notification.objects.create(notification_type = notification_type, message = notification_message)
+                ops_manager.notifications.add(new_notification)
+                ops_manager.save()
+
+def create_notif_for_no_ops_exec_for_pincode(pincode):
+    ops_managers = ops_managers_for_pincode(pincode)
+    if len(ops_managers) > 0:
+        notification_type = notification_type_for_code(constants.NOTIFICATION_CODE_NO_OPS_EXECUTIVE_FOR_PINCODE)
+        for ops_manager in ops_managers:
+            if check_if_notification_already_exists(notification_type, ops_manager, '') is False:
+                notification_message = constants.NOTIFICATION_MESSAGE_NO_OPS_EXEC_FOR_PINCODE%(ops_manager.user.first_name, pincode)
+                new_notification = Notification.objects.create(notification_type = notification_type, message = notification_message)
+                ops_manager.notifications.add(new_notification)
+                ops_manager.save()
 
 def notify_unassigned_pickup():
     date = datetime.today()
