@@ -26,7 +26,7 @@ class ServiceableCity(models.Model):
 
 class ServiceablePincode(models.Model):
     pincode = models.CharField(max_length = 10, unique = True)
-    city = models.ForeignKey(ServiceableCity)
+    city = models.ForeignKey(ServiceableCity, on_delete=models.PROTECT)
     
     def __unicode__(self):
         return u"%s" % (self.pincode)
@@ -85,7 +85,7 @@ class NotificationType(models.Model):
         return unicode(self.title)
 
 class Notification(models.Model):
-    notification_type = models.ForeignKey(NotificationType)
+    notification_type = models.ForeignKey(NotificationType, on_delete=models.PROTECT)
     delivery_id = models.CharField(max_length = 1000, blank = True, null = True)
     message = models.CharField(max_length = 500, blank = True, null = True)
     time_stamp = models.DateTimeField(auto_now_add = True)
@@ -97,7 +97,7 @@ class Notification(models.Model):
 class YGUser(models.Model):
     user = models.OneToOneField(User)
     # Optional Fields
-    profile_picture = models.ForeignKey(Picture, blank = True, null = True)
+    profile_picture = models.ForeignKey(Picture, blank = True, null = True, on_delete=models.PROTECT)
     notifications = models.ManyToManyField(Notification, blank = True)
     class Meta:
         abstract = True
@@ -157,7 +157,7 @@ class DeliveryGuy(YGUser):
         return u"%s - %s" % (self.user.first_name, self.user.username)                
 
 class DeliveryTeamLead(models.Model):
-    delivery_guy = models.ForeignKey(DeliveryGuy, related_name='current_delivery_guy')
+    delivery_guy = models.ForeignKey(DeliveryGuy, related_name='current_delivery_guy', on_delete=models.PROTECT)
     associate_delivery_guys = models.ManyToManyField(DeliveryGuy, blank = True, related_name ='associate_delivery_guys')
     serving_pincodes = models.ManyToManyField(ServiceablePincode, blank = True)
     def __unicode__(self):
@@ -168,7 +168,7 @@ class VendorAccount(models.Model):
     pricing = models.FloatField(default = 0.0)
     
     pan = models.CharField(max_length = 50, blank = True)
-    billing_address = models.ForeignKey(Address, related_name='billing_address', null = True)
+    billing_address = models.ForeignKey(Address, related_name='billing_address', null = True, on_delete=models.PROTECT)
     last_update_date = models.DateTimeField(auto_now_add = True)
     
     # Optional Fields
@@ -192,7 +192,7 @@ class Vendor(models.Model):
 
     addresses = models.ManyToManyField(Address, blank = True)
     is_retail = models.BooleanField(default = False)
-    account = models.ForeignKey(VendorAccount, related_name='account', blank = True, null = True)
+    account = models.ForeignKey(VendorAccount, related_name='account', blank = True, null = True, on_delete=models.PROTECT)
 
     # Optional
     website_url = models.CharField(max_length = 100, blank = True)
@@ -203,7 +203,7 @@ class Vendor(models.Model):
         return unicode(self.store_name)
 
 class VendorAgent(YGUser):
-    vendor = models.ForeignKey(Vendor, related_name='vendor')
+    vendor = models.ForeignKey(Vendor, related_name='vendor', on_delete=models.PROTECT)
     branch = models.CharField(max_length = 50, blank = True)
     
     EMPLOYEE = 'EMPLOYEE'
@@ -260,7 +260,7 @@ class Consumer(YGUser):
 class DGAttendance(models.Model):
 
     # Mandatory Fields
-    dg = models.ForeignKey(DeliveryGuy)
+    dg = models.ForeignKey(DeliveryGuy, on_delete=models.PROTECT)
     date = models.DateField(default = datetime.date.today)
 
     LEAVE = 'LEAVE'
@@ -299,13 +299,13 @@ class Product(models.Model):
     cost = models.FloatField(default = 0.0)
     vendor = models.ForeignKey(Vendor, blank = True, null = True)
     timeslots = models.ManyToManyField(TimeSlot, blank = True)
-    product_category = models.ForeignKey(ProductCategory, blank = True, null = True)
+    product_category = models.ForeignKey(ProductCategory, blank = True, null = True, on_delete=models.PROTECT)
     def __unicode__(self):
         return u"%s - %s" % (self.name, self.vendor)
 
 
 class OrderItem(models.Model):
-    product = models.ForeignKey(Product, blank = True, null = True)
+    product = models.ForeignKey(Product, blank = True, null = True, on_delete=models.PROTECT)
     quantity = models.FloatField(default = 1.0)
     cost = models.FloatField(default = 0.0)
 
@@ -325,8 +325,8 @@ class ProofOfDelivery(models.Model):
 class Order(models.Model):
 
     # Mandatory Fields =====
-    vendor = models.ForeignKey(Vendor)
-    consumer = models.ForeignKey(Consumer)
+    vendor = models.ForeignKey(Vendor, on_delete = models.PROTECT)
+    consumer = models.ForeignKey(Consumer, on_delete = models.PROTECT)
 
     order_items = models.ManyToManyField(OrderItem, blank = True)
     total_cost = models.FloatField(default = 0.0)
@@ -334,12 +334,12 @@ class Order(models.Model):
     pickup_datetime = models.DateTimeField()
     delivery_datetime = models.DateTimeField(blank = True, null = True)
     
-    pickup_address = models.ForeignKey(Address, related_name='pickup_address')
-    delivery_address = models.ForeignKey(Address, related_name='delivery_address')
+    pickup_address = models.ForeignKey(Address, related_name='pickup_address', on_delete=models.PROTECT)
+    delivery_address = models.ForeignKey(Address, related_name='delivery_address', on_delete=models.PROTECT)
     
     # Auto Generated Fields =====
     created_date_time = models.DateTimeField(auto_now_add = True)
-    created_by_user = models.ForeignKey(User, related_name='order_created_by')
+    created_by_user = models.ForeignKey(User, related_name='order_created_by', on_delete=models.PROTECT)
 
     # Optional Fields =====
     notes = models.CharField(max_length = 500, blank = True)
@@ -353,7 +353,7 @@ class Order(models.Model):
     is_recurring = models.BooleanField(blank = True, default = False)
     
     # Order Modified =====
-    modified_by_user = models.ForeignKey(User, blank = True, related_name='order_modified_by', null = True)
+    modified_by_user = models.ForeignKey(User, blank = True, related_name='order_modified_by', null = True, on_delete=models.PROTECT)
     modified_date_time = models.DateTimeField(blank = True, null = True)
     
     def __unicode__(self):
@@ -366,7 +366,7 @@ class DeliveryAction(models.Model):
         return u"%s" % (self.title)
 
 class DeliveryTransaction(models.Model):
-    action = models.ForeignKey(DeliveryAction)
+    action = models.ForeignKey(DeliveryAction, on_delete=models.PROTECT)
     by_user = models.ForeignKey(User, blank = True, null = True)
     time_stamp = models.DateTimeField(blank = True, null = True)
     location = models.ForeignKey(Location, blank = True, null = True)
@@ -376,13 +376,13 @@ class DeliveryTransaction(models.Model):
 
 class OrderDeliveryStatus(models.Model):
     date = models.DateTimeField()
-    order = models.ForeignKey(Order, related_name = 'order', blank = True, null = True)
+    order = models.ForeignKey(Order, related_name = 'order', blank = True, null = True, on_delete=models.PROTECT)
     
     pickedup_datetime = models.DateTimeField(blank = True, null = True)
     completed_datetime = models.DateTimeField(blank = True, null = True)
 
-    pickup_guy = models.ForeignKey(DeliveryGuy, related_name = 'pickup_dg', blank = True, null = True)
-    delivery_guy = models.ForeignKey(DeliveryGuy, related_name = 'assigned_dg', blank = True, null = True)
+    pickup_guy = models.ForeignKey(DeliveryGuy, related_name = 'pickup_dg', blank = True, null = True, on_delete=models.PROTECT)
+    delivery_guy = models.ForeignKey(DeliveryGuy, related_name = 'assigned_dg', blank = True, null = True, on_delete=models.PROTECT)
     
     rejection_reason = models.CharField(max_length = 500, blank = True)
     is_cod_collected = models.BooleanField(default = False)
@@ -426,8 +426,8 @@ class OrderDeliveryStatus(models.Model):
     )
     delivered_at = models.CharField(max_length = 15, choices = DELIVERED_AT_CHOICES, default = NONE)
     
-    pickup_proof = models.ForeignKey(ProofOfDelivery, related_name = 'pickup_pod', blank = True, null = True)
-    delivery_proof = models.ForeignKey(ProofOfDelivery, related_name = 'delivery_pod', blank = True, null = True)
+    pickup_proof = models.ForeignKey(ProofOfDelivery, related_name = 'pickup_pod', blank = True, null = True, on_delete=models.PROTECT)
+    delivery_proof = models.ForeignKey(ProofOfDelivery, related_name = 'delivery_pod', blank = True, null = True, on_delete=models.PROTECT)
 
     cod_collected_amount = models.FloatField(default = 0.0)
     cod_remarks = models.CharField(max_length = 500, blank = True)
