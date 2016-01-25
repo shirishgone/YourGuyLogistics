@@ -163,7 +163,7 @@ def notify_unassigned_pickup():
             notification_type = notification_type_for_code(constants.NOTIFICATION_CODE_UNASSIGNED_PICKUP)
             for ops_manager in ops_managers:
                 if check_if_notification_already_exists(notification_type, ops_manager, delivery_ids) is False:
-                    notification_message = constants.NOTIFICATION_MESSAGE_UNASSIGNED_PICKUP%(ops_manager.user.first_name, delivery_ids_msg_string)
+                    notification_message = constants.NOTIFICATION_MESSAGE_UNASSIGNED_PICKUP%(ops_manager.user.first_name, delivery_ids_msg_string, pincode)
                     new_notification = Notification.objects.create(notification_type = notification_type, 
                         delivery_id = delivery_ids, message = notification_message)
                     ops_manager.notifications.add(new_notification)
@@ -197,7 +197,7 @@ def notify_unassigned_deliveries():
             notification_type = notification_type_for_code(constants.NOTIFICATION_CODE_UNASSIGNED_DELIVERY)            
             for ops_manager in ops_managers:
                 if check_if_notification_already_exists(notification_type, ops_manager, delivery_ids) is False:
-                    notification_message = constants.NOTIFICATION_MESSAGE_UNASSIGNED_DELIVERY%(ops_manager.user.first_name, delivery_ids_msg_string)
+                    notification_message = constants.NOTIFICATION_MESSAGE_UNASSIGNED_DELIVERY%(ops_manager.user.first_name, delivery_ids_msg_string, pincode)
                     new_notification = Notification.objects.create(notification_type = notification_type, 
                         delivery_id = delivery_ids, message = notification_message)
                     ops_manager.notifications.add(new_notification)
