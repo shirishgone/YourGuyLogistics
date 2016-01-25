@@ -1,0 +1,38 @@
+<div id="content" class="notification-content">
+	<div class="menubar fixed">
+		<div class="sidebar-toggler visible-xs" ng-click="$parent.open_sidebar = !$parent.open_sidebar">
+			<i class="ion-navicon"></i>
+		</div>
+		<div class="page-title">
+			NOTIFICATION
+		</div>
+	</div>
+	<div class="content-wrapper">
+		<div class="col-md-10 col-sm-12 col-xs-12 col-md-offset-1" ng-show="show_notification_msg">
+			<div class="no-content">
+				<img src="/static/webapp/images/no_notification.png">
+				<h1>{{notification_msg || 'You currently have no notifications.'}}</h1>
+			</div>
+		</div>
+		<div class="notification">
+			<div class="notice" ng-repeat="notice in notification_list" ng-class="{'unread' : !notice.read}" ng-click="makeAsRead(notice)">
+				<div class="notification-image">
+					<img ng-src="/static/webapp/images/notification/{{notice.notification_type.type_id}}.png"> 
+				</div>
+				<div class="notification-text">
+					<div class="col-md-12">
+						<h4>{{notice.notification_type.title}}</h4> <span class="notice-time">{{notice.time_stamp | fromNow}}</span>
+					</div>
+					<div class="col-md-12">
+						<p>{{notice.message}}</p>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div ng-if="total_notifications">
+			<div class="text-center">
+				<pagination total-items="total_notifications" ng-model="params.page" items-per-page="itemsByPage" max-size="8" boundary-links="true" rotate="false" ng-change="getNotification()"></pagination>
+			</div>
+		</div>
+	</div>
+</div>

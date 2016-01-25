@@ -13,7 +13,7 @@
     "pk": 2,
     "fields": {
         "code": "yg_nt_02",
-        "title": "Late Picked Up",
+        "title": "Late Pickup",
         "description": ""
     }
   },
@@ -31,7 +31,7 @@
     "pk": 4,
     "fields": {
         "code": "yg_nt_04",
-        "title": "Unassigned",
+        "title": "Unassigned Delivery",
         "description": ""
     }
   },
@@ -58,7 +58,34 @@
     "pk": 7,
     "fields": {
         "code": "yg_nt_07",
-        "title": "COD Discreprency",
+        "title": "COD Discrepancy",
+        "description": ""
+    }
+  },
+  {
+    "model": "yourguy.NotificationType",
+    "pk": 8,
+    "fields": {
+        "code": "yg_nt_08",
+        "title": "No Ops Executive for Pincode",
+        "description": ""
+    }
+  },
+  {
+    "model": "yourguy.NotificationType",
+    "pk": 9,
+    "fields": {
+        "code": "yg_nt_09",
+        "title": "Unassigned Pickup",
+        "description": ""
+    }
+  },
+  {
+    "model": "yourguy.NotificationType",
+    "pk": 10,
+    "fields": {
+        "code": "yg_nt_10",
+        "title": "No Ops Executive for delivery boy",
         "description": ""
     }
   }

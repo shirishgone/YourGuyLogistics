@@ -151,17 +151,23 @@ ygVendors.factory('Orders',function ($http,baseURl,$q,Errorhandler){
             page_string = "";
         }
         if(data.search){
-            order_id_string = "&search="+data.search;
+            search_string = "&search="+data.search;
         }
         else{
-            order_id_string = "";
+            search_string = "";
+        }
+        if(data.order_ids){
+            order_ids_string = "&order_ids="+data.order_ids;
+        }
+        else{
+            order_ids_string = "";
         }
         start_time_string = (data.start_time)? "&time_start="+data.start_time:"";
         end_time_string = (data.end_time)? "&time_end="+data.end_time:"";
         cod_string = (data.cod)? "&is_cod="+data.cod:"";
 
 
-        return $http.get(baseURl.V2apiURL+"/order/?date="+data.date+vendor_string+dg_string+status_string+page_string+order_id_string+cod_string+start_time_string+end_time_string).then(Errorhandler.successStatus,Errorhandler.errorStatus);
+        return $http.get(baseURl.V2apiURL+"/order/?date="+data.date+vendor_string+dg_string+status_string+page_string+search_string+cod_string+start_time_string+end_time_string+order_ids_string).then(Errorhandler.successStatus,Errorhandler.errorStatus);
     };
 
     getOrders.createOrder = function (data){
@@ -516,3 +522,23 @@ ygVendors.factory('StoreSessionData', function (){
 
     return StoreSessionData;
 });
+
+ygVendors.factory('notification', ['$http','baseURl','Errorhandler', function ($http,baseURl,Errorhandler){
+    var notify = {};
+    notify.getNotification =  function (data){
+        Errorhandler.clear();
+        return $http.get(baseURl.V2apiURL+'/notification/?page='+data.page).then(Errorhandler.successStatus,Errorhandler.errorStatus);
+    };
+
+    notify.pendingNotificationCount = function(){
+        Errorhandler.clear();
+        return $http.get(baseURl.V2apiURL+'/notification/pending/');
+    };
+
+    notify.markAsRead = function(data){
+        Errorhandler.clear();
+        return $http.post(baseURl.V2apiURL+'/notification/'+data.notification_id+'/read/').then(Errorhandler.successStatus,Errorhandler.errorStatus);
+    };
+
+    return notify;
+}]);

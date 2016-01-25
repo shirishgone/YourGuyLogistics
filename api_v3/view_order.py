@@ -17,9 +17,62 @@ from api_v3 import constants
 from api_v3.push import send_push
 from api_v3.utils import log_exception, send_sms, ist_datetime, user_role, address_string, ist_day_start, ist_day_end, \
     paginate, is_correct_pincode, is_pickup_time_acceptable, timedelta, is_userexists, is_consumerexists, \
-    is_consumer_has_same_address_already, days_in_int, send_email, is_today_date, is_vendor_has_same_address_already
+    is_consumer_has_same_address_already, days_in_int, send_email, is_today_date, is_vendor_has_same_address_already, \
+    delivery_actions, ops_manager_for_dg, notification_type_for_code, ops_executive_for_pincode
+
 from yourguy.models import User, Vendor, DeliveryGuy, VendorAgent, Picture, ProofOfDelivery, OrderDeliveryStatus, \
-    Consumer, Address, Order, Product, OrderItem
+    Consumer, Address, Order, Product, OrderItem, Notification, Location, DeliveryTransaction
+
+def is_deliveryguy_assigned(delivery):
+    if delivery.delivery_guy is not None:
+        return True
+    else:
+        return False    
+
+def notif_unassigned(delivery):
+    pincode = delivery.order.delivery_address.pin_code
+    ops_managers = ops_executive_for_pincode(pincode)
+    if len(ops_managers) > 0:
+        notification_type = notification_type_for_code(constants.NOTIFICATION_CODE_UNASSIGNED)
+        for ops_manager in ops_managers:
+            notification_message = constants.NOTIFICATION_MESSAGE_ORDER_PICKEUP_WITHOUT_DELIVERYGUY_ASSIGNED%(ops_manager.user.first_name, delivery.id, delivery.pickup_guy.user.first_name)
+            new_notification = Notification.objects.create(notification_type = notification_type, 
+                delivery_id = delivery.id, message = notification_message)
+            ops_manager.notifications.add(new_notification)
+            ops_manager.save()
+    else:
+        # CANT FIND APPROPRIATE OPS_EXECUTIVE FOR THE ABOVE PINCODE
+        pass                
+
+def send_reported_email(user, email_orders, reported_reason):
+    subject = '%s Reported Issue'% (user.first_name)
+    
+    body = 'Hello,\n\n%s has reported an issue about the following orders. \n\nIssue: %s\n'% (user.first_name, reported_reason)
+    for email_order in email_orders:
+        string = '\nOrder no: %s | Client Name: %s | Customer Name: %s'% (email_order['order_id'], email_order['vendor'], email_order['customer_name'])
+        body = body + string
+    
+    body = body + '\n\nThanks \n-YourGuy BOT'
+    send_email(constants.EMAIL_REPORTED_ORDERS, subject, body)
+
+def send_cod_discrepency_email(delivery_status, user):
+    try:
+        if float(delivery_status.order.cod_amount) > 0.0 and delivery_status.cod_collected_amount is not None and (float(delivery_status.cod_collected_amount) < float(delivery_status.order.cod_amount) or float(delivery_status.cod_collected_amount) > float(delivery_status.order.cod_amount) ):
+            subject = 'COD discrepancy with order: %s' % delivery_status.id
+            body = 'Hello Ops,'
+            body = body + '\n\nThere is some discrepancy in COD collection for following order.'
+            body = body + '\n\nOrder no: %s' % (delivery_status.id)
+            body = body + '\nVendor: %s' % (delivery_status.order.vendor.store_name)
+            body = body + '\nCustomer name: %s' % (delivery_status.order.consumer.user.first_name)
+            body = body + '\nCOD to be collected: %s' % (delivery_status.order.cod_amount)
+            body = body + '\nCOD collected: %s' % (delivery_status.cod_collected_amount)
+            body = body + '\nDeliveryGuy: %s'% (user.first_name)
+            body = body + '\nReason added: %s'% (delivery_status.cod_remarks)
+            body = body + '\n\nPlease clear the discrepancy with the DeliveryBoy and Vendor soon.'
+            body = body + '\n\n- Thanks \nYourGuy BOT'            
+            send_email(constants.EMAIL_COD_DISCREPENCY, subject, body)
+    except Exception as e:
+        log_exception(e, 'order_delivered COD discrepancy email')
 
 def retail_order_send_email(vendor, new_order_ids):
     client_name = vendor.store_name
@@ -451,6 +504,7 @@ class OrderViewSet(viewsets.ViewSet):
         filter_time_start = request.QUERY_PARAMS.get('time_start', None)
         filter_time_end = request.QUERY_PARAMS.get('time_end', None)
         is_cod = request.QUERY_PARAMS.get('is_cod', None)
+        order_ids = request.QUERY_PARAMS.get('order_ids', None)
 
         # ORDER STATUS CHECK --------------------------------------------------
         order_statuses = []
@@ -551,6 +605,12 @@ class OrderViewSet(viewsets.ViewSet):
         # SEARCH KEYWORD FILTERING ---------------------------------------------------
         if search_query is not None:
             delivery_status_queryset = search_order(request.user, search_query)
+        # ----------------------------------------------------------------------------
+
+        # SPECIFIC ORDER IDs-----------------------------------------------------------
+        if order_ids is not None:
+            order_ids_array = order_ids.split(',')
+            delivery_status_queryset = OrderDeliveryStatus.objects.filter(id__in=order_ids_array)
         # ----------------------------------------------------------------------------
 
         total_orders_count = len(delivery_status_queryset)
@@ -953,6 +1013,11 @@ class OrderViewSet(viewsets.ViewSet):
     @detail_route(methods=['put'])
     def cancel(self, request, pk):
         delivery_status = get_object_or_404(OrderDeliveryStatus, id=pk)
+        timestamp = datetime.now()
+        latitude = request.data.get('latitude')
+        longitude = request.data.get('longitude')
+        cancelled_remarks = request.data.get('cancelled_remarks')
+
         if is_user_permitted_to_update_order(request.user, delivery_status.order) is False:
             content = {
                 'error': "You don\'t have permissions to cancel this order."
@@ -975,6 +1040,19 @@ class OrderViewSet(viewsets.ViewSet):
         if is_cancelled:
             # message = constants.ORDER_CANCELLED_MESSAGE_CLIENT.format(delivery_status.order.consumer.user.first_name, order.id)
             # send_sms(order.vendor.phone_number, message)
+
+            action = delivery_actions(constants.CANCELLED_CODE)
+            if action is not None:
+                delivery_transaction = DeliveryTransaction.objects.create(action=action, by_user=request.user,
+                                                                          time_stamp=timestamp)
+                if latitude is not None and longitude is not None:
+                    cancelled_location = Location.objects.create(latitude=latitude, longitude=longitude)
+                    delivery_transaction.location = cancelled_location
+
+                if cancelled_remarks is not None:
+                    delivery_transaction.remarks = cancelled_remarks
+
+                delivery_transaction.save()
             content = {
                 'description': 'Order has been canceled'
             }
@@ -990,6 +1068,10 @@ class OrderViewSet(viewsets.ViewSet):
         try:
             order_ids = request.data['order_ids']
             reported_reason = request.data['reported_reason']
+            timestamp = datetime.now()
+            latitude = request.data.get('latitude')
+            longitude = request.data.get('longitude')
+
         except Exception as e:
             content = {
                 'error': 'order_ids, reported_reason are mandatory parameters'
@@ -1011,22 +1093,38 @@ class OrderViewSet(viewsets.ViewSet):
                     'customer_name': delivery_status.order.consumer.user.first_name
                 }
                 email_orders.append(order_detail)
+            
+            # CREATE DELIVERY TRANSACTION REPORTED ---------------------------            
+            action = delivery_actions(constants.REPORTED_CODE)
+            if action is not None:
+                delivery_transaction = DeliveryTransaction.objects.create(action=action, by_user=request.user,
+                                                                          time_stamp=timestamp)
+                if latitude is not None and longitude is not None:
+                    reported_location = Location.objects.create(latitude=latitude, longitude=longitude)
+                    delivery_transaction.location = reported_location
 
-            # SEND AN EMAIL TO OPERATIONS ---------------------------------------------
-            delivery_guy = get_object_or_404(DeliveryGuy, user=request.user)
-            subject = '%s Reported Issue' % (delivery_guy.user.first_name)
+                if reported_reason is not None:
+                    delivery_transaction.remarks = reported_reason
 
-            body = 'Hello,\n\n%s has reported an issue about the following orders. \n\nIssue: %s\n' % (
-                delivery_guy.user.first_name, reported_reason)
-            for email_order in email_orders:
-                string = '\nOrder no: %s | Client Name: %s | Customer Name: %s' % (
-                    email_order['order_id'], email_order['vendor'], email_order['customer_name'])
-                body = body + string
-
-            body = body + '\n\nThanks \n-YourGuy BOT'
-            send_email(constants.EMAIL_REPORTED_ORDERS, subject, body)
-            # --------------------------------------------------------------------------
-
+                delivery_transaction.save()
+            
+            # INFORM OPERATIONS IF THERE IS ANY COD DISCREPENCIES -------------------
+            try:
+                delivery_guy = get_object_or_404(DeliveryGuy, user = request.user)
+                ops_managers = ops_manager_for_dg(delivery_guy)
+                if ops_managers.count() == 0:
+                    send_reported_email(delivery_guy.user, email_orders, reported_reason)
+                else:
+                    delivery_ids = ','.join(str(v) for v in order_ids)
+                    notification_message = constants.NOTIFICATION_MESSAGE_REPORTED%(request.user.first_name, reported_reason, delivery_ids)
+                    notification_type = notification_type_for_code(constants.NOTIFICATION_CODE_REPORTED)
+                    new_notification = Notification.objects.create(notification_type = notification_type, message = notification_message, delivery_id = delivery_ids)
+                    for ops_manager in ops_managers:
+                        ops_manager.notifications.add(new_notification)
+                        ops_manager.save()
+            except Exception as e:
+                send_reported_email(delivery_guy.user, email_orders, reported_reason)
+            # -----------------------------------------------------------------------
             content = {
                 'data': 'Successfully reported'
             }
@@ -1044,9 +1142,12 @@ class OrderViewSet(viewsets.ViewSet):
             date_string = request.data['date']
             delivery_remarks = request.data['delivery_remarks']
             pickedup_datetime_string = request.data['pick_attempted_datetime']
+            latitude = request.data.get('latitude')
+            longitude = request.data.get('longitude')
+            timestamp = datetime.now()
         except Exception as e:
             content = {
-                'error': 'order_ids, date, delivery_remarks, pick_attempted_datetime are mandatory parameters'
+                'error': 'order_ids, date, delivery_remarks, pick_attempted_datetime are mandatory parameters. latitude and longitude are optional'
             }
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1071,6 +1172,18 @@ class OrderViewSet(viewsets.ViewSet):
 
                 if can_updated_order(delivery_status, constants.ORDER_STATUS_PICKUP_ATTEMPTED):
                     update_delivery_status_pickup_attempted(delivery_status, delivery_remarks, pickedup_datetime)
+                    action = delivery_actions(constants.PICKUP_ATTEMPTED_CODE)
+                    if action is not None:
+                        delivery_transaction = DeliveryTransaction.objects.create(action=action, by_user=request.user,
+                                                                                  time_stamp=pickedup_datetime)
+                        if latitude is not None and longitude is not None:
+                            pickup_attempted_location = Location.objects.create(latitude=latitude, longitude=longitude)
+                            delivery_transaction.location = pickup_attempted_location
+
+                        if delivery_remarks is not None:
+                            delivery_transaction.remarks = delivery_remarks
+
+                        delivery_transaction.save()
                 else:
                     content = {
                         'error': "Order already processed cant attempt the pickup now"
@@ -1103,10 +1216,12 @@ class OrderViewSet(viewsets.ViewSet):
             pickedup_datetime_string = request.data.get('pickedup_datetime')
             pop_dict = request.data.get('pop')
             delivery_remarks = request.data.get('delivery_remarks')
+            latitude = request.data.get('latitude')
+            longitude = request.data.get('longitude')
         except Exception as e:
             content = {
-                'error': 'order_ids, date, pickedup_datetime are mandatory parameters and pop, delivery_remarks are '
-                         'optional'
+                'error': 'order_ids, date, pickedup_datetime are mandatory parameters and pop, '
+                         'delivery_remarks ,latitude and longitude are optional'
             }
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
         # -------------------------------------------------------------------
@@ -1141,6 +1256,18 @@ class OrderViewSet(viewsets.ViewSet):
                         new_pop = create_proof(pop_dict)
                     # ----------------------------------------------------------------------------
                     update_delivery_status_pickedup(delivery_status, pickedup_datetime, new_pop, delivery_remarks)
+                    action = delivery_actions(constants.PICKEDUP_CODE)
+                    if action is not None:
+                        delivery_transaction = DeliveryTransaction.objects.create(action=action, by_user=request.user,
+                                                                                  time_stamp=pickedup_datetime)
+                        if latitude is not None and longitude is not None:
+                            pickedup_location = Location.objects.create(latitude=latitude, longitude=longitude)
+                            delivery_transaction.location = pickedup_location
+
+                        if delivery_remarks is not None:
+                            delivery_transaction.remarks = delivery_remarks
+
+                        delivery_transaction.save()
                 else:
                     content = {
                         'error': "Can\'t update as the order is not queued"
@@ -1173,6 +1300,8 @@ class OrderViewSet(viewsets.ViewSet):
         pop_dict = request.data.get('pop')
         pickup_attempted = request.data.get('pickup_attempted')
         delivery_remarks = request.data.get('delivery_remarks')
+        latitude = request.data.get('latitude')
+        longitude = request.data.get('longitude')
 
         # PICKEDUP DATE TIME --------------------------------------------------------
         pickedup_datetime_string = request.data.get('pickedup_datetime')
@@ -1196,10 +1325,21 @@ class OrderViewSet(viewsets.ViewSet):
 
         is_order_updated = False
         is_order_picked_up = False
-
         if can_updated_order(delivery_status, constants.ORDER_STATUS_INTRANSIT):
             if pickup_attempted is not None and pickup_attempted == True:
                 update_delivery_status_pickup_attempted(delivery_status, delivery_remarks, pickedup_datetime)
+                action = delivery_actions(constants.PICKUP_ATTEMPTED_CODE)
+                if action is not None:
+                    delivery_transaction = DeliveryTransaction.objects.create(action=action, by_user=request.user,
+                                                                              time_stamp=pickedup_datetime)
+                    if latitude is not None and longitude is not None:
+                        pickup_attempted_location = Location.objects.create(latitude=latitude, longitude=longitude)
+                        delivery_transaction.location = pickup_attempted_location
+
+                    if delivery_remarks is not None:
+                        delivery_transaction.remarks = delivery_remarks
+
+                    delivery_transaction.save()
                 is_order_updated = True
                 is_order_picked_up = False
             else:
@@ -1209,6 +1349,18 @@ class OrderViewSet(viewsets.ViewSet):
                     new_pop = create_proof(pop_dict)
                 # ----------------------------------------------------------------------------
                 update_delivery_status_pickedup(delivery_status, pickedup_datetime, new_pop, delivery_remarks)
+                action = delivery_actions(constants.PICKEDUP_CODE)
+                if action is not None:
+                    delivery_transaction = DeliveryTransaction.objects.create(action=action, by_user=request.user,
+                                                                              time_stamp=pickedup_datetime)
+                    if latitude is not None and longitude is not None:
+                        pickedup_location = Location.objects.create(latitude=latitude, longitude=longitude)
+                        delivery_transaction.location = pickedup_location
+
+                    if delivery_remarks is not None:
+                        delivery_transaction.remarks = delivery_remarks
+
+                    delivery_transaction.save()
                 is_order_updated = True
                 is_order_picked_up = True
         else:
@@ -1216,15 +1368,21 @@ class OrderViewSet(viewsets.ViewSet):
                 'error': "Can\'t update as the order is not queued"
             }
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
-
+        
         if is_order_updated:
+            # NOTIFY OPERATIONS IF DELVIERYGUY IS NOT ASSIGNED EVEN AFTER PIKCKUP --
+            try:
+                if is_deliveryguy_assigned(delivery_status) is False:
+                    notif_unassigned(delivery_status)
+            except Exception as e:
+                pass
+            # ----------------------------------------------------------------------
             if is_order_picked_up is True and delivery_status.order.is_reverse_pickup is True:
                 # SEND A CONFIRMATION MESSAGE TO THE CUSTOMER
                 end_consumer_phone_number = delivery_status.order.consumer.user.username
                 message = 'Dear %s, we have picked your order behalf of %s - Team YourGuy' % (
                     delivery_status.order.consumer.user.first_name, delivery_status.order.vendor.store_name)
                 send_sms(end_consumer_phone_number, message)
-
             content = {
                 'description': 'Order has been updated'
             }
@@ -1238,6 +1396,7 @@ class OrderViewSet(viewsets.ViewSet):
     @detail_route(methods=['put'])
     def delivered(self, request, pk=None):
         delivery_status = get_object_or_404(OrderDeliveryStatus, pk=pk)
+        timestamp = datetime.now()
         if is_user_permitted_to_update_order(request.user, delivery_status.order) is False:
             content = {
                 'error': "You don't have permissions to update this order."
@@ -1300,9 +1459,33 @@ class OrderViewSet(viewsets.ViewSet):
                 # ----------------------------------------------------------------
                 if order_status == constants.ORDER_STATUS_DELIVERY_ATTEMPTED:
                     update_delivery_status_delivery_attempted(delivery_status, delivery_remarks, delivered_datetime)
+                    action = delivery_actions(constants.DELIVERY_ATTEMPTED_CODE)
+                    if action is not None:
+                        delivery_transaction = DeliveryTransaction.objects.create(action=action, by_user=request.user,
+                                                                                  time_stamp=timestamp)
+                        if latitude is not None and longitude is not None:
+                            delivery_attempted_location = Location.objects.create(latitude=latitude, longitude=longitude)
+                            delivery_transaction.location = delivery_attempted_location
+
+                        if delivery_remarks is not None:
+                            delivery_transaction.remarks = delivery_remarks
+
+                        delivery_transaction.save()
                 else:
                     update_delivery_status_delivered(delivery_status, delivered_at, delivered_datetime,
                                                      is_cod_collected, new_pod, delivery_remarks, cod_collected_amount)
+                    action = delivery_actions(constants.DELIVERED_CODE)
+                    if action is not None:
+                        delivery_transaction = DeliveryTransaction.objects.create(action=action, by_user=request.user,
+                                                                                  time_stamp=timestamp)
+                        if latitude is not None and longitude is not None:
+                            delivered_location = Location.objects.create(latitude=latitude, longitude=longitude)
+                            delivery_transaction.location = delivered_location
+
+                        if delivery_remarks is not None:
+                            delivery_transaction.remarks = delivery_remarks
+
+                        delivery_transaction.save()
                 is_order_updated = True
             except Exception as e:
                 log_exception(e, 'order_delivered')
@@ -1314,29 +1497,27 @@ class OrderViewSet(viewsets.ViewSet):
         # -----------------------------------------------------------------------
 
         # INFORM OPERATIONS IF THERE IS ANY COD DISCREPENCIES -------------------
-        try:
-            if float(delivery_status.order.cod_amount) > 0.0 and cod_collected_amount is not None and (
-                            float(cod_collected_amount) < float(delivery_status.order.cod_amount) or float(
-                        cod_collected_amount) > float(delivery_status.order.cod_amount)):
-                subject = 'COD discrepancy with order: %s' % delivery_status.id
-                body = 'Hello Ops,'
-                body = body + '\n\nThere is some discrepancy in COD collection for following order.'
-                body = body + '\n\nOrder no: %s' % (delivery_status.id)
-                body = body + '\nVendor: %s' % (delivery_status.order.vendor.store_name)
-                body = body + '\nCustomer name: %s' % (delivery_status.order.consumer.user.first_name)
-                body = body + '\nCOD to be collected: %s' % (delivery_status.order.cod_amount)
-                body = body + '\nCOD collected: %s' % (cod_collected_amount)
-                body = body + '\nDeliveryGuy: %s' % (request.user.first_name)
-                body = body + '\nReason added: %s' % (delivery_remarks)
-                body = body + '\n\nPlease clear the discrepancy with the DeliveryBoy and Vendor soon.'
-                body = body + '\n\n- Thanks \nYourGuy BOT'
-                send_email(constants.EMAIL_COD_DISCREPENCY, subject, body)
-        except Exception as e:
-            log_exception(e, 'order_delivered COD discrepancy email')
-        # -----------------------------------------------------------------------
+        if is_order_updated is True and float(delivery_status.order.cod_amount) > 0.0 and cod_collected_amount is not None and (float(cod_collected_amount) < float(delivery_status.order.cod_amount) or float(cod_collected_amount) > float(delivery_status.order.cod_amount) ):
+            try:
+                delivery_guy = get_object_or_404(DeliveryGuy, user = request.user)
+                ops_managers = ops_manager_for_dg(delivery_guy)
+                if ops_managers.count() == 0:
+                    send_cod_discrepency_email(delivery_status, request.user)
+                else:
+                    notification_type = notification_type_for_code(constants.NOTIFICATION_CODE_COD_DISPRENCY)
+                    notification_message = constants.NOTIFICATION_MESSAGE_COD_DISCREPENCY%(request.user.first_name, delivery_status.cod_collected_amount, delivery_status.order.cod_amount, delivery_status.id)
+                    new_notification = Notification.objects.create(notification_type = notification_type, 
+                        delivery_id = pk, 
+                        message = notification_message)
+                    for ops_manager in ops_managers:
+                        ops_manager.notifications.add(new_notification)
+                        ops_manager.save()
 
+            except Exception as e:
+                send_cod_discrepency_email(delivery_status, request.user)
+        # -----------------------------------------------------------------------       
 
-        # Final Response ---------------------------------------------------------
+        # Final Response ---------------------------------------------------------        
         if is_order_updated:
             # CONFIRMATION MESSAGE TO CUSTOMER --------------------------------------
             if cod_collected_amount is not None and float(cod_collected_amount) > 0:

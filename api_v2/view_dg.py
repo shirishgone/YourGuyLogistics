@@ -69,13 +69,7 @@ class DGViewSet(viewsets.ModelViewSet):
     serializer_class = DGSerializer
     
     def destroy(self, request, pk= None):
-        role = user_role(request.user)
-        if role == constants.OPERATIONS:            
-            delivery_guy = get_object_or_404(DeliveryGuy, pk = pk)
-            delivery_guy.delete()
-            return Response(status=status.HTTP_200_OK)
-        else:
-            return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)            
 
     def retrieve(self, request, pk = None):        
         role = user_role(request.user)

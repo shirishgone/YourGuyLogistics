@@ -13,8 +13,45 @@ from rest_framework.authtoken.models import Token
 
 from api_v3 import constants
 from server import settings
-from yourguy.models import Order, OrderDeliveryStatus, VendorAgent, Consumer
+from yourguy.models import Order, OrderDeliveryStatus, VendorAgent, Consumer, Employee, NotificationType, DeliveryAction, ServiceablePincode
+from django.db.models import Q
 
+def ops_managers_for_pincode(pincode):
+    result = []
+    try:
+        serving_pincode = get_object_or_404(ServiceablePincode, pincode = pincode)
+        result = Employee.objects.filter(Q(serving_pincodes__in=[serving_pincode]) & Q(department=constants.OPERATIONS_MANAGER))
+        return result
+    except Exception as e:
+        return result
+
+def ops_executive_for_pincode(pincode):
+    result = []
+    try:
+        serving_pincode = get_object_or_404(ServiceablePincode, pincode = pincode)
+        result = Employee.objects.filter(Q(serving_pincodes__in=[serving_pincode]) & Q(department=constants.OPERATIONS))
+        return result
+    except Exception as e:
+        return result
+
+def ops_executive_for_dg(dg):
+    result = []
+    try:
+        result = Employee.objects.filter(Q(associate_delivery_guys__in=[dg]) & Q(department=constants.OPERATIONS))    
+        return result
+    except Exception as e:
+        return result
+
+def ops_manager_for_dg(dg):
+    result = []
+    try:
+        result = Employee.objects.filter(Q(associate_delivery_guys__in=[dg]) & Q(department=constants.OPERATIONS_MANAGER))    
+        return result
+    except Exception as e:
+        return result
+
+def notification_type_for_code(code):
+    return get_object_or_404(NotificationType, code = code)
 
 def s3_connection():
     AWS_ACCESS_KEY = os.environ.get('AWS_ACCESS_KEY')
@@ -233,3 +270,8 @@ def is_pickup_time_acceptable(pickup_datetime):
 def inform_dgs_about_orders_assigned():
     pass
     # TODO
+
+
+def delivery_actions(code):
+    return DeliveryAction.objects.get(code=code)
+

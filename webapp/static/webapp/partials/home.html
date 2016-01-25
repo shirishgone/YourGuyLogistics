@@ -10,7 +10,18 @@
                     <span class="popup_display"> {{user.name}} </span>
                 </a>
             </div>
+            <div class="menu-section" ng-if="role.ops">
+                <ul class="menu">
+                    <li>
+                        <a ui-sref="home.notification" ng-click="hideSidebar()" style="cursor:pointer;" ui-sref-active="active">
+                            <img class="sidebar-image" src="/static/webapp/images/menubar-icons/notification.png">&nbsp;&nbsp;
+                            Notifications &nbsp; <span class="label label-danger" ng-if="count > 0">{{count}}</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
             <div class="menu-section">
+                
                 <h3>General</h3>
                 <ul class="menu">
                     <li>

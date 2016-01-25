@@ -193,15 +193,4 @@ class VendorViewSet(viewsets.ModelViewSet):
     
     @detail_route(methods=['post'])
     def remove_address(self, request, pk):
-        try:
-            address_id = request.data['address_id']
-        except:
-            content = {'error':'Incomplete params', 'description':'address_id'}
-            return Response(content, status = status.HTTP_400_BAD_REQUEST)
-        
-        address = get_object_or_404(Address, pk = address_id)
-        address.delete()
-        
-        content = {'description': 'Deleted successfully'}
-        return Response(content, status = status.HTTP_200_OK)
-
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)            
