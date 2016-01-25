@@ -25,6 +25,9 @@ class ConsumerViewSet(viewsets.ModelViewSet):
     queryset = Consumer.objects.all()
     serializer_class = ConsumerSerializer
 
+    def destroy(self, request, pk= None):
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)            
+
     def list(self, request):
         role = user_role(request.user)
         if role == constants.VENDOR:
