@@ -170,7 +170,8 @@ def notify_unassigned_pickup():
         pincodes = vendor_wise_delivery_queryset.values_list('order__pickup_address__pin_code', flat = True).distinct()
         for pincode in pincodes:
             pincode_wise_delivery_ids = vendor_wise_delivery_queryset.filter(order__pickup_address__pin_code= pincode).values_list('id', flat = True)
-            
+            delivery_ids = delivery_ids_string(pincode_wise_delivery_ids)
+            delivery_ids_msg_string = delivery_ids_message_string(pincode_wise_delivery_ids)
             ops_managers = ops_executive_for_pincode(pincode)
             if len(ops_managers)  > 0:
                 notification_type = notification_type_for_code(constants.NOTIFICATION_CODE_UNASSIGNED_PICKUP)
