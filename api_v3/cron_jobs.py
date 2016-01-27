@@ -135,7 +135,7 @@ def create_notif_for_no_ops_exec_for_delivery_guy(delivery_guy):
     if len(ops_managers) > 0:
         notification_type = notification_type_for_code(constants.NOTIFICATION_CODE_NO_OPS_EXECUTIVE_FOR_DELIVERY_BOY)
         for ops_manager in ops_managers:
-            if check_if_notification_already_exists(notification_type, ops_manager, '') is False:
+            if check_if_notification_already_exists(notification_type, ops_manager, None) is False:
                 notification_message = constants.NOTIFICATION_MESSAGE_NO_OPS_EXEC_FOR_DELIVERY_GUY%(ops_manager.user.first_name, delivery_guy.user.first_name)
                 new_notification = Notification.objects.create(notification_type = notification_type, message = notification_message)
                 ops_manager.notifications.add(new_notification)
@@ -146,7 +146,7 @@ def create_notif_for_no_ops_exec_for_pincode(pincode):
     if len(ops_managers) > 0:
         notification_type = notification_type_for_code(constants.NOTIFICATION_CODE_NO_OPS_EXECUTIVE_FOR_PINCODE)
         for ops_manager in ops_managers:
-            if check_if_notification_already_exists(notification_type, ops_manager, '') is False:
+            if check_if_notification_already_exists(notification_type, ops_manager, None) is False:
                 notification_message = constants.NOTIFICATION_MESSAGE_NO_OPS_EXEC_FOR_PINCODE%(ops_manager.user.first_name, pincode)
                 new_notification = Notification.objects.create(notification_type = notification_type, message = notification_message)
                 ops_manager.notifications.add(new_notification)
@@ -175,7 +175,7 @@ def notify_unassigned_pickup():
             delivery_ids = delivery_ids_string(pincode_wise_delivery_ids)
             delivery_ids_msg_string = delivery_ids_message_string(pincode_wise_delivery_ids)
             ops_managers = ops_executive_for_pincode(pincode)
-            if len(ops_managers)  > 0:
+            if len(ops_managers) > 0:
                 notification_type = notification_type_for_code(constants.NOTIFICATION_CODE_UNASSIGNED_PICKUP)
                 for ops_manager in ops_managers:
                     if check_if_notification_already_exists(notification_type, ops_manager, delivery_ids) is False:
