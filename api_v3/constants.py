@@ -10,6 +10,12 @@ OPERATIONS = 'operations'
 SALES = 'sales'
 DELIVERY_GUY = 'deliveryguy'
 
+SALES_MANAGER = 'sales_manager'
+OPERATIONS_MANAGER = 'operations_manager'
+ACCOUNTS = 'accounts'
+CALLER = 'caller'
+ADMIN = 'admin'
+
 # CONTACTS CONSTANTS
 OPS_PHONE_NUMBER = '+919820252216'
 FROM_MAIL_ID = 'hi@yourguy.in'
@@ -128,15 +134,17 @@ NOTIFICATION_CODE_PICKUP_ATTEMPTED  = 'yg_nt_06'
 NOTIFICATION_CODE_COD_DISPRENCY   = 'yg_nt_07'
 NOTIFICATION_CODE_NO_OPS_EXECUTIVE_FOR_PINCODE = 'yg_nt_08'
 NOTIFICATION_CODE_UNASSIGNED_PICKUP    = 'yg_nt_09'
+NOTIFICATION_CODE_NO_OPS_EXECUTIVE_FOR_DELIVERY_BOY = 'yg_nt_10'
 # ---------------------------------------
 
 # NOTIFICATION MESSAGES -----------------
 NOTIFICATION_MESSAGE_COD_DISCREPENCY = 'Delivery boy %s, has collected different COD amount %s / %s for the order no %s. Please contact the delivery boy immediately.'
 NOTIFICATION_MESSAGE_REPORTED = 'Delivery boy %s, has reported an issue "%s" , for the orders : %s. Please contact the delivery boy immediately.'
-NOTIFICATION_MESSAGE_UNASSIGNED_DELIVERY = 'Dear %s, no delivery boy has been assigned for the following deliveries: %s. Please assign them asap.'
-NOTIFICATION_MESSAGE_UNASSIGNED_PICKUP = 'Dear %s, no pickup boy has been assigned for the following deliveries: %s. Please assign them asap.'
+NOTIFICATION_MESSAGE_UNASSIGNED_DELIVERY = 'Dear %s, no delivery boy has been assigned for the following deliveries: %s of pincode: %s. Please assign them asap.'
+NOTIFICATION_MESSAGE_UNASSIGNED_PICKUP = 'Dear %s, no pickup boy has been assigned for vendor: %s with following deliveries: %s of pincode: %s. Please assign them asap.'
 NOTIFICATION_MESSAGE_ORDER_PICKEUP_WITHOUT_DELIVERYGUY_ASSIGNED = 'Dear %s, order no %s has been picked up by %s and still a delivery boy is not been assigned. Pickup boy can\'t deliver with out delivery guy. Please assign immediately'
-NOTIFICATION_MESSAGE_DELIVERY_DELAY = 'Dear %s, order no: %s has been delayed in delivery. Please contact the delivery guy and complete the delivery asap.'
-NOTIFICATION_MESSAGE_PICKUP_DELAY = 'Dear %s, order no: %s has been delayed in pickup. Please contact the pickup guy and complete the pickup asap.'
+NOTIFICATION_MESSAGE_DELIVERY_DELAY = 'Dear %s, delivery boy %s has delayed in delivering following orders: %s. Please contact %s(%s) and complete the delivery asap.'
+NOTIFICATION_MESSAGE_PICKUP_DELAY = 'Dear %s, pickup boy %s has delayed in picking following orders: %s. Please contact %s(%s) and complete the pickup asap.'
 NOTIFICATION_MESSAGE_NO_OPS_EXEC_FOR_PINCODE = 'Dear %s, there is no operations executive assigned to the pincode: %s. Please assign one asap.'
+NOTIFICATION_MESSAGE_NO_OPS_EXEC_FOR_DELIVERY_GUY = 'Dear %s, there is no operations executive assigned for delivery guy: %s. Please assign one asap.'
 # ---------------------------------------

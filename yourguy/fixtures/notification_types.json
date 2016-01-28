@@ -79,5 +79,14 @@
         "title": "Unassigned Pickup",
         "description": ""
     }
+  },
+  {
+    "model": "yourguy.NotificationType",
+    "pk": 10,
+    "fields": {
+        "code": "yg_nt_10",
+        "title": "No Ops Executive for delivery boy",
+        "description": ""
+    }
   }
 ]
