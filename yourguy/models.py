@@ -122,7 +122,6 @@ class DeliveryGuy(YGUser):
     current_load = models.IntegerField(default = 0)
     capacity = models.IntegerField(default = 0)
 
-    area = models.ForeignKey(Area, blank = True, null = True)
     latitude = models.CharField(max_length = 50, blank = True)
     longitude = models.CharField(max_length = 50, blank = True)
 
@@ -399,6 +398,7 @@ class OrderDeliveryStatus(models.Model):
     DELIVERYATTEMPTED = 'DELIVERYATTEMPTED'
     DELIVERED = 'DELIVERED'
     CANCELLED = 'CANCELLED'
+    OUTFORDELIVERY = 'OUTFORDELIVERY'
     
     ORDER_CHOICES = (
         (ORDER_PLACED, 'ORDER_PLACED'),
@@ -406,6 +406,7 @@ class OrderDeliveryStatus(models.Model):
         (QUEUED, 'QUEUED'),
         (PICKUPATTEMPTED, 'PICKUPATTEMPTED'),
         (INTRANSIT, 'INTRANSIT'),
+        (OUTFORDELIVERY, 'OUTFORDELIVERY'),
         (DELIVERYATTEMPTED, 'DELIVERYATTEMPTED'),
         (DELIVERED, 'DELIVERED'),
         (CANCELLED, 'CANCELLED'),

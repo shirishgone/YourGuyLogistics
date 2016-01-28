@@ -16,6 +16,19 @@ from server import settings
 from yourguy.models import Order, OrderDeliveryStatus, VendorAgent, Consumer, Employee, NotificationType, DeliveryAction, ServiceablePincode
 from django.db.models import Q
 
+def response_structure():
+    result = {
+    'success': False,
+    'payload': {
+    # Application-specific data would go here. 
+    },
+    'error': {
+        'code': None,
+        'message': None
+        }
+    }
+    return result
+
 def ops_managers_for_pincode(pincode):
     result = []
     try:

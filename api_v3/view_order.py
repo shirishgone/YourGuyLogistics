@@ -287,23 +287,19 @@ def update_delivery_status_delivered(delivery_status, delivered_at, delivered_da
 
 def common_params(delivery_status):
     res_order = {}
-
+    
     if delivery_status.order.pickup_datetime is not None:
         new_pickup_datetime = datetime.combine(delivery_status.date, delivery_status.order.pickup_datetime.time())
-        new_pickup_datetime = pytz.utc.localize(new_pickup_datetime)
-        res_order['pickup_datetime'] = new_pickup_datetime,
+        res_order['pickup_datetime'] = pytz.utc.localize(new_pickup_datetime)
     else:
-        new_pickup_datetime = None
-        res_order['pickup_datetime'] = new_pickup_datetime,
-
+        res_order['pickup_datetime'] = None
+    
     if delivery_status.order.delivery_datetime is not None:
         new_delivery_datetime = datetime.combine(delivery_status.date,
                                                  delivery_status.order.delivery_datetime.time())
-        new_delivery_datetime = pytz.utc.localize(new_delivery_datetime)
-        res_order['delivery_datetime'] = new_delivery_datetime,
+        res_order['delivery_datetime'] = pytz.utc.localize(new_delivery_datetime)    
     else:
-        new_delivery_datetime = None
-        res_order['delivery_datetime'] = new_delivery_datetime,
+        res_order['delivery_datetime'] = None
 
     if delivery_status.pickup_guy is not None:
         res_order['pickupguy_id'] = delivery_status.pickup_guy.id
@@ -332,20 +328,17 @@ def common_params(delivery_status):
         order_items_array.append(order_item_obj)
 
     res_order['order_items'] = order_items_array
-
     return res_order
-
 
 def delivery_guy_app(delivery_status):
     if delivery_status is not None:
 
         res_order = {
-            'details': common_params(delivery_status),
             'id': delivery_status.id,
             'pickup_address': address_string(delivery_status.order.pickup_address),
             'delivery_address': address_string(delivery_status.order.delivery_address),
             'status': delivery_status.order_status,
-            'is_recurring': delivery_status.order.is_recurring,
+            'is_reverse_pickup': delivery_status.order.is_reverse_pickup,
             'is_reported': delivery_status.is_reported,
             'reported_reason': delivery_status.reported_reason,
             'cod_amount': delivery_status.order.cod_amount,
@@ -354,7 +347,6 @@ def delivery_guy_app(delivery_status):
             'customer_phonenumber': delivery_status.order.consumer.user.username,
             'vendor_name': delivery_status.order.vendor.store_name,
             'delivered_at': delivery_status.delivered_at,
-            'order_placed_datetime': delivery_status.order.created_date_time,
             'pickedup_datetime': delivery_status.pickedup_datetime,
             'completed_datetime': delivery_status.completed_datetime,
             'notes': delivery_status.order.notes,
@@ -364,7 +356,7 @@ def delivery_guy_app(delivery_status):
             'cod_remarks': delivery_status.cod_remarks,
             'delivery_charges': delivery_status.order.delivery_charges
         }
-
+        res_order.update(common_params(delivery_status))
         return res_order
     else:
         return None
@@ -374,7 +366,6 @@ def webapp_list(delivery_status):
     if delivery_status is not None:
 
         res_order = {
-            'details': common_params(delivery_status),
             'id': delivery_status.id,
             'pickup_address': address_string(delivery_status.order.pickup_address),
             'delivery_address': address_string(delivery_status.order.delivery_address),
@@ -389,7 +380,7 @@ def webapp_list(delivery_status):
             'delivered_at': delivery_status.delivered_at,
             'is_reverse_pickup': delivery_status.order.is_reverse_pickup
         }
-
+        res_order.update(common_params(delivery_status))
         return res_order
     else:
         return None
@@ -424,8 +415,9 @@ def webapp_details(delivery_status):
         'cod_amount': delivery_status.order.cod_amount,
         'customer_phonenumber': delivery_status.order.consumer.user.username,
         'notes': delivery_status.order.notes,
-        'total_cost': delivery_status.order.total_cost,
+        'total_cost': delivery_status.order.total_cost
     }
+    res_order.update(delivery_status)
     return res_order
 
 
@@ -621,7 +613,7 @@ class OrderViewSet(viewsets.ViewSet):
             delivery_statuses = delivery_status_queryset
             result = []
             for single_delivery in delivery_statuses:
-                delivery_status_dict = webapp_details(single_delivery)
+                delivery_status_dict = delivery_guy_app(single_delivery)
                 if delivery_status_dict is not None:
                     result.append(delivery_status_dict)
 
