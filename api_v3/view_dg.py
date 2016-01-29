@@ -56,7 +56,7 @@ def dg_details_dict(delivery_guy):
         'assignment_type': delivery_guy.assignment_type,
         'transportation_mode': delivery_guy.transportation_mode,
         'profile_picture': '',
-        'area': [],
+        'pincode': [],
         'ops_managers': [],
         'team_leads': []
     }
@@ -104,11 +104,18 @@ class DGViewSet(viewsets.ModelViewSet):
 
             # only return pincodes for dg team lead
             if delivery_guy.is_teamlead is True:
-                delivery_guy_tl = DeliveryTeamLead.objects.get(delivery_guy=delivery_guy)
+                try:
+                    delivery_guy_tl = DeliveryTeamLead.objects.get(delivery_guy=delivery_guy)
+                except Exception as e:
+                    content = {
+                        "Description": "No such Delivery Team Lead exists"
+                    }
+                    return Response(content, status=status.HTTP_400_BAD_REQUEST)
+
                 if delivery_guy_tl.serving_pincodes is not None:
                     pincodes = delivery_guy_tl.serving_pincodes.all()
                     for single_pincode in pincodes:
-                        detail_dict['area'].append(single_pincode.pincode)
+                        detail_dict['pincode'].append(single_pincode.pincode)
 
             if delivery_guy.profile_picture is not None:
                 detail_dict['profile_picture'] = delivery_guy.profile_picture.name
@@ -116,13 +123,13 @@ class DGViewSet(viewsets.ModelViewSet):
             if delivery_guy.is_teamlead is False:
                 associated_tl = DeliveryTeamLead.objects.filter(
                     associate_delivery_guys__user__username=delivery_guy.user.username)
-                if associated_tl is not None:
+                if not associated_tl:
                     for single_tl in associated_tl:
                         detail_dict['team_leads'].append('%s' % (single_tl.delivery_guy.user.first_name))
 
             associated_ops_mngr = Employee.objects.filter(
                 associate_delivery_guys__user__username=delivery_guy.user.username)
-            if associated_ops_mngr is not None:
+            if not associated_ops_mngr:
                 for single_ops_mngr in associated_ops_mngr:
                     detail_dict['ops_managers'].append('%s' % (single_ops_mngr.user.first_name))
 
@@ -344,12 +351,14 @@ class DGViewSet(viewsets.ModelViewSet):
                 ops_manager_id = single_ops_manager_id
                 ops_manager = get_object_or_404(Employee, id=ops_manager_id)
                 ops_manager.associate_delivery_guys.add(delivery_guy)
+                ops_manager.save()
 
         if team_lead_ids is not None and delivery_guy.is_teamlead is False:
             for single_team_lead_id in team_lead_ids:
                 team_lead_id = single_team_lead_id
                 team_lead = get_object_or_404(DeliveryTeamLead, id=team_lead_id)
                 team_lead.associate_delivery_guys.add(delivery_guy)
+                team_lead.save()
 
         if profile_picture is not None:
             profile_pic = Picture.objects.create(name=profile_picture)
