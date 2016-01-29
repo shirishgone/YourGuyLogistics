@@ -203,6 +203,8 @@ def user_role(user):
         return constants.CONSUMER
     elif role == constants.OPERATIONS:
         return constants.OPERATIONS
+    elif role == constants.OPERATIONS_MANAGER:
+        return constants.OPERATIONS_MANAGER
     elif role == constants.SALES:
         return constants.SALES
     elif role == constants.DELIVERY_GUY:

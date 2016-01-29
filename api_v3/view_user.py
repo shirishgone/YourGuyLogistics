@@ -76,6 +76,11 @@ def register(request):
         employee = Employee.objects.create(user=user)
         employee.department = constants.OPERATIONS
         assign_usergroup(user)
+    elif role == constants.OPERATIONS_MANAGER:
+        token = create_token(user, constants.OPERATIONS_MANAGER)
+        employee = Employee.objects.create(user=user)
+        employee.department = constants.OPERATIONS_MANAGER
+        assign_usergroup(user)
     elif role == constants.SALES:
         token = create_token(user, constants.SALES)
         employee = Employee.objects.create(user=user)
