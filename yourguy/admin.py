@@ -25,11 +25,17 @@ admin.site.register(DeliveryGuy, DeliveryGuyAdmin)
 admin.site.register(DGAttendance)
 
 admin.site.register(Industry)
-admin.site.register(Vendor)
+
+class VendorAdmin(admin.ModelAdmin):
+    raw_id_fields = ('addresses',)
+admin.site.register(Vendor, VendorAdmin)
+
 admin.site.register(VendorAgent)
 admin.site.register(VendorAccount)
 
-admin.site.register(Consumer)
+class ConsumerAdmin(admin.ModelAdmin):
+    raw_id_fields = ('addresses',)
+admin.site.register(Consumer, ConsumerAdmin)
 
 class OrderAdmin(admin.ModelAdmin):
     raw_id_fields = ('vendor','consumer','order_items','pickup_address','delivery_address','created_by_user')
@@ -44,11 +50,14 @@ admin.site.register(ProductCategory)
 admin.site.register(OrderItem)
 
 class EmployeeAdmin(admin.ModelAdmin):
-    raw_id_fields = ['notifications']
+    raw_id_fields = ['notifications','profile_picture']
 admin.site.register(Employee, EmployeeAdmin)
 
 admin.site.register(Picture)
-admin.site.register(ProofOfDelivery)
+
+class ProofOfDeliveryAdmin(admin.ModelAdmin):
+	raw_id_fields = ['signature','pictures']
+admin.site.register(ProofOfDelivery, ProofOfDeliveryAdmin)
 
 admin.site.register(ServiceableCity)
 admin.site.register(ServiceablePincode)
