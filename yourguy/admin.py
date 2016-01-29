@@ -18,7 +18,10 @@ admin.site.register(TimeSlot)
 admin.site.register(Address)
 admin.site.register(Area)
 
-admin.site.register(DeliveryGuy)
+class DeliveryGuyAdmin(admin.ModelAdmin):
+	raw_id_fields = ['notifications']
+admin.site.register(DeliveryGuy, DeliveryGuyAdmin)
+
 admin.site.register(DGAttendance)
 
 admin.site.register(Industry)
@@ -39,7 +42,10 @@ admin.site.register(OrderDeliveryStatus, DeliveryStatusAdmin)
 admin.site.register(Product)
 admin.site.register(ProductCategory)
 admin.site.register(OrderItem)
-admin.site.register(Employee)
+
+class EmployeeAdmin(admin.ModelAdmin):
+    raw_id_fields = ['notifications']
+admin.site.register(Employee, EmployeeAdmin)
 
 admin.site.register(Picture)
 admin.site.register(ProofOfDelivery)
