@@ -23,6 +23,8 @@ from api_v3.utils import log_exception, send_sms, ist_datetime, user_role, addre
 from yourguy.models import User, Vendor, DeliveryGuy, VendorAgent, Picture, ProofOfDelivery, OrderDeliveryStatus, \
     Consumer, Address, Order, Product, OrderItem, Notification, Location, DeliveryTransaction
 
+from api_v3.cron_jobs import create_notif_for_no_ops_exec_for_pincode
+
 def is_deliveryguy_assigned(delivery):
     if delivery.delivery_guy is not None:
         return True
@@ -31,18 +33,17 @@ def is_deliveryguy_assigned(delivery):
 
 def notif_unassigned(delivery):
     pincode = delivery.order.delivery_address.pin_code
-    ops_managers = ops_executive_for_pincode(pincode)
-    if len(ops_managers) > 0:
+    ops_execs = ops_executive_for_pincode(pincode)
+    if len(ops_execs) > 0:
         notification_type = notification_type_for_code(constants.NOTIFICATION_CODE_UNASSIGNED)
-        for ops_manager in ops_managers:
+        for ops_manager in ops_execs:
             notification_message = constants.NOTIFICATION_MESSAGE_ORDER_PICKEUP_WITHOUT_DELIVERYGUY_ASSIGNED%(ops_manager.user.first_name, delivery.id, delivery.pickup_guy.user.first_name)
             new_notification = Notification.objects.create(notification_type = notification_type, 
                 delivery_id = delivery.id, message = notification_message)
             ops_manager.notifications.add(new_notification)
             ops_manager.save()
     else:
-        # CANT FIND APPROPRIATE OPS_EXECUTIVE FOR THE ABOVE PINCODE
-        pass                
+        create_notif_for_no_ops_exec_for_pincode(pincode)
 
 def send_reported_email(user, email_orders, reported_reason):
     subject = '%s Reported Issue'% (user.first_name)
