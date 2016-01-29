@@ -18,7 +18,7 @@ from api_v3.push import send_push
 from api_v3.utils import log_exception, send_sms, ist_datetime, user_role, address_string, ist_day_start, ist_day_end, \
     paginate, is_correct_pincode, is_pickup_time_acceptable, timedelta, is_userexists, is_consumerexists, \
     is_consumer_has_same_address_already, days_in_int, send_email, is_today_date, is_vendor_has_same_address_already, \
-    delivery_actions, ops_manager_for_dg, notification_type_for_code, ops_executive_for_pincode
+    delivery_actions, ops_manager_for_dg, notification_type_for_code, ops_executive_for_pincode, address_with_location
 
 from yourguy.models import User, Vendor, DeliveryGuy, VendorAgent, Picture, ProofOfDelivery, OrderDeliveryStatus, \
     Consumer, Address, Order, Product, OrderItem, Notification, Location, DeliveryTransaction
@@ -336,8 +336,8 @@ def delivery_guy_app(delivery_status):
 
         res_order = {
             'id': delivery_status.id,
-            'pickup_address': address_string(delivery_status.order.pickup_address),
-            'delivery_address': address_string(delivery_status.order.delivery_address),
+            'pickup_address': address_with_location(delivery_status.order.pickup_address),
+            'delivery_address': address_with_location(delivery_status.order.delivery_address),
             'status': delivery_status.order_status,
             'is_reverse_pickup': delivery_status.order.is_reverse_pickup,
             'is_reported': delivery_status.is_reported,
