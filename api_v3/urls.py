@@ -1,4 +1,4 @@
-from django.conf.urls import url, patterns
+from django.conf.urls import patterns, url, include
 from rest_framework.routers import DefaultRouter
 
 from api_v3 import mail, views, view_user, view_freshdesk, view_address, view_dashboard, report, cron_jobs, view_internals
