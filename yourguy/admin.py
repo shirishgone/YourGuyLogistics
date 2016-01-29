@@ -19,7 +19,7 @@ admin.site.register(Address)
 admin.site.register(Area)
 
 class DeliveryGuyAdmin(admin.ModelAdmin):
-	raw_id_fields = ['notifications']
+	raw_id_fields = ['user','notifications','profile_picture']
 admin.site.register(DeliveryGuy, DeliveryGuyAdmin)
 
 admin.site.register(DGAttendance)
@@ -34,7 +34,7 @@ admin.site.register(VendorAgent)
 admin.site.register(VendorAccount)
 
 class ConsumerAdmin(admin.ModelAdmin):
-    raw_id_fields = ('addresses',)
+    raw_id_fields = ['user','addresses']
 admin.site.register(Consumer, ConsumerAdmin)
 
 class OrderAdmin(admin.ModelAdmin):
@@ -50,7 +50,7 @@ admin.site.register(ProductCategory)
 admin.site.register(OrderItem)
 
 class EmployeeAdmin(admin.ModelAdmin):
-    raw_id_fields = ['notifications','profile_picture']
+    raw_id_fields = ['user','notifications','profile_picture']
 admin.site.register(Employee, EmployeeAdmin)
 
 admin.site.register(Picture)
