@@ -1741,6 +1741,8 @@ class OrderViewSet(viewsets.ViewSet):
 
             # ASSIGN PICKUP AS SAME BOY -------------------------------------------
             delivery_status.pickup_guy = delivery_boy
+            if vendor.is_hyper_local is True:
+                delivery_status.delivery_guy = delivery_boy
             delivery_status.save()
             # ---------------------------------------------------------------------
 
