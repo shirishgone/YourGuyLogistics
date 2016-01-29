@@ -105,7 +105,6 @@ class YGUser(models.Model):
 class DeliveryGuy(YGUser):
     # Mandatory Fields
     employee_code = models.CharField(max_length = 200, blank = True , null = True)
-    
     UN_AVAILABLE = 'UN_AVAILABLE'
     AVAILABLE = 'AVAILABLE'
     BUSY = 'BUSY'
@@ -122,7 +121,6 @@ class DeliveryGuy(YGUser):
     current_load = models.IntegerField(default = 0)
     capacity = models.IntegerField(default = 0)
 
-    area = models.ForeignKey(Area, blank = True, null = True)
     latitude = models.CharField(max_length = 50, blank = True)
     longitude = models.CharField(max_length = 50, blank = True)
 
@@ -198,6 +196,7 @@ class Vendor(models.Model):
     website_url = models.CharField(max_length = 100, blank = True)
     verified = models.BooleanField(blank = True, default = False)
     notes = models.CharField(max_length = 500, blank = True)
+    is_hyper_local = models.BooleanField(default = False)
 
     def __unicode__(self):
         return unicode(self.store_name)
@@ -399,6 +398,7 @@ class OrderDeliveryStatus(models.Model):
     DELIVERYATTEMPTED = 'DELIVERYATTEMPTED'
     DELIVERED = 'DELIVERED'
     CANCELLED = 'CANCELLED'
+    OUTFORDELIVERY = 'OUTFORDELIVERY'
     
     ORDER_CHOICES = (
         (ORDER_PLACED, 'ORDER_PLACED'),
@@ -406,6 +406,7 @@ class OrderDeliveryStatus(models.Model):
         (QUEUED, 'QUEUED'),
         (PICKUPATTEMPTED, 'PICKUPATTEMPTED'),
         (INTRANSIT, 'INTRANSIT'),
+        (OUTFORDELIVERY, 'OUTFORDELIVERY'),
         (DELIVERYATTEMPTED, 'DELIVERYATTEMPTED'),
         (DELIVERED, 'DELIVERED'),
         (CANCELLED, 'CANCELLED'),

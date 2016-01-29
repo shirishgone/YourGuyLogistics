@@ -1,4 +1,4 @@
-from django.conf.urls import url, patterns
+from django.conf.urls import patterns, url, include
 from rest_framework.routers import DefaultRouter
 
 from api_v3 import mail, views, view_user, view_freshdesk, view_address, view_dashboard, report, cron_jobs, view_internals
@@ -14,6 +14,7 @@ from api_v3 import view_notifications
 
 urlpatterns = patterns(
     'api_v3.views',
+    url(r'^auth/', include('djoser.urls')),
     url(r'^register/', view_user.register, name='Registration'),
     # url(r'^reset_password_link/', view_user.reset_password_link, name='reset_password_link'),
     # url(r'^reset_password/', view_user.reset_password, name='reset_password'),
