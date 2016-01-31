@@ -1320,6 +1320,8 @@ class OrderViewSet(viewsets.ViewSet):
 
             # ASSIGN PICKUP AS SAME BOY -------------------------------------------
             delivery_status.pickup_guy = delivery_boy
+            if vendor.is_hyper_local is True:
+                delivery_status.delivery_guy = delivery_boy
             delivery_status.save()
             # ---------------------------------------------------------------------
 
@@ -1766,7 +1768,6 @@ class OrderViewSet(viewsets.ViewSet):
         try:
             dg_id = request.data['dg_id']
             delivery_ids = request.data['order_ids']
-            date_string = request.data['date']
             assignment_type = request.data['assignment_type']
         except Exception, e:
             content = {
@@ -1795,10 +1796,11 @@ class OrderViewSet(viewsets.ViewSet):
         # ---------------------------------------------------------------
        
         is_orders_assigned = False       
-        date = parse_datetime(date_string)
+        order_date = None
         dg = get_object_or_404(DeliveryGuy, id = dg_id)
         for delivery_id in delivery_ids:
             delivery_status = get_object_or_404(OrderDeliveryStatus, id = delivery_id)
+            order_date = delivery_status.date
             order = delivery_status.order            
 
             current_datetime = datetime.now()
@@ -1845,10 +1847,10 @@ class OrderViewSet(viewsets.ViewSet):
         # INFORM DG THROUGH SMS AND NOTIF IF ITS ONLY TODAYS DELIVERY -----
         if is_orders_assigned is True:
             try:
-                if is_today_date(date):
+                if is_today_date(order_date):
                     send_dg_notification(dg, delivery_ids)
                     if delivery_count == 1:
-                        send_sms_to_dg_about_order(date, dg, delivery_status)
+                        send_sms_to_dg_about_order(order_date, dg, delivery_status)
                     else:
                         send_sms_to_dg_about_mass_orders(dg, delivery_ids)
             except Exception, e:

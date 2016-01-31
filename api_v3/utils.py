@@ -16,6 +16,19 @@ from server import settings
 from yourguy.models import Order, OrderDeliveryStatus, VendorAgent, Consumer, Employee, NotificationType, DeliveryAction, ServiceablePincode
 from django.db.models import Q
 
+def response_structure():
+    result = {
+    'success': False,
+    'payload': {
+    # Application-specific data would go here. 
+    },
+    'error': {
+        'code': None,
+        'message': None
+        }
+    }
+    return result
+
 def ops_managers_for_pincode(pincode):
     result = []
     try:
@@ -62,7 +75,6 @@ def s3_connection():
 def s3_bucket_pod():
     return os.environ.get('S3_BUCKET_POD')
 
-
 def address_string(address):
     try:
         if len(address.full_address) > 1:
@@ -75,6 +87,21 @@ def address_string(address):
         return address_string
     except Exception as e:
         print(e)
+
+def address_with_location(address):
+    result = {
+    "full_address": address_string(address),
+    }
+
+    if address.latitude is not None and address.longitude is not None and len(address.latitude) > 0 and len(address.longitude):
+        location = {
+        "latitude": address.latitude,
+        "longitude": address.longitude        
+        }
+        result['location'] = location
+    else:
+        result['location'] = None
+    return result
 
 
 def is_correct_pincode(pincode):
@@ -263,7 +290,7 @@ def paginate(list, page):
 
 def is_pickup_time_acceptable(pickup_datetime):
 	current_datetime = datetime.now()
-	if time(0, 0) <= pickup_datetime.time() <= time(16, 30) and pickup_datetime.date() >= current_datetime.date():
+	if time(0, 0) <= pickup_datetime.time() <= time(18, 0) and pickup_datetime.date() >= current_datetime.date():
 		return True
 	else:
 		return False

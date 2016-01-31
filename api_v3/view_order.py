@@ -18,10 +18,12 @@ from api_v3.push import send_push
 from api_v3.utils import log_exception, send_sms, ist_datetime, user_role, address_string, ist_day_start, ist_day_end, \
     paginate, is_correct_pincode, is_pickup_time_acceptable, timedelta, is_userexists, is_consumerexists, \
     is_consumer_has_same_address_already, days_in_int, send_email, is_today_date, is_vendor_has_same_address_already, \
-    delivery_actions, ops_manager_for_dg, notification_type_for_code, ops_executive_for_pincode
+    delivery_actions, ops_manager_for_dg, notification_type_for_code, ops_executive_for_pincode, address_with_location
 
 from yourguy.models import User, Vendor, DeliveryGuy, VendorAgent, Picture, ProofOfDelivery, OrderDeliveryStatus, \
     Consumer, Address, Order, Product, OrderItem, Notification, Location, DeliveryTransaction
+
+from api_v3.cron_jobs import create_notif_for_no_ops_exec_for_pincode
 
 def is_deliveryguy_assigned(delivery):
     if delivery.delivery_guy is not None:
@@ -31,18 +33,17 @@ def is_deliveryguy_assigned(delivery):
 
 def notif_unassigned(delivery):
     pincode = delivery.order.delivery_address.pin_code
-    ops_managers = ops_executive_for_pincode(pincode)
-    if len(ops_managers) > 0:
+    ops_execs = ops_executive_for_pincode(pincode)
+    if len(ops_execs) > 0:
         notification_type = notification_type_for_code(constants.NOTIFICATION_CODE_UNASSIGNED)
-        for ops_manager in ops_managers:
+        for ops_manager in ops_execs:
             notification_message = constants.NOTIFICATION_MESSAGE_ORDER_PICKEUP_WITHOUT_DELIVERYGUY_ASSIGNED%(ops_manager.user.first_name, delivery.id, delivery.pickup_guy.user.first_name)
             new_notification = Notification.objects.create(notification_type = notification_type, 
                 delivery_id = delivery.id, message = notification_message)
             ops_manager.notifications.add(new_notification)
             ops_manager.save()
     else:
-        # CANT FIND APPROPRIATE OPS_EXECUTIVE FOR THE ABOVE PINCODE
-        pass                
+        create_notif_for_no_ops_exec_for_pincode(pincode)
 
 def send_reported_email(user, email_orders, reported_reason):
     subject = '%s Reported Issue'% (user.first_name)
@@ -287,23 +288,19 @@ def update_delivery_status_delivered(delivery_status, delivered_at, delivered_da
 
 def common_params(delivery_status):
     res_order = {}
-
+    
     if delivery_status.order.pickup_datetime is not None:
         new_pickup_datetime = datetime.combine(delivery_status.date, delivery_status.order.pickup_datetime.time())
-        new_pickup_datetime = pytz.utc.localize(new_pickup_datetime)
-        res_order['pickup_datetime'] = new_pickup_datetime,
+        res_order['pickup_datetime'] = pytz.utc.localize(new_pickup_datetime)
     else:
-        new_pickup_datetime = None
-        res_order['pickup_datetime'] = new_pickup_datetime,
-
+        res_order['pickup_datetime'] = None
+    
     if delivery_status.order.delivery_datetime is not None:
         new_delivery_datetime = datetime.combine(delivery_status.date,
                                                  delivery_status.order.delivery_datetime.time())
-        new_delivery_datetime = pytz.utc.localize(new_delivery_datetime)
-        res_order['delivery_datetime'] = new_delivery_datetime,
+        res_order['delivery_datetime'] = pytz.utc.localize(new_delivery_datetime)    
     else:
-        new_delivery_datetime = None
-        res_order['delivery_datetime'] = new_delivery_datetime,
+        res_order['delivery_datetime'] = None
 
     if delivery_status.pickup_guy is not None:
         res_order['pickupguy_id'] = delivery_status.pickup_guy.id
@@ -332,20 +329,17 @@ def common_params(delivery_status):
         order_items_array.append(order_item_obj)
 
     res_order['order_items'] = order_items_array
-
     return res_order
-
 
 def delivery_guy_app(delivery_status):
     if delivery_status is not None:
 
         res_order = {
-            'details': common_params(delivery_status),
             'id': delivery_status.id,
-            'pickup_address': address_string(delivery_status.order.pickup_address),
-            'delivery_address': address_string(delivery_status.order.delivery_address),
+            'pickup_address': address_with_location(delivery_status.order.pickup_address),
+            'delivery_address': address_with_location(delivery_status.order.delivery_address),
             'status': delivery_status.order_status,
-            'is_recurring': delivery_status.order.is_recurring,
+            'is_reverse_pickup': delivery_status.order.is_reverse_pickup,
             'is_reported': delivery_status.is_reported,
             'reported_reason': delivery_status.reported_reason,
             'cod_amount': delivery_status.order.cod_amount,
@@ -354,7 +348,6 @@ def delivery_guy_app(delivery_status):
             'customer_phonenumber': delivery_status.order.consumer.user.username,
             'vendor_name': delivery_status.order.vendor.store_name,
             'delivered_at': delivery_status.delivered_at,
-            'order_placed_datetime': delivery_status.order.created_date_time,
             'pickedup_datetime': delivery_status.pickedup_datetime,
             'completed_datetime': delivery_status.completed_datetime,
             'notes': delivery_status.order.notes,
@@ -364,7 +357,7 @@ def delivery_guy_app(delivery_status):
             'cod_remarks': delivery_status.cod_remarks,
             'delivery_charges': delivery_status.order.delivery_charges
         }
-
+        res_order.update(common_params(delivery_status))
         return res_order
     else:
         return None
@@ -374,7 +367,6 @@ def webapp_list(delivery_status):
     if delivery_status is not None:
 
         res_order = {
-            'details': common_params(delivery_status),
             'id': delivery_status.id,
             'pickup_address': address_string(delivery_status.order.pickup_address),
             'delivery_address': address_string(delivery_status.order.delivery_address),
@@ -389,7 +381,7 @@ def webapp_list(delivery_status):
             'delivered_at': delivery_status.delivered_at,
             'is_reverse_pickup': delivery_status.order.is_reverse_pickup
         }
-
+        res_order.update(common_params(delivery_status))
         return res_order
     else:
         return None
@@ -424,8 +416,9 @@ def webapp_details(delivery_status):
         'cod_amount': delivery_status.order.cod_amount,
         'customer_phonenumber': delivery_status.order.consumer.user.username,
         'notes': delivery_status.order.notes,
-        'total_cost': delivery_status.order.total_cost,
+        'total_cost': delivery_status.order.total_cost
     }
+    res_order.update(delivery_status)
     return res_order
 
 
@@ -621,7 +614,7 @@ class OrderViewSet(viewsets.ViewSet):
             delivery_statuses = delivery_status_queryset
             result = []
             for single_delivery in delivery_statuses:
-                delivery_status_dict = webapp_details(single_delivery)
+                delivery_status_dict = delivery_guy_app(single_delivery)
                 if delivery_status_dict is not None:
                     result.append(delivery_status_dict)
 
@@ -1576,11 +1569,10 @@ class OrderViewSet(viewsets.ViewSet):
         try:
             dg_id = request.data['dg_id']
             delivery_ids = request.data['order_ids']
-            date_string = request.data['date']
             assignment_type = request.data['assignment_type']
         except Exception as e:
             content = {
-                'error': 'dg_id, order_ids, date, assignment_type are Mandatory'
+                'error': 'dg_id, order_ids, assignment_type are Mandatory'
             }
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
         # ---------------------------------------------------------------
@@ -1605,10 +1597,11 @@ class OrderViewSet(viewsets.ViewSet):
         # ---------------------------------------------------------------
 
         is_orders_assigned = False
-        date = parse_datetime(date_string)
+        order_date = None
         dg = get_object_or_404(DeliveryGuy, id=dg_id)
         for delivery_id in delivery_ids:
             delivery_status = get_object_or_404(OrderDeliveryStatus, id=delivery_id)
+            order_date = delivery_status.date 
             order = delivery_status.order
 
             current_datetime = datetime.now()
@@ -1655,10 +1648,10 @@ class OrderViewSet(viewsets.ViewSet):
         # INFORM DG THROUGH SMS AND NOTIF IF ITS ONLY TODAYS DELIVERY -----
         if is_orders_assigned is True:
             try:
-                if is_today_date(date):
+                if is_today_date(order_date):
                     send_dg_notification(dg, delivery_ids)
                     if delivery_count == 1:
-                        send_sms_to_dg_about_order(date, dg, delivery_status)
+                        send_sms_to_dg_about_order(order_date, dg, delivery_status)
                     else:
                         send_sms_to_dg_about_mass_orders(dg, delivery_ids)
             except Exception as e:
@@ -1762,6 +1755,8 @@ class OrderViewSet(viewsets.ViewSet):
 
             # ASSIGN PICKUP AS SAME BOY -------------------------------------------
             delivery_status.pickup_guy = delivery_boy
+            if vendor.is_hyper_local is True:
+                delivery_status.delivery_guy = delivery_boy
             delivery_status.save()
             # ---------------------------------------------------------------------
 
