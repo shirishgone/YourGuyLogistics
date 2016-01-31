@@ -5,7 +5,8 @@ from rest_framework import status
 from rest_framework.response import Response
 from api_v3 import constants
 from api_v3.utils import send_email, ist_day_start, ist_day_end
-from yourguy.models import DeliveryGuy, OrderDeliveryStatus, DGAttendance, Vendor
+from yourguy.models import DeliveryGuy, OrderDeliveryStatus, DGAttendance, Vendor, Employee
+from rest_framework.decorators import api_view
 
 
 def daily_report():
@@ -370,8 +371,8 @@ def cod_report():
         send_email(constants.EMAIL_COD_REPORT, email_subject, email_body)
         # ------------------------------------------------------------------------------------------------
 
-
-def dg_report():
+@api_view(['GET'])
+def dg_report(request):
     date = datetime.today()
     day_start = ist_day_start(date)
     day_end = ist_day_end(date)
@@ -390,12 +391,14 @@ def dg_report():
     )
     delivery_statuses_today = delivery_statuses_today.exclude(delivery_guy=None)
     delivery_statuses_today = delivery_statuses_today.exclude(pickup_guy=None)
+
     all_dgs = delivery_statuses_today.values('delivery_guy__user__username'). \
         annotate(sum_of_cod_collected=Sum('cod_collected_amount'), sum_of_cod_amount=Sum('order__cod_amount'))
 
-    all_pickup_guys = delivery_statuses_today.values('pickup_guy__user__username').annotate(
+    all_pgs = delivery_statuses_today.values('pickup_guy__user__username').annotate(
         sum_of_cod_amount=Sum('order__cod_amount'))
 
+    all_ops_execs = Employee.objects.filter(department=constants.OPERATIONS)
     # -----------------------------------------------------------------------------------
 
     if dg_working_today_count == 0:
@@ -413,65 +416,74 @@ def dg_report():
         today_string = datetime.now().strftime("%Y %b %d")
         email_subject = 'DG Report : %s' % (today_string)
 
-        email_body = "Good Evening Guys, \n\nPlease find the dg report of the day."
+        email_body = "Good Evening Guys, \nPlease find the dg report of the day."
         email_body = email_body + "\n\nTotal dgs working today = %s" % (dg_working_today_count)
 
-        email_body = email_body + "\n\nPICKUP BOY DETAILS -------\n"
-
         orders_executed = delivery_statuses_today.filter(order_status=constants.ORDER_STATUS_DELIVERED)
+        orders_count = 0
 
-        for single_pickup_guy in all_pickup_guys:
-            pickup_guy_ph_number = single_pickup_guy['pickup_guy__user__username']
-
-            pickup_guy = DeliveryGuy.objects.get(user__username=pickup_guy_ph_number)
-            pickup_guy_full_name = pickup_guy.user.first_name + pickup_guy.user.last_name
-
-            orders_assigned_tracked = delivery_statuses_today.filter(
-                delivery_guy__user__username=single_pickup_guy['pickup_guy__user__username'])
-            no_of_assigned_orders = len(orders_assigned_tracked)
-
-            orders_executed_tracked = orders_executed.filter(
-                delivery_guy__user__username=single_pickup_guy['pickup_guy__user__username'])
-            no_of_executed_orders = len(orders_executed_tracked)
-
-            email_body = email_body + "\n\n%s - Orders: %s/%s" % (
-            pickup_guy_full_name, no_of_executed_orders, no_of_assigned_orders)
+        for single_ops_exec in all_ops_execs:
+            associated_guys = single_ops_exec.associate_delivery_guys.all()
+            executed_orders_count = 0
+            assigned_orders_count = 0
+            pgs_data = []
+            dgs_data = []
             email_body = email_body + "\n-----------------------------------"
+            for single_pg in all_pgs:
+                pg_ph_number = single_pg['pickup_guy__user__username']
+                pickup_guy = DeliveryGuy.objects.get(user__username=pg_ph_number)
 
-        email_body = email_body + "\n\nDELIVERY BOY DETAILS -------\n* COD of Cancelled orders are not considered."
+                if pickup_guy in associated_guys:
+                    pickup_guy_full_name = pickup_guy.user.first_name + pickup_guy.user.last_name
 
-        for single_dg in all_dgs:
-            dg_ph_number = single_dg['delivery_guy__user__username']
-            cod_collected = single_dg['sum_of_cod_collected']
-            if cod_collected is None:
-                cod_collected = 0
+                    no_of_assigned_orders = delivery_statuses_today.filter(
+                        delivery_guy__user__username=single_pg['pickup_guy__user__username']).count()
+                    assigned_orders_count = assigned_orders_count + no_of_assigned_orders
 
-            cod_to_be_collected = single_dg['sum_of_cod_amount']
-            if cod_to_be_collected is None:
-                cod_to_be_collected = 0
+                    no_of_executed_orders = orders_executed.filter(
+                        delivery_guy__user__username=single_pg['pickup_guy__user__username']).count()
+                    executed_orders_count = executed_orders_count + no_of_executed_orders
+                    pgs_data.append("%s - Orders: %s/%s" % (pickup_guy_full_name, no_of_executed_orders,
+                                                                          no_of_assigned_orders))
+            for single_dg in all_dgs:
+                dg_ph_number = single_dg['delivery_guy__user__username']
+                dg = DeliveryGuy.objects.get(user__username=dg_ph_number)
 
-            dg = DeliveryGuy.objects.get(user__username=dg_ph_number)
-            dg_first_name = dg.user.first_name
-            dg_last_name = dg.user.last_name
-            dg_full_name = dg_first_name + dg_last_name
+                if dg in associated_guys:
+                    cod_collected = single_dg['sum_of_cod_collected']
+                    if cod_collected is None:
+                        cod_collected = 0
 
-            orders_assigned_tracked = delivery_statuses_today.filter(
-                delivery_guy__user__username=single_dg['delivery_guy__user__username'])
-            no_of_assigned_orders = len(orders_assigned_tracked)
+                    cod_to_be_collected = single_dg['sum_of_cod_amount']
+                    if cod_to_be_collected is None:
+                        cod_to_be_collected = 0
 
-            orders_executed_tracked = orders_executed.filter(
-                delivery_guy__user__username=single_dg['delivery_guy__user__username'])
-            no_of_executed_orders = len(orders_executed_tracked)
+                    dg_full_name = dg.user.first_name + dg.user.last_name
 
-            email_body = email_body + "\n\n%s - Orders: %s/%s, COD: %s/%s" % (dg_full_name, no_of_executed_orders,
-                                                                              no_of_assigned_orders, cod_collected,
-                                                                              cod_to_be_collected)
-            email_body = email_body + "\n-----------------------------------"
+                    no_of_assigned_orders = delivery_statuses_today.filter(
+                        delivery_guy__user__username=single_dg['delivery_guy__user__username']).count()
+                    assigned_orders_count = assigned_orders_count + no_of_assigned_orders
 
+                    no_of_executed_orders = orders_executed.filter(
+                        delivery_guy__user__username=single_dg['delivery_guy__user__username']).count()
+                    executed_orders_count = executed_orders_count + no_of_executed_orders
+                    dgs_data.append("%s - Orders: %s/%s, COD: %s/%s" % (dg_full_name, no_of_executed_orders,
+                                                                                      no_of_assigned_orders, cod_collected,
+                                                                                      cod_to_be_collected))
+                    orders_count = "%s/%s" %(executed_orders_count, assigned_orders_count)
+
+            email_body = email_body + "\n\nOPS EXECUTIVE %s - Orders: %s"%(single_ops_exec.user.first_name, orders_count)
+            email_body = email_body + "\n\nPICKUP BOY DETAILS -------\n\n"
+            for single in pgs_data:
+                email_body = email_body + single +"\n\n"
+            email_body = email_body + "\n\nDELIVERY BOY DETAILS -------\n* COD of Cancelled orders are not considered.\n\n"
+            for single in dgs_data:
+                email_body = email_body + single + "\n\n"
         email_body = email_body + "\n-----------------------------------"
         email_body = email_body + "\n\n- YourGuy BOT"
 
         send_email(constants.EMAIL_DG_REPORT, email_subject, email_body)
+        return Response(status=status.HTTP_200_OK)
 
 
 def vendor_report():
