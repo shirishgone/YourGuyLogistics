@@ -1,3 +1,4 @@
+from datetime import datetime
 from django.db.models.functions import Lower
 from django.shortcuts import get_object_or_404
 from rest_framework import status, authentication
@@ -192,60 +193,74 @@ class VendorViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['put'])
     def approve(self, request, pk):
+        import pdb
+        pdb.set_trace()
+
+        role = user_role(request.user)
         vendor = get_object_or_404(Vendor, pk=pk)
         notes = request.data.get('notes')
         is_retail = request.data.get('is_retail')
         industry_ids = request.data.get('industry_ids')
+        approved_by = request.user
         # pricing = request.data.get('pricing')
         # pan = request.data.get('pan')
-        try:
-            username = vendor.phone_number
-            password = vendor.store_name.replace(" ", "")
-            password = password.lower()
-
-            if is_userexists(username):
-                user = get_object_or_404(User, username=username)
-                user.set_password(password)
-                user.save()
-            else:
-                user = User.objects.create_user(username=username, password=password)
-
-            token = create_token(user, constants.VENDOR)
-            vendor_agent = VendorAgent.objects.create(user=user, vendor=vendor)
-
-            vendor.verified = True
-
-            if notes is not None:
-                vendor.notes = notes
-
-            if is_retail is not None:
-                vendor.is_retail = is_retail
-
+        if role == constants.SALES:
             try:
-                if industry_ids is not None:
-                    for industry_id in industry_ids:
-                        industry = get_object_or_404(Industry, pk=industry_id)
-                        vendor.industries.add(industry)
-            except Exception as e:
-                pass
+                username = vendor.phone_number
+                password = vendor.store_name.replace(" ", "")
+                password = password.lower()
 
-            vendor.save()
-        except Exception as e:
+                if is_userexists(username):
+                    user = get_object_or_404(User, username=username)
+                    user.set_password(password)
+                    user.save()
+                else:
+                    user = User.objects.create_user(username=username, password=password)
+
+                token = create_token(user, constants.VENDOR)
+                vendor_agent = VendorAgent.objects.create(user=user, vendor=vendor)
+
+                vendor.verified = True
+
+                if notes is not None:
+                    vendor.notes = notes
+
+                if is_retail is not None:
+                    vendor.is_retail = is_retail
+
+                if approved_by is not None:
+                    vendor.approved_by = approved_by
+
+                try:
+                    if industry_ids is not None:
+                        for industry_id in industry_ids:
+                            industry = get_object_or_404(Industry, pk=industry_id)
+                            vendor.industries.add(industry)
+                except Exception as e:
+                    pass
+
+                vendor.save()
+            except Exception as e:
+                content = {
+                    'error': 'An error occurred creating the account. Please try again'
+                }
+                return Response(content, status=status.HTTP_400_BAD_REQUEST)
+
+            subject = 'YourGuy: Account created for {}'.format(vendor.store_name)
+            customer_message = constants.VENDOR_ACCOUNT_APPROVED_MESSAGE.format(vendor.phone_number, password)
+            customer_emails = [vendor.email]
+            send_email(customer_emails, subject, customer_message)
+            send_sms(vendor.phone_number, customer_message)
+
+            sales_message = constants.VENDOR_ACCOUNT_APPROVED_MESSAGE_SALES.format(vendor.store_name)
+            send_email(constants.SALES_EMAIL, subject, sales_message)
+
             content = {
-                'error': 'An error occurred creating the account. Please try again'
+                'description': 'Your account credentials has been sent via email and SMS.'
+            }
+            return Response(content, status=status.HTTP_200_OK)
+        else:
+            content = {
+                'error': 'API access limited'
             }
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
-
-        subject = 'YourGuy: Account created for {}'.format(vendor.store_name)
-        customer_message = constants.VENDOR_ACCOUNT_APPROVED_MESSAGE.format(vendor.phone_number, password)
-        customer_emails = [vendor.email]
-        send_email(customer_emails, subject, customer_message)
-        send_sms(vendor.phone_number, customer_message)
-
-        sales_message = constants.VENDOR_ACCOUNT_APPROVED_MESSAGE_SALES.format(vendor.store_name)
-        send_email(constants.SALES_EMAIL, subject, sales_message)
-
-        content = {
-            'description': 'Your account credentials has been sent via email and SMS.'
-        }
-        return Response(content, status=status.HTTP_200_OK)
