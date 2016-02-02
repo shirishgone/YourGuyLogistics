@@ -193,9 +193,6 @@ class VendorViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['put'])
     def approve(self, request, pk):
-        import pdb
-        pdb.set_trace()
-
         role = user_role(request.user)
         vendor = get_object_or_404(Vendor, pk=pk)
         notes = request.data.get('notes')
