@@ -387,6 +387,7 @@ def dg_report(request):
         Q(order_status=constants.ORDER_STATUS_INTRANSIT) |
         Q(order_status=constants.ORDER_STATUS_PICKUP_ATTEMPTED) |
         Q(order_status=constants.ORDER_STATUS_DELIVERY_ATTEMPTED) |
+        Q(order_status=constants.ORDER_STATUS_OUTFORDELIVERY) |
         Q(order_status=constants.ORDER_STATUS_DELIVERED)
     )
     delivery_statuses_today = delivery_statuses_today.exclude(delivery_guy=None)
@@ -419,7 +420,12 @@ def dg_report(request):
         email_body = "Good Evening Guys, \nPlease find the dg report of the day."
         email_body = email_body + "\n\nTotal dgs working today = %s" % (dg_working_today_count)
 
-        orders_executed = delivery_statuses_today.filter(order_status=constants.ORDER_STATUS_DELIVERED)
+        orders_executed_dg = delivery_statuses_today.filter(order_status=constants.ORDER_STATUS_DELIVERED)
+
+        orders_executed_pg = delivery_statuses_today.filter(Q(order_status=constants.ORDER_STATUS_PICKUP_ATTEMPTED) |
+                                                            Q(order_status=constants.ORDER_STATUS_DELIVERED) |
+                                                            Q(order_status=constants.ORDER_STATUS_OUTFORDELIVERY))
+
         orders_count = 0
 
         for single_ops_exec in all_ops_execs:
@@ -440,7 +446,7 @@ def dg_report(request):
                         delivery_guy__user__username=single_pg['pickup_guy__user__username']).count()
                     assigned_orders_count = assigned_orders_count + no_of_assigned_orders
 
-                    no_of_executed_orders = orders_executed.filter(
+                    no_of_executed_orders = orders_executed_pg.filter(
                         delivery_guy__user__username=single_pg['pickup_guy__user__username']).count()
                     executed_orders_count = executed_orders_count + no_of_executed_orders
                     pgs_data.append("%s - Orders: %s/%s" % (pickup_guy_full_name, no_of_executed_orders,
@@ -464,7 +470,7 @@ def dg_report(request):
                         delivery_guy__user__username=single_dg['delivery_guy__user__username']).count()
                     assigned_orders_count = assigned_orders_count + no_of_assigned_orders
 
-                    no_of_executed_orders = orders_executed.filter(
+                    no_of_executed_orders = orders_executed_dg.filter(
                         delivery_guy__user__username=single_dg['delivery_guy__user__username']).count()
                     executed_orders_count = executed_orders_count + no_of_executed_orders
                     dgs_data.append("%s - Orders: %s/%s, COD: %s/%s" % (dg_full_name, no_of_executed_orders,
