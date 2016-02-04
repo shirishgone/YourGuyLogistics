@@ -150,7 +150,7 @@ class DeliveryGuy(YGUser):
     transportation_mode = models.CharField(max_length = 50, choices = TRANSPORTATION_MODE_CHOICES, default = WALKER)
     is_teamlead = models.BooleanField(default = False)
     is_active = models.BooleanField(default = False)
-    deactivated_date = models.DateTimeField(blank=True, null=True)
+    deactivated_date = models.DateField(blank=True, null=True)
     
     def __unicode__(self):
         return u"%s - %s" % (self.user.first_name, self.user.username)                
