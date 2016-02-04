@@ -652,15 +652,12 @@ class DGViewSet(viewsets.ModelViewSet):
     @list_route()
     def download_attendance(self, request):
         try:
-            import pdb
-            pdb.set_trace()
-
             start_date_string = self.request.QUERY_PARAMS.get('start_date')
             end_date_string = self.request.QUERY_PARAMS.get('end_date')
 
             start_date = parse_datetime(start_date_string)
             start_date = ist_day_start(start_date)
-            start_date=start_date.date()
+            start_date = start_date.date()
 
             end_date = parse_datetime(end_date_string)
             end_date = ist_day_end(end_date)
@@ -684,8 +681,8 @@ class DGViewSet(viewsets.ModelViewSet):
 
         for single_dg in all_dgs:
             download_attendance_dict = download_attendance_excel_dict(single_dg)
-            datewise_dict = attendance_datewise_dict()
             for date in alldates:
+                datewise_dict = attendance_datewise_dict()
                 dg_attendance = all_attendance.filter(dg=single_dg, date=date)
                 if dg_attendance:
                     for single in dg_attendance:
@@ -707,10 +704,8 @@ class DGViewSet(viewsets.ModelViewSet):
                     date = date
                     worked_hours = 0
 
-                    datewise_dict = attendance_datewise_dict()
                     datewise_dict['date'] = date
                     datewise_dict['worked_hrs'] = worked_hours
-                    # all_dg_attendance.append(datewise_dict)
                 download_attendance_dict['attendance'].append(datewise_dict)
             all_dg_attendance.append(download_attendance_dict)
 
