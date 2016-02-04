@@ -197,6 +197,8 @@ class Vendor(models.Model):
     verified = models.BooleanField(blank = True, default = False)
     notes = models.CharField(max_length = 500, blank = True)
     is_hyper_local = models.BooleanField(default = False)
+    approved_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.PROTECT)
+    approved_date = models.DateTimeField(auto_now_add=True, blank=True, null=True)
 
     def __unicode__(self):
         return unicode(self.store_name)

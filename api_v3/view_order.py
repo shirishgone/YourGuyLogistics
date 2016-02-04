@@ -1046,6 +1046,9 @@ class OrderViewSet(viewsets.ViewSet):
                     delivery_transaction.remarks = cancelled_remarks
 
                 delivery_transaction.save()
+                delivery_status.delivery_transactions.add(delivery_transaction)
+                delivery_status.save()
+
             content = {
                 'description': 'Order has been canceled'
             }
@@ -1100,6 +1103,8 @@ class OrderViewSet(viewsets.ViewSet):
                     delivery_transaction.remarks = reported_reason
 
                 delivery_transaction.save()
+                delivery_status.delivery_transactions.add(delivery_transaction)
+                delivery_status.save()
             
             # INFORM OPERATIONS IF THERE IS ANY COD DISCREPENCIES -------------------
             try:
@@ -1177,6 +1182,9 @@ class OrderViewSet(viewsets.ViewSet):
                             delivery_transaction.remarks = delivery_remarks
 
                         delivery_transaction.save()
+                        delivery_status.delivery_transactions.add(delivery_transaction)
+                        delivery_status.save()
+
                 else:
                     content = {
                         'error': "Order already processed cant attempt the pickup now"
@@ -1261,6 +1269,9 @@ class OrderViewSet(viewsets.ViewSet):
                             delivery_transaction.remarks = delivery_remarks
 
                         delivery_transaction.save()
+                        delivery_status.delivery_transactions.add(delivery_transaction)
+                        delivery_status.save()
+
                 else:
                     content = {
                         'error': "Can\'t update as the order is not queued"
@@ -1333,6 +1344,9 @@ class OrderViewSet(viewsets.ViewSet):
                         delivery_transaction.remarks = delivery_remarks
 
                     delivery_transaction.save()
+                    delivery_status.delivery_transactions.add(delivery_transaction)
+                    delivery_status.save()
+
                 is_order_updated = True
                 is_order_picked_up = False
             else:
@@ -1354,6 +1368,9 @@ class OrderViewSet(viewsets.ViewSet):
                         delivery_transaction.remarks = delivery_remarks
 
                     delivery_transaction.save()
+                    delivery_status.delivery_transactions.add(delivery_transaction)
+                    delivery_status.save()
+
                 is_order_updated = True
                 is_order_picked_up = True
         else:
@@ -1464,6 +1481,8 @@ class OrderViewSet(viewsets.ViewSet):
                             delivery_transaction.remarks = delivery_remarks
 
                         delivery_transaction.save()
+                        delivery_status.delivery_transactions.add(delivery_transaction)
+                        delivery_status.save()
                 else:
                     update_delivery_status_delivered(delivery_status, delivered_at, delivered_datetime,
                                                      is_cod_collected, new_pod, delivery_remarks, cod_collected_amount)
@@ -1479,6 +1498,8 @@ class OrderViewSet(viewsets.ViewSet):
                             delivery_transaction.remarks = delivery_remarks
 
                         delivery_transaction.save()
+                        delivery_status.delivery_transactions.add(delivery_transaction)
+                        delivery_status.save()
                 is_order_updated = True
             except Exception as e:
                 log_exception(e, 'order_delivered')
