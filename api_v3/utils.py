@@ -29,6 +29,15 @@ def response_structure():
     }
     return result
 
+def response_access_denied():
+    response = response_structure()    
+    error = {
+    'code':'101',
+    'message':'Access Denied'
+    }
+    response['error'] = error
+    return Response(content, status=status.HTTP_400_BAD_REQUEST) 
+
 def ops_managers_for_pincode(pincode):
     result = []
     try:

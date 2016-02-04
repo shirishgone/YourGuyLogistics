@@ -42,7 +42,7 @@ class OrderAdmin(admin.ModelAdmin):
 admin.site.register(Order, OrderAdmin)
 
 class DeliveryStatusAdmin(admin.ModelAdmin):
-    raw_id_fields = ('order','pickup_guy','delivery_guy','pickup_proof','delivery_proof')
+    raw_id_fields = ('order','pickup_guy','delivery_guy','pickup_proof','delivery_proof', 'delivery_transactions')
 admin.site.register(OrderDeliveryStatus, DeliveryStatusAdmin)
 
 admin.site.register(Product)
