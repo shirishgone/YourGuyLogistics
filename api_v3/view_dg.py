@@ -1,8 +1,10 @@
 from datetime import datetime
+from dateutil.rrule import rrule, DAILY
 import pytz
 from django.db.models import Q
 from django.db.models.functions import Lower
 from django.shortcuts import get_object_or_404
+from django.test import override_settings
 from django.utils.dateparse import parse_datetime
 from rest_framework import status, authentication, viewsets
 from rest_framework.decorators import api_view
@@ -78,6 +80,21 @@ def dg_attendance_list_dict(dg_attendance):
 
     return dg_attendance_dict
 
+
+def download_attendance_excel_dict(dg):
+    download_attendance_dict = {
+        'name': dg.user.first_name,
+        'attendance': []
+    }
+    return download_attendance_dict
+
+
+def attendance_datewise_dict():
+    datewise_dict = {
+            'date': '',
+            'worked_hrs': ''
+        }
+    return datewise_dict
 
 class DGViewSet(viewsets.ModelViewSet):
     """
@@ -476,11 +493,14 @@ class DGViewSet(viewsets.ModelViewSet):
             delivery_guy = get_object_or_404(DeliveryGuy, id=pk)
             if delivery_guy.is_active is True:
                 delivery_guy.is_active = False
+                deactivated_date = datetime.now()
+                delivery_guy.deactivated_date = deactivated_date
                 delivery_guy.save()
                 content = {
-                    'delivery_guy': '%s %s is deactivated' % (
-                    delivery_guy.user.first_name, delivery_guy.user.last_name),
-                    'deactivate_reason': deactivate_reason
+                    'delivery_guy': '%s %s is deactivated' % (delivery_guy.user.first_name,
+                                                              delivery_guy.user.last_name),
+                    'deactivate_reason': deactivate_reason,
+                    'deactivated_date': deactivated_date
                 }
                 return Response(content, status=status.HTTP_200_OK)
             else:
@@ -629,6 +649,75 @@ class DGViewSet(viewsets.ModelViewSet):
         }
         return Response(content, status=status.HTTP_200_OK)
 
+    @list_route()
+    def download_attendance(self, request):
+        try:
+            import pdb
+            pdb.set_trace()
+
+            start_date_string = self.request.QUERY_PARAMS.get('start_date')
+            end_date_string = self.request.QUERY_PARAMS.get('end_date')
+
+            start_date = parse_datetime(start_date_string)
+            start_date = ist_day_start(start_date)
+            start_date=start_date.date()
+
+            end_date = parse_datetime(end_date_string)
+            end_date = ist_day_end(end_date)
+            end_date = end_date.date()
+        except Exception as e:
+            content = {
+                'error': 'Error in params: start_date, end_date'
+            }
+            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+
+        # CREATE DATE RULE -----------------------------------------------------------
+        rule_daily = rrule(DAILY, dtstart=start_date, until=end_date)
+        alldates = list(rule_daily)
+
+        # ALL DGS
+        all_dgs = DeliveryGuy.objects.all()
+        all_attendance = DGAttendance.objects.all()
+
+        all_dg_attendance = []
+        worked_hours = 0
+
+        for single_dg in all_dgs:
+            download_attendance_dict = download_attendance_excel_dict(single_dg)
+            datewise_dict = attendance_datewise_dict()
+            for date in alldates:
+                dg_attendance = all_attendance.filter(dg=single_dg, date=date)
+                if dg_attendance:
+                    for single in dg_attendance:
+                        if single.login_time is not None and single.logout_time is not None:
+                            worked_hours = (single.logout_time - single.login_time)
+                            total_seconds_worked = int(worked_hours.total_seconds())
+                            hours, remainder = divmod(total_seconds_worked, 60 * 60)
+                            worked_hours = "%d hrs" % hours
+                        elif single.login_time is not None and single.logout_time is None:
+                            worked_hours = (datetime.now(pytz.utc) - single.login_time)
+                            total_seconds_worked = int(worked_hours.total_seconds())
+                            hours, remainder = divmod(total_seconds_worked, 60 * 60)
+                            worked_hours = "%d hrs" % hours
+                        else:
+                            pass
+                    datewise_dict['date'] = date
+                    datewise_dict['worked_hrs'] = worked_hours
+                else:
+                    date = date
+                    worked_hours = 0
+
+                    datewise_dict = attendance_datewise_dict()
+                    datewise_dict['date'] = date
+                    datewise_dict['worked_hrs'] = worked_hours
+                    # all_dg_attendance.append(datewise_dict)
+                download_attendance_dict['attendance'].append(datewise_dict)
+            all_dg_attendance.append(download_attendance_dict)
+
+        content = {
+            'all_dg_attendance': all_dg_attendance
+        }
+        return Response(content, status=status.HTTP_200_OK)
 
 @api_view(['GET'])
 def dg_app_version(request):
