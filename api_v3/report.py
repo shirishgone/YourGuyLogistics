@@ -489,10 +489,10 @@ def dg_report(request):
             email_body = email_body + "\n\nOPS EXECUTIVE %s - Orders: %s, COD: %s/%s"%(single_ops_exec.user.first_name,
                                                                                        orders_count, ops_cod_collected,
                                                                                        ops_cod_to_be_collected)
-            email_body = email_body + "\nPICKUP BOY DETAILS\n"
+            email_body = email_body + "\nPickup boys:\n"
             for single in pgs_data:
                 email_body = email_body + single +"\n"
-            email_body = email_body + "DELIVERY BOY DETAILS (COD of Cancelled orders are not considered)\n"
+            email_body = email_body + "Delivery Boys:\n"
             for single in dgs_data:
                 email_body = email_body + single + "\n"
         # ---------------------------------------------------
@@ -551,17 +551,17 @@ def dg_report(request):
 
                     orders_count = "%s/%s" %(executed_orders_count, assigned_orders_count)
 
-        email_body = email_body + "\n\nUNASSOCIATED OPS EXECUTIVE- Orders: %s, COD: %s/%s"%(orders_count, ops_cod_collected,
+        email_body = email_body + "\n\nUNASSOCIATED PICKP/DELIVERY BOYS - Orders: %s, COD: %s/%s"%(orders_count, ops_cod_collected,
                                                                                        ops_cod_to_be_collected)
 
-        email_body = email_body + "\nUNASSOCIATED PGS\n"
+        email_body = email_body + "\nPickup Boys:\n"
         for single in all_unassociated_pgs:
             email_body = email_body + single +"\n"
-        email_body = email_body + "UNASSOCIATED DGS (COD of Cancelled orders are not considered)\n"
+        email_body = email_body + "Delivery Boys:\n"
         for single in all_unassociated_dgs:
             email_body = email_body + single + "\n"
 
-        email_body = email_body + "\n-----------------------------------"
+        email_body = email_body + "\n"
         email_body = email_body + "\n\n- YourGuy BOT"
 
         send_email(constants.EMAIL_DG_REPORT, email_subject, email_body)
