@@ -740,9 +740,9 @@ class OrderViewSet(viewsets.ViewSet):
                 consumer_phone_number = single_order['customer_phone_number']
                 
                 # Delivery address ------------------------------------
-                delivery_full_address = single_order['delivery_full_address']
-                delivery_pin_code = single_order['delivery_pincode']
-                delivery_landmark = single_order.get('delivery_landmark')
+                delivery_full_address = single_order['customer_full_address']
+                delivery_pin_code = single_order['customer_pincode']
+                delivery_landmark = single_order.get('customer_landmark')
                 
                 is_reverse_pickup = single_order.get('is_reverse_pickup')
                 is_reverse_pickup = is_reverse_pickup.lower()
