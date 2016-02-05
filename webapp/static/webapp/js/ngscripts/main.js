@@ -2402,10 +2402,6 @@ ygVendors.controller('fileUploadCntrl' ,function ($scope,$filter,$timeout,$state
           alert('date not present for customer '+$scope.content[i].customer_name+' at line '+(i+1))
           return false;
         }
-        else if(!$scope.content[i].hasOwnProperty('vendor_order_id')){
-          alert('vendor_order_id not present for customer '+$scope.content[i].customer_name+' at line '+(i+1))
-          return false;
-        }
         else if(!$scope.content[i].hasOwnProperty('pickup_time')){
           alert('pickup_time not present for customer '+$scope.content[i].customer_name+' at line '+(i+1))
           return false;
@@ -2425,6 +2421,14 @@ ygVendors.controller('fileUploadCntrl' ,function ($scope,$filter,$timeout,$state
         else if(!$scope.content[i].hasOwnProperty('customer_pincode')){
           alert('customer_pincode not present for customer '+$scope.content[i].customer_name+' at line '+(i+1))
           return false;
+        }
+        else if(!$scope.content[i].hasOwnProperty('is_reverse_pickup')){
+          alert('is_reverse_pickup not present for customer '+$scope.content[i].customer_name+' at line '+(i+1))
+          return false;
+        }
+        else if (!(($scope.content[i].is_reverse_pickup.toLowerCase() == 'false') || ($scope.content[i].is_reverse_pickup.toLowerCase() == 'true'))){
+          alert('is_reverse_pickup can only be true or false for customer '+$scope.content[i].customer_name+' at line '+(i+1))
+          return false;            
         }
         else{
           vendor_id_set.add($scope.content[i].vendor_order_id)
