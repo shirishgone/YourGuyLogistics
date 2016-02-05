@@ -2399,32 +2399,36 @@ ygVendors.controller('fileUploadCntrl' ,function ($scope,$filter,$timeout,$state
       }
       else{
         if(!$scope.content[i].hasOwnProperty('date')){
-          alert('Date not present for customer '+$scope.content[i].customer_name+' at line '+(i+1))
-          return false;
-        }
-        else if(!$scope.content[i].hasOwnProperty('vendor_order_id')){
-          alert('Vendor Order Id not present for customer '+$scope.content[i].customer_name+' at line '+(i+1))
+          alert('date not present for customer '+$scope.content[i].customer_name+' at line '+(i+1))
           return false;
         }
         else if(!$scope.content[i].hasOwnProperty('pickup_time')){
-          alert('Pickup Time not present for customer '+$scope.content[i].customer_name+' at line '+(i+1))
+          alert('pickup_time not present for customer '+$scope.content[i].customer_name+' at line '+(i+1))
           return false;
         }
         else if(!$scope.content[i].hasOwnProperty('customer_name')){
-          alert('Customer Name not present for customer '+$scope.content[i].customer_name+' at line '+(i+1))
+          alert('customer_name not present for customer '+$scope.content[i].customer_name+' at line '+(i+1))
           return false;
         }
         else if(!$scope.content[i].hasOwnProperty('customer_phone_number')){
-          alert('Customer Phone Number not present for customer '+$scope.content[i].customer_name+' at line '+(i+1))
+          alert('customer_phone_number not present for customer '+$scope.content[i].customer_name+' at line '+(i+1))
           return false;
         }
-        else if(!$scope.content[i].hasOwnProperty('delivery_full_address')){
-          alert('Delivery Street not present for customer '+$scope.content[i].customer_name+' at line '+(i+1))
+        else if(!$scope.content[i].hasOwnProperty('customer_full_address')){
+          alert('customer_full_address not present for customer '+$scope.content[i].customer_name+' at line '+(i+1))
           return false;
         }
-        else if(!$scope.content[i].hasOwnProperty('delivery_pincode')){
-          alert('Delivery Pincode not present for customer '+$scope.content[i].customer_name+' at line '+(i+1))
+        else if(!$scope.content[i].hasOwnProperty('customer_pincode')){
+          alert('customer_pincode not present for customer '+$scope.content[i].customer_name+' at line '+(i+1))
           return false;
+        }
+        else if(!$scope.content[i].hasOwnProperty('is_reverse_pickup')){
+          alert('is_reverse_pickup not present for customer '+$scope.content[i].customer_name+' at line '+(i+1))
+          return false;
+        }
+        else if (!(($scope.content[i].is_reverse_pickup.toLowerCase() == 'false') || ($scope.content[i].is_reverse_pickup.toLowerCase() == 'true'))){
+          alert('is_reverse_pickup can only be true or false for customer '+$scope.content[i].customer_name+' at line '+(i+1))
+          return false;            
         }
         else{
           vendor_id_set.add($scope.content[i].vendor_order_id)

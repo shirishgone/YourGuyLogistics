@@ -54,7 +54,6 @@ def notif_unassigned(delivery):
             ops_manager.notifications.add(new_notification)
             ops_manager.save()
     else:
-        # CANT FIND APPROPRIATE OPS_EXECUTIVE FOR THE ABOVE PINCODE
         pass                
 
 def send_reported_email(user, email_orders, reported_reason):
@@ -280,16 +279,21 @@ def update_delivery_status_delivered(delivery_status, delivered_at, delivered_da
 def address_string(address):
     try:
         if len(address.full_address) > 1:
-            address_string = address.full_address + ', ' + address.pin_code
+            address_string = address.full_address 
+            if address.landmark is not None and len(address.landmark) > 0:
+                address_string += ', '
+                address_string += address.landmark
+            if address.pin_code is not None:
+                address_string += ', '
+                address_string += address.pin_code
         else:
-            address_string = address.flat_number + ', ' + address.building + ', ' +  address.street + ', ' + address.pin_code
-        
-        address_string = string.replace(address_string, ',,','')
-        address_string = string.replace(address_string, ', ,','')
+            address_string = address.flat_number + ', ' + address.building + ', ' + address.street + ', ' + address.pin_code
+
+        address_string = string.replace(address_string, ',,', '')
+        address_string = string.replace(address_string, ', ,', '')
         return address_string
-    except Exception, e:
-        print e
-        return ''
+    except Exception as e:
+        print(e)
     
 def order_details(delivery_status):
     if delivery_status.order.pickup_datetime is not None:
@@ -709,7 +713,6 @@ class OrderViewSet(viewsets.ViewSet):
 
     @detail_route(methods=['post'])
     def upload_excel(self, request, pk):
-        
         # VENDOR ONLY ACCESS CHECK ------------------------------------
         role = user_role(self.request.user)
         if role == constants.VENDOR:
@@ -719,6 +722,7 @@ class OrderViewSet(viewsets.ViewSet):
             content = {'error':'API Access limited.', 'description':'You cant access this API'}
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
         # --------------------------------------------------------------
+        
         try:
             pickup_address_id = request.data['pickup_address_id']
             orders = request.data['orders']
@@ -730,21 +734,30 @@ class OrderViewSet(viewsets.ViewSet):
         for single_order in orders:
             try:
                 pickup_datetime = single_order['pickup_datetime']
-                vendor_order_id = single_order['vendor_order_id']
+                vendor_order_id = single_order.get('vendor_order_id')
 
                 # Optional ------------------------------------
                 cod_amount = single_order.get('cod_amount')
-                notes = single_order.get('notes')
-                        
+                
                 # Customer details ------------------------------------
                 consumer_name = single_order['customer_name']
                 consumer_phone_number = single_order['customer_phone_number']
                 
                 # Delivery address ------------------------------------
-                delivery_full_address = single_order['delivery_full_address']
-                delivery_pin_code = single_order['delivery_pincode']
-                delivery_landmark = single_order.get('delivery_landmark')
+                delivery_full_address = single_order['customer_full_address']
+                delivery_pin_code = single_order['customer_pincode']
+                delivery_landmark = single_order.get('customer_landmark')
                 
+                is_reverse_pickup = single_order.get('is_reverse_pickup')
+                is_reverse_pickup = is_reverse_pickup.lower()
+                if is_reverse_pickup == 'false':
+                    is_reverse_pickup = False
+                else:
+                    is_reverse_pickup = True    
+
+                total_cost = single_order.get('total_cost')
+                notes = single_order.get('notes')
+
                 # PINCODE IS INTEGER CHECK -----------------------------
                 if is_correct_pincode(delivery_pin_code) is False:
                     content = {'error':'Incorrect pin_code', 
@@ -767,14 +780,17 @@ class OrderViewSet(viewsets.ViewSet):
                     }
                     return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
-                delivery_timedelta = timedelta(hours = 4, minutes = 0)
-                delivery_datetime = pickup_datetime + delivery_timedelta
+                if vendor.is_hyper_local is True:
+                    delivery_timedelta = timedelta(hours = 1, minutes = 0)
+                    delivery_datetime = pickup_datetime + delivery_timedelta
+                else:                                    
+                    delivery_timedelta = timedelta(hours = 4, minutes = 0)
+                    delivery_datetime = pickup_datetime + delivery_timedelta
 
             except Exception, e:
                 content = {'error':'Error parsing dates'}
                 return Response(content, status = status.HTTP_400_BAD_REQUEST)
             
-            # CREATE A NEW ORDER ONLY IF VENDOR_ORDER_ID IS UNIQUE
             try:
                 if is_userexists(consumer_phone_number) is True:
                     user = get_object_or_404(User, username = consumer_phone_number)
@@ -790,19 +806,14 @@ class OrderViewSet(viewsets.ViewSet):
                 
                 # ADDRESS CHECK ----------------------------------
                 try:
-                    pickup_address = get_object_or_404(Address, pk = pickup_address_id)
-                        
-                    # CHECK IF THE CONSUMER HAS SAME DELIVERY ADDRESS ------------ 
-                    delivery_address = is_consumer_has_same_address_already(consumer, delivery_pin_code)
-                    if delivery_address is None:
-                        delivery_address = Address.objects.create(full_address = delivery_full_address, pin_code = delivery_pin_code)
-                        if delivery_landmark is not None:
-                            delivery_address.landmark = delivery_landmark
-                        consumer.addresses.add(delivery_address)
+                    if is_reverse_pickup is True:
+                        pickup_address = fetch_consumer_address(consumer, delivery_full_address, delivery_pin_code, delivery_landmark)
+                        delivery_address = get_object_or_404(Address, pk = pickup_address_id)                
+                    else:
+                        pickup_address = get_object_or_404(Address, pk = pickup_address_id)
+                        delivery_address = fetch_consumer_address(consumer, delivery_full_address, delivery_pin_code, delivery_landmark)
                 except:
-                    content = {
-                    'error':' Error parsing addresses'
-                    }
+                    content = {'error':' Error parsing addresses'}
                     return Response(content, status = status.HTTP_400_BAD_REQUEST)
                 # -------------------------------------------------------
 
@@ -813,15 +824,21 @@ class OrderViewSet(viewsets.ViewSet):
                                                 pickup_address = pickup_address, 
                                                 delivery_address = delivery_address, 
                                                 pickup_datetime = pickup_datetime, 
-                                                delivery_datetime = delivery_datetime,
-                                                vendor_order_id = vendor_order_id)
+                                                delivery_datetime = delivery_datetime)
                 
+                if vendor_order_id is not None:
+                    new_order.vendor_order_id = vendor_order_id
+
                 if cod_amount is not None and float(cod_amount) > 0:
                     new_order.is_cod = True
                     new_order.cod_amount = float(cod_amount)
                 
                 if notes is not None:
                     new_order.notes = notes
+
+                if total_cost is not None:
+                    new_order.total_cost = total_cost        
+                
                 new_order.save()
                 delivery_status = OrderDeliveryStatus.objects.create(date = pickup_datetime, order = new_order)
                 new_order_ids.append(delivery_status.id)

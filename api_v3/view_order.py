@@ -772,8 +772,12 @@ class OrderViewSet(viewsets.ViewSet):
             }
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
-        delivery_timedelta = timedelta(hours=4, minutes=0)  # DELIVERY IS 4 HOURS FROM PICKUP
-        delivery_datetime = pickup_datetime + delivery_timedelta
+        if vendor.is_hyper_local is True:
+            delivery_timedelta = timedelta(hours = 1, minutes = 0)
+            delivery_datetime = pickup_datetime + delivery_timedelta
+        else:                                    
+            delivery_timedelta = timedelta(hours = 4, minutes = 0)
+            delivery_datetime = pickup_datetime + delivery_timedelta
         # --------------------------------------------------------------
 
         new_order_ids = []
@@ -859,149 +863,146 @@ class OrderViewSet(viewsets.ViewSet):
 
     @detail_route(methods=['post'])
     def upload_excel(self, request, pk):
-
-        # VENDOR ONLY ACCESS CHECK ----------------------------------------
+        # VENDOR ONLY ACCESS CHECK ------------------------------------
         role = user_role(self.request.user)
         if role == constants.VENDOR:
-            vendor_agent = get_object_or_404(VendorAgent, user=self.request.user)
+            vendor_agent = get_object_or_404(VendorAgent, user = self.request.user)
             vendor = vendor_agent.vendor
         else:
-            content = {
-                'error': 'API Access limited.',
-                'description': 'You cant access this API'
-            }
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
-        # ------------------------------------------------------------------
-
+            content = {'error':'API Access limited.', 'description':'You cant access this API'}
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+        # --------------------------------------------------------------
+        
         try:
             pickup_address_id = request.data['pickup_address_id']
             orders = request.data['orders']
-        except Exception as e:
-            content = {
-                'error': 'Incomplete params. pickup_address_id, orders'
-            }
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
-
-        new_order_ids = []
+        except Exception, e:
+            content = {'error':'Incomplete params. pickup_address_id, orders'}
+            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+              
+        new_order_ids = []                
         for single_order in orders:
             try:
                 pickup_datetime = single_order['pickup_datetime']
-                vendor_order_id = single_order['vendor_order_id']
+                vendor_order_id = single_order.get('vendor_order_id')
 
-                # Optional ------------------------------------------------
+                # Optional ------------------------------------
                 cod_amount = single_order.get('cod_amount')
-                notes = single_order.get('notes')
-
-                # Customer details ----------------------------------------
+                
+                # Customer details ------------------------------------
                 consumer_name = single_order['customer_name']
                 consumer_phone_number = single_order['customer_phone_number']
+                
+                # Delivery address ------------------------------------
+                delivery_full_address = single_order['customer_full_address']
+                delivery_pin_code = single_order['customer_pincode']
+                delivery_landmark = single_order.get('customer_landmark')
+                
+                is_reverse_pickup = single_order.get('is_reverse_pickup')
+                is_reverse_pickup = is_reverse_pickup.lower()
+                if is_reverse_pickup == 'false':
+                    is_reverse_pickup = False
+                else:
+                    is_reverse_pickup = True    
 
-                # Delivery address ------------------------------------------
-                delivery_full_address = single_order['delivery_full_address']
-                delivery_pin_code = single_order['delivery_pincode']
-                delivery_landmark = single_order.get('delivery_landmark')
+                total_cost = single_order.get('total_cost')
+                notes = single_order.get('notes')
 
-                # PINCODE IS INTEGER CHECK --------------------------------
+                # PINCODE IS INTEGER CHECK -----------------------------
                 if is_correct_pincode(delivery_pin_code) is False:
-                    content = {
-                        'error': 'Incorrect pin_code',
-                        'description': 'Pincode should be an integer with 6 digits.'
-                    }
-                    return Response(content, status=status.HTTP_400_BAD_REQUEST)
-
-            except Exception as e:
+                    content = {'error':'Incorrect pin_code', 
+                    'description':'Pincode should be an integer with 6 digits.'}
+                    return Response(content, status = status.HTTP_400_BAD_REQUEST)
+            
+            except Exception, e:
                 content = {
-                    'error': 'Incomplete params',
-                    'description': 'pickup_datetime, customer_name, customer_phone_number, pickup address id , delivery address'
+                'error':'Incomplete params', 
+                'description':'pickup_datetime, customer_name, customer_phone_number, pickup address id , delivery address'
                 }
-                return Response(content, status=status.HTTP_400_BAD_REQUEST)
+                return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
             try:
                 pickup_datetime = parse_datetime(pickup_datetime)
                 if is_pickup_time_acceptable(pickup_datetime) is False:
                     content = {
-                        'error': 'Pickup time not acceptable',
-                        'description': 'Pickup time can only be between 5.30AM to 10.00PM'
+                    'error':'Pickup date or time not acceptable', 
+                    'description':'Pickup time can only be between 5.30AM to 10.00PM and past dates are not allowed'
                     }
-                    return Response(content, status=status.HTTP_400_BAD_REQUEST)
+                    return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
-                delivery_timedelta = timedelta(hours=4, minutes=0)
-                delivery_datetime = pickup_datetime + delivery_timedelta
+                if vendor.is_hyper_local is True:
+                    delivery_timedelta = timedelta(hours = 1, minutes = 0)
+                    delivery_datetime = pickup_datetime + delivery_timedelta
+                else:                                    
+                    delivery_timedelta = timedelta(hours = 4, minutes = 0)
+                    delivery_datetime = pickup_datetime + delivery_timedelta
 
-            except Exception as e:
-                content = {
-                    'error': 'Error parsing dates'
-                }
-                return Response(content, status=status.HTTP_400_BAD_REQUEST)
-
-            # CREATE A NEW ORDER ONLY IF VENDOR_ORDER_ID IS UNIQUE
+            except Exception, e:
+                content = {'error':'Error parsing dates'}
+                return Response(content, status = status.HTTP_400_BAD_REQUEST)
+            
             try:
                 if is_userexists(consumer_phone_number) is True:
-                    user = get_object_or_404(User, username=consumer_phone_number)
+                    user = get_object_or_404(User, username = consumer_phone_number)
                     if is_consumerexists(user) is True:
-                        consumer = get_object_or_404(Consumer, user=user)
+                        consumer = get_object_or_404(Consumer, user = user)
                     else:
-                        consumer = Consumer.objects.create(user=user)
+                        consumer = Consumer.objects.create(user = user)
                         consumer.associated_vendor.add(vendor)
                 else:
-                    user = User.objects.create(username=consumer_phone_number, first_name=consumer_name, password='')
-                    consumer = Consumer.objects.create(user=user)
+                    user = User.objects.create(username = consumer_phone_number, first_name = consumer_name, password = '')
+                    consumer = Consumer.objects.create(user = user)
                     consumer.associated_vendor.add(vendor)
-
+                
                 # ADDRESS CHECK ----------------------------------
                 try:
-                    pickup_address = get_object_or_404(Address, pk=pickup_address_id)
-
-                    # CHECK IF THE CONSUMER HAS SAME DELIVERY ADDRESS ------------
-                    delivery_address = is_consumer_has_same_address_already(consumer, delivery_pin_code)
-                    if delivery_address is None:
-                        delivery_address = Address.objects.create(full_address=delivery_full_address,
-                                                                  pin_code=delivery_pin_code)
-                        if delivery_landmark is not None:
-                            delivery_address.landmark = delivery_landmark
-                        consumer.addresses.add(delivery_address)
+                    if is_reverse_pickup is True:
+                        pickup_address = fetch_consumer_address(consumer, delivery_full_address, delivery_pin_code, delivery_landmark)
+                        delivery_address = get_object_or_404(Address, pk = pickup_address_id)                
+                    else:
+                        pickup_address = get_object_or_404(Address, pk = pickup_address_id)
+                        delivery_address = fetch_consumer_address(consumer, delivery_full_address, delivery_pin_code, delivery_landmark)
                 except:
-                    content = {
-                        'error': ' Error parsing addresses'
-                    }
-                    return Response(content, status=status.HTTP_400_BAD_REQUEST)
+                    content = {'error':' Error parsing addresses'}
+                    return Response(content, status = status.HTTP_400_BAD_REQUEST)
                 # -------------------------------------------------------
 
                 # CREATE NEW ORDER --------------------------------------
-                new_order = Order.objects.create(created_by_user=request.user,
-                                                 vendor=vendor,
-                                                 consumer=consumer,
-                                                 pickup_address=pickup_address,
-                                                 delivery_address=delivery_address,
-                                                 pickup_datetime=pickup_datetime,
-                                                 delivery_datetime=delivery_datetime,
-                                                 vendor_order_id=vendor_order_id)
-
+                new_order = Order.objects.create(created_by_user = request.user, 
+                                                vendor = vendor, 
+                                                consumer = consumer, 
+                                                pickup_address = pickup_address, 
+                                                delivery_address = delivery_address, 
+                                                pickup_datetime = pickup_datetime, 
+                                                delivery_datetime = delivery_datetime)
+                
+                if vendor_order_id is not None:
+                    new_order.vendor_order_id = vendor_order_id
+                    
                 if cod_amount is not None and float(cod_amount) > 0:
                     new_order.is_cod = True
                     new_order.cod_amount = float(cod_amount)
-
+                
                 if notes is not None:
                     new_order.notes = notes
+
+                if total_cost is not None:
+                    new_order.total_cost = total_cost        
+                
                 new_order.save()
-
-                delivery_status = OrderDeliveryStatus.objects.create(date=pickup_datetime, order=new_order)
+                delivery_status = OrderDeliveryStatus.objects.create(date = pickup_datetime, order = new_order)
                 new_order_ids.append(delivery_status.id)
-            except Exception as e:
+            except:
                 content = {
-                    'error': 'Unable to create orders with the given details'
+                'error':'Unable to create orders with the given details'
                 }
-                return Response(content, status=status.HTTP_400_BAD_REQUEST)
-
-        # SEND MAIL TO RETAIL TEAM, IF ITS A RETAIL ORDER
-        if vendor.is_retail is True and len(new_order_ids)> 0:
+                return Response(content, status = status.HTTP_400_BAD_REQUEST)
+        if vendor.is_retail is True and len(new_order_ids) > 0:
             retail_order_send_email(vendor, new_order_ids)
-        # -------------------------------------------------------------
-
         content = {
-            'message': 'Your Orders has been placed.'
+        'message':'Your Orders has been placed.'
         }
-        return Response(content, status=status.HTTP_201_CREATED)
+        return Response(content, status = status.HTTP_201_CREATED)
 
     @detail_route(methods=['put'])
     def cancel(self, request, pk):
@@ -1718,8 +1719,13 @@ class OrderViewSet(viewsets.ViewSet):
             'description':'Pickup time can only be between 5.30AM to 10.00PM and past dates are not allowed'
             }
             return Response(content, status = status.HTTP_400_BAD_REQUEST)            
-        delivery_timedelta = timedelta(hours=4, minutes=0)
-        delivery_datetime = pickup_datetime + delivery_timedelta
+        
+        if vendor.is_hyper_local is True:
+            delivery_timedelta = timedelta(hours = 1, minutes = 0)
+            delivery_datetime = pickup_datetime + delivery_timedelta
+        else:                                    
+            delivery_timedelta = timedelta(hours = 4, minutes = 0)
+            delivery_datetime = pickup_datetime + delivery_timedelta
         # ------------------------------------------------------------------
 
         created_orders = []
