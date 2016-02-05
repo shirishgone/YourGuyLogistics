@@ -884,7 +884,7 @@ class OrderViewSet(viewsets.ViewSet):
         for single_order in orders:
             try:
                 pickup_datetime = single_order['pickup_datetime']
-                vendor_order_id = single_order['vendor_order_id']
+                vendor_order_id = single_order.get('vendor_order_id')
 
                 # Optional ------------------------------------
                 cod_amount = single_order.get('cod_amount')
@@ -974,9 +974,11 @@ class OrderViewSet(viewsets.ViewSet):
                                                 pickup_address = pickup_address, 
                                                 delivery_address = delivery_address, 
                                                 pickup_datetime = pickup_datetime, 
-                                                delivery_datetime = delivery_datetime,
-                                                vendor_order_id = vendor_order_id)
+                                                delivery_datetime = delivery_datetime)
                 
+                if vendor_order_id is not None:
+                    new_order.vendor_order_id = vendor_order_id
+                    
                 if cod_amount is not None and float(cod_amount) > 0:
                     new_order.is_cod = True
                     new_order.cod_amount = float(cod_amount)
