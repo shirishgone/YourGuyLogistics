@@ -713,9 +713,11 @@ class DGViewSet(viewsets.ModelViewSet):
                 # compare deactivated_date and start_date
                 # generate rule from start date till the deactivated date only
                 # loop from start date till this deactivated date
+                start_month = start_date.month
                 dg_deactived_date = single_dg.deactivated_date
+                deactivated_month = dg_deactived_date.month
                 download_attendance_dict = download_attendance_excel_dict(single_dg)
-                if start_date < dg_deactived_date:
+                if start_date < dg_deactived_date and start_month == deactivated_month:
                     rule_daily_deactivated = rrule(DAILY, dtstart=start_date, until=dg_deactived_date)
                     till_deactivated_date = list(rule_daily_deactivated)
                     for date in till_deactivated_date:
