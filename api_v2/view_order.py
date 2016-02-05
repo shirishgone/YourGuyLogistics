@@ -279,16 +279,21 @@ def update_delivery_status_delivered(delivery_status, delivered_at, delivered_da
 def address_string(address):
     try:
         if len(address.full_address) > 1:
-            address_string = address.full_address + ', ' + address.pin_code
+            address_string = address.full_address 
+            if address.landmark is not None and len(address.landmark) > 0:
+                address_string += ', '
+                address_string += address.landmark
+            if address.pin_code is not None:
+                address_string += ', '
+                address_string += address.pin_code
         else:
-            address_string = address.flat_number + ', ' + address.building + ', ' +  address.street + ', ' + address.pin_code
-        
-        address_string = string.replace(address_string, ',,','')
-        address_string = string.replace(address_string, ', ,','')
+            address_string = address.flat_number + ', ' + address.building + ', ' + address.street + ', ' + address.pin_code
+
+        address_string = string.replace(address_string, ',,', '')
+        address_string = string.replace(address_string, ', ,', '')
         return address_string
-    except Exception, e:
-        print e
-        return ''
+    except Exception as e:
+        print(e)
     
 def order_details(delivery_status):
     if delivery_status.order.pickup_datetime is not None:
