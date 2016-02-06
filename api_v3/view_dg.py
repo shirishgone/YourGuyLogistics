@@ -747,6 +747,36 @@ class DGViewSet(viewsets.ModelViewSet):
                             datewise_dict['worked_hrs'] = worked_hours
                         download_attendance_dict['attendance'].append(datewise_dict)
                     all_dg_attendance.append(download_attendance_dict)
+                elif start_date < dg_deactived_date and start_month < deactivated_month:
+                    rule_daily_deactivated = rrule(DAILY, dtstart=start_date, until=end_date)
+                    till_date = list(rule_daily_deactivated)
+                    for date in till_date:
+                        datewise_dict = attendance_datewise_dict()
+                        dg_attendance = all_attendance.filter(dg=single_dg, date=date)
+                        if dg_attendance:
+                            for single in dg_attendance:
+                                if single.login_time is not None and single.logout_time is not None:
+                                    worked_hours = (single.logout_time - single.login_time)
+                                    total_seconds_worked = int(worked_hours.total_seconds())
+                                    hours, remainder = divmod(total_seconds_worked, 60 * 60)
+                                    worked_hours = "%d hrs" % hours
+                                elif single.login_time is not None and single.logout_time is None:
+                                    worked_hours = (datetime.now(pytz.utc) - single.login_time)
+                                    total_seconds_worked = int(worked_hours.total_seconds())
+                                    hours, remainder = divmod(total_seconds_worked, 60 * 60)
+                                    worked_hours = "%d hrs" % hours
+                                else:
+                                    pass
+                            datewise_dict['date'] = date
+                            datewise_dict['worked_hrs'] = worked_hours
+                        else:
+                            date = date
+                            worked_hours = 0
+
+                            datewise_dict['date'] = date
+                            datewise_dict['worked_hrs'] = worked_hours
+                        download_attendance_dict['attendance'].append(datewise_dict)
+                    all_dg_attendance.append(download_attendance_dict)
 
         content = {
             'all_dg_attendance': all_dg_attendance
