@@ -371,8 +371,7 @@ def cod_report():
         send_email(constants.EMAIL_COD_REPORT, email_subject, email_body)
         # ------------------------------------------------------------------------------------------------
 
-@api_view(['GET'])
-def dg_report(request):
+def dg_report():
     date = datetime.today()
     day_start = ist_day_start(date)
     day_end = ist_day_end(date)
@@ -582,10 +581,7 @@ def dg_report(request):
 
         email_body = email_body + "\n"
         email_body = email_body + "\n\n- YourGuy BOT"
-
         send_email(constants.EMAIL_DG_REPORT, email_subject, email_body)
-        return Response(status=status.HTTP_200_OK)
-
 
 def vendor_report():
     date = datetime.today()
