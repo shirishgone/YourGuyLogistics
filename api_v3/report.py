@@ -378,7 +378,7 @@ def dg_report(request):
     day_end = ist_day_end(date)
 
     # Number of dgs working today ----------------------------------------------------------------------
-    dg_working_today_count = DGAttendance.objects.filter(date__gte=day_start, date__lte=day_end).count()
+    dg_working_today_count = DGAttendance.objects.filter(date=date).count()
 
     # --------------------------------------------
     delivery_statuses_today = OrderDeliveryStatus.objects.filter(date__gte=day_start, date__lte=day_end)
