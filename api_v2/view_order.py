@@ -749,12 +749,11 @@ class OrderViewSet(viewsets.ViewSet):
                 delivery_landmark = single_order.get('customer_landmark')
                 
                 is_reverse_pickup = single_order.get('is_reverse_pickup')
-                is_reverse_pickup = is_reverse_pickup.lower()
-                if is_reverse_pickup == 'false':
-                    is_reverse_pickup = False
+                if is_reverse_pickup is not None and is_reverse_pickup.lower() == 'true':
+                    is_reverse_pickup = True
                 else:
-                    is_reverse_pickup = True    
-
+                    is_reverse_pickup = False
+                
                 total_cost = single_order.get('total_cost')
                 notes = single_order.get('notes')
 
@@ -824,7 +823,8 @@ class OrderViewSet(viewsets.ViewSet):
                                                 pickup_address = pickup_address, 
                                                 delivery_address = delivery_address, 
                                                 pickup_datetime = pickup_datetime, 
-                                                delivery_datetime = delivery_datetime)
+                                                delivery_datetime = delivery_datetime,
+                                                is_reverse_pickup = is_reverse_pickup)
                 
                 if vendor_order_id is not None:
                     new_order.vendor_order_id = vendor_order_id
