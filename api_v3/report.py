@@ -378,7 +378,7 @@ def dg_report(request):
     day_end = ist_day_end(date)
 
     # Number of dgs working today ----------------------------------------------------------------------
-    dg_working_today_count = DGAttendance.objects.filter(date__gte=day_start, date__lte=day_end).count()
+    dg_working_today_count = DGAttendance.objects.filter(date=date).count()
 
     # --------------------------------------------
     delivery_statuses_today = OrderDeliveryStatus.objects.filter(date__gte=day_start, date__lte=day_end)
@@ -390,9 +390,27 @@ def dg_report(request):
         Q(order_status=constants.ORDER_STATUS_OUTFORDELIVERY) |
         Q(order_status=constants.ORDER_STATUS_DELIVERED)
     )
-
     all_dgs = delivery_statuses_today.values('delivery_guy__user__username'). \
         annotate(sum_of_cod_collected=Sum('cod_collected_amount'), sum_of_cod_amount=Sum('order__cod_amount'))
+
+    delivery_statuses_without_delivery_attempted = delivery_statuses_today.exclude(order_status=constants.ORDER_STATUS_DELIVERY_ATTEMPTED)
+    all_dgs_2 = delivery_statuses_without_delivery_attempted.values('delivery_guy__user__username'). \
+        annotate(sum_of_cod_collected_without_delivery_attempted=Sum('cod_collected_amount'),
+                 sum_of_cod_amount_without_delivery_attempted=Sum('order__cod_amount'))
+
+    # This is for handling delivery attempted case in COD
+    # In delivery attempted case, COD is not considered, but the order is still considered to be executed order
+    for dg in all_dgs:
+        dg_phone_number = dg['delivery_guy__user__username']
+        filtered_dgs = all_dgs_2.filter(delivery_guy__user__username=dg_phone_number)
+        if len(filtered_dgs) ==1:
+            single = filtered_dgs[0]
+            # for single in filtered_dgs:
+            dg['sum_of_cod_collected'] = single['sum_of_cod_collected_without_delivery_attempted']
+            dg['sum_of_cod_amount'] = single['sum_of_cod_amount_without_delivery_attempted']
+        else:
+            dg['sum_of_cod_collected'] = 0
+            dg['sum_of_cod_amount'] = 0
 
     all_pgs = delivery_statuses_today.values('pickup_guy__user__username').annotate(
         sum_of_cod_amount=Sum('order__cod_amount'))
@@ -427,9 +445,9 @@ def dg_report(request):
                                                             Q(order_status=constants.ORDER_STATUS_DELIVERED) |
                                                             Q(order_status=constants.ORDER_STATUS_OUTFORDELIVERY))
 
-        orders_count = 0
         for single_ops_exec in all_ops_execs:
             associated_guys = single_ops_exec.associate_delivery_guys.all()
+            orders_count = 0
             executed_orders_count = 0
             assigned_orders_count = 0
             ops_cod_to_be_collected = 0
@@ -501,6 +519,7 @@ def dg_report(request):
         all_unassociated_pgs = []
         all_unassociated_dgs = []
 
+        orders_count = 0
         assigned_orders_count = 0
         executed_orders_count = 0
         ops_cod_to_be_collected = 0
