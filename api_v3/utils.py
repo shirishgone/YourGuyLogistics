@@ -15,6 +15,8 @@ from api_v3 import constants
 from server import settings
 from yourguy.models import Order, OrderDeliveryStatus, VendorAgent, Consumer, Employee, NotificationType, DeliveryAction, ServiceablePincode
 from django.db.models import Q
+from rest_framework.response import Response
+from rest_framework import status
 
 def response_structure():
     result = {
@@ -36,7 +38,19 @@ def response_access_denied():
     'message':'Access Denied'
     }
     response['error'] = error
-    return Response(content, status=status.HTTP_400_BAD_REQUEST) 
+    response['payload'] = None
+    return Response(response, status=status.HTTP_400_BAD_REQUEST) 
+
+def response_incomplete_parameters(parameters):
+    response = response_structure()    
+    error = {
+    'code':'102',
+    'message':'Incomplete parameters %s'%(parameters)
+    }
+    response['error'] = error
+    response['payload'] = None
+    return Response(response, status=status.HTTP_400_BAD_REQUEST) 
+
 
 def ops_managers_for_pincode(pincode):
     result = []

@@ -18,7 +18,8 @@ from api_v3.push import send_push
 from api_v3.utils import log_exception, send_sms, ist_datetime, user_role, address_string, ist_day_start, ist_day_end, \
     paginate, is_correct_pincode, is_pickup_time_acceptable, timedelta, is_userexists, is_consumerexists, \
     is_consumer_has_same_address_already, days_in_int, send_email, is_today_date, is_vendor_has_same_address_already, \
-    delivery_actions, ops_manager_for_dg, notification_type_for_code, ops_executive_for_pincode, address_with_location
+    delivery_actions, ops_manager_for_dg, notification_type_for_code, ops_executive_for_pincode, address_with_location, \
+    response_access_denied, response_incomplete_parameters
 
 from yourguy.models import User, Vendor, DeliveryGuy, VendorAgent, Picture, ProofOfDelivery, OrderDeliveryStatus, \
     Consumer, Address, Order, Product, OrderItem, Notification, Location, DeliveryTransaction
@@ -508,11 +509,7 @@ class OrderViewSet(viewsets.ViewSet):
             vendor_agent = get_object_or_404(VendorAgent, user=request.user)
             vendor = vendor_agent.vendor
             if delivery_status.order.vendor.id != vendor.id:
-                content = {
-                    'error': 'Access privileges',
-                    'description': 'You can\'t access other vendor orders'
-                }
-                return Response(content, status=status.HTTP_400_BAD_REQUEST)
+                return response_access_denied()                
 
         result = delivery_guy_app(delivery_status)
         return Response(result, status=status.HTTP_200_OK)
@@ -699,12 +696,8 @@ class OrderViewSet(viewsets.ViewSet):
             vendor_agent = get_object_or_404(VendorAgent, user=self.request.user)
             vendor = vendor_agent.vendor
         else:
-            content = {
-                'error': 'API Access limited.',
-                'description': 'You cant access this API'
-            }
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
-
+            return response_access_denied()            
+        
         # PARSING REQUEST PARAMS ------------------------
         try:
             order_date = request.data['order_date']
@@ -725,12 +718,8 @@ class OrderViewSet(viewsets.ViewSet):
             total_cost = request.data.get('total_cost')
 
         except Exception as e:
-            content = {
-                'error': 'Incomplete parameters',
-                'description': 'order_date, timeslots, customers, product_id, recurring, vendor_address_id, '
-                               'is_reverse_pickup. Optional: cod_amount, notes, total_cost, vendor_order_id'
-            }
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+            parameters = ['order_date', 'timeslots', 'customers', 'product_id', 'recurring', 'vendor_address_id', 'is_reverse_pickup', 'cod_amount(optional)', 'notes(optional)', 'total_cost(optional)', 'vendor_order_id(optional)']
+            return response_incomplete_parameters([parameters])
         # ---------------------------------------------------
 
         # TIMESLOT PARSING -----------------------------------
@@ -739,11 +728,8 @@ class OrderViewSet(viewsets.ViewSet):
             timeslot_start = timeslots['timeslot_start']
             timeslot_end = timeslots['timeslot_end']
         except Exception as e:
-            content = {
-                'error': 'Incomplete parameters',
-                'description': 'timeslot_start, timeslot_start are mandatory parameters'
-            }
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+            parameters = ['timeslot_start', 'timeslot_end']
+            return response_incomplete_parameters([parameters])
         # ---------------------------------------------------
 
         # CREATING DATES OF DELIVERY ------------------------
@@ -903,10 +889,7 @@ class OrderViewSet(viewsets.ViewSet):
             vendor_agent = get_object_or_404(VendorAgent, user = self.request.user)
             vendor = vendor_agent.vendor
         else:
-            content = {'error':'API Access limited.', 'description':'You cant access this API'}
-            return Response(content, status = status.HTTP_400_BAD_REQUEST)
-        # --------------------------------------------------------------
-        
+            return response_access_denied()            
         try:
             pickup_address_id = request.data['pickup_address_id']
             orders = request.data['orders']
@@ -1484,11 +1467,7 @@ class OrderViewSet(viewsets.ViewSet):
     def add_deliveries(self, request, pk=None):
         role = user_role(request.user)
         if role is not constants.DELIVERY_GUY:
-            content = {
-                'error': 'Access Denied',
-                'description': 'You don\'t have permissions to add orders'
-            }
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+            return response_access_denied()
         else:
             delivery_boy = get_object_or_404(DeliveryGuy, user=request.user)
 
@@ -1601,14 +1580,10 @@ class OrderViewSet(viewsets.ViewSet):
             new_date_string = request.data['new_date']
             new_date = parse_datetime(new_date_string)
         except Exception as e:
-            content = {
-                'error': 'Incomplete parameters',
-                'description': 'new_date is a mandatory parameter'
-            }
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+            parameters = ['new_date']
+            return response_incomplete_parameters(parameters)
 
         delivery_status = get_object_or_404(OrderDeliveryStatus, id=pk)
-
         current_datetime = datetime.now()
         if current_datetime.date() > new_date.date():
             content = {
@@ -1629,5 +1604,4 @@ class OrderViewSet(viewsets.ViewSet):
                 content = {'error': 'The order has already been processed, now you can\'t update the status.'}
                 return Response(content, status=status.HTTP_400_BAD_REQUEST)
         else:
-            content = {'error': 'Access Denied'}
-            return Response(content, status=status.HTTP_400_BAD_REQUEST) 
+            return response_access_denied()
