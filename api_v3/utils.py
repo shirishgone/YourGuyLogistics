@@ -78,7 +78,13 @@ def s3_bucket_pod():
 def address_string(address):
     try:
         if len(address.full_address) > 1:
-            address_string = address.full_address + ', ' + address.pin_code
+            address_string = address.full_address 
+            if address.landmark is not None and len(address.landmark) > 0:
+                address_string += ', '
+                address_string += address.landmark
+            if address.pin_code is not None:
+                address_string += ', '
+                address_string += address.pin_code
         else:
             address_string = address.flat_number + ', ' + address.building + ', ' + address.street + ', ' + address.pin_code
 
