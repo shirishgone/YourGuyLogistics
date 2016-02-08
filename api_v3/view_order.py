@@ -216,6 +216,16 @@ def is_user_permitted_to_edit_order(user, order):
         is_permissible = False
     return is_permissible
 
+def can_cancel_order(delivery_status, status):
+    if can_update_order(delivery_status,status):
+        current_datetime = datetime.now()
+        if delivery_status.date.date() >= current_datetime.date():
+            return True
+        else:
+            return False    
+    else:
+        return False        
+
 def can_update_order(delivery_status, status):
     if status == constants.ORDER_STATUS_INTRANSIT:
         if delivery_status.order_status == constants.ORDER_STATUS_QUEUED:
@@ -1039,7 +1049,7 @@ class OrderViewSet(viewsets.ViewSet):
             if is_user_permitted_to_cancel_order(request.user, delivery_status.order) is False:
                 content = {'error': "You don\'t have permissions to cancel this order."}
                 return Response(content, status=status.HTTP_400_BAD_REQUEST)
-            if can_update_order(delivery_status, constants.ORDER_STATUS_CANCELLED):
+            if can_cancel_order(delivery_status, constants.ORDER_STATUS_CANCELLED):
                 delivery_status.order_status = constants.ORDER_STATUS_CANCELLED
                 delivery_status.save()
                 action = delivery_actions(constants.CANCELLED_CODE)
