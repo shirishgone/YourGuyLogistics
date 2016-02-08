@@ -8,10 +8,9 @@ from dateutil.rrule import rrule, WEEKLY
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.utils.dateparse import parse_datetime
-from rest_framework import status, authentication, viewsets
+from rest_framework import authentication, viewsets
 from rest_framework.decorators import detail_route, list_route
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
 
 from api_v3 import constants
 from api_v3.push import send_push
@@ -557,11 +556,8 @@ class OrderViewSet(viewsets.ViewSet):
                     or order_status == constants.ORDER_STATUS_REJECTED:
                 pass
             else:
-                content = {
-                    'error': 'Incorrect order_status',
-                    'description': 'Options: QUEUED, INTRANSIT, PICKUPATTEMPTED, DELIVERED, DELIVERYATTEMPTED, CANCELLED'
-                }
-                return Response(content, status=status.HTTP_400_BAD_REQUEST)
+                error_message = 'order_status can be only QUEUED, INTRANSIT, PICKUPATTEMPTED, DELIVERED, DELIVERYATTEMPTED, CANCELLED'
+                return response_error_with_message(error_message)
         # -------------------------------------------------------------------------
 
         # DATE FILTERING ----------------------------------------------------------
