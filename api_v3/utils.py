@@ -22,7 +22,9 @@ def response_structure():
     result = {
     'success': False,
     'payload': {
-    # Application-specific data would go here. 
+        # Application-specific data would go here. 
+        'message':None,
+        'data':None
     },
     'error': {
         'code': None,
@@ -30,6 +32,28 @@ def response_structure():
         }
     }
     return result
+
+def response_with_payload(data, message):
+    response = response_structure()    
+    payload = {
+        'data': data,
+        'message': message
+    }
+    response['payload'] = payload
+    response['success'] = True
+    response['error'] = None
+    return Response(response, status=status.HTTP_200_OK) 
+
+def response_success_with_message(message):
+    response = response_structure()    
+    response['success'] = True
+    payload = {
+        'data': None,
+        'message': message
+    }
+    response['payload'] = payload
+    response['error'] = None
+    return Response(response, status=status.HTTP_200_OK) 
 
 def response_access_denied():
     response = response_structure()    
@@ -51,6 +75,25 @@ def response_incomplete_parameters(parameters):
     response['payload'] = None
     return Response(response, status=status.HTTP_400_BAD_REQUEST) 
 
+def response_invalid_pagenumber():
+    response = response_structure()  
+    error = {
+    'code':'103',
+    'message':'Invalid page number'
+    }
+    response['error'] = error
+    response['payload'] = None
+    return Response(response, status=status.HTTP_400_BAD_REQUEST) 
+
+def response_error_with_message(message):
+    response = response_structure()  
+    error = {
+    'code':'104',
+    'message':message
+    }
+    response['error'] = error
+    response['payload'] = None
+    return Response(response, status=status.HTTP_400_BAD_REQUEST) 
 
 def ops_managers_for_pincode(pincode):
     result = []

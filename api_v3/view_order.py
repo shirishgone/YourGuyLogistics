@@ -19,7 +19,8 @@ from api_v3.utils import log_exception, send_sms, ist_datetime, user_role, addre
     paginate, is_correct_pincode, is_pickup_time_acceptable, timedelta, is_userexists, is_consumerexists, \
     is_consumer_has_same_address_already, days_in_int, send_email, is_today_date, is_vendor_has_same_address_already, \
     delivery_actions, ops_manager_for_dg, notification_type_for_code, ops_executive_for_pincode, address_with_location, \
-    response_access_denied, response_incomplete_parameters
+    response_access_denied, response_incomplete_parameters, response_success_with_message, response_with_payload, response_invalid_pagenumber, \
+    response_error_with_message
 
 from yourguy.models import User, Vendor, DeliveryGuy, VendorAgent, Picture, ProofOfDelivery, OrderDeliveryStatus, \
     Consumer, Address, Order, Product, OrderItem, Notification, Location, DeliveryTransaction
@@ -508,7 +509,7 @@ class OrderViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
 
     def destroy(self, request):
-        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        return response_access_denied()
 
     def retrieve(self, request, pk=None):
         delivery_status = get_object_or_404(OrderDeliveryStatus, id=pk)
@@ -522,7 +523,7 @@ class OrderViewSet(viewsets.ViewSet):
                 return response_access_denied()                
 
         result = delivery_guy_app(delivery_status)
-        return Response(result, status=status.HTTP_200_OK)
+        return response_with_payload(result, None)
 
     def list(self, request):
         """
@@ -664,7 +665,7 @@ class OrderViewSet(viewsets.ViewSet):
                 "total_pages": 1,
                 "total_orders": total_orders_count
             }
-            return Response(response_content, status=status.HTTP_200_OK)
+            return response_with_payload(response_content, None)
 
         else:
             # PAGINATION  ----------------------------------------------------------------
@@ -675,10 +676,7 @@ class OrderViewSet(viewsets.ViewSet):
 
             total_pages = int(total_orders_count / constants.PAGINATION_PAGE_SIZE) + 1
             if page > total_pages or page <= 0:
-                response_content = {
-                    "error": "Invalid page number"
-                }
-                return Response(response_content, status=status.HTTP_400_BAD_REQUEST)
+                return response_invalid_pagenumber()
             else:
                 delivery_statuses = paginate(delivery_status_queryset, page)
             # ----------------------------------------------------------------------------
@@ -697,8 +695,7 @@ class OrderViewSet(viewsets.ViewSet):
                 "unassigned_orders_count":unassigned_orders_count,
                 "pending_orders_count":pending_orders_count
             }
-
-            return Response(response_content, status=status.HTTP_200_OK)
+            return response_with_payload(response_content, None)
 
     def create(self, request):
         role = user_role(self.request.user)
@@ -729,7 +726,7 @@ class OrderViewSet(viewsets.ViewSet):
 
         except Exception as e:
             parameters = ['order_date', 'timeslots', 'customers', 'product_id', 'recurring', 'vendor_address_id', 'is_reverse_pickup', 'cod_amount(optional)', 'notes(optional)', 'total_cost(optional)', 'vendor_order_id(optional)']
-            return response_incomplete_parameters([parameters])
+            return response_incomplete_parameters(parameters)
         # ---------------------------------------------------
 
         # TIMESLOT PARSING -----------------------------------
@@ -739,7 +736,7 @@ class OrderViewSet(viewsets.ViewSet):
             timeslot_end = timeslots['timeslot_end']
         except Exception as e:
             parameters = ['timeslot_start', 'timeslot_end']
-            return response_incomplete_parameters([parameters])
+            return response_incomplete_parameters(parameters)
         # ---------------------------------------------------
 
         # CREATING DATES OF DELIVERY ------------------------
@@ -767,28 +764,20 @@ class OrderViewSet(viewsets.ViewSet):
                 # ---------------------------------------------------
 
                 if len(delivery_dates) <= 0:
-                    content = {
-                        'error': 'Incomplete dates',
-                        'description': 'Please check the dates'
-                    }
-                    return Response(content, status=status.HTTP_400_BAD_REQUEST)
-
+                    error_message = 'Incomplete dates'
+                    return response_error_with_message(error_message)
+            
             except Exception as e:
-                content = {
-                    'error': 'Incomplete parameters',
-                    'description': 'start_date, end_date, by_day should be mentioned for recurring events'
-                }
-                return Response(content, status=status.HTTP_400_BAD_REQUEST)
+                parameters = ['start_date', 'end_date', 'by_day']
+                return response_incomplete_parameters(parameters)
         except:
             delivery_dates.append(order_datetime)
         # --------------------------------------------------------------
 
         # CREATING NEW ORDER FOR EACH CUSTOMER -------------------------
         if len(consumers) == 0:
-            content = {
-                'status': 'No customers. Please provide customer details [id, address_id]'
-            }
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+            error_message = 'No customers. Please provide customer details [id, address_id]'
+            return response_error_with_message(error_message)
         # --------------------------------------------------------------
 
         # CREATING NEW ORDER FOR EACH CUSTOMER -------------------------
@@ -796,12 +785,9 @@ class OrderViewSet(viewsets.ViewSet):
         pickup_datetime = order_datetime.replace(hour=time_obj.tm_hour, minute=time_obj.tm_min)
 
         if is_pickup_time_acceptable(pickup_datetime) is False:
-            content = {
-                'error': 'Pickup date or time not acceptable',
-                'description': 'Pickup time can only be between 5.30AM to 10.00PM and past dates are not allowed'
-            }
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
-
+            error_message = 'Pickup time can only be between 5.30AM to 11.30PM and past dates are not allowed'
+            return response_error_with_message(error_message)
+        
         if vendor.is_hyper_local is True:
             delivery_timedelta = timedelta(hours = 1, minutes = 0)
             delivery_datetime = pickup_datetime + delivery_timedelta
@@ -837,11 +823,8 @@ class OrderViewSet(viewsets.ViewSet):
                                                  is_reverse_pickup=is_reverse_pickup)
 
             except Exception as e:
-                print(e)
-                content = {
-                    'error': ' Error placing new order'
-                }
-                return Response(content, status=status.HTTP_400_BAD_REQUEST)
+                error_message = 'Error placing new order'
+                return response_error_with_message(error_message)
             # ---------------------------------------------------
 
             # ADDING OPTIONAL ATTRIBUTES TO NEW ORDER CREATED ------------------
@@ -879,17 +862,12 @@ class OrderViewSet(viewsets.ViewSet):
 
         # FINAL RESPONSE ----------------------------------------------
         if len(new_delivery_ids) > 0:
-            content = {
-                'status': 'orders added',
-                'delivery_ids': new_delivery_ids
-            }
-            return Response(content, status=status.HTTP_201_CREATED)
+            success_message = 'orders added successfully'
+            return response_with_payload(new_delivery_ids, success_message)
         else:
-            content = {
-                'status': 'There is some problem adding orders, please try again.'
-            }
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
-            # -------------------------------------------------------------
+            error_message = 'There is some problem adding orders, please try again.'
+            return response_error_with_message(error_message)
+        # -------------------------------------------------------------
 
     @detail_route(methods=['post'])
     def upload_excel(self, request, pk):
@@ -904,10 +882,8 @@ class OrderViewSet(viewsets.ViewSet):
             pickup_address_id = request.data['pickup_address_id']
             orders = request.data['orders']
         except Exception as e:
-            content = {
-                'error': 'Incomplete params. pickup_address_id, orders'
-            }
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+            parameters = ['pickup_address_id', 'orders']
+            return response_incomplete_parameters(parameters)
 
         new_delivery_ids = []
         for single_order in orders:
@@ -939,25 +915,17 @@ class OrderViewSet(viewsets.ViewSet):
 
                 # PINCODE IS INTEGER CHECK -----------------------------
                 if is_correct_pincode(delivery_pin_code) is False:
-                    content = {'error':'Incorrect pin_code', 
-                    'description':'Pincode should be an integer with 6 digits.'}
-                    return Response(content, status = status.HTTP_400_BAD_REQUEST)
-            
+                    error_message = 'pincode should be an integer with 6 digits.'
+                    return response_error_with_message(error_message)            
             except Exception, e:
-                content = {
-                'error':'Incomplete params', 
-                'description':'pickup_datetime, customer_name, customer_phone_number, pickup address id , delivery address'
-                }
-                return Response(content, status = status.HTTP_400_BAD_REQUEST)
-
+                parameters = ['pickup_datetime', 'customer_name', 'customer_phone_number', 'delivery address', 'vendor_order_id', 'customer_full_address', 'customer_pincode']
+                return response_incomplete_parameters(parameters)
+            
             try:
                 pickup_datetime = parse_datetime(pickup_datetime)
                 if is_pickup_time_acceptable(pickup_datetime) is False:
-                    content = {
-                    'error':'Pickup date or time not acceptable', 
-                    'description':'Pickup time can only be between 5.30AM to 10.00PM and past dates are not allowed'
-                    }
-                    return Response(content, status = status.HTTP_400_BAD_REQUEST)
+                    error_message = 'Pickup time can only be between 5.30AM to 11.30PM and past dates are not allowed'
+                    return response_error_with_message(error_message)
 
                 if vendor.is_hyper_local is True:
                     delivery_timedelta = timedelta(hours = 1, minutes = 0)
@@ -966,9 +934,9 @@ class OrderViewSet(viewsets.ViewSet):
                     delivery_timedelta = timedelta(hours = 4, minutes = 0)
                     delivery_datetime = pickup_datetime + delivery_timedelta
 
-            except Exception, e:
-                content = {'error':'Error parsing dates'}
-                return Response(content, status = status.HTTP_400_BAD_REQUEST)
+            except Exception as e:
+                error_message = 'error parsing dates'
+                return response_error_with_message(error_message)
             
             try:
                 if is_userexists(consumer_phone_number) is True:
@@ -992,8 +960,8 @@ class OrderViewSet(viewsets.ViewSet):
                         pickup_address = get_object_or_404(Address, pk = pickup_address_id)
                         delivery_address = fetch_consumer_address(consumer, delivery_full_address, delivery_pin_code, delivery_landmark)
                 except:
-                    content = {'error':' Error parsing addresses'}
-                    return Response(content, status = status.HTTP_400_BAD_REQUEST)
+                    error_message = 'error parsing addresses'
+                    return response_error_with_message(error_message)
                 # -------------------------------------------------------
 
                 # CREATE NEW ORDER --------------------------------------
@@ -1020,45 +988,39 @@ class OrderViewSet(viewsets.ViewSet):
                 delivery_status = OrderDeliveryStatus.objects.create(date = pickup_datetime, order = new_order)
                 new_delivery_ids.append(delivery_status.id)
             except Exception as e:
-                content = {
-                'error':'Unable to create orders with the given details'
-                }
-                return Response(content, status=status.HTTP_400_BAD_REQUEST)
+                error_message = 'Unable to create orders with the given details'
+                return response_error_with_message(error_message)
 
         # SEND MAIL TO RETAIL TEAM, IF ITS A RETAIL ORDER
         if vendor.is_retail is True and len(new_delivery_ids)> 0:
             retail_order_send_email(vendor, new_delivery_ids)
         # -------------------------------------------------------------
-
-        content = {
-        'message':'Your Orders has been placed.'
-        }
-        return Response(content, status = status.HTTP_201_CREATED)
+        success_message = 'Your Orders has been placed.'
+        return response_success_with_message(success_message)
 
     @list_route(methods=['put'])
     def cancel(self, request, pk = None):
         try:
             delivery_ids = request.data['delivery_ids']
         except Exception as e:
-            content = {'error': 'delivery_ids is a mandatory parameter.'}
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+            parameters = ['delivery_ids']
+            return response_incomplete_parameters(parameters)
         
         timestamp = datetime.now()
         for delivery_id in delivery_ids:
             delivery_status = get_object_or_404(OrderDeliveryStatus, pk=delivery_id)
             if is_user_permitted_to_cancel_order(request.user, delivery_status.order) is False:
-                content = {'error': "You don\'t have permissions to cancel this order."}
-                return Response(content, status=status.HTTP_400_BAD_REQUEST)
+                return response_access_denied()
             if can_cancel_order(delivery_status, constants.ORDER_STATUS_CANCELLED):
                 delivery_status.order_status = constants.ORDER_STATUS_CANCELLED
                 delivery_status.save()
                 action = delivery_actions(constants.CANCELLED_CODE)
                 add_action_for_delivery(action, delivery_status, request.user, None, None, timestamp, None)
             else:
-                content = {'error': "Can\'t update this."}
-                return Response(content, status=status.HTTP_400_BAD_REQUEST)                            
-        content = {'description': 'Order has been canceled'}
-        return Response(content, status=status.HTTP_200_OK)
+                error_message = 'Can\'t update this delivery now.'
+                return response_error_with_message(error_message)
+        success_message = 'Order has been canceled'
+        return response_success_with_message(success_message)
 
     @list_route(methods=['put'])
     def report(self, request, pk=None):
@@ -1069,8 +1031,8 @@ class OrderViewSet(viewsets.ViewSet):
             latitude = request.data.get('latitude')
             longitude = request.data.get('longitude')
         except Exception as e:
-            content = {'error': 'delivery_ids, reported_reason are mandatory parameters'}
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+            parameters = ['delivery_ids', 'reported_reason']
+            return response_incomplete_parameters(parameters)
 
         role = user_role(request.user)
         if role == constants.DELIVERY_GUY:
@@ -1107,11 +1069,10 @@ class OrderViewSet(viewsets.ViewSet):
             except Exception as e:
                 send_reported_email(delivery_guy.user, email_orders, reported_reason)
             # -----------------------------------------------------------------------
-            content = {'data': 'Successfully reported'}
-            return Response(content, status=status.HTTP_200_OK)
+            success_message = 'Reported successfully'
+            return response_success_with_message(success_message)
         else:
-            content = {'error': 'You don\'t have permissions to report about the orders'}
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+            return response_access_denied()
 
     @list_route(methods=['put'])
     def multiple_pickup_attempted(self, request, pk=None):
@@ -1122,16 +1083,15 @@ class OrderViewSet(viewsets.ViewSet):
             longitude = request.data.get('longitude')
             attempted_datetime = request.data.get('attempted_datetime')
         except Exception as e:
-            content = {'error': 'delivery_ids is mandatory parameters and attempted_datetime, remarks, latitude, longitude are optional'}
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+            parameters = ['delivery_ids', 'attempted_datetime(optional)', 'remarks(optional)', 'latitude(optional)', 'longitude(optional)']
+            return response_incomplete_parameters(parameters)
         
         if attempted_datetime is not None:
             try:
                 attempted_datetime = parse_datetime(attempted_datetime)    
             except Exception as e:
-                log_exception(e, 'parsing date in multiple_pickup_attempted')
-                content = {'error': 'Parsing error for pickedup_datetime or date'}
-                return Response(content, status=status.HTTP_400_BAD_REQUEST)
+                error_message = 'parsing date error in multiple_pickup_attempted'
+                response_error_with_message(error_message)
         else:
             attempted_datetime = datetime.now()            
         
@@ -1139,27 +1099,22 @@ class OrderViewSet(viewsets.ViewSet):
             try:
                 delivery_status = get_object_or_404(OrderDeliveryStatus, pk=delivery_id)
                 if is_user_permitted_to_update_order(request.user, delivery_status.order) is False:
-                    content = {'error': 'You don\'t have permissions to update this order.'}
-                    return Response(content, status=status.HTTP_400_BAD_REQUEST)
+                    return response_access_denied()
                 if can_update_order(delivery_status, constants.ORDER_STATUS_PICKUP_ATTEMPTED):
                     update_delivery_status_pickup_attempted(delivery_status, remarks, attempted_datetime)
                     action = delivery_actions(constants.PICKUP_ATTEMPTED_CODE)
                     add_action_for_delivery(action, delivery_status, request.user, latitude, longitude, attempted_datetime, remarks)
                 else:
-                    content = {'error': 'Order already processed cant attempt the pickup now'}
-                    return Response(content, status=status.HTTP_400_BAD_REQUEST)
+                    error_message = 'Order already processed cant attempt the pickup now'
+                    response_error_with_message(error_message)
             except Exception as e:
                 log_exception(e, 'multiple_pickup_attempted')
-                content = {
-                    'error': 'Order update failed',
-                    'data': {'delivery_id': delivery_id}
-                }
-                return Response(content, status=status.HTTP_400_BAD_REQUEST)
-
-        content = {'data': 'Orders attempted'}
-        return Response(content, status=status.HTTP_200_OK)
-
-
+                error_message = 'Order already processed cant attempt the pickup now %s'%(delivery_id)
+                response_error_with_message(error_message)
+        
+        success_message = 'Orders attempted'
+        return response_success_with_message(success_message)
+    
     @list_route(methods=['put'])
     def multiple_pickups(self, request, pk=None):
         try:
@@ -1168,15 +1123,15 @@ class OrderViewSet(viewsets.ViewSet):
             latitude = request.data.get('latitude')
             longitude = request.data.get('longitude')
         except Exception as e:
-            content = {'error': 'delivery_ids is a mandatory and pickedup_datetime, latitude and longitude are optional'}
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+            parameters = ['delivery_ids', 'pickedup_datetime(optional)', 'remarks(optional)', 'latitude(optional)', 'longitude(optional)']
+            return response_incomplete_parameters(parameters)        
         
         if pickedup_datetime_string is not None:
             try:
                 pickedup_datetime = parse_datetime(pickedup_datetime_string)     
-            except Exception, e:
-                content = {'error': 'pickedup_datetime should be UTC in following format 2015-11-23T09:32:56.000'}
-                return Response(content, status=status.HTTP_400_BAD_REQUEST)
+            except Exception as e:
+                error_message = 'pickedup_datetime should be UTC in following format 2015-11-23T09:32:56.000'
+                response_error_with_message(error_message)
         else:
             pickedup_datetime = datetime.now()
         
@@ -1184,33 +1139,29 @@ class OrderViewSet(viewsets.ViewSet):
             try:
                 delivery_status = get_object_or_404(OrderDeliveryStatus, pk=delivery_id)
                 if is_user_permitted_to_update_order(request.user, delivery_status.order) is False:
-                    content = {'error': "You don\'t have permissions to update this order."}
-                    return Response(content, status=status.HTTP_400_BAD_REQUEST)
-
+                    return response_access_denied()
+                
                 if can_update_order(delivery_status, constants.ORDER_STATUS_INTRANSIT):
                     update_delivery_status_pickedup(delivery_status, pickedup_datetime, None, None)
                     action = delivery_actions(constants.PICKEDUP_CODE)
                     add_action_for_delivery(action, delivery_status, request.user, latitude, longitude, pickedup_datetime, None)
                 else:
-                    content = {'error': 'Can\'t update as the order is not queued'}
-                    return Response(content, status=status.HTTP_400_BAD_REQUEST)
+                    error_message = 'Can\'t update as the order is not queued'
+                    response_error_with_message(error_message)
             except Exception as e:
                 log_exception(e, 'multiple_pickup_attempted')
-                content = {
-                    'error': 'delivery update failed',
-                    'data': {'delivery_id': delivery_id}
-                }
-                return Response(content, status=status.HTTP_400_BAD_REQUEST)
-        content = {'data': 'delivery attempted'}
-        return Response(content, status=status.HTTP_200_OK)
+                error_message = 'delivery update failed with delivery_id: %s'%(delivery_id)
+                response_error_with_message(error_message)
+        
+        success_message = 'delivery attempted'
+        return response_success_with_message(success_message)
 
     @detail_route(methods=['put'])
     def picked_up(self, request, pk):
         delivery_status = get_object_or_404(OrderDeliveryStatus, pk=pk)
         if is_user_permitted_to_update_order(request.user, delivery_status.order) is False:
-            content = {'error': 'You don\'t have permissions to update this order.'}
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
-
+            return response_access_denied()
+        
         pop_dict = request.data.get('pop')
         remarks = request.data.get('remarks')
         latitude = request.data.get('latitude')
@@ -1236,9 +1187,9 @@ class OrderViewSet(viewsets.ViewSet):
             add_action_for_delivery(action, delivery_status, request.user, latitude, longitude, pickedup_datetime, remarks)
             is_order_updated = True
         else:
-            content = {'error': 'Delivery can\'t be processed'}
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
-        
+            error_message = 'Delivery can\'t be processed'
+            return response_error_with_message(error_message)
+
         if is_order_updated:
             if is_deliveryguy_assigned(delivery_status) is False:
                 notif_unassigned(delivery_status)
@@ -1247,19 +1198,19 @@ class OrderViewSet(viewsets.ViewSet):
                 message = 'Dear %s, we have picked your order behalf of %s - Team YourGuy' % (
                     delivery_status.order.consumer.user.first_name, delivery_status.order.vendor.store_name)
                 send_sms(end_consumer_phone_number, message)
-            content = {'description': 'Delivery has been updated'}
-            return Response(content, status=status.HTTP_200_OK)
+            
+            success_message = 'Delivery updated'
+            return response_success_with_message(success_message)
         else:    
-            content = {'error': 'Delivery update failed'}
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+            error_message = 'Delivery update failed'
+            return response_error_with_message(error_message)
 
     @detail_route(methods=['put'])
     def pickup_attempted(self, request, pk=None):
         delivery_status = get_object_or_404(OrderDeliveryStatus, pk=pk)
         if is_user_permitted_to_update_order(request.user, delivery_status.order) is False:
-            content = {'error': "You don\'t have permissions to update this order."}
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
-
+            return response_access_denied()
+        
         remarks = request.data.get('remarks')
         latitude = request.data.get('latitude')
         longitude = request.data.get('longitude')
@@ -1279,23 +1230,22 @@ class OrderViewSet(viewsets.ViewSet):
             add_action_for_delivery(action, delivery_status, request.user, latitude, longitude, attempted_datetime, remarks)
             is_order_updated = True
         else:
-            content = {'error': 'Delivery can\'t be processed'}
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+            error_message = 'Delivery can\'t be processed'
+            return response_error_with_message(error_message)
 
         if is_order_updated:
-            content = {'description': 'Delivery updated'}
-            return Response(content, status=status.HTTP_200_OK)
+            success_message = 'Delivery updated'
+            return response_success_with_message(success_message)
         else:
-            content = {'error': 'Delivery update failed'}
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+            error_message = 'Delivery can\'t be processed'
+            return response_error_with_message(error_message)
     
     @detail_route(methods=['put'])
     def delivery_attempted(self, request, pk):
         delivery_status = get_object_or_404(OrderDeliveryStatus, pk=pk)
         if is_user_permitted_to_update_order(request.user, delivery_status.order) is False:
-            content = {'error': 'You don\'t have permissions to update this order.'}
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
-
+            return response_access_denied()
+        
         latitude = request.data.get('latitude')
         longitude = request.data.get('longitude') 
         remarks = request.data.get('remarks')       
@@ -1312,19 +1262,18 @@ class OrderViewSet(viewsets.ViewSet):
             update_delivery_status_delivery_attempted(delivery_status, delivery_remarks, delivered_datetime)
             action = delivery_actions(constants.DELIVERY_ATTEMPTED_CODE)
             add_action_for_delivery(action, delivery_status, request.user, latitude, longitude, attempted_datetime, remarks)
-            content = {'description': 'Delivery updated'}
-            return Response(content, status=status.HTTP_200_OK)
+            success_message = 'Delivery updated'
+            return response_success_with_message(success_message)            
         else:
-            content = {'error': 'Delivery has already been processed, now you cant update the status.'}
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+            error_message = 'Delivery has already been processed, now you cant update the status.'
+            return response_error_with_message(error_message)
 
     @detail_route(methods=['put'])
     def delivered(self, request, pk):
         delivery_status = get_object_or_404(OrderDeliveryStatus, pk=pk)
         if is_user_permitted_to_update_order(request.user, delivery_status.order) is False:
-            content = {'error': 'You don\'t have permissions to update this order.'}
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
-
+            return response_access_denied()
+        
         # REQUEST PARAMETERS ---------------------------------------------
         cod_collected_amount = request.data.get('cod_collected_amount')
         remarks = request.data.get('remarks')
@@ -1346,11 +1295,8 @@ class OrderViewSet(viewsets.ViewSet):
                 or delivered_at == 'CUSTOMER':
             pass
         else:
-            content = {
-                'error': 'delivered_at value is missing or wrong.',
-                'Options': 'DOOR_STEP, SECURITY, RECEPTION, CUSTOMER'
-            }
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+            error_message = 'delivered_at can only be DOOR_STEP, SECURITY, RECEPTION, CUSTOMER'
+            return response_error_with_message(error_message)
         
         if can_update_order(delivery_status, constants.ORDER_STATUS_DELIVERED):
             pod_dict = request.data.get('pod')
@@ -1381,11 +1327,11 @@ class OrderViewSet(viewsets.ViewSet):
 
                 except Exception as e:
                     send_cod_discrepency_email(delivery_status, request.user)
-            content = {'description': 'Delivery updated'}
-            return Response(content, status=status.HTTP_200_OK)
+            success_message = 'Delivery updated'            
+            return response_success_with_message(success_message)
         else:
-            content = {'error': 'Delivery can\'t be updated.'}
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+            error_message = 'Delivery can\'t be updated.'
+            return response_error_with_message(error_message)
 
     @list_route(methods=['put'])
     def assign_orders(self, request, pk=None):
@@ -1394,19 +1340,19 @@ class OrderViewSet(viewsets.ViewSet):
             delivery_ids = request.data['delivery_ids']
             assignment_type = request.data['assignment_type']
         except Exception as e:
-            content = {'error': 'dg_id, delivery_ids, assignment_type are Mandatory'}
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+            parameters = ['dg_id', 'delivery_ids', 'assignment_type']
+            return response_incomplete_parameters(parameters)
 
         delivery_count = len(delivery_ids)
         if delivery_count > 50:
-            content = {'error': 'Cant assign more than 50 orders at a time.'}
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
-
+            error_message = 'Cant assign more than 50 orders at a time.'
+            return response_error_with_message(error_message)
+        
         if assignment_type == 'pickup' or assignment_type == 'delivery':
             pass
         else:
-            content = {'error': 'assignment_type can only be either pickup or delivery'}
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+            error_message = 'assignment_type can only be either pickup or delivery'
+            return response_error_with_message(error_message)
 
         is_orders_assigned = False
         dg = get_object_or_404(DeliveryGuy, id=dg_id)
@@ -1418,17 +1364,16 @@ class OrderViewSet(viewsets.ViewSet):
 
             current_datetime = datetime.now()
             if current_datetime.date() > delivery_status.date.date():
-                content = {'error': 'Cant assign orders of previous dates'}
-                return Response(content, status=status.HTTP_400_BAD_REQUEST)
-
+                error_message = 'Cant assign orders of previous dates'
+                return response_error_with_message(error_message)
+            
             if order.is_recurring is True:
                 # FETCHING ALL RECURRING ORDERS FOR ASSIGNMENT ------------------------
                 today_datetime = current_datetime.replace(hour=0, minute=0, second=0)
                 recurring_delivery_statuses = OrderDeliveryStatus.objects.filter(order=order, date__gte=today_datetime)
                 for recurring_delivery_status in recurring_delivery_statuses:
                     if is_user_permitted_to_update_order(request.user, recurring_delivery_status.order) is False:
-                        content = {'error': 'You don\'t have permissions to update this order.'}
-                        return Response(content, status=status.HTTP_400_BAD_REQUEST)
+                        return response_access_denied()
 
                     # Final Assignment -------------------------------------------
                     if assignment_type == 'pickup':
@@ -1442,9 +1387,8 @@ class OrderViewSet(viewsets.ViewSet):
                     is_orders_assigned = True
             else:
                 if is_user_permitted_to_update_order(request.user, delivery_status.order) is False:
-                    content = {'error': 'You don\'t have permissions to update this order.'}
-                    return Response(content, status=status.HTTP_400_BAD_REQUEST)
-
+                    return response_access_denied()
+                
                 # Final Assignment -------------------------------------------
                 if assignment_type == 'pickup':
                     delivery_status.pickup_guy = dg
@@ -1470,8 +1414,8 @@ class OrderViewSet(viewsets.ViewSet):
         except Exception as e:
             log_exception(e, 'SMS to DG about delivery assignment')
         
-        content = {'description': 'Order assigned'}
-        return Response(content, status=status.HTTP_200_OK)
+        success_message = 'Orders assigned successfully'
+        return response_success_with_message(success_message)
 
     @list_route(methods=['put'])
     def add_deliveries(self, request, pk=None):
@@ -1486,36 +1430,30 @@ class OrderViewSet(viewsets.ViewSet):
             vendor_id = request.data['vendor_id']
             deliveries = request.data['deliveries']
         except Exception as e:
-            content = {
-                'error': 'Missing input parameters',
-                'description': 'vendor_id, deliveries [consumer_phonenumber, consumer_name, pincode]'
-            }
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+            parameters = ['vendor_id', 'deliveries [consumer_phonenumber, consumer_name, pincode]']
+            return response_incomplete_parameters(parameters)
         # --------------------------------------------------------------------
 
         # FETCH VENDOR DETAILS --------------------------------------------
         try:
             vendor = get_object_or_404(Vendor, pk=vendor_id)
         except Exception as e:
-            content = {'error': 'Cant find vendor with supplied vendor_id'}
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
-
+            error_message = 'Cant find vendor with supplied vendor_id'
+            return response_error_with_message(error_message)
+        
         all_vendor_addresses = vendor.addresses.all()
         if len(all_vendor_addresses) > 0:
             vendor_address = all_vendor_addresses[0]
         else:
-            content = {'error': 'Cant find vendor address'}
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+            error_message = 'Cant find vendor address'
+            return response_error_with_message(error_message)
         # ------------------------------------------------------------------
 
         # PICK UP AND DELVIERY DATE TIMES ---------------------------------
         pickup_datetime = datetime.now()
         if is_pickup_time_acceptable(pickup_datetime) is False:
-            content = {
-            'error':'Pickup date or time not acceptable', 
-            'description':'Pickup time can only be between 5.30AM to 10.00PM and past dates are not allowed'
-            }
-            return Response(content, status = status.HTTP_400_BAD_REQUEST)            
+            error_message = 'Pickup time can only be between 5.30AM to 11.30PM and past dates are not allowed'
+            return response_error_with_message(error_message)        
         
         if vendor.is_hyper_local is True:
             delivery_timedelta = timedelta(hours = 1, minutes = 0)
@@ -1532,8 +1470,8 @@ class OrderViewSet(viewsets.ViewSet):
                 consumer_phonenumber = delivery['consumer_phonenumber']
                 pincode = delivery['pincode']
             except Exception as e:
-                content = {'error': 'consumer_name, consumer_phonenumber, pincode are mandatory parameters'}
-                return Response(content, status=status.HTTP_400_BAD_REQUEST)
+                parameters = ['consumer_name', 'consumer_phonenumber', 'pincode']
+                return response_incomplete_parameters(parameters)
 
             # FETCH CUSTOMER or CREATE NEW CUSTOMER ----------------
             consumer = fetch_consumer(consumer_phonenumber, consumer_name, vendor)
@@ -1577,12 +1515,8 @@ class OrderViewSet(viewsets.ViewSet):
         body = body + '\n\n-Thanks \nYourGuy BOT'
         send_email(email_ids, subject, body)
         # --------------------------------------------------------------------------
-
-        content = {
-            'data': created_orders,
-            'message': 'Orders placed Successfully'
-        }
-        return Response(content, status=status.HTTP_201_CREATED)
+        success_message = 'Orders placed Successfully'
+        return response_with_payload(created_orders, success_message)
 
     @detail_route(methods=['put'])
     def reschedule(self, request, pk):
@@ -1596,11 +1530,8 @@ class OrderViewSet(viewsets.ViewSet):
         delivery_status = get_object_or_404(OrderDeliveryStatus, id=pk)
         current_datetime = datetime.now()
         if current_datetime.date() > new_date.date():
-            content = {
-                'error': 'Reschedule Failed',
-                'description': 'You can\'t prepone the delivery to previous dates.'
-            }
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+            error_message = 'You can\'t prepone the delivery to previous dates.'
+            return response_error_with_message(error_message)
 
         if is_user_permitted_to_edit_order(request.user, delivery_status.order):
             if can_update_delivery_status(delivery_status):
@@ -1608,10 +1539,10 @@ class OrderViewSet(viewsets.ViewSet):
                 delivery_status.save()
                 action = delivery_actions(constants.RESCHEDULED_CODE)
                 add_action_for_delivery(action, delivery_status, request.user, None, None, datetime.now(), None)
-                content = {'description': 'Reschedule successful'}
-                return Response(content, status=status.HTTP_200_OK)
+                success_message = 'Reschedule successful'
+                return response_success_with_message(success_message)
             else:
-                content = {'error': 'The order has already been processed, now you can\'t update the status.'}
-                return Response(content, status=status.HTTP_400_BAD_REQUEST)
+                error_message = 'The order has already been processed, now you can\'t update the status.'
+                return response_error_with_message(error_message)
         else:
             return response_access_denied()
