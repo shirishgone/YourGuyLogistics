@@ -13,7 +13,8 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from api_v3 import constants
-from api_v3.utils import paginate, user_role, ist_day_start, ist_day_end, is_userexists, create_token, assign_usergroup
+from api_v3.utils import paginate, user_role, ist_day_start, ist_day_end, is_userexists, create_token, assign_usergroup, \
+    check_month
 from yourguy.models import DeliveryGuy, DGAttendance, Location, OrderDeliveryStatus, User, Employee, DeliveryTeamLead, \
     ServiceablePincode, Picture
 
@@ -74,7 +75,8 @@ def dg_attendance_list_dict(dg_attendance):
         'login_time': dg_attendance.login_time,
         'logout_time': dg_attendance.logout_time,
         'shift_start_datetime': dg_attendance.dg.shift_start_datetime,
-        'shift_end_datetime': dg_attendance.dg.shift_end_datetime
+        'shift_end_datetime': dg_attendance.dg.shift_end_datetime,
+        'worked_hrs': ''
     }
 
     return dg_attendance_dict
@@ -599,19 +601,33 @@ class DGViewSet(viewsets.ModelViewSet):
 
     @detail_route(methods=['put'])
     def attendance(self, request, pk):
-        month = request.data.get('month')
-        year = request.data.get('year')
+        try:
+            month = request.data.get('month')
+            year = request.data.get('year')
+        except Exception as e:
+            content = {
+                'error': 'Error in params: month, year'
+            }
+            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+        # Util method to generate the start_date and end_date based on the month and year input
+        import pdb
+        pdb.set_trace()
+
+        dates = check_month(month, year)
+
+        rule_daily = rrule(DAILY, dtstart=dates.start_date, until=dates.end_date)
+        alldates = list(rule_daily)
 
         dg = get_object_or_404(DeliveryGuy, pk=pk)
-        all_dg_attendance = DGAttendance.objects.filter(dg=dg, date__year=year, date__month=month)
+        dg_all_attendance = DGAttendance.objects.filter(dg=dg, date__year=year, date__month=month)
 
-        all_dgs_array = []
-        for dg_attendance in all_dg_attendance:
+        dg_monthly_attendance = []
+        for dg_attendance in dg_all_attendance:
             dg_attendance_dict = dg_attendance_list_dict(dg_attendance)
-            all_dgs_array.append(dg_attendance_dict)
+            dg_monthly_attendance.append(dg_attendance_dict)
 
         content = {
-            'attendance': all_dgs_array
+            'attendance': dg_monthly_attendance
         }
         return Response(content, status=status.HTTP_200_OK)
 
