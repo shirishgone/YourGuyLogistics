@@ -15,3 +15,5 @@ class AddressViewSet(viewsets.ModelViewSet):
 
     queryset = Address.objects.all()
     serializer_class = AddressSerializer
+    def destroy(self, request, pk= None):
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)            

@@ -14,14 +14,92 @@ from rest_framework.authtoken.models import Token
 from api_v3 import constants
 from server import settings
 from yourguy.models import Order, OrderDeliveryStatus, VendorAgent, Consumer, Employee, NotificationType, DeliveryAction, ServiceablePincode
+from django.db.models import Q
+from rest_framework.response import Response
+from rest_framework import status
+
+def response_structure():
+    result = {
+    'success': False,
+    'payload': {
+        # Application-specific data would go here. 
+        'message':None,
+        'data':None
+    },
+    'error': {
+        'code': None,
+        'message': None
+        }
+    }
+    return result
+
+def response_with_payload(data, message):
+    response = response_structure()    
+    payload = {
+        'data': data,
+        'message': message
+    }
+    response['payload'] = payload
+    response['success'] = True
+    response['error'] = None
+    return Response(response, status=status.HTTP_200_OK) 
+
+def response_success_with_message(message):
+    response = response_structure()    
+    response['success'] = True
+    payload = {
+        'data': None,
+        'message': message
+    }
+    response['payload'] = payload
+    response['error'] = None
+    return Response(response, status=status.HTTP_200_OK) 
+
+def response_access_denied():
+    response = response_structure()    
+    error = {
+    'code':'101',
+    'message':'Access Denied'
+    }
+    response['error'] = error
+    response['payload'] = None
+    return Response(response, status=status.HTTP_400_BAD_REQUEST) 
+
+def response_incomplete_parameters(parameters):
+    response = response_structure()    
+    error = {
+    'code':'102',
+    'message':'Incomplete parameters %s'%(parameters)
+    }
+    response['error'] = error
+    response['payload'] = None
+    return Response(response, status=status.HTTP_400_BAD_REQUEST) 
+
+def response_invalid_pagenumber():
+    response = response_structure()  
+    error = {
+    'code':'103',
+    'message':'Invalid page number'
+    }
+    response['error'] = error
+    response['payload'] = None
+    return Response(response, status=status.HTTP_400_BAD_REQUEST) 
+
+def response_error_with_message(message):
+    response = response_structure()  
+    error = {
+    'code':'104',
+    'message':message
+    }
+    response['error'] = error
+    response['payload'] = None
+    return Response(response, status=status.HTTP_400_BAD_REQUEST) 
 
 def ops_managers_for_pincode(pincode):
     result = []
     try:
         serving_pincode = get_object_or_404(ServiceablePincode, pincode = pincode)
-        result = Employee.objects.filter(Q(serving_pincodes__in=[serving_pincode]) &
-            Q(department='operations_manager'))
-        
+        result = Employee.objects.filter(Q(serving_pincodes__in=[serving_pincode]) & Q(department=constants.OPERATIONS_MANAGER))
         return result
     except Exception as e:
         return result
@@ -30,19 +108,29 @@ def ops_executive_for_pincode(pincode):
     result = []
     try:
         serving_pincode = get_object_or_404(ServiceablePincode, pincode = pincode)
-        result = Employee.objects.filter(serving_pincodes__in = [serving_pincode])
+        result = Employee.objects.filter(Q(serving_pincodes__in=[serving_pincode]) & Q(department=constants.OPERATIONS))
+        return result
+    except Exception as e:
+        return result
+
+def ops_executive_for_dg(dg):
+    result = []
+    try:
+        result = Employee.objects.filter(Q(associate_delivery_guys__in=[dg]) & Q(department=constants.OPERATIONS))    
         return result
     except Exception as e:
         return result
 
 def ops_manager_for_dg(dg):
-    employees = Employee.objects.filter(associate_delivery_guys__in = [dg])
-    return employees
-
+    result = []
+    try:
+        result = Employee.objects.filter(Q(associate_delivery_guys__in=[dg]) & Q(department=constants.OPERATIONS_MANAGER))    
+        return result
+    except Exception as e:
+        return result
 
 def notification_type_for_code(code):
     return get_object_or_404(NotificationType, code = code)
-
 
 def s3_connection():
     AWS_ACCESS_KEY = os.environ.get('AWS_ACCESS_KEY')
@@ -53,11 +141,16 @@ def s3_connection():
 def s3_bucket_pod():
     return os.environ.get('S3_BUCKET_POD')
 
-
 def address_string(address):
     try:
         if len(address.full_address) > 1:
-            address_string = address.full_address + ', ' + address.pin_code
+            address_string = address.full_address 
+            if address.landmark is not None and len(address.landmark) > 0:
+                address_string += ', '
+                address_string += address.landmark
+            if address.pin_code is not None:
+                address_string += ', '
+                address_string += address.pin_code
         else:
             address_string = address.flat_number + ', ' + address.building + ', ' + address.street + ', ' + address.pin_code
 
@@ -66,6 +159,21 @@ def address_string(address):
         return address_string
     except Exception as e:
         print(e)
+
+def address_with_location(address):
+    result = {
+    "full_address": address_string(address),
+    }
+
+    if address.latitude is not None and address.longitude is not None and len(address.latitude) > 0 and len(address.longitude):
+        location = {
+        "latitude": address.latitude,
+        "longitude": address.longitude        
+        }
+        result['location'] = location
+    else:
+        result['location'] = None
+    return result
 
 
 def is_correct_pincode(pincode):
@@ -194,6 +302,8 @@ def user_role(user):
         return constants.CONSUMER
     elif role == constants.OPERATIONS:
         return constants.OPERATIONS
+    elif role == constants.OPERATIONS_MANAGER:
+        return constants.OPERATIONS_MANAGER
     elif role == constants.SALES:
         return constants.SALES
     elif role == constants.DELIVERY_GUY:
@@ -252,7 +362,7 @@ def paginate(list, page):
 
 def is_pickup_time_acceptable(pickup_datetime):
 	current_datetime = datetime.now()
-	if time(0, 0) <= pickup_datetime.time() <= time(16, 30) and pickup_datetime.date() >= current_datetime.date():
+	if time(0, 0) <= pickup_datetime.time() <= time(18, 0) and pickup_datetime.date() >= current_datetime.date():
 		return True
 	else:
 		return False

@@ -26,6 +26,9 @@ class DGViewSet(viewsets.ModelViewSet):
     queryset = DeliveryGuy.objects.all()
     serializer_class = DGSerializer
 
+    def destroy(self, request, pk= None):
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)            
+
     def get_queryset(self):
         queryset = DeliveryGuy.objects.order_by(Lower('user__first_name'))
         return queryset
