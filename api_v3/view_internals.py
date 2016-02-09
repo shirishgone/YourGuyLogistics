@@ -75,8 +75,8 @@ def mark_all_notifications_read(request):
             'description': 'Only admin can access this method'
         }
         return Response(content, status=status.HTTP_400_BAD_REQUEST)
-    else:
-        all_notifications = Notification.objects.all()
+    else:        
+        all_notifications = Notification.objects.filter(read = False)
         for notification in all_notifications:
             notification.read = True
             notification.save()
