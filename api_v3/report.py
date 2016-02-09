@@ -664,4 +664,4 @@ def vendor_report(request):
             email_body = email_body + "\n\n- YourGuy BOT"
 
             send_email(vendor_mail_id, email_subject, email_body)
-            return Response(status=status.HTTP_200_OK)
+    return Response(status=status.HTTP_200_OK)
