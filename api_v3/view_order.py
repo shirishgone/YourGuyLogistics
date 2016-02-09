@@ -299,7 +299,7 @@ def update_delivery_status_pickup_attempted(delivery_status, dg_remarks, attempt
     delivery_status.save()
 
 
-def update_delivery_status_pickedup(delivery_status, pickedup_datetime, proof, dg_remarks):
+def update_delivery_status_pickedup(user, delivery_status, pickedup_datetime, proof, latitude, longitude, dg_remarks):
     delivery_status.order_status = constants.ORDER_STATUS_INTRANSIT
     delivery_status.pickedup_datetime = pickedup_datetime
     if proof is not None:
@@ -307,7 +307,8 @@ def update_delivery_status_pickedup(delivery_status, pickedup_datetime, proof, d
     if dg_remarks is not None:
         delivery_status.cod_remarks = dg_remarks
     delivery_status.save()
-
+    action = delivery_actions(constants.PICKEDUP_CODE)
+    add_action_for_delivery(action, delivery_status, user, latitude, longitude, pickedup_datetime, dg_remarks)
 
 def update_delivery_status_delivered(delivery_status, delivered_at, delivered_datetime, proof, delivery_remarks, cod_collected_amount):
     delivery_status.order_status = constants.ORDER_STATUS_DELIVERED
@@ -1089,7 +1090,7 @@ class OrderViewSet(viewsets.ViewSet):
                 attempted_datetime = parse_datetime(attempted_datetime)    
             except Exception as e:
                 error_message = 'parsing date error in multiple_pickup_attempted'
-                response_error_with_message(error_message)
+                return response_error_with_message(error_message)
         else:
             attempted_datetime = datetime.now()            
         
@@ -1104,11 +1105,11 @@ class OrderViewSet(viewsets.ViewSet):
                     add_action_for_delivery(action, delivery_status, request.user, latitude, longitude, attempted_datetime, remarks)
                 else:
                     error_message = 'Order already processed cant attempt the pickup now'
-                    response_error_with_message(error_message)
+                    return response_error_with_message(error_message)
             except Exception as e:
                 log_exception(e, 'multiple_pickup_attempted')
                 error_message = 'Order already processed cant attempt the pickup now %s'%(delivery_id)
-                response_error_with_message(error_message)
+                return response_error_with_message(error_message)
         
         success_message = 'Orders attempted'
         return response_success_with_message(success_message)
@@ -1129,7 +1130,7 @@ class OrderViewSet(viewsets.ViewSet):
                 pickedup_datetime = parse_datetime(pickedup_datetime_string)     
             except Exception as e:
                 error_message = 'pickedup_datetime should be UTC in following format 2015-11-23T09:32:56.000'
-                response_error_with_message(error_message)
+                return response_error_with_message(error_message)
         else:
             pickedup_datetime = datetime.now()
         
@@ -1140,18 +1141,16 @@ class OrderViewSet(viewsets.ViewSet):
                     return response_access_denied()
                 
                 if can_update_order(delivery_status, constants.ORDER_STATUS_INTRANSIT):
-                    update_delivery_status_pickedup(delivery_status, pickedup_datetime, None, None)
-                    action = delivery_actions(constants.PICKEDUP_CODE)
-                    add_action_for_delivery(action, delivery_status, request.user, latitude, longitude, pickedup_datetime, None)
+                    update_delivery_status_pickedup(request.user, delivery_status, pickedup_datetime, None, latitude, longitude, None)
                 else:
                     error_message = 'Can\'t update as the order is not queued'
-                    response_error_with_message(error_message)
+                    return response_error_with_message(error_message)
             except Exception as e:
                 log_exception(e, 'multiple_pickup_attempted')
                 error_message = 'delivery update failed with delivery_id: %s'%(delivery_id)
-                response_error_with_message(error_message)
+                return response_error_with_message(error_message)
         
-        success_message = 'delivery attempted'
+        success_message = 'Deliveries picked up successfully.'
         return response_success_with_message(success_message)
 
     @detail_route(methods=['put'])
@@ -1179,10 +1178,7 @@ class OrderViewSet(viewsets.ViewSet):
             new_pop = None
             if pop_dict is not None:
                 new_pop = create_proof(pop_dict)
-
-            update_delivery_status_pickedup(delivery_status, pickedup_datetime, new_pop, remarks)
-            action = delivery_actions(constants.PICKEDUP_CODE)
-            add_action_for_delivery(action, delivery_status, request.user, latitude, longitude, pickedup_datetime, remarks)
+            update_delivery_status_pickedup(request.user, delivery_status, pickedup_datetime, new_pop, latitude, longitude, remarks)
             is_order_updated = True
         else:
             error_message = 'Delivery can\'t be processed'
