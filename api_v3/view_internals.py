@@ -67,7 +67,7 @@ def new_order_id_for_old_order_id(request):
         }
         return Response(content, status=status.HTTP_200_OK)
 
-@api_view(['PUT'])
+@api_view(['GET'])
 def mark_all_notifications_read(request):
     if request.user.is_staff is False:
         content = {
