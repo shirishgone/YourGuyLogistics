@@ -10,7 +10,7 @@ from rest_framework.response import Response
 from api_v3 import constants
 from api_v3.utils import user_role
 from yourguy.models import VendorAgent
-
+from api_v3.utils import response_access_denied, response_with_payload, response_error_with_message, response_success_with_message, response_invalid_pagenumber, response_incomplete_parameters
 
 def auth_headers():
     # TODO:
@@ -37,34 +37,26 @@ def all_tickets(request):
     elif role == constants.OPERATIONS:
         url = '{}/helpdesk/tickets/filter/all_tickets?format=json'.format(constants.FRESHDESK_BASEURL)
     else:
-        content = {
-            'error': 'You don\'t have permissions'
-        }
-        return Response(content, status=status.HTTP_400_BAD_REQUEST)
-
+        return response_access_denied()
     try:
         r = requests.get(url, headers=auth_headers())
-        return Response(r.json(), status=status.HTTP_200_OK)
-
+        content = r.json()
+        return response_with_payload(content, None)
     except Exception as e:
-        content = {
-            'error': 'Something went wrong'
-        }
-        return Response(content, status=status.HTTP_400_BAD_REQUEST)
-
+        error_message = 'Something went wrong'
+        return response_error_with_message(error_message)
 
 @api_view(['GET'])
 def groups(request):
     url = '{}/groups.json'.format(constants.FRESHDESK_BASEURL)
     try:
         r = requests.get(url, headers=auth_headers())
-        return Response(r.json(), status=status.HTTP_200_OK)
+        content = r.json()
+        return response_with_payload(content, None)
 
     except Exception as e:
-        content = {
-            'error': 'Something went wrong'
-        }
-        return Response(content, status=status.HTTP_400_BAD_REQUEST)
+        error_message = 'Something went wrong'
+        return response_error_with_message(error_message)
 
 
 @api_view(['POST'])
@@ -72,12 +64,11 @@ def create_ticket(request):
     url = '{}/helpdesk/tickets.json'.format(constants.FRESHDESK_BASEURL)
     try:
         r = requests.post(url, data=json.dumps(request.data), headers=auth_headers())
-        return Response(r.json(), status=status.HTTP_200_OK)
+        content = r.json()
+        return response_with_payload(content, None)
     except Exception as e:
-        content = {
-            'error': 'Something went wrong'
-        }
-        return Response(content, status=status.HTTP_400_BAD_REQUEST)
+        error_message = 'Something went wrong'
+        return response_error_with_message(error_message)
 
 
 @api_view(['GET'])
@@ -87,13 +78,11 @@ def get_ticket(request):
     url = '{}/helpdesk/tickets/{}.json'.format(constants.FRESHDESK_BASEURL, ticket_id)
     try:
         r = requests.get(url, headers=auth_headers())
-        return Response(r.json(), status=status.HTTP_200_OK)
+        content = r.json()
+        return response_with_payload(content, None)
     except Exception as e:
-        content = {
-            'error': 'Something went wrong'
-        }
-        return Response(content, status=status.HTTP_400_BAD_REQUEST)
-
+        error_message = 'Something went wrong'
+        return response_error_with_message(error_message)
 
 @api_view(['POST'])
 def add_note(request):
@@ -103,13 +92,11 @@ def add_note(request):
 
     try:
         r = requests.post(url, data=json.dumps(note), headers=auth_headers())
-        return Response(r.json(), status=status.HTTP_200_OK)
+        content = r.json()
+        return response_with_payload(content, None)
     except Exception as e:
-        content = {
-            'error': 'Something went wrong'
-        }
-        return Response(content, status=status.HTTP_400_BAD_REQUEST)
-
+        error_message = 'Something went wrong'
+        return response_error_with_message(error_message)
 
 @api_view(['PUT'])
 def resolve(request):
@@ -123,12 +110,8 @@ def resolve(request):
         note_request = requests.post(note_url, data=json.dumps(note), headers=auth_headers())
         resolve_request = requests.put(resolve_url, data=json.dumps(resolve), headers=auth_headers())
 
-        content = {
-            'meta': 'Successfully resolved the issue.'
-        }
-        return Response(status=status.HTTP_200_OK)
+        success_message = 'Successfully resolved the ticket'
+        return response_success_with_message(success_message)
     except Exception as e:
-        content = {
-            'error': 'Something went wrong'
-        }
-        return Response(content, status=status.HTTP_400_BAD_REQUEST)
+        error_message = 'Something went wrong'
+        return response_error_with_message(error_message)

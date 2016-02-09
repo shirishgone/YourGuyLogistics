@@ -9,7 +9,7 @@ from api_v3 import constants
 from api_v3.utils import user_role, paginate
 from yourguy.models import Product, VendorAgent
 from django.db.models import Q
-
+from api_v3.utils import response_access_denied, response_with_payload, response_error_with_message, response_success_with_message, response_invalid_pagenumber, response_incomplete_parameters
 
 def product_list_dict(product):
     product_dict = {
@@ -55,10 +55,7 @@ class ProductViewSet(viewsets.ModelViewSet):
             page = int(page)
             total_pages = int(total_product_count / constants.PAGINATION_PAGE_SIZE) + 1
             if page > total_pages or page <= 0:
-                response_content = {
-                    "error": "Invalid page number"
-                }
-                return Response(response_content, status=status.HTTP_400_BAD_REQUEST)
+                return response_invalid_pagenumber()
             else:
                 result_products = paginate(products_of_vendor, page)
             # ----------------------------------------------------------------------------
@@ -71,30 +68,23 @@ class ProductViewSet(viewsets.ModelViewSet):
                 "total_pages": total_pages,
                 "total_product_count": total_product_count
             }
-            return Response(response_content, status=status.HTTP_200_OK)
+            return response_with_payload(response_content, None)
         else:
-            content = {
-                'error': 'You don\'t have permissions to view products'
-            }
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+            return response_access_denied()
 
     def create(self, request):
         role = user_role(request.user)
         if role == constants.VENDOR:
             vendor_agent = get_object_or_404(VendorAgent, user=self.request.user)
             vendor = vendor_agent.vendor
-
             try:
                 name = request.data['name']
                 description = request.data['description']
                 cost_string = request.data['cost']
                 cost = float(cost_string)
-
             except Exception as e:
-                content = {
-                    'error': 'missing params with name, description, cost, vendor'
-                }
-                return Response(content, status=status.HTTP_400_BAD_REQUEST)
+                params = ['name' 'description', 'cost', 'vendor']
+                return response_incomplete_parameters(params)
 
             new_product = Product.objects.create(vendor=vendor,
                                                  name=name,
@@ -102,15 +92,10 @@ class ProductViewSet(viewsets.ModelViewSet):
                                                  cost=cost)
 
             product_dict = product_list_dict(new_product)
-            content = {
-                "product": product_dict
-            }
-            return Response(content, status=status.HTTP_201_CREATED)
+            content = {'product': product_dict}
+            return response_with_payload(content, None)
         else:
-            content = {
-                'error': 'You don\'t have permissions to add a product'
-            }
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+            return response_access_denied()
 
     def destroy(self, request, pk):
         role = user_role(request.user)
@@ -119,21 +104,11 @@ class ProductViewSet(viewsets.ModelViewSet):
         if role == constants.VENDOR:
             vendor_agent = get_object_or_404(VendorAgent, user=request.user)
             vendor = vendor_agent.vendor
-
             if product.vendor == vendor:
                 product.delete()
-                content = {
-                    'description': 'Product deleted Successfully.'
-                }
-                return Response(content, status=status.HTTP_200_OK)
+                success_message = 'Product deleted Successfully.'
+                return response_success_with_message(success_message)
             else:
-                content = {
-                    'description': 'You dont have permissions to delete this product.'
-                }
-                return Response(content, status=status.HTTP_400_BAD_REQUEST)
-
+                return response_access_denied()                
         else:
-            content = {
-                'description': 'You dont have permissions to delete this order.'
-            }
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+            return response_access_denied()            
