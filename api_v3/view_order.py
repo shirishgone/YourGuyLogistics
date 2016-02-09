@@ -233,7 +233,7 @@ def can_update_order(delivery_status, status):
         else:
             return False
     elif status == constants.ORDER_STATUS_DELIVERED:
-        if delivery_status.order_status == constants.ORDER_STATUS_INTRANSIT:
+        if delivery_status.order_status == constants.ORDER_STATUS_INTRANSIT or delivery_status.order_status == constants.ORDER_STATUS_OUTFORDELIVERY:
             return True
         else:
             return False
@@ -249,6 +249,11 @@ def can_update_order(delivery_status, status):
             return False
     elif status == constants.ORDER_STATUS_DELIVERY_ATTEMPTED:
         if delivery_status.order_status == constants.ORDER_STATUS_INTRANSIT:
+            return True
+        else:
+            return False
+    elif status == constants.ORDER_STATUS_OUTFORDELIVERY:
+        if delivery_status.order_status == constants.ORDER_STATUS_QUEUED or delivery_status.order_status == constants.ORDER_STATUS_INTRANSIT:
             return True
         else:
             return False
@@ -299,16 +304,25 @@ def update_delivery_status_pickup_attempted(delivery_status, dg_remarks, attempt
     delivery_status.save()
 
 
-def update_delivery_status_pickedup(user, delivery_status, pickedup_datetime, proof, latitude, longitude, dg_remarks):
-    delivery_status.order_status = constants.ORDER_STATUS_INTRANSIT
-    delivery_status.pickedup_datetime = pickedup_datetime
+def update_delivery_status_pickedup(user, delivery_status, order_status, pickedup_datetime, proof, latitude, longitude, dg_remarks):
+    if order_status == constants.ORDER_STATUS_OUTFORDELIVERY:
+        action = delivery_actions(constants.OUTFORDELIVERY_CODE)
+    elif order_status == constants.ORDER_STATUS_INTRANSIT:
+        action = delivery_actions(constants.PICKEDUP_CODE)
+        if pickedup_datetime is not None:
+            delivery_status.pickedup_datetime = pickedup_datetime
+    else:
+        return False
+    
     if proof is not None:
         delivery_status.pickup_proof = proof
     if dg_remarks is not None:
         delivery_status.cod_remarks = dg_remarks
+    
+    delivery_status.order_status = order_status
     delivery_status.save()
-    action = delivery_actions(constants.PICKEDUP_CODE)
     add_action_for_delivery(action, delivery_status, user, latitude, longitude, pickedup_datetime, dg_remarks)
+    return True
 
 def update_delivery_status_delivered(delivery_status, delivered_at, delivered_datetime, proof, delivery_remarks, cod_collected_amount):
     delivery_status.order_status = constants.ORDER_STATUS_DELIVERED
@@ -1140,8 +1154,19 @@ class OrderViewSet(viewsets.ViewSet):
                 if is_user_permitted_to_update_order(request.user, delivery_status.order) is False:
                     return response_access_denied()
                 
-                if can_update_order(delivery_status, constants.ORDER_STATUS_INTRANSIT):
-                    update_delivery_status_pickedup(request.user, delivery_status, pickedup_datetime, None, latitude, longitude, None)
+                role = user_role(request.user)
+                if role == constants.OPERATIONS:
+                    order_status = constants.ORDER_STATUS_INTRANSIT
+                elif role == constants.DELIVERY_GUY:
+                    if delivery_status.delivery_guy.user == request.user:
+                        order_status = constants.ORDER_STATUS_OUTFORDELIVERY
+                    else:
+                        order_status = constants.ORDER_STATUS_INTRANSIT
+                else:
+                    return response_access_denied()
+                
+                if can_update_order(delivery_status, order_status):
+                    update_delivery_status_pickedup(request.user, delivery_status, order_status, pickedup_datetime, None, latitude, longitude, None)
                 else:
                     error_message = 'Can\'t update as the order is not queued'
                     return response_error_with_message(error_message)
@@ -1170,16 +1195,26 @@ class OrderViewSet(viewsets.ViewSet):
             pickedup_datetime = parse_datetime(pickedup_datetime_string)
         else:
             pickedup_datetime = datetime.now()
-        # ----------------------------------------------------------------------------
-        
+        # ----------------------------------------------------------------------------        
+        role = user_role(request.user)
+        if role == constants.OPERATIONS:
+            order_status = constants.ORDER_STATUS_INTRANSIT
+        elif role == constants.DELIVERY_GUY:
+            if delivery_status.delivery_guy is not None and delivery_status.delivery_guy.user == request.user:
+                order_status = constants.ORDER_STATUS_OUTFORDELIVERY
+            else:
+                order_status = constants.ORDER_STATUS_INTRANSIT
+        else:
+            return response_access_denied()
+
         is_order_updated = False
         is_order_picked_up = False
-        if can_update_order(delivery_status, constants.ORDER_STATUS_INTRANSIT):
+        
+        if can_update_order(delivery_status, order_status):
             new_pop = None
             if pop_dict is not None:
                 new_pop = create_proof(pop_dict)
-            update_delivery_status_pickedup(request.user, delivery_status, pickedup_datetime, new_pop, latitude, longitude, remarks)
-            is_order_updated = True
+            is_order_updated = update_delivery_status_pickedup(request.user, delivery_status, order_status, pickedup_datetime, new_pop, latitude, longitude, remarks)
         else:
             error_message = 'Delivery can\'t be processed'
             return response_error_with_message(error_message)
