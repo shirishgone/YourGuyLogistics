@@ -1613,7 +1613,7 @@ ygVendors.controller('orderDetailsCntrl',function ($scope,$state,$stateParams,$m
   $scope.downloadPop = function(){ 
     var param = {
       Bucket : baseURl.S3_BUCKET,
-      Prefix : $scope.param.orderId+'/'+$scope.param.dateId.slice(0,10)+'/pop'
+      Prefix : $scope.param.orderId+'/'+$scope.order_with_id.pickedup_datetime.slice(0,10)+'/pop'
     }
     $scope.download_image(param)
   }
@@ -1621,7 +1621,7 @@ ygVendors.controller('orderDetailsCntrl',function ($scope,$state,$stateParams,$m
   $scope.downloadPod = function(){ 
     var param = {
       Bucket : baseURl.S3_BUCKET,
-      Prefix : $scope.param.orderId+'/'+$scope.param.dateId.slice(0,10)+'/pod'
+      Prefix : $scope.param.orderId+'/'+$scope.order_with_id.pickedup_datetime.slice(0,10)+'/pod'
     }
     $scope.download_image(param)
   }
@@ -1672,9 +1672,13 @@ ygVendors.controller('orderDetailsCntrl',function ($scope,$state,$stateParams,$m
         else{
           data.Contents.forEach(function (img){
             s3.getObject({Bucket : baseURl.S3_BUCKET,Key: img.Key}, function (err, data){
-              var base64string = btoa(String.fromCharCode.apply(null, data.Body))
-              var image_proof = new Image()
-              image_proof.src = "data:image/png;base64,"+base64string
+              var str = "", array = new Uint8Array(data.Body);
+              for (var j = 0, len = array.length; j < len; j++) {
+                str += String.fromCharCode(array[j]);
+              }
+              var base64string = window.btoa(str);
+              image_proof = new Image();
+              image_proof.src = "data:image/png;base64,"+base64string;
               image_proof.onload = function(){
                 var canvas = document.createElement('canvas');
                 context = canvas.getContext('2d');
