@@ -6,6 +6,7 @@
 	.dg-list {
 		padding: 0px;
 		.list {
+			position: relative;
 			z-index: 9;
 			overflow: hidden;
 			padding: 10px;
@@ -17,5 +18,10 @@
 			height: 50px; 
 			z-index: 10;
 		}
+	}
+	.floating-button {
+		position: absolute;
+		bottom: 30px;
+		right: 50px;
 	}
 }

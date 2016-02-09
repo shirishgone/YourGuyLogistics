@@ -41,13 +41,20 @@ body {
 }
 
 
+.yg-toolbar.selected {
+	background-color: primary-color('400') !important;
+	color: $white-color !important;
+}
+
+
 .table-list {
-	width: 100%;
+	overflow: hidden;
 	.table-header {
+		min-width: 600px;
 		width: 100%;
-		padding: 0 20px;
 		background-color: orange-accent-color('400');;
 		tr {
+			margin-right: 20px;
 			th {
 				text-align: left;
 				padding: 15px;
@@ -57,10 +64,10 @@ body {
 		}
 	}
 	.table-body {
+		min-width: 600px;
 		overflow-y: auto;
 		width: 100%;
 		tr {
-			padding-left: 20px;
 			border-bottom: 1px solid grey-color('300');
 			cursor: pointer;
 			td {
@@ -71,6 +78,26 @@ body {
 			}
 			&:hover { 
 				background-color: orange-accent-color('100');
+			}
+		}
+	}
+	@include mobile {
+		overflow-x: auto;
+		.table-header {
+			tr {
+				margin-right: 0;
+				th {
+					font-size: 12px;
+					padding: 10px;
+				}
+			}
+		}
+		.table-body {
+			tr {
+				td {
+					padding: 10px;
+					font-size: 11px;
+				}
 			}
 		}
 	}

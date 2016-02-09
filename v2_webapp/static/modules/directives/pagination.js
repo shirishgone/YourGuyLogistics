@@ -61,7 +61,7 @@
 							'</md-select>',
 						'</md-input-container>',
 					'</div>',
-					'<div class="pagination" layout="row" layout-align="start center">',
+					'<div class="pagination hide-xs" layout="row" layout-align="start center">',
 						'<p>{{orderFrom}} -- {{orderTo}} of {{total}}</p>',
 					'</div>',
 					'<div class="page-navigation">',

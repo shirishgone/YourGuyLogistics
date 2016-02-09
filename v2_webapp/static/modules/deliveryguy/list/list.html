@@ -1,11 +1,11 @@
-<md-toolbar class="order-toolbar md-primary md-whiteframe-z2" ng-class="{'selected':opsOrder.handleOrdeSelection.selectActive}">
-	<div class="md-toolbar-tools" ng-if="!(opsOrder.handleOrdeSelection.selectActive)">
+<md-toolbar class="yg-toolbar md-primary md-whiteframe-z2" ng-class="{'selected':dgList.searchDgActive}">
+	<div class="md-toolbar-tools" ng-if="!dgList.searchDgActive">
 		<md-button ng-click="home.toggleSideNav()" class="md-icon-button" aria-label="Menu Icon">
 			<md-icon>menu</md-icon>
 		</md-button>
 		<p>Delivery Boy</p>
 		<span flex></span>
-		<md-button class="md-icon-button" aria-label="Filter Button">
+		<md-button class="md-icon-button" aria-label="Filter Button" ng-click="dgList.searchDgActive = true">
 			<md-icon>search</md-icon>
 		</md-button>
 		<md-button class="md-icon-button" aria-label="Filter Button">
@@ -15,25 +15,38 @@
 			<md-icon>filter_list</md-icon>
 		</md-button>
 	</div>
+	<div class="md-toolbar-tools" ng-if="dgList.searchDgActive">
+		<md-button ng-click="dgList.searchDgActive = false" class="md-icon-button" aria-label="Clear Icon">
+			<md-icon>clear</md-icon>
+		</md-button>
+		<md-input-container md-no-float>
+        	<!-- <label>Search DG</label> -->
+        	<input ng-model="dgList.params.search" type="text" placeholder="Search DG">
+        </md-input-container>
+		<!-- <form name="searchdeliverguyform" flex="50" flex-xs="80">
+			
+		</form> -->
+		
+	</div>
 </md-toolbar>
 <md-content flex layout-fill layout="row" class="dgList">
 	<div flex layout="column" class="dg-list">
 		<section flex="90" class="list" layout="row" layout-align="center stretch">
-			<md-content flex layout="row" layout-align="center stretch">
+			<md-content flex layout="column" layout-align="center stretch">
 				<table class="table-list" layout="column">
-					<thead flex="10" class="table-header">
+					<thead class="table-header">
 						<tr layout="row" layout-align="center start">
-							<th flex-xs="20" flex="10" >Emp No</th>
+							<th flex-xs="10" flex="10" >Emp No</th>
 							<th flex-xs="30" flex="30">Delivery Boy</th>
 							<th flex-xs="20" flex="20">Mobile No</th>
 							<th flex-xs="20" flex="20">Total working hrs</th>
-							<th flex-xs="20" flex="20">Del Executed/Assigned</th>
+							<th flex-xs="20" flex="20">Executed / Assigned</th>
 						</tr>
 					</thead>
-					<tbody flex="90" class="table-body">
+					<tbody  class="table-body">
 						<tr ng-repeat="dg in dgList.dgs" layout="row" layout-align="center start">
-							<td flex-xs="20" flex="10">{{dg.employee_code}}</td>
-							<td flex-xs="20" flex="30">{{dg.name}}</td>
+							<td flex-xs="10" flex="10">{{dg.employee_code}}</td>
+							<td flex-xs="30" flex="30">{{dg.name}}</td>
 							<td flex-xs="20" flex="20">{{dg.phone_number}}</td>
 							<td flex-xs="20" flex="20">{{dg.worked_hours}}</td>
 							<td flex-xs="20" flex="20">{{dg.no_of_executed_orders}}/{{dg.no_of_assigned_orders}}</td>
@@ -41,33 +54,44 @@
 					</tbody>
 				</table>
 			</md-content>
-			<!-- <md-card flex> -->
-				<!-- <table layout="column" class="table-list">
-					<thead flex="10" class="table-header">
-						<tr layout="row" layout-align="center start">
-							<th flex="10" >Emp No</th>
-							<th flex="30">Delivery Boy</th>
-							<th flex="20">Mobile No</th>
-							<th flex="20">Total working hrs</th>
-							<th flex="20">Del Executed/Assigned</th>
-						</tr>
-					</thead>
-					<tbody flex="90" class="table-body">
-						<tr ng-repeat="dg in dgList.dgs" layout="row" layout-align="center start">
-							<td flex="10">{{dg.employee_code}}</td>
-							<td flex="30">{{dg.name}}</td>
-							<td flex="20">{{dg.phone_number}}</td>
-							<td flex="20">{{dg.worked_hours}}</td>
-							<td flex="20">{{dg.no_of_executed_orders}}/{{dg.no_of_assigned_orders}}</td>
-						</tr>
-					</tbody>
-				</table> -->
-			<!-- </md-card> -->
+			<div class="floating-button">
+				<md-button class="md-fab md-mini md-warn" aria-label="Add Deliveryguy">
+					<md-icon>add</md-icon>
+				</md-button>
+			</div>
 		</section>
 		<section flex="10" class="footer">
 			<div yd-pagination total="{{dgList.total_dgs}}" total-page="{{dgList.total_pages}}" params="dgList.params" list-length="{{dgList.dgs.length}}" paginate="dgList.paginate" get-data="dgList.getDgs()"></div>
 		</section>
 	</div>
 	<md-sidenav class="filter-sidenav md-sidenav-right md-whiteframe-z3" layout="column" md-component-id="dgList-filter">
+		<md-toolbar class="md-primary md-whiteframe-z1">
+			<div class="md-toolbar-tools">
+				<h1 class="md-subhead">FILTERS</h1>
+				<span flex></span>
+				<md-button class="md-icon-button" aria-label="Filter Button" ng-click="dgList.getDgs()">
+					<md-icon>done</md-icon>
+				</md-button>
+			</div>
+     	</md-toolbar>
+     	<md-content flex layout="column">
+     		<md-list>
+     			<md-subheader>DATE</md-subheader>
+     			<md-list-item class="md-1-line">
+					<md-datepicker ng-model="dgList.params.date" md-placeholder="Enter date"></md-datepicker>
+				</md-list-item>
+				<md-subheader>STATUS</md-subheader>
+				<md-list-item class="md-1-line" flex>
+     				<form name="dgstatusselectform" flex>
+     					<md-radio-group ng-model="dgList.params.attendance">
+							<md-radio-button ng-value="item.value" class="md-warn" ng-repeat="item in dgList.dg_status">
+								{{item.status}}
+							</md-radio-button>
+					    </md-radio-group>
+     				</form>
+				</md-list-item>
+     		</md-list>
+     	</md-content>
+     	
 	</md-sidenav>
 </md-content>

@@ -73,3 +73,21 @@ $orange-accent-color : (
 @function orange-accent-color($key: '500') {
   @return map-get($orange-accent-color, $key);
 }
+
+@mixin mobile {
+  @media (max-width: #{$xs-breakpoint}) {
+    @content;
+  }
+}
+
+@mixin tablet {
+  @media (min-width: #{$sm-breakpoint}) and (max-width: #{$lg-breakpoint - 1px}) {
+    @content;
+  }
+}
+
+@mixin desktop {
+  @media (min-width: #{$desktop-width}) {
+    @content;
+  }
+}

@@ -73,9 +73,11 @@
   		.primaryPalette('ygBlue' , {
   			'default' : '700'
   		})
-        .accentPalette('ygOrange')
-        .warnPalette('red');
-        $mdThemingProvider.setDefaultTheme('ygBlueTheme');
+      .accentPalette('ygOrange',{
+        'default' : '500'
+      })
+      .warnPalette('red');
+      $mdThemingProvider.setDefaultTheme('ygBlueTheme');
 	}]);
 
 })();

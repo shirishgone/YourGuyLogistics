@@ -54,43 +54,73 @@ body {
 }
 
 /* line 44, ../sass/modules/_components.scss */
-.table-list {
-  width: 100%;
+.yg-toolbar.selected {
+  background-color: #6DD2ED !important;
+  color: #ffffff !important;
 }
-/* line 46, ../sass/modules/_components.scss */
+
+/* line 50, ../sass/modules/_components.scss */
+.table-list {
+  overflow: hidden;
+}
+/* line 52, ../sass/modules/_components.scss */
 .table-list .table-header {
+  min-width: 600px;
   width: 100%;
-  padding: 0 20px;
   background-color: #FDCD88;
 }
-/* line 51, ../sass/modules/_components.scss */
+/* line 56, ../sass/modules/_components.scss */
+.table-list .table-header tr {
+  margin-right: 20px;
+}
+/* line 58, ../sass/modules/_components.scss */
 .table-list .table-header tr th {
   text-align: left;
   padding: 15px;
   color: #757575;
   font-size: 14px;
 }
-/* line 59, ../sass/modules/_components.scss */
+/* line 66, ../sass/modules/_components.scss */
 .table-list .table-body {
+  min-width: 600px;
   overflow-y: auto;
   width: 100%;
 }
-/* line 62, ../sass/modules/_components.scss */
+/* line 70, ../sass/modules/_components.scss */
 .table-list .table-body tr {
-  padding-left: 20px;
   border-bottom: 1px solid #E0E0E0;
   cursor: pointer;
 }
-/* line 66, ../sass/modules/_components.scss */
+/* line 73, ../sass/modules/_components.scss */
 .table-list .table-body tr td {
   text-align: left;
   padding: 15px;
   color: #757575;
   font-size: 12px;
 }
-/* line 72, ../sass/modules/_components.scss */
+/* line 79, ../sass/modules/_components.scss */
 .table-list .table-body tr:hover {
   background-color: #FFEFDA;
+}
+@media (max-width: 599px) {
+  /* line 50, ../sass/modules/_components.scss */
+  .table-list {
+    overflow-x: auto;
+  }
+  /* line 87, ../sass/modules/_components.scss */
+  .table-list .table-header tr {
+    margin-right: 0;
+  }
+  /* line 89, ../sass/modules/_components.scss */
+  .table-list .table-header tr th {
+    font-size: 12px;
+    padding: 10px;
+  }
+  /* line 97, ../sass/modules/_components.scss */
+  .table-list .table-body tr td {
+    padding: 10px;
+    font-size: 11px;
+  }
 }
 
 /* line 1, ../sass/modules/_login.scss */
@@ -186,12 +216,6 @@ body {
 }
 
 /* line 1, ../sass/modules/_opsOrder.scss */
-.order-toolbar.selected {
-  background-color: #89DAF1 !important;
-  color: #ffffff !important;
-}
-
-/* line 6, ../sass/modules/_opsOrder.scss */
 .filter-sidenav {
   max-width: 240px;
   padding: 0;
@@ -199,49 +223,49 @@ body {
   -webkit-border-radius: 3px;
   border-radius: 3px;
 }
-/* line 10, ../sass/modules/_opsOrder.scss */
+/* line 5, ../sass/modules/_opsOrder.scss */
 .filter-sidenav md-input-container {
   margin: 10px 0;
 }
-/* line 13, ../sass/modules/_opsOrder.scss */
+/* line 8, ../sass/modules/_opsOrder.scss */
 .filter-sidenav .vendor-list, .filter-sidenav .dg-list {
   padding: 10px 10px;
 }
-/* line 16, ../sass/modules/_opsOrder.scss */
+/* line 11, ../sass/modules/_opsOrder.scss */
 .filter-sidenav .status-list, .filter-sidenav .time-list {
   padding-top: 10px;
   font-size: 12px;
 }
-/* line 20, ../sass/modules/_opsOrder.scss */
+/* line 15, ../sass/modules/_opsOrder.scss */
 .filter-sidenav .cod {
   font-size: 12px;
 }
-/* line 22, ../sass/modules/_opsOrder.scss */
+/* line 17, ../sass/modules/_opsOrder.scss */
 .filter-sidenav .cod md-switch {
   margin: 10px 10px;
 }
 
-/* line 28, ../sass/modules/_opsOrder.scss */
+/* line 23, ../sass/modules/_opsOrder.scss */
 .opsOrder {
   background-color: #F5F5F5 !important;
   overflow-y: hidden;
   padding: 0;
 }
-/* line 32, ../sass/modules/_opsOrder.scss */
+/* line 27, ../sass/modules/_opsOrder.scss */
 .opsOrder .order-list {
   padding: 0;
 }
-/* line 34, ../sass/modules/_opsOrder.scss */
+/* line 29, ../sass/modules/_opsOrder.scss */
 .opsOrder .order-list .header {
   z-index: 10;
   padding: 5px;
   min-height: 50px;
 }
-/* line 38, ../sass/modules/_opsOrder.scss */
+/* line 33, ../sass/modules/_opsOrder.scss */
 .opsOrder .order-list .header md-checkbox {
   margin-bottom: 0;
 }
-/* line 42, ../sass/modules/_opsOrder.scss */
+/* line 37, ../sass/modules/_opsOrder.scss */
 .opsOrder .order-list .footer {
   border-top: 1px solid #E0E0E0;
   min-height: 50px;
@@ -249,24 +273,24 @@ body {
   padding: 5px;
   z-index: 10;
 }
-/* line 48, ../sass/modules/_opsOrder.scss */
+/* line 43, ../sass/modules/_opsOrder.scss */
 .opsOrder .order-list .footer .stats, .opsOrder .order-list .footer .pagination {
   margin: 0 10px;
 }
-/* line 50, ../sass/modules/_opsOrder.scss */
+/* line 45, ../sass/modules/_opsOrder.scss */
 .opsOrder .order-list .footer .stats p, .opsOrder .order-list .footer .pagination p {
   font-size: 12px;
   color: #616161;
   margin: 10px 10px;
 }
-/* line 57, ../sass/modules/_opsOrder.scss */
+/* line 52, ../sass/modules/_opsOrder.scss */
 .opsOrder .order-list .list {
   height: 80%;
   z-index: 9;
   overflow-y: scroll;
   padding: 5px 10px;
 }
-/* line 62, ../sass/modules/_opsOrder.scss */
+/* line 57, ../sass/modules/_opsOrder.scss */
 .opsOrder .order-list .list md-card {
   -moz-border-radius: 0px;
   -webkit-border-radius: 0px;
@@ -274,46 +298,46 @@ body {
   margin: 10px 0px;
   cursor: pointer;
 }
-/* line 66, ../sass/modules/_opsOrder.scss */
+/* line 61, ../sass/modules/_opsOrder.scss */
 .opsOrder .order-list .list md-card .icon {
   margin-right: 10px;
 }
-/* line 70, ../sass/modules/_opsOrder.scss */
+/* line 65, ../sass/modules/_opsOrder.scss */
 .opsOrder .order-list .list .card-content {
   padding: 5px;
 }
-/* line 72, ../sass/modules/_opsOrder.scss */
+/* line 67, ../sass/modules/_opsOrder.scss */
 .opsOrder .order-list .list .card-content .customer, .opsOrder .order-list .list .card-content .vendor, .opsOrder .order-list .list .card-content .dg {
   padding-right: 15px;
 }
-/* line 74, ../sass/modules/_opsOrder.scss */
+/* line 69, ../sass/modules/_opsOrder.scss */
 .opsOrder .order-list .list .card-content .customer p, .opsOrder .order-list .list .card-content .vendor p, .opsOrder .order-list .list .card-content .dg p {
   margin: 0;
   font-size: 14px;
   text-transform: uppercase;
   color: #616161;
 }
-/* line 80, ../sass/modules/_opsOrder.scss */
+/* line 75, ../sass/modules/_opsOrder.scss */
 .opsOrder .order-list .list .card-content .customer span, .opsOrder .order-list .list .card-content .vendor span, .opsOrder .order-list .list .card-content .dg span {
   font-size: 12px;
   color: #757575;
 }
-/* line 86, ../sass/modules/_opsOrder.scss */
+/* line 81, ../sass/modules/_opsOrder.scss */
 .opsOrder .order-list .list .card-action {
   margin: 5px;
 }
-/* line 89, ../sass/modules/_opsOrder.scss */
+/* line 84, ../sass/modules/_opsOrder.scss */
 .opsOrder .order-list .list .card-action .order-time .icon, .opsOrder .order-list .list .card-action .payment .icon {
   margin-right: 10px;
 }
-/* line 92, ../sass/modules/_opsOrder.scss */
+/* line 87, ../sass/modules/_opsOrder.scss */
 .opsOrder .order-list .list .card-action .order-time p, .opsOrder .order-list .list .card-action .payment p {
   margin: 0;
   font-size: 11px;
   text-transform: uppercase;
   color: #616161;
 }
-/* line 98, ../sass/modules/_opsOrder.scss */
+/* line 93, ../sass/modules/_opsOrder.scss */
 .opsOrder .order-list .list .card-action .order-time span, .opsOrder .order-list .list .card-action .payment span {
   font-size: 10px;
   color: #757575;
@@ -322,7 +346,7 @@ body {
 /* line 1, ../sass/modules/_pagination.scss */
 .ydPagination {
   background-color: #F5F5F5 !important;
-  border-top: 1px solid #E0E0E0;
+  border-top: 1px solid #F5F5F5;
   min-height: 50px;
   max-height: 50px;
   padding: 5px;
@@ -338,6 +362,16 @@ body {
   color: #616161;
   margin: 10px 10px;
 }
+@media (max-width: 599px) {
+  /* line 17, ../sass/modules/_pagination.scss */
+  .ydPagination .stats, .ydPagination .pagination {
+    margin: 0;
+  }
+  /* line 20, ../sass/modules/_pagination.scss */
+  .ydPagination p {
+    margin: 5px !important;
+  }
+}
 
 /* line 1, ../sass/modules/_dgList.scss */
 .dgList {
@@ -352,16 +386,23 @@ body {
 }
 /* line 8, ../sass/modules/_dgList.scss */
 .dgList .dg-list .list {
+  position: relative;
   z-index: 9;
   overflow: hidden;
   padding: 10px;
 }
-/* line 12, ../sass/modules/_dgList.scss */
+/* line 13, ../sass/modules/_dgList.scss */
 .dgList .dg-list .list md-content {
   overflow: hidden;
 }
-/* line 16, ../sass/modules/_dgList.scss */
+/* line 17, ../sass/modules/_dgList.scss */
 .dgList .dg-list .footer {
   height: 50px;
   z-index: 10;
+}
+/* line 22, ../sass/modules/_dgList.scss */
+.dgList .floating-button {
+  position: absolute;
+  bottom: 30px;
+  right: 50px;
 }

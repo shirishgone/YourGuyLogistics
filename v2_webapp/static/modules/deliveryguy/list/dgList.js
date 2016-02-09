@@ -5,9 +5,11 @@
 		Its resolved after loading all the dgs from the server.
 			
 	*/
-	var dgListCntrl = function($state,$mdSidenav,$stateParams,dgs){
+	var dgListCntrl = function($state,$mdSidenav,$stateParams,dgs,constants){
 		var self = this;
 		this.params = $stateParams;
+		this.params.date = new Date(this.params.date);
+		this.dg_status = constants.dg_status;
 		/*
 			@dgs: resolved dgs list accordign to the url prameters.
 		*/
@@ -50,6 +52,7 @@
 		'$mdSidenav',
 		'$stateParams',
 		'dgs',
+		'constants',
 		dgListCntrl 
 	]);
 })();

@@ -4,13 +4,14 @@
 	.config(['$stateProvider',function ($stateProvider) {
 		$stateProvider
 		.state('home.dgList', {
-			url: "^/deliveryguy/list?date&search&page",
+			url: "^/deliveryguy/list?date&attendance&search&page",
 			templateUrl: "/static/modules/deliveryguy/list/list.html",
 			controllerAs : 'dgList',
     		controller: "dgListCntrl",
     		resolve : {
     			dgs: ['DeliverGuy','$stateParams', function (DeliverGuy,$stateParams){
     						$stateParams.date = ($stateParams.date !== undefined) ? new Date($stateParams.date).toISOString() : new Date().toISOString();
+    						$stateParams.attendance = ($stateParams.attendance!== undefined) ? $stateParams.attendance : 'ALL';
     						$stateParams.page = (!isNaN($stateParams.page))? parseInt($stateParams.page): 1;
     						return DeliverGuy.dgPageQuery.query($stateParams).$promise;
     					}],

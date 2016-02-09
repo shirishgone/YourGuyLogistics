@@ -226,9 +226,11 @@
   		.primaryPalette('ygBlue' , {
   			'default' : '700'
   		})
-        .accentPalette('ygOrange')
-        .warnPalette('red');
-        $mdThemingProvider.setDefaultTheme('ygBlueTheme');
+      .accentPalette('ygOrange',{
+        'default' : '500'
+      })
+      .warnPalette('red');
+      $mdThemingProvider.setDefaultTheme('ygBlueTheme');
 	}]);
 
 })();
@@ -254,6 +256,12 @@
     	{status:'Deliver Attempted',value:'DELIVERYATTEMPTED',selected:false},
     	{status:'Cancelled',value:'CANCELLED',selected:false},
     	{status:'Rejected',value:'REJECTED',selected:false},
+  	];
+  	var dg_checkin_status = [
+  		{status:'All',value:'ALL'},
+  		{status:'Checked-In',value:'ONLY_CHECKEDIN'},
+  		{status:'Not Checked-In',value:'NOT_CHECKEDIN'},
+  		{status:'CheckedIn & CheckedOut',value:'CHECKEDIN_AND_CHECKEDOUT'},
   	];
   	var time_data = [
 	  	{
@@ -287,37 +295,31 @@
   	];
 
 	var constants = {
-		v1baseUrl: '/api/v1/',
-		v2baseUrl: '/api/v2/',
-		v3baseUrl: '/api/v3/',
-		userRole: {
-			ADMIN : 'operations',
-			VENDOR : 'vendor'
-		},
-		status : STATUS_OBJECT,
-		time:time_data
+		v1baseUrl : '/api/v1/',
+		v2baseUrl : '/api/v2/',
+		v3baseUrl : '/api/v3/',
+		userRole  : { ADMIN : 'operations', VENDOR : 'vendor'},
+		status    : STATUS_OBJECT,
+		time      :time_data,
+		dg_status : dg_checkin_status
 	};
 	var prodConstants = {
-		v1baseUrl: 'http://yourguy.herokuapp.com/api/v1/',
-		v2baseUrl: 'http://yourguy.herokuapp.com/api/v2/',
-		v3baseUrl: 'http://yourguy.herokuapp.com/api/v3/',
-		userRole: {
-			ADMIN : 'operations',
-			VENDOR : 'vendor'
-		},
-		status : STATUS_OBJECT,
-		time:time_data
+		v1baseUrl : 'http://yourguy.herokuapp.com/api/v1/',
+		v2baseUrl : 'http://yourguy.herokuapp.com/api/v2/',
+		v3baseUrl : 'http://yourguy.herokuapp.com/api/v3/',
+		userRole  : { ADMIN : 'operations', VENDOR : 'vendor'},
+		status    : STATUS_OBJECT,
+		time      : time_data,
+		dg_status : dg_checkin_status
 	};
 	var testConstants = {
-		v1baseUrl: 'https://yourguytestserver.herokuapp.com/api/v1/',
-		v2baseUrl: 'https://yourguytestserver.herokuapp.com/api/v2/',
-		v3baseUrl: 'https://yourguytestserver.herokuapp.com/api/v3/',
-		userRole: {
-			ADMIN : 'operations',
-			VENDOR : 'vendor'
-		},
-		status : STATUS_OBJECT,
-		time:time_data
+		v1baseUrl : 'https://yourguytestserver.herokuapp.com/api/v1/',
+		v2baseUrl : 'https://yourguytestserver.herokuapp.com/api/v2/',
+		v3baseUrl : 'https://yourguytestserver.herokuapp.com/api/v3/',
+		userRole  : { ADMIN : 'operations', VENDOR: 'vendor'},
+		status    : STATUS_OBJECT,
+		time      : time_data,
+		dg_status : dg_checkin_status
 	};
 
 	angular.module('ygVendorApp')
@@ -734,7 +736,7 @@
 							'</md-select>',
 						'</md-input-container>',
 					'</div>',
-					'<div class="pagination" layout="row" layout-align="start center">',
+					'<div class="pagination hide-xs" layout="row" layout-align="start center">',
 						'<p>{{orderFrom}} -- {{orderTo}} of {{total}}</p>',
 					'</div>',
 					'<div class="page-navigation">',
@@ -1023,13 +1025,14 @@
 	.config(['$stateProvider',function ($stateProvider) {
 		$stateProvider
 		.state('home.dgList', {
-			url: "^/deliveryguy/list?date&search&page",
+			url: "^/deliveryguy/list?date&attendance&search&page",
 			templateUrl: "/static/modules/deliveryguy/list/list.html",
 			controllerAs : 'dgList',
     		controller: "dgListCntrl",
     		resolve : {
     			dgs: ['DeliverGuy','$stateParams', function (DeliverGuy,$stateParams){
     						$stateParams.date = ($stateParams.date !== undefined) ? new Date($stateParams.date).toISOString() : new Date().toISOString();
+    						$stateParams.attendance = ($stateParams.attendance!== undefined) ? $stateParams.attendance : 'ALL';
     						$stateParams.page = (!isNaN($stateParams.page))? parseInt($stateParams.page): 1;
     						return DeliverGuy.dgPageQuery.query($stateParams).$promise;
     					}],
@@ -1056,9 +1059,11 @@
 		Its resolved after loading all the dgs from the server.
 			
 	*/
-	var dgListCntrl = function($state,$mdSidenav,$stateParams,dgs){
+	var dgListCntrl = function($state,$mdSidenav,$stateParams,dgs,constants){
 		var self = this;
 		this.params = $stateParams;
+		this.params.date = new Date(this.params.date);
+		this.dg_status = constants.dg_status;
 		/*
 			@dgs: resolved dgs list accordign to the url prameters.
 		*/
@@ -1101,6 +1106,7 @@
 		'$mdSidenav',
 		'$stateParams',
 		'dgs',
+		'constants',
 		dgListCntrl 
 	]);
 })();
