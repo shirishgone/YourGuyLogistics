@@ -1,8 +1,22 @@
+.search-toolbar {
+	md-input-container.md-ygBlueTheme-theme {
+		display: flex;
+		margin: 0;
+		.md-input {
+			color: $white-color !important;
+			@include input-placeholder {
+				color: grey-color('300') !important;
+			}
+		}
+	}
+}
+
+
 .dgList {
 	padding : 0px;
 	overflow-y: hidden;
 	height: 100%;
-	background-color: grey-color('100') !important;;
+	background-color: grey-color('100') !important;
 	.dg-list {
 		padding: 0px;
 		.list {
@@ -15,6 +29,7 @@
 			}
 		}
 		.footer {
+			max-height: 50px;
 			height: 50px; 
 			z-index: 10;
 		}

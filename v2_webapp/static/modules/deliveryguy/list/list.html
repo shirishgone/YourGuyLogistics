@@ -5,34 +5,32 @@
 		</md-button>
 		<p>Delivery Boy</p>
 		<span flex></span>
-		<md-button class="md-icon-button" aria-label="Filter Button" ng-click="dgList.searchDgActive = true">
+		<md-button class="md-icon-button" aria-label="search Button" ng-click="dgList.searchDgActive = true">
 			<md-icon>search</md-icon>
 		</md-button>
-		<md-button class="md-icon-button" aria-label="Filter Button">
+		<md-button class="md-icon-button" aria-label="Notification Button">
 			<md-icon>notifications_none</md-icon>
 		</md-button>
 		<md-button ng-click="dgList.toggleFilter()" class="md-icon-button" aria-label="Filter Button">
 			<md-icon>filter_list</md-icon>
 		</md-button>
 	</div>
-	<div class="md-toolbar-tools" ng-if="dgList.searchDgActive">
-		<md-button ng-click="dgList.searchDgActive = false" class="md-icon-button" aria-label="Clear Icon">
-			<md-icon>clear</md-icon>
+	<div class="md-toolbar-tools search-toolbar" ng-if="dgList.searchDgActive">
+		<md-button ng-click="dgList.backFromSearch()" class="md-icon-button" aria-label="Clear Icon">
+			<md-icon>arrow_back</md-icon>
 		</md-button>
-		<md-input-container md-no-float>
-        	<!-- <label>Search DG</label> -->
-        	<input ng-model="dgList.params.search" type="text" placeholder="Search DG">
+		<md-input-container flex  md-no-float>
+        	<input ng-model="dgList.params.search" type="text" placeholder="Search delivery guy" ng-keyup="$event.which === 13 && dgList.getDgs()" md-autofocus="dgList.searchDgActive == true">
         </md-input-container>
-		<!-- <form name="searchdeliverguyform" flex="50" flex-xs="80">
-			
-		</form> -->
-		
+        <md-button class="md-icon-button" aria-label="Search dg Button" ng-click="dgList.getDgs()">
+			<md-icon>search</md-icon>
+		</md-button>
 	</div>
 </md-toolbar>
 <md-content flex layout-fill layout="row" class="dgList">
 	<div flex layout="column" class="dg-list">
 		<section flex="90" class="list" layout="row" layout-align="center stretch">
-			<md-content flex layout="column" layout-align="center stretch">
+			<md-content flex layout="column" layout-align="start stretch">
 				<table class="table-list" layout="column">
 					<thead class="table-header">
 						<tr layout="row" layout-align="center start">
@@ -92,6 +90,5 @@
 				</md-list-item>
      		</md-list>
      	</md-content>
-     	
 	</md-sidenav>
 </md-content>

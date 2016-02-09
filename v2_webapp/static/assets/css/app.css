@@ -373,34 +373,61 @@ body {
   }
 }
 
-/* line 1, ../sass/modules/_dgList.scss */
+/* line 2, ../sass/modules/_dgList.scss */
+.search-toolbar md-input-container.md-ygBlueTheme-theme {
+  display: flex;
+  margin: 0;
+}
+/* line 5, ../sass/modules/_dgList.scss */
+.search-toolbar md-input-container.md-ygBlueTheme-theme .md-input {
+  color: #ffffff !important;
+}
+/* line 61, ../../../../../../../var/lib/gems/1.9.1/gems/compass-core-1.1.0.alpha.3/stylesheets/compass/css3/_user-interface.scss */
+.search-toolbar md-input-container.md-ygBlueTheme-theme .md-input:-moz-placeholder {
+  color: #E0E0E0 !important;
+}
+/* line 64, ../../../../../../../var/lib/gems/1.9.1/gems/compass-core-1.1.0.alpha.3/stylesheets/compass/css3/_user-interface.scss */
+.search-toolbar md-input-container.md-ygBlueTheme-theme .md-input::-moz-placeholder {
+  color: #E0E0E0 !important;
+}
+/* line 67, ../../../../../../../var/lib/gems/1.9.1/gems/compass-core-1.1.0.alpha.3/stylesheets/compass/css3/_user-interface.scss */
+.search-toolbar md-input-container.md-ygBlueTheme-theme .md-input:-ms-input-placeholder {
+  color: #E0E0E0 !important;
+}
+/* line 56, ../../../../../../../var/lib/gems/1.9.1/gems/compass-core-1.1.0.alpha.3/stylesheets/compass/css3/_user-interface.scss */
+.search-toolbar md-input-container.md-ygBlueTheme-theme .md-input::-webkit-input-placeholder {
+  color: #E0E0E0 !important;
+}
+
+/* line 15, ../sass/modules/_dgList.scss */
 .dgList {
   padding: 0px;
   overflow-y: hidden;
   height: 100%;
   background-color: #F5F5F5 !important;
 }
-/* line 6, ../sass/modules/_dgList.scss */
+/* line 20, ../sass/modules/_dgList.scss */
 .dgList .dg-list {
   padding: 0px;
 }
-/* line 8, ../sass/modules/_dgList.scss */
+/* line 22, ../sass/modules/_dgList.scss */
 .dgList .dg-list .list {
   position: relative;
   z-index: 9;
   overflow: hidden;
   padding: 10px;
 }
-/* line 13, ../sass/modules/_dgList.scss */
+/* line 27, ../sass/modules/_dgList.scss */
 .dgList .dg-list .list md-content {
   overflow: hidden;
 }
-/* line 17, ../sass/modules/_dgList.scss */
+/* line 31, ../sass/modules/_dgList.scss */
 .dgList .dg-list .footer {
+  max-height: 50px;
   height: 50px;
   z-index: 10;
 }
-/* line 22, ../sass/modules/_dgList.scss */
+/* line 37, ../sass/modules/_dgList.scss */
 .dgList .floating-button {
   position: absolute;
   bottom: 30px;
