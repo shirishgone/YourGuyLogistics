@@ -312,23 +312,14 @@ def delivery_actions(code):
     return DeliveryAction.objects.get(code=code)
 
 
+# Util method for calculating the month start date and end date
 def check_month(month, year):
-    if month == '01' or month == '03' or month == '05' or month == '07' or month == '08' or month == '10' or month == '12':
-        start_date = '01/01/%s' % year
-        end_date = '01/31/%s' % year
-        return start_date, end_date
-    elif month == '02':
-        if calendar.isleap(year):
-            start_date = '02/01/%s' % year
-            end_date = '02/29/%s' % year
-        else:
-            start_date = '02/01/%s' % year
-            end_date = '02/28/%s' % year
-        return start_date, end_date
-    elif month == '04' or month == '06' or month == '09' or month == '11':
-        start_date = '01/01/%s' % year
-        end_date = '01/30/%s' % year
-        return start_date, end_date
-    else:
-        pass
-
+    month = int(month)
+    year = int(year)
+    start_date = datetime(year, month, 1)
+    end_date = calendar.monthrange(year, month)[1]
+    end_date = datetime(year, month, end_date)
+    return {
+        'start_date': start_date,
+        'end_date': end_date
+    }

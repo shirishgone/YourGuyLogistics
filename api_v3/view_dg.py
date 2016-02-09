@@ -70,16 +70,23 @@ def dg_attendance_list_dict(dg_attendance):
         'id': dg_attendance.dg.user.id,
         'employee_code': dg_attendance.dg.employee_code,
         'name': dg_attendance.dg.user.first_name,
-        'date': dg_attendance.date,
-        'status': dg_attendance.status,
-        'login_time': dg_attendance.login_time,
-        'logout_time': dg_attendance.logout_time,
-        'shift_start_datetime': dg_attendance.dg.shift_start_datetime,
-        'shift_end_datetime': dg_attendance.dg.shift_end_datetime,
-        'worked_hrs': ''
+        'attendance': []
     }
 
     return dg_attendance_dict
+
+
+def attendance_list_datewise(date, status, login_time, logout_time, shift_start_datetime, shift_end_datetime, worked_hrs):
+    datewise_dict = {
+        'date': date,
+        'status': status,
+        'login_time': login_time,
+        'logout_time': logout_time,
+        'shift_start_datetime': shift_start_datetime,
+        'shift_end_datetime': shift_end_datetime,
+        'worked_hrs': worked_hrs
+    }
+    return datewise_dict
 
 
 def download_attendance_excel_dict(dg):
@@ -96,6 +103,25 @@ def attendance_datewise_dict():
             'worked_hrs': ''
         }
     return datewise_dict
+
+
+# Util for calculating worked hours
+def working_hours_calculation(dg_attendance):
+    worked_hours = 0
+    if dg_attendance.login_time is not None and dg_attendance.logout_time is not None:
+        worked_hours = (dg_attendance.logout_time - dg_attendance.login_time)
+        total_seconds_worked = int(worked_hours.total_seconds())
+        hours, remainder = divmod(total_seconds_worked, 60 * 60)
+        worked_hours = "%d hrs" % hours
+    elif dg_attendance.login_time is not None and dg_attendance.logout_time is None:
+        worked_hours = (datetime.now(pytz.utc) - dg_attendance.login_time)
+        total_seconds_worked = int(worked_hours.total_seconds())
+        hours, remainder = divmod(total_seconds_worked, 60 * 60)
+        worked_hours = "%d hrs" % hours
+    else:
+        pass
+    return worked_hours
+
 
 class DGViewSet(viewsets.ModelViewSet):
     """
@@ -609,25 +635,75 @@ class DGViewSet(viewsets.ModelViewSet):
                 'error': 'Error in params: month, year'
             }
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
+
         # Util method to generate the start_date and end_date based on the month and year input
-        import pdb
-        pdb.set_trace()
-
         dates = check_month(month, year)
+        start_date = dates['start_date']
+        end_date = dates['end_date']
+        start_month = start_date.month
 
-        rule_daily = rrule(DAILY, dtstart=dates.start_date, until=dates.end_date)
+        rule_daily = rrule(DAILY, dtstart=start_date, until=end_date)
         alldates = list(rule_daily)
 
         dg = get_object_or_404(DeliveryGuy, pk=pk)
-        dg_all_attendance = DGAttendance.objects.filter(dg=dg, date__year=year, date__month=month)
-
+        dg_full_month_attendance = DGAttendance.objects.filter(dg=dg, date__year=year, date__month=month)
         dg_monthly_attendance = []
-        for dg_attendance in dg_all_attendance:
-            dg_attendance_dict = dg_attendance_list_dict(dg_attendance)
-            dg_monthly_attendance.append(dg_attendance_dict)
 
+        import pdb
+        pdb.set_trace()
+
+        # ================================
+        # when dg is deactivated
+        # if deactivated_date is None
+        #   pull out the latest attendance record for this dg and use this date as the deactivated date
+        #   assign this deactivated date to the dg and save data to db
+        if dg.is_active is False:
+            dg_deactived_date = dg.deactivated_date
+            if dg_deactived_date is None:
+                dg_latest_attendance = DGAttendance.objects.filter(dg=dg).latest('date')
+                if dg_latest_attendance is not None:
+                    dg.deactivated_date = dg_latest_attendance.date
+                    dg.save()
+                else:
+                    pass
+
+        # when dg is deactivated
+        # if deactivated_date is not None
+        #   compare deactivated_date and start_date
+        #   generate rule from start date till the deactivated date only
+        #   loop from start date till this deactivated date
+        if dg.is_active is False:
+            dg_deactived_date = dg.deactivated_date
+            if dg_deactived_date is not None:
+                deactivated_month = dg_deactived_date.month
+                if start_date.date() < dg_deactived_date and start_month == deactivated_month:
+                    rule_daily_deactivated = rrule(DAILY, dtstart=start_date, until=dg_deactived_date)
+                    till_deactivated_date = list(rule_daily_deactivated)
+                    for date in till_deactivated_date:
+                        dg_attendance = dg_full_month_attendance.filter(dg=dg, date=date)
+                        if dg_attendance:
+                            for single in dg_attendance:
+                                dg_attendance_dict = dg_attendance_list_dict(dg_attendance)
+                                worked_hours = working_hours_calculation(single)
+                                dg_attendance_dict['worked_hrs'] = worked_hours
+                                dg_monthly_attendance.append(dg_attendance_dict)
+                        else:
+                            pass
+        if dg.is_active or (dg.is_active is False and
+                            start_date.date() < dg.deactivated_date and
+                            start_month < dg.deactivated_date.month):
+            for date in alldates:
+                dg_attendance = dg_full_month_attendance.filter(dg=dg, date=date)
+                if dg_attendance:
+                    for single in dg_attendance:
+                        dg_attendance_dict = dg_attendance_list_dict(dg_attendance)
+                        worked_hours = working_hours_calculation(single)
+                        dg_attendance_dict['worked_hrs'] = worked_hours
+                        dg_monthly_attendance.append(dg_attendance_dict)
+                else:
+                    pass
         content = {
-            'attendance': dg_monthly_attendance
+            'dg_monthly_attendance': dg_monthly_attendance
         }
         return Response(content, status=status.HTTP_200_OK)
 
@@ -667,6 +743,10 @@ class DGViewSet(viewsets.ModelViewSet):
     @list_route()
     def download_attendance(self, request):
         try:
+            import pdb
+            pdb.set_trace()
+
+
             start_date_string = self.request.QUERY_PARAMS.get('start_date')
             end_date_string = self.request.QUERY_PARAMS.get('end_date')
 
