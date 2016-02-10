@@ -1,11 +1,10 @@
 from datetime import datetime
 from django.db.models.functions import Lower
 from django.shortcuts import get_object_or_404
-from rest_framework import status, authentication
+from rest_framework import authentication
 from rest_framework import viewsets
 from rest_framework.decorators import detail_route
 from rest_framework.exceptions import APIException
-from rest_framework.response import Response
 
 from api_v3 import constants
 from api_v3.utils import user_role, send_email, send_sms, is_userexists, create_token, paginate
@@ -124,7 +123,7 @@ class VendorViewSet(viewsets.ModelViewSet):
                 "total_pages": total_pages,
                 "total_vendor_count": total_vendor_count
             }
-            return Response(response_content, status=status.HTTP_200_OK)
+            return response_with_payload(response_content, None)
         elif role == constants.VENDOR:
             vendor_agent = get_object_or_404(VendorAgent, user=request.user)
             vendor_detail = vendor_detail_dict(vendor_agent.vendor)

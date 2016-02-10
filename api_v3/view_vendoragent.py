@@ -1,9 +1,8 @@
 from django.contrib.auth.models import User, Group
-from rest_framework import status, authentication
+from rest_framework import authentication
 from rest_framework import viewsets
 from rest_framework.exceptions import APIException
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
 
 from api_v3 import constants
 from api_v3.utils import user_role, is_userexists, create_token, is_vendoragentexists, log_exception
@@ -51,7 +50,7 @@ class VendorAgentViewSet(viewsets.ModelViewSet):
                 password = request.data['password']
             except APIException:
                 params = ['vendor_id', 'phone_number', 'name', 'password']
-                return response_incomplete_parameters()
+                return response_incomplete_parameters(params)
 
             try:
                 vendor = Vendor.objects.get(id=vendor_id)

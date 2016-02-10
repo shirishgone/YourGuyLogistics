@@ -5,13 +5,12 @@ from django.db.models import Q
 from django.db.models.functions import Lower
 from django.shortcuts import get_object_or_404
 from django.utils.dateparse import parse_datetime
-from rest_framework import status, authentication, viewsets
+from rest_framework import authentication, viewsets
 from rest_framework.decorators import api_view
 from rest_framework.decorators import detail_route, list_route
 from rest_framework.decorators import authentication_classes, permission_classes
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
 from api_v3 import constants
 from api_v3.utils import paginate, user_role, ist_day_start, ist_day_end, is_userexists, create_token, assign_usergroup
 from yourguy.models import DeliveryGuy, DGAttendance, Location, OrderDeliveryStatus, User, Employee, DeliveryTeamLead, \
@@ -434,7 +433,7 @@ class DGViewSet(viewsets.ModelViewSet):
                 return response_success_with_message(success_message)
             else:
                 error_message = 'You can only edit active delivery guys'
-                return response_error_with_message()
+                return response_error_with_message(error_message)
 
     @detail_route(methods=['put'])
     def deactivate(self, request, pk=None):

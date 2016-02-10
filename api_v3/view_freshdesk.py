@@ -3,9 +3,7 @@ from base64 import encode
 
 import requests
 from django.shortcuts import get_object_or_404
-from rest_framework import status
 from rest_framework.decorators import api_view
-from rest_framework.response import Response
 
 from api_v3 import constants
 from api_v3.utils import user_role

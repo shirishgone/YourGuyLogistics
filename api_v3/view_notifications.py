@@ -1,7 +1,6 @@
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view
-from rest_framework.response import Response
-from rest_framework import status, authentication
+from rest_framework import authentication
 from rest_framework.decorators import authentication_classes, permission_classes
 from rest_framework.authentication import TokenAuthentication
 from rest_framework import viewsets
@@ -55,7 +54,7 @@ class NotificationViewSet(viewsets.ViewSet):
             
             if is_permitted == True:
                 notif_dict = notification_dict(notification)
-                return Response(notif_dict, status = status.HTTP_200_OK)      
+                return response_with_payload(notif_dict, None)
             else:
                 return response_access_denied()                
         else:
@@ -105,7 +104,8 @@ class NotificationViewSet(viewsets.ViewSet):
             if is_permitted == True:
                 notification.read = True
                 notification.save()
-                return Response(status = status.HTTP_200_OK)      
+                success_message = 'Notification marked as read.'
+                return response_success_with_message(success_message)
             else:
                 return response_access_denied()
         else:

@@ -1,8 +1,6 @@
 from django.shortcuts import get_object_or_404
-from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.exceptions import APIException
-from rest_framework.response import Response
 
 from api_v3 import constants
 from api_v3.utils import is_userexists, create_token, assign_usergroup_with_name, assign_usergroup

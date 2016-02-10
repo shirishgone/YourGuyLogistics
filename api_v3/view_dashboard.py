@@ -3,11 +3,9 @@ from dateutil.rrule import rrule, DAILY
 from django.db.models import Sum, Q
 from django.shortcuts import get_object_or_404
 from django.utils.dateparse import parse_datetime
-from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.exceptions import APIException
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
 
 from api_v3 import constants
 from api_v3.utils import user_role, ist_day_start, ist_day_end
