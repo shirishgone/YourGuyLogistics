@@ -5,18 +5,18 @@ from django.db.models import Q
 from django.db.models.functions import Lower
 from django.shortcuts import get_object_or_404
 from django.utils.dateparse import parse_datetime
-from rest_framework import status, authentication, viewsets
+from rest_framework import authentication, viewsets
 from rest_framework.decorators import api_view
 from rest_framework.decorators import detail_route, list_route
 from rest_framework.decorators import authentication_classes, permission_classes
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
 from api_v3 import constants
 from api_v3.utils import paginate, user_role, ist_day_start, ist_day_end, is_userexists, create_token, assign_usergroup
 from yourguy.models import DeliveryGuy, DGAttendance, Location, OrderDeliveryStatus, User, Employee, DeliveryTeamLead, \
     ServiceablePincode, Picture
 
+from api_v3.utils import response_access_denied, response_with_payload, response_error_with_message, response_success_with_message, response_invalid_pagenumber, response_incomplete_parameters
 
 def dg_list_dict(delivery_guy, attendance, no_of_assigned_orders, no_of_executed_orders, worked_hours):
     dg_list_dict = {
@@ -104,16 +104,12 @@ class DGViewSet(viewsets.ModelViewSet):
     queryset = DeliveryGuy.objects.all()
 
     def destroy(self, request, pk=None):
-        role = user_role(request.user)
-        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        return response_access_denied()
 
     def retrieve(self, request, pk=None):
         role = user_role(request.user)
         if role == constants.VENDOR:
-            content = {
-                'error': 'You don\'t have permissions to view delivery guy info'
-            }
-            return Response(content, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+            return response_access_denied()
         else:
             delivery_guy = get_object_or_404(DeliveryGuy, id=pk)
             detail_dict = dg_details_dict(delivery_guy)
@@ -123,10 +119,8 @@ class DGViewSet(viewsets.ModelViewSet):
                 try:
                     delivery_guy_tl = DeliveryTeamLead.objects.get(delivery_guy=delivery_guy)
                 except Exception as e:
-                    content = {
-                        "Description": "No such Delivery Team Lead exists"
-                    }
-                    return Response(content, status=status.HTTP_400_BAD_REQUEST)
+                    error_message = 'No such Delivery Team Lead exists'
+                    return response_error_with_message(error_message)
 
                 if delivery_guy_tl.serving_pincodes is not None:
                     pincodes = delivery_guy_tl.serving_pincodes.all()
@@ -149,10 +143,8 @@ class DGViewSet(viewsets.ModelViewSet):
                 for single_ops_mngr in associated_ops_mngr:
                     detail_dict['ops_managers'].append('%s' % (single_ops_mngr.user.first_name))
 
-            content = {
-                "data": detail_dict
-            }
-            return Response(content, status=status.HTTP_200_OK)
+            content = {'data': detail_dict}
+            return response_with_payload(content, None)
 
     def list(self, request):
         page = self.request.QUERY_PARAMS.get('page', None)
@@ -183,17 +175,12 @@ class DGViewSet(viewsets.ModelViewSet):
                     or attendance_status == 'CHECKEDIN_AND_CHECKEDOUT':
                 pass
             else:
-                content = {
-                    'error': "Wrong attendance_status. Options: ALL or ONLY_CHECKEDIN or NOT_CHECKEDIN"
-                }
-                return Response(content, status=status.HTTP_400_BAD_REQUEST)
+                error_message = 'Wrong attendance_status. Options: ALL or ONLY_CHECKEDIN or NOT_CHECKEDIN'
+                return response_error_with_message(error_message)
         # ---------------------------------------------------------------------------
 
-        if role == 'vendor':
-            content = {
-                'error': "You don\'t have permissions to view delivery guy info"
-            }
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+        if role == constants.VENDOR:
+            return response_access_denied()
         else:
             all_dgs = DeliveryGuy.objects.order_by('user__first_name')
 
@@ -236,10 +223,7 @@ class DGViewSet(viewsets.ModelViewSet):
             total_pages = int(total_dg_count / constants.PAGINATION_PAGE_SIZE) + 1
 
             if page > total_pages or page <= 0:
-                response_content = {
-                    "error": "Invalid page number"
-                }
-                return Response(response_content, status=status.HTTP_400_BAD_REQUEST)
+                return response_invalid_pagenumber()
             else:
                 result_dgs = paginate(final_dgs, page)
 
@@ -287,7 +271,7 @@ class DGViewSet(viewsets.ModelViewSet):
                 "total_pages": total_pages,
                 "total_dg_count": total_dg_count
             }
-            return Response(content, status=status.HTTP_200_OK)
+            return response_with_payload(content, None)
 
     # boolean is_teamlead will be sent if the create dg api is used to create a team lead
     # also only servicable pincodes will be considered for team lead creation
@@ -309,27 +293,15 @@ class DGViewSet(viewsets.ModelViewSet):
                 is_teamlead = request.data.get('is_teamlead')
 
             except Exception as e:
-                content = {
-                    'error': 'Incomplete params',
-                    'description': 'MANDATORY: phone_number, password, name. '
-                                   'OPTIONAL: serviceable_pincodes, shift_start_datetime, shift_end_datetime, '
-                                   'transportation_mode, ops_manager_ids, team_lead_ids, profile_picture, is_teamlead'
-                }
-                return Response(content, status=status.HTTP_400_BAD_REQUEST)
+                params = ['phone_number', 'password', 'name', 'serviceable_pincodes(optional)', 'shift_start_datetime(optional)', 'shift_end_datetime(optional)', 'transportation_mode(optional)', 'ops_manager_ids(optional)', 'team_lead_ids(optional)', 'profile_picture(optional)', 'is_teamlead(optional)']
+                return response_incomplete_parameters(params)
         else:
-            content = {
-                'error': 'API Access limited.',
-                'description': 'You cant access this API'
-            }
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
-
+            return response_access_denied()
+        
         # CHECK IF USER EXISTS  -----------------------------------
         if is_userexists(phone_number):
-            content = {
-                'error': 'User already exists',
-                'description': 'User with same phone number already exists'
-            }
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+            error_message = 'User with same phone number already exists'
+            return response_error_with_message(error_message)
         # ---------------------------------------------------------------
         user = User.objects.create_user(username=phone_number, password=password, first_name=name)
         user.save()
@@ -381,10 +353,8 @@ class DGViewSet(viewsets.ModelViewSet):
             delivery_guy.profile_picture = profile_pic
 
         delivery_guy.save()
-        content = {
-            'auth_token': token.key
-        }
-        return Response(content, status=status.HTTP_201_CREATED)
+        content = {'auth_token': token.key}
+        return response_with_payload(content, None)
 
     # Workflows handled are edit dg, edit dg tl
     # req param being sent is is_teamlead flag, check this flag and do a get object or 404 with this data,
@@ -405,14 +375,9 @@ class DGViewSet(viewsets.ModelViewSet):
             is_teamlead = request.data.get('is_teamlead')
 
         except Exception as e:
-            content = {
-                'error': 'Only following params can be edited',
-                'description': 'OPTIONAL: name, serviceable_pincodes, shift_start_datetime, '
-                               'shift_end_datetime, transportation_mode, ops_manager_ids, team_lead_ids, '
-                               'profile_picture, is_teamlead'
-            }
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
-
+            params = ['name(optional)', 'serviceable_pincodes(optional)', 'shift_start_datetime(optional)', 'shift_end_datetime(optional)', 'transportation_mode(optional)', 'ops_manager_ids(optional)', 'team_lead_ids(optional)', 'profile_picture(optional)', 'is_teamlead(optional)']
+            return response_incomplete_parameters(params)
+        
         if role == constants.OPERATIONS or role == constants.OPERATIONS_MANAGER:
             delivery_guy = get_object_or_404(DeliveryGuy, id=pk)
 
@@ -464,17 +429,11 @@ class DGViewSet(viewsets.ModelViewSet):
                     delivery_guy.profile_picture = profile_pic
 
                 delivery_guy.save()
-
-                content = {
-                    "description": 'Delivery guy updated'
-                }
-                return Response(content, status=status.HTTP_200_OK)
-
+                success_message = 'Delivery guy updated.'
+                return response_success_with_message(success_message)
             else:
-                content = {
-                    'error': "You can only edit active dg"
-                }
-                return Response(content, status=status.HTTP_400_BAD_REQUEST)
+                error_message = 'You can only edit active delivery guys'
+                return response_error_with_message(error_message)
 
     @detail_route(methods=['put'])
     def deactivate(self, request, pk=None):
@@ -482,12 +441,9 @@ class DGViewSet(viewsets.ModelViewSet):
         try:
             deactivate_reason = request.data['deactivate_reason']
         except Exception as e:
-            content = {
-                'error': 'Incomplete params',
-                'description': 'MANDATORY: deactivate_reason'
-            }
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
-
+            params = ['deactivate_reason']
+            return response_incomplete_parameters(params)
+        
         if role == constants.OPERATIONS:
             delivery_guy = get_object_or_404(DeliveryGuy, id=pk)
             if delivery_guy.is_active is True:
@@ -501,19 +457,12 @@ class DGViewSet(viewsets.ModelViewSet):
                     'deactivate_reason': deactivate_reason,
                     'deactivated_date': deactivated_date
                 }
-                return Response(content, status=status.HTTP_200_OK)
+                return response_with_payload(content, None)
             else:
-                content = {
-                    'error': 'DG already deactivated',
-                    'description': 'This dg had already been deactivated'
-                }
-                return Response(content, status=status.HTTP_400_BAD_REQUEST)
+                error_message = 'This delivery boy had already been deactivated'
+                return response_error_with_message(error_message)
         else:
-            content = {
-                'error': 'API Access limited.',
-                'description': 'You cant access this API'
-            }
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+            return response_access_denied()
 
     @detail_route(methods=['put'])
     def check_in(self, request, pk=None):
@@ -548,15 +497,11 @@ class DGViewSet(viewsets.ModelViewSet):
                 attendance.save()
 
         if is_today_checkedIn is True:
-            content = {
-                'description': 'Thanks for checking in.'
-            }
-            return Response(content, status=status.HTTP_200_OK)
+            success_message = 'Thanks for checking in.'
+            return response_success_with_message(success_message)
         else:
-            content = {
-                'error': 'Something went wrong'
-            }
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+            error_message = 'something went wrong'
+            return response_error_with_message(error_message)
 
     @detail_route(methods=['put'])
     def check_out(self, request, pk=None):
@@ -569,10 +514,8 @@ class DGViewSet(viewsets.ModelViewSet):
                 attendance = DGAttendance.objects.filter(dg=dg, date__year=today_now.year, date__month=today_now.month,
                                                          date__day=today_now.day).latest('date')
             except Exception as e:
-                content = {
-                    'error': 'You havent checked-in properly or forgot to checkout the day before.'
-                }
-                return Response(content, status=status.HTTP_200_OK)
+                error_message = 'You havent checked-in properly or forgot to checkout the day before.'
+                return response_error_with_message(error_message)
 
             attendance.logout_time = today_now
             attendance.save()
@@ -586,15 +529,11 @@ class DGViewSet(viewsets.ModelViewSet):
                 attendance.checkout_location = checkout_location
                 attendance.save()
 
-            content = {
-                'description': 'Thanks for checking out.'
-            }
-            return Response(content, status=status.HTTP_200_OK)
+            success_message = 'Thanks for checking out.'
+            return response_success_with_message(success_message)
         except Exception as e:
-            content = {
-                'error': 'Something went wrong'
-            }
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+            error_message = 'Something went wrong'
+            return response_error_with_message(error_message)
 
     @detail_route(methods=['put'])
     def attendance(self, request, pk):
@@ -609,10 +548,8 @@ class DGViewSet(viewsets.ModelViewSet):
             dg_attendance_dict = dg_attendance_list_dict(dg_attendance)
             all_dgs_array.append(dg_attendance_dict)
 
-        content = {
-            'attendance': all_dgs_array
-        }
-        return Response(content, status=status.HTTP_200_OK)
+        content = {'attendance': all_dgs_array}
+        return response_with_payload(content, None)
 
     @list_route()
     def all_dg_attendance(self, request):
@@ -629,10 +566,8 @@ class DGViewSet(viewsets.ModelViewSet):
             dg_attendance_dict = dg_attendance_list_dict(attendance)
             all_dg_attendance.append(dg_attendance_dict)
 
-        content = {
-            'all_dg_attendance': all_dg_attendance
-        }
-        return Response(content, status=status.HTTP_200_OK)
+        content = {'all_dg_attendance': all_dg_attendance}
+        return response_with_payload(content, None)
 
     @detail_route(methods=['put'])
     def update_pushtoken(self, request, pk=None):
@@ -641,11 +576,8 @@ class DGViewSet(viewsets.ModelViewSet):
         dg = get_object_or_404(DeliveryGuy, user=request.user)
         dg.device_token = push_token
         dg.save()
-
-        content = {
-            'description': 'Push Token updated'
-        }
-        return Response(content, status=status.HTTP_200_OK)
+        success_message = 'Push Token updated.'
+        return response_success_with_message(success_message)
 
     @list_route()
     def download_attendance(self, request):
@@ -661,10 +593,8 @@ class DGViewSet(viewsets.ModelViewSet):
             end_date = ist_day_end(end_date)
             end_date = end_date.date()
         except Exception as e:
-            content = {
-                'error': 'Error in params: start_date, end_date'
-            }
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+            params = ['start_date', 'end_date']
+            return response_incomplete_parameters(params)
 
         # CREATE DATE RULE -----------------------------------------------------------
         rule_daily = rrule(DAILY, dtstart=start_date, until=end_date)
@@ -777,18 +707,13 @@ class DGViewSet(viewsets.ModelViewSet):
                         download_attendance_dict['attendance'].append(datewise_dict)
                     all_dg_attendance.append(download_attendance_dict)
 
-        content = {
-            'all_dg_attendance': all_dg_attendance
-        }
-        return Response(content, status=status.HTTP_200_OK)
+        content = {'all_dg_attendance': all_dg_attendance}
+        return response_with_payload(content, None)
 
 @api_view(['GET'])
 def dg_app_version(request):
-    response_content = {
-        "app_version": constants.LATEST_DG_APP_VERSION
-    }
-    return Response(response_content, status=status.HTTP_200_OK)
-
+    content = {'app_version': constants.LATEST_DG_APP_VERSION}
+    return response_with_payload(content, None)
 
 @api_view(['GET'])
 @authentication_classes((TokenAuthentication,))
@@ -799,9 +724,6 @@ def profile(request):
         delivery_guy = get_object_or_404(DeliveryGuy, user=request.user)
         detail_dict = dg_details_dict(delivery_guy)
         response_content = {"data": detail_dict}
-        return Response(response_content, status=status.HTTP_200_OK)
+        return response_with_payload(response_content, None)
     else:
-        content = {
-            'error': 'You dont have permissions to view delivery guy info'
-        }
-        return Response(content, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        return response_access_denied()
