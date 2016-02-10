@@ -1499,7 +1499,7 @@ ygVendors.controller('createProductCntrl',function ($scope,$state,$timeout,Produ
   }
 })
 
-ygVendors.controller('orderDetailsCntrl',function ($scope,$state,$stateParams,$modal,$timeout,cfpLoadingBar,Orders,baseURl,Errorhandler){
+ygVendors.controller('orderDetailsCntrl',function ($scope,$q,$state,$stateParams,$modal,$timeout,cfpLoadingBar,Orders,baseURl,Errorhandler){
   $scope.header = "Order Details"
   $scope.format = 'dd-MMMM-yyyy'
   $scope.notification = {}
@@ -1513,6 +1513,7 @@ ygVendors.controller('orderDetailsCntrl',function ($scope,$state,$stateParams,$m
   $scope.accordian.address = true
   $scope.screenWidth = window.innerWidth;
   AWS.config.update({accessKeyId: baseURl.ACCESS_KEY, secretAccessKey: baseURl.SECRET_KEY});
+  var s3 = new AWS.S3()
   
   $scope.hideNotificationBar = function(){
     $scope.notification.type = null
@@ -1677,19 +1678,73 @@ ygVendors.controller('orderDetailsCntrl',function ($scope,$state,$stateParams,$m
     }
   }
 
+  function drawConvertedImage(bufferStr , name) {
+    var image_proof = new Image();
+    image_proof.onload = function(){
+      var canvas = document.createElement('canvas');
+      context = canvas.getContext('2d');
+      context.canvas.width = this.width
+      context.canvas.height = this.height
+      context.drawImage(image_proof, 0,0);
+      canvas.toBlob(function(blob) {
+        saveAs(blob, name);
+      },"image/png");
+    };
+    image_proof.src = "data:image/png;base64,"+ bufferStr;
+  }
+
+  function convertBinaryToImage (data){
+    var deferred = $q.defer();
+    var str = "", array = new Uint8Array(data.Body);
+    for (var j = 0, len = array.length; j < len; j++) {
+      str += String.fromCharCode(array[j]);
+    }
+    var base64string = window.btoa(str);
+    if(base64string){
+      deferred.resolve(base64string)
+    }
+    else {
+      deferred.reject('error creating base64 data')
+    }
+    base64string = undefined;
+    str = undefined;
+    array = undefined;
+    return deferred.promise;
+  };
+
+  function getS3Images (img , cb){
+    s3.getObject({Bucket : baseURl.S3_BUCKET,Key: img.Key}, function (err, data){
+      if(err){
+        cb(err);
+      }
+      else{
+        var base64ConvertedData = convertBinaryToImage(data);
+        base64ConvertedData.then(function (bs64data){
+          drawConvertedImage(bs64data,img.Key);
+          cb();
+        },function (err){
+          cb(err);
+        })
+      }
+    });
+  }
+
   $scope.download_image = function(param){
-    var s3 = new AWS.S3()
     cfpLoadingBar.start();
     s3.listObjects(param, function (err, data){
-      cfpLoadingBar.complete()
       if(err){
-        alert(err)
+        $scope.notification.type = 'error';
+          $scope.notification.message = 'Error Downloading Images';
+          $timeout(function(){
+            $scope.hideNotificationBar()
+          },5000)
+        cfpLoadingBar.complete();
       }
       else{
         if (data.Contents.length == 0) {
+          cfpLoadingBar.complete();
           $scope.notification.type = 'error'
           $scope.notification.message = "NO PROOF IMAGES WERE FOUND"
-          $scope.$apply()
           $timeout(function(){
             $scope.hideNotificationBar()
           },5000)
@@ -1705,28 +1760,23 @@ ygVendors.controller('orderDetailsCntrl',function ($scope,$state,$stateParams,$m
           return;
         }
         else{
-          data.Contents.forEach(function (img){
-            s3.getObject({Bucket : baseURl.S3_BUCKET,Key: img.Key}, function (err, data){
-              var str = "", array = new Uint8Array(data.Body);
-              for (var j = 0, len = array.length; j < len; j++) {
-                str += String.fromCharCode(array[j]);
-              }
-              var base64string = window.btoa(str);
-              image_proof = new Image();
-              image_proof.src = "data:image/png;base64,"+base64string;
-              image_proof.onload = function(){
-                var canvas = document.createElement('canvas');
-                context = canvas.getContext('2d');
-                context.canvas.width = this.width
-                context.canvas.height = this.height
-                context.drawImage(image_proof, 0,0);
-                canvas.toBlob(function(blob) {
-                  saveAs(blob, img.Key);
-                },"image/png");
-                delete canvas;
-              }
-            }); // end of s3 getObject
-          }); // end of forEach
+          async.map( data.Contents , getS3Images , function(err, result) {
+            if(err){
+              $scope.notification.type = 'error';
+              $scope.notification.message = "err";
+              $timeout(function(){
+                $scope.hideNotificationBar()
+              },5000)
+            }
+            else {
+              cfpLoadingBar.complete();
+              $scope.notification.type = 'success';
+              $scope.notification.message = 'Images Downloaded Successfully';
+              $timeout(function(){
+                $scope.hideNotificationBar();
+              },5000)
+            }
+          });
         } // end of else
       } // end of else 
     }) // end of listObject
