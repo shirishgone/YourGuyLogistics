@@ -1706,9 +1706,6 @@ ygVendors.controller('orderDetailsCntrl',function ($scope,$q,$state,$stateParams
     else {
       deferred.reject('error creating base64 data')
     }
-    base64string = undefined;
-    str = undefined;
-    array = undefined;
     return deferred.promise;
   };
 
