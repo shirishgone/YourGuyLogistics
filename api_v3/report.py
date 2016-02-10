@@ -371,7 +371,8 @@ def cod_report():
         send_email(constants.EMAIL_COD_REPORT, email_subject, email_body)
         # ------------------------------------------------------------------------------------------------
 
-def dg_report():
+@api_view(['GET'])
+def dg_report(request):
     date = datetime.today()
     day_start = ist_day_start(date)
     day_end = ist_day_end(date)
@@ -583,7 +584,11 @@ def dg_report():
         email_body = email_body + "\n\n- YourGuy BOT"
         send_email(constants.EMAIL_DG_REPORT, email_subject, email_body)
 
-def vendor_report():
+    return Response(status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+def vendor_report(request):
     date = datetime.today()
     day_start = ist_day_start(date)
     day_end = ist_day_end(date)
@@ -630,6 +635,7 @@ def vendor_report():
             email_body = email_body + "\n\n- YourGuy BOT"
 
             send_email(vendor_mail_id, email_subject, email_body)
+            return Response(status=status.HTTP_200_OK)
         else:
             orders_for_this_vendor = OrderDeliveryStatus.objects.filter(date__gte=day_start, date__lte=day_end,
                                                                         order__vendor=vendors)
@@ -649,7 +655,7 @@ def vendor_report():
 
             email_body = "Good Evening Guys, \n\nPlease find the report of the day."
             email_body = email_body + "\nTotal orders = %s" % (orders_total_count)
-            email_body = email_body + "\nCancelled orders = %s" % (count_cancelled_orders)
+            email_body = email_body + "\nCanceled orders = %s" % (count_cancelled_orders)
             email_body = email_body + "\nExecuted orders = %s" % (count_executed_orders)
             email_body = email_body + "\nCOD supposed to be collected: %s" % (sum_of_cod_amount)
             email_body = email_body + "\nCOD collected: %s" % (sum_of_cod_collected)
@@ -659,3 +665,6 @@ def vendor_report():
             email_body = email_body + "\n\n- YourGuy BOT"
 
             send_email(vendor_mail_id, email_subject, email_body)
+
+    return Response(status=status.HTTP_200_OK)
+

@@ -44,7 +44,31 @@
     "pk": 6,
     "fields": {
       "code": "yg_da_06",
-      "title": "Cancelled"
+      "title": "Canceled"
+    }
+  },
+  {
+    "model": "yourguy.DeliveryAction",
+    "pk": 7,
+    "fields": {
+      "code": "yg_da_07",
+      "title": "Rescheduled"
+    }
+  },
+  {
+    "model": "yourguy.DeliveryAction",
+    "pk": 8,
+    "fields": {
+      "code": "yg_da_08",
+      "title": "Assigned"
+    }
+  },
+  {
+    "model": "yourguy.DeliveryAction",
+    "pk": 9,
+    "fields": {
+      "code": "yg_da_09",
+      "title": "OutForDelivery"
     }
   }
 ]

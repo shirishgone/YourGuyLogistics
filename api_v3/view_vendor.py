@@ -1,11 +1,10 @@
 from datetime import datetime
 from django.db.models.functions import Lower
 from django.shortcuts import get_object_or_404
-from rest_framework import status, authentication
+from rest_framework import authentication
 from rest_framework import viewsets
 from rest_framework.decorators import detail_route
 from rest_framework.exceptions import APIException
-from rest_framework.response import Response
 
 from api_v3 import constants
 from api_v3.utils import user_role, send_email, send_sms, is_userexists, create_token, paginate
@@ -14,6 +13,8 @@ from api_v3.views import IsAuthenticatedOrWriteOnly
 from yourguy.models import Vendor, VendorAgent, User, Industry
 from django.db.models import Q
 import json
+
+from api_v3.utils import response_access_denied, response_with_payload, response_error_with_message, response_success_with_message, response_invalid_pagenumber, response_incomplete_parameters
 
 def vendor_detail_dict(vendor):
     vendor_dict = {
@@ -62,7 +63,7 @@ class VendorViewSet(viewsets.ModelViewSet):
     queryset = Vendor.objects.all()
 
     def destroy(self, request):
-        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        return response_access_denied()
 
     def retrieve(self, request, pk=None):
         vendor = get_object_or_404(Vendor, id=pk)
@@ -80,15 +81,10 @@ class VendorViewSet(viewsets.ModelViewSet):
 
         if can_respond:
             vendor_detail = vendor_detail_dict(vendor)
-            content = {
-                "data": vendor_detail
-            }
-            return Response(content, status=status.HTTP_200_OK)
+            content = {'data': vendor_detail}
+            return response_with_payload(content, None)
         else:
-            content = {
-                'error': 'You don\'t have permissions to view this vendor details.'
-            }
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+            return response_access_denied()
 
     def list(self, request):
         role = user_role(request.user)
@@ -112,10 +108,7 @@ class VendorViewSet(viewsets.ModelViewSet):
             page = int(page)
             total_pages = int(total_vendor_count / constants.PAGINATION_PAGE_SIZE) + 1
             if page > total_pages or page <= 0:
-                response_content = {
-                    "error": "Invalid page number"
-                }
-                return Response(response_content, status=status.HTTP_400_BAD_REQUEST)
+                return response_invalid_pagenumber()
             else:
                 result_vendors = paginate(all_vendors, page)
             # ----------------------------------------------------------------------------
@@ -130,20 +123,14 @@ class VendorViewSet(viewsets.ModelViewSet):
                 "total_pages": total_pages,
                 "total_vendor_count": total_vendor_count
             }
-            return Response(response_content, status=status.HTTP_200_OK)
+            return response_with_payload(response_content, None)
         elif role == constants.VENDOR:
             vendor_agent = get_object_or_404(VendorAgent, user=request.user)
             vendor_detail = vendor_detail_dict(vendor_agent.vendor)
-            content = {
-                "data": vendor_detail
-            }
-            return Response(content, status=status.HTTP_200_OK)
+            content = {'data': vendor_detail}
+            return response_with_payload(content, None)
         else:
-            content = {
-                'error': 'You don\'t have permissions to view all vendors'
-            }
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
-
+            return response_access_denied()
 
     @detail_route(methods=['post'])
     def request_vendor_account(self, request, pk=None):
@@ -155,20 +142,15 @@ class VendorViewSet(viewsets.ModelViewSet):
             pin_code = request.data['pin_code']
             landmark = request.data.get('landmark')
         except APIException:
-            content = {
-                'error': 'Incomplete parameters',
-                'description': 'store_name, phone_number, email, full_address, pin_code, landmark[optional]'
-            }
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+            parameters = ['store_name', 'phone_number', 'email', 'full_address', 'pin_code', 'landmark(optional)']
+            return response_incomplete_parameters(parameters)
 
         # CHECK IF THE VENDOR HAS ALREADY REQUESTED FOR AN ACCOUNT
         existing_vendors = Vendor.objects.filter(phone_number=phone_number)
         existing_users = User.objects.filter(username=phone_number)
         if len(existing_vendors) > 0 or len(existing_users) > 0:
-            content = {
-                'error': 'Already exists', 'description': 'Vendor with similar details already exists'
-            }
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+            error_message = 'Vendor with similar details already exists'
+            return response_error_with_message(error_message)
 
         # CREATING NEW VENDOR
         new_vendor = Vendor.objects.create(store_name=store_name, email=email, phone_number=phone_number)
@@ -186,10 +168,8 @@ class VendorViewSet(viewsets.ModelViewSet):
         except Exception as e:
             pass
 
-        content = {
-            'status': 'Thank you! We have received your request. Our sales team will contact you soon.'
-        }
-        return Response(content, status=status.HTTP_201_CREATED)
+        success_message = 'Thank you! We have received your request. Our sales team will contact you soon.'
+        return response_success_with_message(success_message)
 
     @detail_route(methods=['put'])
     def approve(self, request, pk):
@@ -238,10 +218,8 @@ class VendorViewSet(viewsets.ModelViewSet):
 
                 vendor.save()
             except Exception as e:
-                content = {
-                    'error': 'An error occurred creating the account. Please try again'
-                }
-                return Response(content, status=status.HTTP_400_BAD_REQUEST)
+                error_message = 'An error occurred creating the account. Please try again'
+                return response_error_with_message(error_message)
 
             subject = 'YourGuy: Account created for {}'.format(vendor.store_name)
             customer_message = constants.VENDOR_ACCOUNT_APPROVED_MESSAGE.format(vendor.phone_number, password)
@@ -252,12 +230,7 @@ class VendorViewSet(viewsets.ModelViewSet):
             sales_message = constants.VENDOR_ACCOUNT_APPROVED_MESSAGE_SALES.format(vendor.store_name)
             send_email(constants.SALES_EMAIL, subject, sales_message)
 
-            content = {
-                'description': 'Your account credentials has been sent via email and SMS.'
-            }
-            return Response(content, status=status.HTTP_200_OK)
+            success_message = 'Your account credentials has been sent via email and SMS.'
+            return response_success_with_message(success_message)
         else:
-            content = {
-                'error': 'API access limited'
-            }
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+            return response_access_denied()

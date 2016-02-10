@@ -2,7 +2,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import get_object_or_404
-from yourguy.models import Address
+from yourguy.models import Address, Notification
 
 @api_view(['GET'])
 def fill_full_address(request):
@@ -66,3 +66,18 @@ def new_order_id_for_old_order_id(request):
             'new_id': new_id
         }
         return Response(content, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+def mark_all_notifications_read(request):
+    if request.user.is_staff is False:
+        content = {
+            'error': 'insufficient permissions',
+            'description': 'Only admin can access this method'
+        }
+        return Response(content, status=status.HTTP_400_BAD_REQUEST)
+    else:        
+        all_notifications = Notification.objects.filter(read = False)
+        for notification in all_notifications:
+            notification.read = True
+            notification.save()
+        return Response(status=status.HTTP_200_OK)
