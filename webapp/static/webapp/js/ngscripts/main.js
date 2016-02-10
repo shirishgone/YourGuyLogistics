@@ -1,8 +1,4 @@
-angular.module('development',[]).constant('baseURl',{
-  apiURL:'http://127.0.0.1'
-});
-
-angular.module('stage',[]).constant('baseURl',{
+angular.module('test',[]).constant('baseURl',{
   apiURL:'http://yourguytestserver.herokuapp.com/api/v1'
   ,V2apiURL:'http://yourguytestserver.herokuapp.com/api/v2'
   ,VENDOR:'vendor'
@@ -20,6 +16,45 @@ angular.module('stage',[]).constant('baseURl',{
   ,STATUS_OBJECT : [
     {status:'Intransit',value:'INTRANSIT',selected:false}
     ,{status:'Queued',value:'QUEUED',selected:false}
+    ,{status:'Delivered',value:'DELIVERED',selected:false}
+    ,{status:'Order Placed',value:'ORDER_PLACED',selected:false}
+    ,{status:'Pickup Attempted',value:'PICKUPATTEMPTED',selected:false}
+    ,{status:'Deliver Attempted',value:'DELIVERYATTEMPTED',selected:false}
+    ,{status:'Cancelled',value:'CANCELLED',selected:false}
+    ,{status:'Rejected',value:'REJECTED',selected:false}
+  ]
+  ,ROLE:{
+    dg:'deliveryguy'
+  }
+  ,MARKER : '/static/webapp/images/Map.png'
+  ,MARKER_BIKER_AVAIL : '/static/webapp/images/map_icon_biker_available.png'
+  ,MARKER_BIKER_BUSY : '/static/webapp/images/map_icon_biker_busy.png'
+  ,MARKER_WALKER_AVAIL : '/static/webapp/images/map_icon_walker_available.png'
+  ,MARKER_WALKER_BUSY : '/static/webapp/images/map_icon_walker_busy.png'
+  ,ItemByPage : 50
+  ,ACCESS_KEY : 'AKIAJTRSKA2PKKWFL5PA'
+  ,SECRET_KEY : 'grJpBB1CcH8ShN6g88acAkDjvklYdgX7OENAx4g/'
+  ,S3_BUCKET : 'yourguy-pod-test'
+});
+
+angular.module('stage',[]).constant('baseURl',{
+  apiURL:'/api/v1'
+  ,V2apiURL:'/api/v2'
+  ,VENDOR:'vendor'
+  ,OPS:'operations'
+  ,STATUS : {
+    'INTRANSIT' :'Intransit'
+    ,'QUEUED': 'Queued'
+    ,'DELIVERED':'Delivered'
+    ,'ORDER_PLACED':'Order Placed'
+    ,'PICKUPATTEMPTED' : 'Pickup Attempted'
+    ,'DELIVERYATTEMPTED' : 'Deliver Attempted'
+    ,'CANCELLED' : 'Cancelled'
+    ,'REJECTED' : 'Rejected'
+  }
+  ,STATUS_OBJECT : [
+    {status:'Intransit',value:'INTRANSIT'}
+    ,{status:'Queued',value:'QUEUED',selected:false,selected:false}
     ,{status:'Delivered',value:'DELIVERED',selected:false}
     ,{status:'Order Placed',value:'ORDER_PLACED',selected:false}
     ,{status:'Pickup Attempted',value:'PICKUPATTEMPTED',selected:false}
@@ -81,7 +116,7 @@ angular.module('production',[]).constant('baseURl',{
 });
 
 var ygVendors = angular.module('ygwebapp',['ui.router','ngCookies','ngStorage','ngAnimate','cfp.loadingBar',
-  'base64','smart-table','ui.bootstrap','gm.datepickerMultiSelect','ng-fusioncharts','ngMaterial','production'
+  'base64','smart-table','ui.bootstrap','gm.datepickerMultiSelect','ng-fusioncharts','ngMaterial','stage'
 ]);
 
 ygVendors.run(function ($rootScope, $location, $state, $localStorage,$templateCache) {
