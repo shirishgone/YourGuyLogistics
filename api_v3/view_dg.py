@@ -14,7 +14,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from api_v3 import constants
 from api_v3.utils import paginate, user_role, ist_day_start, ist_day_end, is_userexists, create_token, assign_usergroup, \
-    check_month
+    check_month, ist_datetime
 from yourguy.models import DeliveryGuy, DGAttendance, Location, OrderDeliveryStatus, User, Employee, DeliveryTeamLead, \
     ServiceablePincode, Picture
 
@@ -65,25 +65,24 @@ def dg_details_dict(delivery_guy):
     return dg_detail_dict
 
 
-def dg_attendance_list_dict(dg_attendance):
+def dg_attendance_list_dict(dg):
     dg_attendance_dict = {
-        'id': dg_attendance.dg.user.id,
-        'employee_code': dg_attendance.dg.employee_code,
-        'name': dg_attendance.dg.user.first_name,
+        'id': dg.user.id,
+        'employee_code': dg.employee_code,
+        'name': dg.user.first_name,
         'attendance': []
     }
 
     return dg_attendance_dict
 
 
-def attendance_list_datewise(date, status, login_time, logout_time, shift_start_datetime, shift_end_datetime, worked_hrs):
+def attendance_list_datewise(date, worked_hrs):
     datewise_dict = {
         'date': date,
-        'status': status,
-        'login_time': login_time,
-        'logout_time': logout_time,
-        'shift_start_datetime': shift_start_datetime,
-        'shift_end_datetime': shift_end_datetime,
+        'login_time': '',
+        'logout_time': '',
+        'shift_start_datetime': '',
+        'shift_end_datetime': '',
         'worked_hrs': worked_hrs
     }
     return datewise_dict
@@ -570,11 +569,10 @@ class DGViewSet(viewsets.ModelViewSet):
             attendance.status = constants.DG_STATUS_WORKING
             attendance.save()
             is_today_checkedIn = True
-
-        if latitude is not None and longitude is not None:
-            checkin_location = Location.objects.create(latitude=latitude, longitude=longitude)
-            attendance.checkin_location = checkin_location
-            attendance.save()
+            if latitude is not None and longitude is not None:
+                checkin_location = Location.objects.create(latitude=latitude, longitude=longitude)
+                attendance.checkin_location = checkin_location
+                attendance.save()
 
         if is_today_checkedIn is True:
             content = {
@@ -648,6 +646,7 @@ class DGViewSet(viewsets.ModelViewSet):
         dg = get_object_or_404(DeliveryGuy, pk=pk)
         dg_full_month_attendance = DGAttendance.objects.filter(dg=dg, date__year=year, date__month=month)
         dg_monthly_attendance = []
+        dg_attendance_dict = dg_attendance_list_dict(dg)
 
         import pdb
         pdb.set_trace()
@@ -683,10 +682,16 @@ class DGViewSet(viewsets.ModelViewSet):
                         dg_attendance = dg_full_month_attendance.filter(dg=dg, date=date)
                         if dg_attendance:
                             for single in dg_attendance:
-                                dg_attendance_dict = dg_attendance_list_dict(dg_attendance)
-                                worked_hours = working_hours_calculation(single)
-                                dg_attendance_dict['worked_hrs'] = worked_hours
-                                dg_monthly_attendance.append(dg_attendance_dict)
+                                if single is None:
+                                    worked_hours = 0
+                                    date = date
+                                    attendance_list_datewise(date, worked_hours)
+
+                                else:
+                                    worked_hours = working_hours_calculation(single)
+                                    attendance_list_datewise()
+                                    dg_attendance_dict['worked_hrs'] = worked_hours
+                                    dg_monthly_attendance.append(dg_attendance_dict)
                         else:
                             pass
         if dg.is_active or (dg.is_active is False and
@@ -696,7 +701,7 @@ class DGViewSet(viewsets.ModelViewSet):
                 dg_attendance = dg_full_month_attendance.filter(dg=dg, date=date)
                 if dg_attendance:
                     for single in dg_attendance:
-                        dg_attendance_dict = dg_attendance_list_dict(dg_attendance)
+                        dg_attendance_dict = dg_attendance_list_dict(dg)
                         worked_hours = working_hours_calculation(single)
                         dg_attendance_dict['worked_hrs'] = worked_hours
                         dg_monthly_attendance.append(dg_attendance_dict)
@@ -751,8 +756,9 @@ class DGViewSet(viewsets.ModelViewSet):
             end_date_string = self.request.QUERY_PARAMS.get('end_date')
 
             start_date = parse_datetime(start_date_string)
-            start_date = ist_day_start(start_date)
-            start_date = start_date.date()
+            start_date = ist_datetime(start_date)
+            # start_date = ist_day_start(start_date)
+            # start_date = start_date.date()
 
             end_date = parse_datetime(end_date_string)
             end_date = ist_day_end(end_date)
