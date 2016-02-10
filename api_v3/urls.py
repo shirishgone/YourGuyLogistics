@@ -42,7 +42,9 @@ urlpatterns = patterns(
         name='new_order_id_for_old_order_id'),
     url(r'^old_order_id_for_new_order_id/', view_internals.old_order_id_for_new_order_id,
         name='old_order_id_for_new_order_id'),
-    url(r'^fill_full_address/', view_internals.fill_full_address, name='fill_full_address')
+    url(r'^fill_full_address/', view_internals.fill_full_address, name='fill_full_address'),
+    url(r'^vendor_report/', report.vendor_report, name='vendor_report'),
+    url(r'^mark_all_notifications_read/', view_internals.mark_all_notifications_read, name='mark_all_notifications_read')    
     # --------------------------------------------------------
 )
 

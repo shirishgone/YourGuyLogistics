@@ -66,6 +66,7 @@ FRESHDESK_TEST_KEY = 'wxMmvYfVzHCaYaXi1yln'
 FRESHDESK_PRODUCTION_KEY = 'iUVZ8uJ1AywpVsQKL'
 
 # URL CONSTANTS
+COMPLAINTS_URL = 'http://app.yourguy.in/#/home/complaints'
 FRESHDESK_BASEURL = 'https://yourguy.freshdesk.com'
 URL_EXPIRY_TIME = 300  # 300 seconds
 SMS_URL = "http://api.smscountry.com/SMSCwebservice_bulk.aspx?User=yourguy&passwd=yourguydotin&mobilenumber=" \
@@ -107,6 +108,9 @@ REPORTED_CODE = 'yg_da_03'
 PICKUP_ATTEMPTED_CODE = 'yg_da_04'
 DELIVERY_ATTEMPTED_CODE = 'yg_da_05'
 CANCELLED_CODE = 'yg_da_06'
+RESCHEDULED_CODE = 'yg_da_07'
+ASSIGNED_CODE = 'yg_da_08'
+OUTFORDELIVERY_CODE = 'yg_da_09'
 
 # DG WORKING STATUS CONSTANTS
 DG_STATUS_WORKING = 'WORKING'
