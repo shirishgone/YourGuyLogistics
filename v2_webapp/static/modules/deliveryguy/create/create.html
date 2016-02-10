@@ -1,0 +1,15 @@
+<md-toolbar class="yg-toolbar md-primary md-whiteframe-z2">
+	<div class="md-toolbar-tools" ng-if="!dgList.searchDgActive">
+		<md-button ng-click="home.toggleSideNav()" class="md-icon-button" aria-label="Menu Icon">
+			<md-icon>menu</md-icon>
+		</md-button>
+		<p>Delivery Boy</p>
+		<span flex></span>
+		<md-button class="md-icon-button" aria-label="Notification Button">
+			<md-icon>notifications_none</md-icon>
+		</md-button>
+		<md-button ng-click="dgList.toggleFilter()" class="md-icon-button" aria-label="Filter Button">
+			<md-icon>filter_list</md-icon>
+		</md-button>
+	</div>
+</md-toolbar>
