@@ -62,5 +62,13 @@
       "code": "yg_da_08",
       "title": "Assigned"
     }
+  },
+  {
+    "model": "yourguy.DeliveryAction",
+    "pk": 9,
+    "fields": {
+      "code": "yg_da_09",
+      "title": "OutForDelivery"
+    }
   }
 ]
