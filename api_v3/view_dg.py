@@ -492,11 +492,10 @@ class DGViewSet(viewsets.ModelViewSet):
             attendance.status = constants.DG_STATUS_WORKING
             attendance.save()
             is_today_checkedIn = True
-
-        if latitude is not None and longitude is not None:
-            checkin_location = Location.objects.create(latitude=latitude, longitude=longitude)
-            attendance.checkin_location = checkin_location
-            attendance.save()
+            if latitude is not None and longitude is not None:
+                checkin_location = Location.objects.create(latitude=latitude, longitude=longitude)
+                attendance.checkin_location = checkin_location
+                attendance.save()
 
         if is_today_checkedIn is True:
             success_message = 'Thanks for checking in.'
