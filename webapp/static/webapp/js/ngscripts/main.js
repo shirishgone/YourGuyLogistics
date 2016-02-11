@@ -1680,17 +1680,25 @@ ygVendors.controller('orderDetailsCntrl',function ($scope,$q,$state,$stateParams
 
   function drawConvertedImage(bufferStr , name) {
     var image_proof = new Image();
+    image_proof.src = "data:image/png;base64,"+ bufferStr;
     image_proof.onload = function(){
       var canvas = document.createElement('canvas');
       context = canvas.getContext('2d');
-      context.canvas.width = this.width
-      context.canvas.height = this.height
-      context.drawImage(image_proof, 0,0);
+      if(image_proof.width >= image_proof.height){
+        var ctxImageWidht = 1024;
+        var ctxImageHeight = 768;
+      }
+      else{
+        var ctxImageWidht = 768;
+        var ctxImageHeight = 1024;
+      }
+      context.canvas.width = ctxImageWidht
+      context.canvas.height = ctxImageHeight
+      context.drawImage(image_proof, 0,0 ,image_proof.width ,image_proof.height, 0, 0, ctxImageWidht ,ctxImageHeight);
       canvas.toBlob(function(blob) {
         saveAs(blob, name);
       },"image/png");
     };
-    image_proof.src = "data:image/png;base64,"+ bufferStr;
   }
 
   function convertBinaryToImage (data){

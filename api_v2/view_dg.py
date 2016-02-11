@@ -19,6 +19,8 @@ from api.views import user_role
 from api_v2.views import paginate
 from django.db.models import Q
 from api_v2 import constants
+
+from api_v3.utils import ist_day_start, ist_day_end
     
 def dg_list_dict(delivery_guy, attendance):
     dg_list_dict = {
@@ -96,6 +98,9 @@ class DGViewSet(viewsets.ModelViewSet):
             date = parse_datetime(date_string)
         else:
             date = datetime.today()
+
+        day_start = ist_day_start(date)
+        day_end = ist_day_end(date)
         # ---------------------------------------------------------------------------  
         
         if page is not None:
@@ -136,7 +141,7 @@ class DGViewSet(viewsets.ModelViewSet):
                 if attendance_status == 'ONLY_CHECKEDIN' or attendance_status == 'NOT_CHECKEDIN' or attendance_status == 'CHECKEDIN_AND_CHECKEDOUT':
                     for delivery_guy in all_dgs:
                         try:
-                            attendance = DGAttendance.objects.filter(dg = delivery_guy, date__year = date.year, date__month = date.month, date__day = date.day).latest('date')
+                            attendance = DGAttendance.objects.filter(dg = delivery_guy, login_time__gte=day_start, login_time__lte=day_end).latest('date')
                         except Exception, e:
                             attendance = None
                             
