@@ -1,8 +1,4 @@
-angular.module('development',[]).constant('baseURl',{
-  apiURL:'http://127.0.0.1'
-});
-
-angular.module('stage',[]).constant('baseURl',{
+angular.module('test',[]).constant('baseURl',{
   apiURL:'http://yourguytestserver.herokuapp.com/api/v1'
   ,V2apiURL:'http://yourguytestserver.herokuapp.com/api/v2'
   ,VENDOR:'vendor'
@@ -20,6 +16,45 @@ angular.module('stage',[]).constant('baseURl',{
   ,STATUS_OBJECT : [
     {status:'Intransit',value:'INTRANSIT',selected:false}
     ,{status:'Queued',value:'QUEUED',selected:false}
+    ,{status:'Delivered',value:'DELIVERED',selected:false}
+    ,{status:'Order Placed',value:'ORDER_PLACED',selected:false}
+    ,{status:'Pickup Attempted',value:'PICKUPATTEMPTED',selected:false}
+    ,{status:'Deliver Attempted',value:'DELIVERYATTEMPTED',selected:false}
+    ,{status:'Cancelled',value:'CANCELLED',selected:false}
+    ,{status:'Rejected',value:'REJECTED',selected:false}
+  ]
+  ,ROLE:{
+    dg:'deliveryguy'
+  }
+  ,MARKER : '/static/webapp/images/Map.png'
+  ,MARKER_BIKER_AVAIL : '/static/webapp/images/map_icon_biker_available.png'
+  ,MARKER_BIKER_BUSY : '/static/webapp/images/map_icon_biker_busy.png'
+  ,MARKER_WALKER_AVAIL : '/static/webapp/images/map_icon_walker_available.png'
+  ,MARKER_WALKER_BUSY : '/static/webapp/images/map_icon_walker_busy.png'
+  ,ItemByPage : 50
+  ,ACCESS_KEY : 'AKIAJTRSKA2PKKWFL5PA'
+  ,SECRET_KEY : 'grJpBB1CcH8ShN6g88acAkDjvklYdgX7OENAx4g/'
+  ,S3_BUCKET : 'yourguy-pod-test'
+});
+
+angular.module('stage',[]).constant('baseURl',{
+  apiURL:'/api/v1'
+  ,V2apiURL:'/api/v2'
+  ,VENDOR:'vendor'
+  ,OPS:'operations'
+  ,STATUS : {
+    'INTRANSIT' :'Intransit'
+    ,'QUEUED': 'Queued'
+    ,'DELIVERED':'Delivered'
+    ,'ORDER_PLACED':'Order Placed'
+    ,'PICKUPATTEMPTED' : 'Pickup Attempted'
+    ,'DELIVERYATTEMPTED' : 'Deliver Attempted'
+    ,'CANCELLED' : 'Cancelled'
+    ,'REJECTED' : 'Rejected'
+  }
+  ,STATUS_OBJECT : [
+    {status:'Intransit',value:'INTRANSIT'}
+    ,{status:'Queued',value:'QUEUED',selected:false,selected:false}
     ,{status:'Delivered',value:'DELIVERED',selected:false}
     ,{status:'Order Placed',value:'ORDER_PLACED',selected:false}
     ,{status:'Pickup Attempted',value:'PICKUPATTEMPTED',selected:false}
@@ -81,7 +116,7 @@ angular.module('production',[]).constant('baseURl',{
 });
 
 var ygVendors = angular.module('ygwebapp',['ui.router','ngCookies','ngStorage','ngAnimate','cfp.loadingBar',
-  'base64','smart-table','ui.bootstrap','gm.datepickerMultiSelect','ng-fusioncharts','ngMaterial','production'
+  'base64','smart-table','ui.bootstrap','gm.datepickerMultiSelect','ng-fusioncharts','ngMaterial','stage'
 ]);
 
 ygVendors.run(function ($rootScope, $location, $state, $localStorage,$templateCache) {
@@ -1464,7 +1499,7 @@ ygVendors.controller('createProductCntrl',function ($scope,$state,$timeout,Produ
   }
 })
 
-ygVendors.controller('orderDetailsCntrl',function ($scope,$state,$stateParams,$modal,$timeout,cfpLoadingBar,Orders,baseURl,Errorhandler){
+ygVendors.controller('orderDetailsCntrl',function ($scope,$q,$state,$stateParams,$modal,$timeout,cfpLoadingBar,Orders,baseURl,Errorhandler){
   $scope.header = "Order Details"
   $scope.format = 'dd-MMMM-yyyy'
   $scope.notification = {}
@@ -1478,6 +1513,7 @@ ygVendors.controller('orderDetailsCntrl',function ($scope,$state,$stateParams,$m
   $scope.accordian.address = true
   $scope.screenWidth = window.innerWidth;
   AWS.config.update({accessKeyId: baseURl.ACCESS_KEY, secretAccessKey: baseURl.SECRET_KEY});
+  var s3 = new AWS.S3()
   
   $scope.hideNotificationBar = function(){
     $scope.notification.type = null
@@ -1613,7 +1649,7 @@ ygVendors.controller('orderDetailsCntrl',function ($scope,$state,$stateParams,$m
   $scope.downloadPop = function(){ 
     var param = {
       Bucket : baseURl.S3_BUCKET,
-      Prefix : $scope.param.orderId+'/'+$scope.param.dateId.slice(0,10)+'/pop'
+      Prefix : $scope.param.orderId+'/'+$scope.order_with_id.pickedup_datetime.slice(0,10)+'/pop'
     }
     $scope.download_image(param)
   }
@@ -1621,7 +1657,7 @@ ygVendors.controller('orderDetailsCntrl',function ($scope,$state,$stateParams,$m
   $scope.downloadPod = function(){ 
     var param = {
       Bucket : baseURl.S3_BUCKET,
-      Prefix : $scope.param.orderId+'/'+$scope.param.dateId.slice(0,10)+'/pod'
+      Prefix : $scope.param.orderId+'/'+$scope.order_with_id.pickedup_datetime.slice(0,10)+'/pod'
     }
     $scope.download_image(param)
   }
@@ -1642,19 +1678,70 @@ ygVendors.controller('orderDetailsCntrl',function ($scope,$state,$stateParams,$m
     }
   }
 
+  function drawConvertedImage(bufferStr , name) {
+    var image_proof = new Image();
+    image_proof.onload = function(){
+      var canvas = document.createElement('canvas');
+      context = canvas.getContext('2d');
+      context.canvas.width = this.width
+      context.canvas.height = this.height
+      context.drawImage(image_proof, 0,0);
+      canvas.toBlob(function(blob) {
+        saveAs(blob, name);
+      },"image/png");
+    };
+    image_proof.src = "data:image/png;base64,"+ bufferStr;
+  }
+
+  function convertBinaryToImage (data){
+    var deferred = $q.defer();
+    var str = "", array = new Uint8Array(data.Body);
+    for (var j = 0, len = array.length; j < len; j++) {
+      str += String.fromCharCode(array[j]);
+    }
+    var base64string = window.btoa(str);
+    if(base64string){
+      deferred.resolve(base64string)
+    }
+    else {
+      deferred.reject('error creating base64 data')
+    }
+    return deferred.promise;
+  };
+
+  function getS3Images (img , cb){
+    s3.getObject({Bucket : baseURl.S3_BUCKET,Key: img.Key}, function (err, data){
+      if(err){
+        cb(err);
+      }
+      else{
+        var base64ConvertedData = convertBinaryToImage(data);
+        base64ConvertedData.then(function (bs64data){
+          drawConvertedImage(bs64data,img.Key);
+          cb();
+        },function (err){
+          cb(err);
+        })
+      }
+    });
+  }
+
   $scope.download_image = function(param){
-    var s3 = new AWS.S3()
     cfpLoadingBar.start();
     s3.listObjects(param, function (err, data){
-      cfpLoadingBar.complete()
       if(err){
-        alert(err)
+        $scope.notification.type = 'error';
+          $scope.notification.message = 'Error Downloading Images';
+          $timeout(function(){
+            $scope.hideNotificationBar()
+          },5000)
+        cfpLoadingBar.complete();
       }
       else{
         if (data.Contents.length == 0) {
+          cfpLoadingBar.complete();
           $scope.notification.type = 'error'
           $scope.notification.message = "NO PROOF IMAGES WERE FOUND"
-          $scope.$apply()
           $timeout(function(){
             $scope.hideNotificationBar()
           },5000)
@@ -1670,24 +1757,23 @@ ygVendors.controller('orderDetailsCntrl',function ($scope,$state,$stateParams,$m
           return;
         }
         else{
-          data.Contents.forEach(function (img){
-            s3.getObject({Bucket : baseURl.S3_BUCKET,Key: img.Key}, function (err, data){
-              var base64string = btoa(String.fromCharCode.apply(null, data.Body))
-              var image_proof = new Image()
-              image_proof.src = "data:image/png;base64,"+base64string
-              image_proof.onload = function(){
-                var canvas = document.createElement('canvas');
-                context = canvas.getContext('2d');
-                context.canvas.width = this.width
-                context.canvas.height = this.height
-                context.drawImage(image_proof, 0,0);
-                canvas.toBlob(function(blob) {
-                  saveAs(blob, img.Key);
-                },"image/png");
-                delete canvas;
-              }
-            }); // end of s3 getObject
-          }); // end of forEach
+          async.map( data.Contents , getS3Images , function(err, result) {
+            if(err){
+              $scope.notification.type = 'error';
+              $scope.notification.message = "err";
+              $timeout(function(){
+                $scope.hideNotificationBar()
+              },5000)
+            }
+            else {
+              cfpLoadingBar.complete();
+              $scope.notification.type = 'success';
+              $scope.notification.message = 'Images Downloaded Successfully';
+              $timeout(function(){
+                $scope.hideNotificationBar();
+              },5000)
+            }
+          });
         } // end of else
       } // end of else 
     }) // end of listObject

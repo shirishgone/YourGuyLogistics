@@ -1,14 +1,13 @@
 from django.contrib.auth.models import User, Group
-from rest_framework import status, authentication
+from rest_framework import authentication
 from rest_framework import viewsets
 from rest_framework.exceptions import APIException
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
 
 from api_v3 import constants
 from api_v3.utils import user_role, is_userexists, create_token, is_vendoragentexists, log_exception
 from yourguy.models import VendorAgent, Vendor
-
+from api_v3.utils import response_access_denied, response_with_payload, response_error_with_message, response_success_with_message, response_invalid_pagenumber, response_incomplete_parameters
 
 def vendor_agent_list_dict(agent):
     vendor_agent_dict = {
@@ -36,15 +35,10 @@ class VendorAgentViewSet(viewsets.ModelViewSet):
                 vendor_agent_dict = vendor_agent_list_dict(agent)
                 vendoragents.append(vendor_agent_dict)
 
-            content = {
-                "vendor_agents": vendor_agent_dict
-            }
-            return Response(content, status=status.HTTP_200_OK)
+            content = {"vendor_agents": vendor_agent_dict}
+            return response_with_payload(content, None)
         else:
-            content = {
-                'error': 'You don\'t have permissions to view all vendor agents'
-            }
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+            return response_access_denied()
 
     def create(self, request):
         role = user_role(request.user)
@@ -55,27 +49,20 @@ class VendorAgentViewSet(viewsets.ModelViewSet):
                 name = request.data.get('name')
                 password = request.data['password']
             except APIException:
-                content = {
-                    'error': 'Incomplete params',
-                    'description': 'vendor_id, phone_number, name, password'
-                }
-                return Response(content, status=status.HTTP_400_BAD_REQUEST)
+                params = ['vendor_id', 'phone_number', 'name', 'password']
+                return response_incomplete_parameters(params)
 
             try:
                 vendor = Vendor.objects.get(id=vendor_id)
             except APIException:
-                content = {
-                    'error': 'Vendor with id doesnt exists'
-                }
-                return Response(content, status=status.HTTP_400_BAD_REQUEST)
+                error_message = 'Vendor with id doesnt exists'
+                return response_error_with_message(error_message)
 
             if is_userexists(phone_number) is True:
                 user = User.objects.get(username=phone_number)
                 if is_vendoragentexists(user) is True:
-                    content = {
-                        'error': 'Vendor Agent with same details exists'
-                    }
-                    return Response(content, status=status.HTTP_400_BAD_REQUEST)
+                    error_message = 'Vendor Agent with same details exists'
+                    return response_error_with_message(error_message)
                 else:
                     vendor_agent = VendorAgent.objects.create(user=user)
             else:
@@ -90,13 +77,7 @@ class VendorAgentViewSet(viewsets.ModelViewSet):
                 log_exception(e, 'Group settings failed for vendor agent')
 
             token = create_token(user, constants.VENDOR)
-            content = {
-                'auth_token': token.key
-            }
-            return Response(content, status=status.HTTP_201_CREATED)
-
+            content = {'auth_token': token.key}
+            return response_with_payload(content, None)
         else:
-            content = {
-                'error': 'No permissions to create vendor agent'
-            }
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+            return response_access_denied()

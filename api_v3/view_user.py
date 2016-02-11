@@ -1,13 +1,12 @@
 from django.shortcuts import get_object_or_404
-from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.exceptions import APIException
-from rest_framework.response import Response
 
 from api_v3 import constants
 from api_v3.utils import is_userexists, create_token, assign_usergroup_with_name, assign_usergroup
 from yourguy.models import User, Vendor, VendorAgent, Consumer, DeliveryGuy, Employee
 
+from api_v3.utils import response_access_denied, response_with_payload, response_error_with_message, response_success_with_message, response_invalid_pagenumber, response_incomplete_parameters
 
 @api_view(['POST'])
 def register(request):
@@ -20,37 +19,25 @@ def register(request):
         email = request.data.get('email')
         vendor_id = request.data.get('vendor_id')
     except APIException:
-        content = {
-            'error': 'Incomplete params',
-            'description': 'MANDATORY: role, phone_number, password, name. OPTIONAL: email, vendor_id'
-        }
-        return Response(content, status=status.HTTP_400_BAD_REQUEST)
+        params = ['role', 'phone_number', 'password', 'name', 'email(optional)', 'vendor_id(optional)']
+        return response_incomplete_parameters(params)
 
     # CHECK IF USER EXISTS  -----------------------------------
     if is_userexists(phone_number):
-        content = {
-            'error': 'User already exists',
-            'description': 'User with same phone number already exists'
-        }
-        return Response(content, status=status.HTTP_400_BAD_REQUEST)
+        error_message = 'User with same phone number already exists'
+        return response_error_with_message(error_message)
     # -----------------------------------------------------------
 
     # VENDOR AGENT CREATION NEEDS VENDOR_ID ----------------------
     if role == constants.VENDOR:
         if vendor_id is None:
-            content = {
-                'error': 'Incomplete params',
-                'description': 'MANDATORY: vendor_id. For creating vendor agent pass vendor_id'
-            }
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
-
+            params = ['vendor_id']
+            return response_incomplete_parameters(params)
         try:
             vendor = Vendor.objects.get(id=vendor_id)
         except APIException:
-            content = {
-                'error': 'Vendor with given id doesnt exists'
-            }
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+            error_message = 'Vendor with given id doesnt exists'
+            return response_error_with_message(error_message)
     # ---------------------------------------------------------------
 
     user = User.objects.create_user(username=phone_number, password=password, first_name=name)
@@ -95,7 +82,7 @@ def register(request):
         content = {'auth_token': None,
                    'user created for group: ': role}
 
-    return Response(content, status=status.HTTP_201_CREATED)
+    return response_with_payload(content, None)
 
 # DO NOT DELETE
 # Reset password implementation will be implemented later on
