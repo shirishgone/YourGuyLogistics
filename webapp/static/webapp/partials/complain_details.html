@@ -75,8 +75,8 @@
 							<input type="text" ng-model="ticket_data.note.helpdesk_note.private" ng-init="ticket_data.note.helpdesk_note.private = false" style="display: none;">
 							<div>
 								<a ng-click="hideNotes()" class="btn btn-default" >Cancel</a>
-								<button type="button" class="btn btn-info" ng-show="submit_notes" ng-click="submitNote(ticket_data)" >Add Notes</button>
-								<button type="button" class="btn btn-danger" ng-show="submit_resolve" ng-click="closeComplain(ticket_data)" >Resolve</button>
+								<button type="button" class="btn btn-info" ng-show="submit_notes" ng-click="submitNote(ticket_data)" ng-disabled="!ticket_data.note.helpdesk_note.body">Add Notes</button>
+								<button type="button" class="btn btn-danger" ng-show="submit_resolve" ng-click="closeComplain(ticket_data)" ng-disabled="!ticket_data.note.helpdesk_note.body" >Resolve</button>
 							</div>
 						</div>
 					</div>
