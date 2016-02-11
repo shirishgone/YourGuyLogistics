@@ -390,11 +390,11 @@ def dg_report(request):
         Q(order_status=constants.ORDER_STATUS_OUTFORDELIVERY) |
         Q(order_status=constants.ORDER_STATUS_DELIVERED)
     )
+    delivery_statuses_today = delivery_statuses_today.exclude(order_status=constants.ORDER_STATUS_PICKUP_ATTEMPTED)
     all_dgs = delivery_statuses_today.values('delivery_guy__user__username'). \
         annotate(sum_of_cod_collected=Sum('cod_collected_amount'), sum_of_cod_amount=Sum('order__cod_amount'))
 
     delivery_statuses_without_attempted = delivery_statuses_today.exclude(order_status=constants.ORDER_STATUS_DELIVERY_ATTEMPTED)
-    delivery_statuses_without_attempted = delivery_statuses_without_attempted.exclude(order_status=constants.ORDER_STATUS_PICKUP_ATTEMPTED)
     all_dgs_2 = delivery_statuses_without_attempted.values('delivery_guy__user__username'). \
         annotate(sum_of_cod_collected_without_attempted=Sum('cod_collected_amount'),
                  sum_of_cod_amount_without_attempted=Sum('order__cod_amount'))
