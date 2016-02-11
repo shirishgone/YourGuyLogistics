@@ -378,7 +378,7 @@ def dg_report(request):
     day_end = ist_day_end(date)
 
     # Number of dgs working today ----------------------------------------------------------------------
-    dg_working_today_count = DGAttendance.objects.filter(date=date).count()
+    dg_working_today_count = DGAttendance.objects.filter(login_time__gte=day_start, login_time__lte=day_end).count()
 
     # --------------------------------------------
     delivery_statuses_today = OrderDeliveryStatus.objects.filter(date__gte=day_start, date__lte=day_end)
@@ -393,21 +393,22 @@ def dg_report(request):
     all_dgs = delivery_statuses_today.values('delivery_guy__user__username'). \
         annotate(sum_of_cod_collected=Sum('cod_collected_amount'), sum_of_cod_amount=Sum('order__cod_amount'))
 
-    delivery_statuses_without_delivery_attempted = delivery_statuses_today.exclude(order_status=constants.ORDER_STATUS_DELIVERY_ATTEMPTED)
-    all_dgs_2 = delivery_statuses_without_delivery_attempted.values('delivery_guy__user__username'). \
-        annotate(sum_of_cod_collected_without_delivery_attempted=Sum('cod_collected_amount'),
-                 sum_of_cod_amount_without_delivery_attempted=Sum('order__cod_amount'))
+    delivery_statuses_without_attempted = delivery_statuses_today.exclude(order_status=constants.ORDER_STATUS_DELIVERY_ATTEMPTED)
+    delivery_statuses_without_attempted = delivery_statuses_without_attempted.exclude(order_status=constants.ORDER_STATUS_PICKUP_ATTEMPTED)
+    all_dgs_2 = delivery_statuses_without_attempted.values('delivery_guy__user__username'). \
+        annotate(sum_of_cod_collected_without_attempted=Sum('cod_collected_amount'),
+                 sum_of_cod_amount_without_attempted=Sum('order__cod_amount'))
 
-    # This is for handling delivery attempted case in COD
-    # In delivery attempted case, COD is not considered, but the order is still considered to be executed order
+    # This is for handling delivery attempted and pickup attempted case in COD
+    # In both these cases, COD is not considered, but the order is still considered to be executed order
     for dg in all_dgs:
         dg_phone_number = dg['delivery_guy__user__username']
         filtered_dgs = all_dgs_2.filter(delivery_guy__user__username=dg_phone_number)
         if len(filtered_dgs) ==1:
             single = filtered_dgs[0]
             # for single in filtered_dgs:
-            dg['sum_of_cod_collected'] = single['sum_of_cod_collected_without_delivery_attempted']
-            dg['sum_of_cod_amount'] = single['sum_of_cod_amount_without_delivery_attempted']
+            dg['sum_of_cod_collected'] = single['sum_of_cod_collected_without_attempted']
+            dg['sum_of_cod_amount'] = single['sum_of_cod_amount_without_attempted']
         else:
             dg['sum_of_cod_collected'] = 0
             dg['sum_of_cod_amount'] = 0
@@ -609,11 +610,37 @@ def vendor_report(request):
         Q(order_status=constants.ORDER_STATUS_CANCELLED)
     )
     delivery_statuses_cancelled_today = delivery_statuses_today.filter(order_status=constants.ORDER_STATUS_CANCELLED)
-    delivery_statuses_executed_today = delivery_statuses_today.filter(order_status=constants.ORDER_STATUS_DELIVERED)
+
+    # Executed orders are delivery attempted and delivered orders since we charge the vendors under both these cases
+    delivery_statuses_executed_today = delivery_statuses_today.filter(Q(order_status=constants.ORDER_STATUS_DELIVERY_ATTEMPTED) |
+                                                                      Q(order_status=constants.ORDER_STATUS_DELIVERED))
 
     vendors_tracked = delivery_statuses_today.values('order__vendor__store_name'). \
         annotate(sum_of_cod_collected=Sum('cod_collected_amount'), sum_of_cod_amount=Sum('order__cod_amount'),
                  total_orders=Count('order'))
+
+    # Adding COD exclusions for cancelled, pickup attempted and delivery attempted amount
+    delivery_statuses_without_attempted = delivery_statuses_today.exclude(order_status=constants.ORDER_STATUS_DELIVERY_ATTEMPTED)
+    delivery_statuses_without_attempted = delivery_statuses_without_attempted.exclude(order_status=constants.ORDER_STATUS_PICKUP_ATTEMPTED)
+    delivery_statuses_without_attempted = delivery_statuses_without_attempted.exclude(order_status=constants.ORDER_STATUS_CANCELLED)
+    vendors_tracked_2 = delivery_statuses_without_attempted.values('order__vendor__store_name'). \
+        annotate(sum_of_cod_collected_without_attempted=Sum('cod_collected_amount'),
+                 sum_of_cod_amount_without_attempted=Sum('order__cod_amount'), total_orders=Count('order'))
+
+    # This is for handling delivery and pickup attempted case in COD
+    # In both these cases, COD is not considered, but the order is still considered to be executed order
+    for vendor in vendors_tracked:
+        vendor_store_name = vendor['order__vendor__store_name']
+        filtered_vendors = vendors_tracked_2.filter(order__vendor__store_name=vendor_store_name)
+        if len(filtered_vendors) ==1:
+            single = filtered_vendors[0]
+            # for single in filtered_dgs:
+            vendor['sum_of_cod_collected'] = single['sum_of_cod_collected_without_attempted']
+            vendor['sum_of_cod_amount'] = single['sum_of_cod_amount_without_attempted']
+        else:
+            vendor['sum_of_cod_collected'] = 0
+            vendor['sum_of_cod_amount'] = 0
+    #=================================================================
 
     for item in vendors_tracked:
         vendor_name = item['order__vendor__store_name']
@@ -665,6 +692,7 @@ def vendor_report(request):
             email_body = email_body + "\n\n- YourGuy BOT"
 
             send_email(vendor_mail_id, email_subject, email_body)
+
 
     return Response(status=status.HTTP_200_OK)
 
