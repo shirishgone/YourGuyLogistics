@@ -622,6 +622,7 @@ def vendor_report(request):
     # Adding COD exclusions for cancelled, pickup attempted and delivery attempted amount
     delivery_statuses_without_attempted = delivery_statuses_today.exclude(order_status=constants.ORDER_STATUS_DELIVERY_ATTEMPTED)
     delivery_statuses_without_attempted = delivery_statuses_without_attempted.exclude(order_status=constants.ORDER_STATUS_PICKUP_ATTEMPTED)
+    delivery_statuses_without_attempted = delivery_statuses_without_attempted.exclude(order_status=constants.ORDER_STATUS_CANCELLED)
     vendors_tracked_2 = delivery_statuses_without_attempted.values('order__vendor__store_name'). \
         annotate(sum_of_cod_collected_without_attempted=Sum('cod_collected_amount'),
                  sum_of_cod_amount_without_attempted=Sum('order__cod_amount'), total_orders=Count('order'))
