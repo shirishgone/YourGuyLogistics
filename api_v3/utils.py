@@ -1,6 +1,7 @@
 import base64
 import os
 import string
+import calendar
 from datetime import time, datetime, timedelta
 
 import requests
@@ -376,3 +377,15 @@ def inform_dgs_about_orders_assigned():
 def delivery_actions(code):
     return DeliveryAction.objects.get(code=code)
 
+
+# Util method for calculating the month start date and end date
+def check_month(month, year):
+    month = int(month)
+    year = int(year)
+    start_date = datetime(year, month, 1)
+    end_date = calendar.monthrange(year, month)[1]
+    end_date = datetime(year, month, end_date)
+    return {
+        'start_date': start_date,
+        'end_date': end_date
+    }
