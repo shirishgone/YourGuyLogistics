@@ -568,11 +568,8 @@ class DGViewSet(viewsets.ModelViewSet):
             month = request.data.get('month')
             year = request.data.get('year')
         except Exception as e:
-            content = {
-                'error': 'Error in params: month, year'
-            }
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
-
+            params = ['month', 'year']
+            return response_incomplete_parameters(params)
         # Util method to generate the start_date and end_date based on the month and year input
         dates = check_month(month, year)
         start_date = dates['start_date']
@@ -582,7 +579,6 @@ class DGViewSet(viewsets.ModelViewSet):
         rule_daily = rrule(DAILY, dtstart=start_date, until=end_date)
         alldates = list(rule_daily)
 
-<<<<<<< HEAD
         dg = get_object_or_404(DeliveryGuy, pk=pk)
         dg_full_month_attendance = DGAttendance.objects.filter(dg=dg, date__year=year, date__month=month)
         dg_monthly_attendance = []
@@ -655,11 +651,8 @@ class DGViewSet(viewsets.ModelViewSet):
         content = {
             'dg_monthly_attendance': dg_monthly_attendance
         }
-        return Response(content, status=status.HTTP_200_OK)
-=======
-        content = {'attendance': all_dgs_array}
         return response_with_payload(content, None)
->>>>>>> stage
+
 
     @list_route()
     def all_dg_attendance(self, request):
