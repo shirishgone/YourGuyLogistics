@@ -2883,6 +2883,7 @@ ygVendors.controller('detailComplaintsCntrl', function ($scope,$stateParams,Stor
   }
 
   $scope.hideNotes = function(){
+    $scope.ticket_data.note.helpdesk_note.body = undefined;
     $scope.show_note_section = false;
     $scope.submit_resolve = false;
     $scope.submit_notes = false;
@@ -2917,7 +2918,8 @@ ygVendors.controller('detailComplaintsCntrl', function ($scope,$stateParams,Stor
         alert(status.error)
       }
       else{
-        cfpLoadingBar.complete()
+        cfpLoadingBar.complete();
+        $scope.ticket_data.note.helpdesk_note.body = undefined;
         $scope.show_note_section = false;
         $scope.submit_notes = false;
         $scope.getTicket(ticket_id)
@@ -2942,11 +2944,12 @@ ygVendors.controller('detailComplaintsCntrl', function ($scope,$stateParams,Stor
     Complaints.closeComplain(data).finally(function(){
       var status = Errorhandler.getStatus()
       if(status.has_error){
-        cfpLoadingBar.complete()
+        cfpLoadingBar.complete();
         alert(status.error)
       }
       else{
-        cfpLoadingBar.complete()
+        cfpLoadingBar.complete();
+        $scope.ticket_data.note.helpdesk_note.body = undefined;
         $scope.show_note_section = false;
         $scope.submit_resolve = false;
         $scope.getTicket(ticket_id)
