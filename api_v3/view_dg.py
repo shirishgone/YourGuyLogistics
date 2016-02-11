@@ -227,9 +227,7 @@ class DGViewSet(viewsets.ModelViewSet):
                         or attendance_status == 'CHECKEDIN_AND_CHECKEDOUT':
                     for delivery_guy in all_dgs:
                         try:
-                            attendance = DGAttendance.objects.filter(dg=delivery_guy, date__year=date.year,
-                                                                     date__month=date.month, date__day=date.day).latest(
-                                'date')
+                            attendance = DGAttendance.objects.filter(dg = delivery_guy, login_time__gte=day_start, login_time__lte=day_end).latest('date')
                         except Exception as e:
                             attendance = None
 
