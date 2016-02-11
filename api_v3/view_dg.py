@@ -498,36 +498,39 @@ class DGViewSet(viewsets.ModelViewSet):
         longitude = request.data.get('longitude')
 
         dg = get_object_or_404(DeliveryGuy, user=request.user)
+        if dg.is_active:
+            dg.status = constants.DG_STATUS_AVAILABLE
+            if app_version is not None:
+                dg.app_version = app_version
+            dg.save()
 
-        dg.status = constants.DG_STATUS_AVAILABLE
-        if app_version is not None:
-            dg.app_version = app_version
-        dg.save()
+            today = datetime.now()
+            is_today_checkedIn = False
 
-        today = datetime.now()
-        is_today_checkedIn = False
+            attendance_list = DGAttendance.objects.filter(dg=dg, date__year=today.year, date__month=today.month,
+                                                          date__day=today.day)
 
-        attendance_list = DGAttendance.objects.filter(dg=dg, date__year=today.year, date__month=today.month,
-                                                      date__day=today.day)
+            if len(attendance_list) > 0:
+                is_today_checkedIn = True
 
-        if len(attendance_list) > 0:
-            is_today_checkedIn = True
-
-        if is_today_checkedIn == False:
-            attendance = DGAttendance.objects.create(dg=dg, date=today, login_time=today)
-            attendance.status = constants.DG_STATUS_WORKING
-            attendance.save()
-            is_today_checkedIn = True
-            if latitude is not None and longitude is not None:
-                checkin_location = Location.objects.create(latitude=latitude, longitude=longitude)
-                attendance.checkin_location = checkin_location
+            if is_today_checkedIn == False:
+                attendance = DGAttendance.objects.create(dg=dg, date=today, login_time=today)
+                attendance.status = constants.DG_STATUS_WORKING
                 attendance.save()
+                is_today_checkedIn = True
+                if latitude is not None and longitude is not None:
+                    checkin_location = Location.objects.create(latitude=latitude, longitude=longitude)
+                    attendance.checkin_location = checkin_location
+                    attendance.save()
 
-        if is_today_checkedIn is True:
-            success_message = 'Thanks for checking in.'
-            return response_success_with_message(success_message)
+            if is_today_checkedIn is True:
+                success_message = 'Thanks for checking in.'
+                return response_success_with_message(success_message)
+            else:
+                error_message = 'something went wrong'
+                return response_error_with_message(error_message)
         else:
-            error_message = 'something went wrong'
+            error_message = 'Deactivated DG cannot perform checkin'
             return response_error_with_message(error_message)
 
     @detail_route(methods=['put'])
