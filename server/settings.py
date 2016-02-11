@@ -27,7 +27,7 @@ FIXTURE_DIRS = (
 SECRET_KEY = 'vtyju!_%klrjx-_y=@@1@v8p$4(jvr5#6t@nty#$yd8qfpdr(c'
 
 # ENVIRONMENT = PRODUCTION/ STAGE/ LOCAL
-ENVIRONMENT = 'LOCAL'
+ENVIRONMENT = 'STAGE'
 
 # Broker Settings for PRODUCTION/ STAGE/ LOCAL
 if ENVIRONMENT == 'LOCAL':
