@@ -555,7 +555,9 @@ class OrderViewSet(viewsets.ViewSet):
         filter_time_end = request.QUERY_PARAMS.get('time_end', None)
         is_cod = request.QUERY_PARAMS.get('is_cod', None)
         delivery_ids = request.QUERY_PARAMS.get('delivery_ids', None)
-
+        pincodes = request.QUERY_PARAMS.get('pincodes', None)
+        is_retail = request.QUERY_PARAMS.get('is_retail', None)
+        
         # ORDER STATUS CHECK --------------------------------------------------
         order_statuses = []
         if filter_order_status is not None:
@@ -626,7 +628,19 @@ class OrderViewSet(viewsets.ViewSet):
         if vendor is not None:
             delivery_status_queryset = delivery_status_queryset.filter(order__vendor=vendor)
         # ----------------------------------------------------------------------------
+        
+        # RETAIL VENDOR FILTER -------------------------------------------------------
+        if role == constants.OPERATIONS and is_retail is not None:
+            is_retail = json.loads(is_retail.lower())
+            delivery_status_queryset = delivery_status_queryset.filter(order__vendor__is_retail=is_retail)
+        # ----------------------------------------------------------------------------
 
+        # PINCODE FILTERING ----------------------------------------------------------
+        if pincodes is not None:
+            pincodes_array = pincodes.split(',')
+            delivery_status_queryset = delivery_status_queryset.filter(Q(order__pickup_address__pin_code__in = pincodes_array) | Q(order__delivery_address__pin_code__in = pincodes_array))
+        # ----------------------------------------------------------------------------
+        
         # COD FILTERING --------------------------------------------------------------
         if is_cod is not None:
             is_cod_bool = json.loads(is_cod.lower())
