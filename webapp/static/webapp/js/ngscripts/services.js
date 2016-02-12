@@ -407,9 +407,11 @@ ygVendors.factory('GetJsonData', function ($http,$q,baseURl,StoreSession,$localS
 
         var getvendor = $http.get(baseURl.V2apiURL+'/vendor/');
         var dg = $http.get(baseURl.apiURL+'/deliveryguy/');
-        $q.all([getvendor,dg]).then(function (value){
+        var pin_code = $http.get(baseURl.V3apiURL+'/servicible_pincodes/');
+        $q.all([getvendor,dg,pin_code]).then(function (value){
             jsonData.vendors = value[0].data;
             jsonData.dgs = value[1].data;
+            jsonData.pin_codes = value[2].data;
             deferred.resolve(jsonData);
         }, function (error){
             deferred.reject("Could not retrieve data! Please reload the page"+error);

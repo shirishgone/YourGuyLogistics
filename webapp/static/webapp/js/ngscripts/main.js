@@ -1,6 +1,7 @@
 angular.module('test',[]).constant('baseURl',{
   apiURL:'http://yourguytestserver.herokuapp.com/api/v1'
   ,V2apiURL:'http://yourguytestserver.herokuapp.com/api/v2'
+  ,V3apiURL :'http://yourguytestserver.herokuapp.com/api/v3'
   ,VENDOR:'vendor'
   ,OPS:'operations'
   ,STATUS : {
@@ -40,6 +41,7 @@ angular.module('test',[]).constant('baseURl',{
 angular.module('stage',[]).constant('baseURl',{
   apiURL:'/api/v1'
   ,V2apiURL:'/api/v2'
+  ,V3apiURL : '/api/v3'
   ,VENDOR:'vendor'
   ,OPS:'operations'
   ,STATUS : {
@@ -79,6 +81,7 @@ angular.module('stage',[]).constant('baseURl',{
 angular.module('production',[]).constant('baseURl',{
   apiURL:'/api/v1'
   ,V2apiURL:'/api/v2'
+  ,V3apiURL : '/api/v3'
   ,VENDOR:'vendor'
   ,OPS:'operations'
   ,STATUS : {
@@ -528,8 +531,9 @@ ygVendors.controller('homeCntrl', function ($state,$scope,$interval,StoreSession
       $scope.user.name  = baseURl.OPS.toUpperCase()
       GetJsonData.fetchFromServer().then(function (data){
         $scope.vendors = data.vendors.data;
-        $scope.area_codes = data.areas;
+        $scope.pin_codes = data.pin_codes;
         $scope.dgs = data.dgs;
+        console.log(data)
         $scope.dgs.unshift({user :{username:'UNASSIGNED',first_name:'Unassigned'}})
         $scope.dgs.unshift({user :{username:'UNASSIGNED_DELIVERY',first_name:'Unassigned Delivery'}})
         $scope.dgs.unshift({user :{username:'UNASSIGNED_PICKUP',first_name:'Unassigned Pickup'}})
