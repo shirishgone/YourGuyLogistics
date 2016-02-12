@@ -1,5 +1,5 @@
 import json
-from base64 import encode
+from base64 import encodestring
 
 import requests
 from django.shortcuts import get_object_or_404
@@ -14,10 +14,7 @@ def auth_headers():
     # TODO:
     # freshdesk_key = os.environ['freshdesk_key']
     # Can save the keys in Heroku Shared preferences and fetch it dynamically
-    freshdesk_test_key = constants.FRESHDESK_TEST_KEY
-    freshdesk_production_key = constants.FRESHDESK_PRODUCTION_KEY
-
-    base64string = encode(freshdesk_production_key).replace('\n', '')
+    base64string = encodestring(constants.FRESHDESK_KEY).replace('\n', '')
     headers = {
         'Authorization': 'Basic %s' % base64string, 'Content-Type': 'application/json;charset=UTF-8'
     }
@@ -68,11 +65,30 @@ def create_ticket(request):
         error_message = 'Something went wrong'
         return response_error_with_message(error_message)
 
+@api_view(['GET'])
+def get_open_ticket_count(request):
+    role = user_role(request.user)
+    if role == constants.VENDOR:
+        vendor_agent = get_object_or_404(VendorAgent, user=request.user)
+        vendor = vendor_agent.vendor
+        url = '{}/helpdesk/tickets.json?email={}&filter_name=new_and_my_open'.format(constants.FRESHDESK_BASEURL,
+                                                                                 vendor.email)
+    elif role == constants.OPERATIONS:
+        url = '{}/helpdesk/tickets/filter/new_and_my_open?format=json'.format(constants.FRESHDESK_BASEURL)
+    else:
+        return response_access_denied()
+    try:
+        r = requests.get(url, headers=auth_headers())
+        content = r.json()
+        response = {'count':len(content)}
+        return response_with_payload(response, None)
+    except Exception as e:
+        error_message = 'Something went wrong'
+        return response_error_with_message(error_message)
 
 @api_view(['GET'])
 def get_ticket(request):
     ticket_id = request.QUERY_PARAMS.get('ticket_id', None)
-
     url = '{}/helpdesk/tickets/{}.json'.format(constants.FRESHDESK_BASEURL, ticket_id)
     try:
         r = requests.get(url, headers=auth_headers())

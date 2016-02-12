@@ -46,6 +46,27 @@ def all_tickets(request):
 		return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
+def get_open_ticket_count(request):
+    role = user_role(request.user)
+    if role == constants.VENDOR:
+        vendor_agent = get_object_or_404(VendorAgent, user=request.user)
+        vendor = vendor_agent.vendor
+        url = '{}/helpdesk/tickets.json?email={}&filter_name=new_and_my_open'.format(constants.FRESHDESK_BASEURL,
+                                                                                 vendor.email)
+    elif role == constants.OPERATIONS:
+        url = '{}/helpdesk/tickets/filter/new_and_my_open?format=json'.format(constants.FRESHDESK_BASEURL)
+    else:
+        return response_access_denied()
+    try:
+        r = requests.get(url, headers=auth_headers())
+        content = r.json()
+        response = {'count':len(content)}
+        return Response(response, status = status.HTTP_200_OK)
+    except Exception, e:
+		content = {'error':'Something went wrong'}
+		return Response(content, status = status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
 def groups(request):	
 	url = '{}/groups.json'.format(constants.FRESHDESK_BASEURL)
 	try:

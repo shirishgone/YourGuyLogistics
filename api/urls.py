@@ -30,6 +30,7 @@ urlpatterns = patterns(
 	url(r'^freshdesk/get_ticket', view_freshdesk.get_ticket, name='freshdesk_get_ticket'),
 	url(r'^freshdesk/add_note', view_freshdesk.add_note, name='freshdesk_add_note'),
 	url(r'^freshdesk/resolve', view_freshdesk.resolve, name='freshdesk_resolve'),
+	url(r'^freshdesk/get_open_ticket_count', view_freshdesk.get_open_ticket_count, name='get_open_ticket_count'),
 )
 
 
