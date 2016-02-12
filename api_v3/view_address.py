@@ -6,7 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 
 from api_v3 import constants
 from api_v3.utils import user_role
-from yourguy.models import Address, VendorAgent
+from yourguy.models import Address, VendorAgent, ServiceablePincode
 from api_v3.utils import response_access_denied, response_with_payload, response_error_with_message, response_success_with_message, response_invalid_pagenumber, response_incomplete_parameters
 
 def create_address(full_address, pin_code, landmark):
@@ -58,5 +58,23 @@ def remove_address(request):
         vendor.addresses.remove(address)
         success_message = 'Address removed successfully'
         return response_success_with_message(success_message)
+    else:
+        return response_access_denied()
+
+
+@api_view(['GET'])
+@permission_classes((IsAuthenticated,))
+def servicible_pincodes(request):
+    role = user_role(request.user)
+    if role == constants.VENDOR or role == constants.OPERATIONS:
+        all_pincodes = ServiceablePincode.objects.all()
+        result = []
+        for pincode in all_pincodes:
+            pincode_dict = {
+                'pincode':pincode.pincode,
+                'city':pincode.city.city_name
+            }
+            result.append(pincode_dict)
+        return response_with_payload(result, None)
     else:
         return response_access_denied()

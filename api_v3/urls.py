@@ -18,6 +18,7 @@ urlpatterns = patterns(
     url(r'^register/', view_user.register, name='Registration'),
     # url(r'^reset_password_link/', view_user.reset_password_link, name='reset_password_link'),
     # url(r'^reset_password/', view_user.reset_password, name='reset_password'),
+    url(r'^servicible_pincodes/', view_address.servicible_pincodes, name='servicible_pincodes'),
     url(r'^add_address/', view_address.add_address, name='add_address'),
     url(r'^remove_address', view_address.remove_address, name='remove_address'),
     url(r'^dashboard_stats/', view_dashboard.dashboard_stats, name='dashboard_stats'),
