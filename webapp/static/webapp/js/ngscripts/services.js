@@ -491,6 +491,10 @@ ygVendors.factory('Complaints', function ($http,$q,baseURl,Errorhandler){
         return $http.post(baseURl.apiURL+"/freshdesk/resolve/",data).then(Errorhandler.successStatus,Errorhandler.errorStatus);
     };
 
+    complaints.getComplaintsCount = function(){
+        return $http.get(baseURl.apiURL+'/freshdesk/get_open_ticket_count/');
+    };
+
     return complaints;
 });
 
