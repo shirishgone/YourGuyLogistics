@@ -24,13 +24,14 @@ def auth_headers():
 @api_view(['GET'])
 def all_tickets(request):
     role = user_role(request.user)
+    page = request.QUERY_PARAMS.get('page', 1)
     if role == constants.VENDOR:
         vendor_agent = get_object_or_404(VendorAgent, user=request.user)
         vendor = vendor_agent.vendor
-        url = '{}/helpdesk/tickets.json?email={}&filter_name=all_tickets'.format(constants.FRESHDESK_BASEURL,
-                                                                                 vendor.email)
+        url = '{}/api/v2/tickets?&email={}&per_page={}&page={}'.format(constants.FRESHDESK_BASEURL,
+                                                                                 vendor.email, constants.FRESHDESK_PAGE_COUNT, page)
     elif role == constants.OPERATIONS:
-        url = '{}/helpdesk/tickets/filter/all_tickets?format=json'.format(constants.FRESHDESK_BASEURL)
+        url = '{}/api/v2/tickets?&per_page={}&page={}'.format(constants.FRESHDESK_BASEURL, constants.FRESHDESK_PAGE_COUNT, page)
     else:
         return response_access_denied()
     try:
