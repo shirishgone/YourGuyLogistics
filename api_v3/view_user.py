@@ -2,11 +2,116 @@ from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view
 from rest_framework.exceptions import APIException
 
+import requests
+import json
+
 from api_v3 import constants
-from api_v3.utils import is_userexists, create_token, assign_usergroup_with_name, assign_usergroup
+from api_v3.utils import is_userexists, create_token, assign_usergroup_with_name, assign_usergroup, user_role, login_url
 from yourguy.models import User, Vendor, VendorAgent, Consumer, DeliveryGuy, Employee
 
 from api_v3.utils import response_access_denied, response_with_payload, response_error_with_message, response_success_with_message, response_invalid_pagenumber, response_incomplete_parameters
+
+
+def dg_details_dict(delivery_guy):
+    dg_detail_dict = {
+        'id': delivery_guy.id,
+        'username': delivery_guy.user.username,
+        'shift_start_datetime': delivery_guy.shift_start_datetime,
+        'shift_end_datetime': delivery_guy.shift_end_datetime,
+        'is_teamlead': delivery_guy.is_teamlead,
+        'role': ''
+    }
+    return dg_detail_dict
+
+
+def vendor_details_dict(vendor_agent):
+    vendor_detail_dict = {
+        'vendor_agent_username': vendor_agent.user.username,
+        'vendor_agent_name': vendor_agent.user.first_name,
+        'vendor_store_name': vendor_agent.vendor.store_name,
+        'role': ''
+    }
+    return vendor_detail_dict
+
+
+def emp_details_dict(emp):
+    emp_detail_dict = {
+        'vendor_agent_name': emp.user.first_name,
+        'role': ''
+    }
+    return emp_detail_dict
+
+
+def auth_headers():
+    headers = {
+        'Content-Type': 'application/json;charset=UTF-8'
+    }
+    return headers
+
+
+# Login api is being developed as a wrapper around the djoser login api
+@api_view(['POST'])
+def login(request):
+    try:
+        username = request.data.get('username')
+        password = request.data.get('password')
+    except APIException:
+        params = ['username', 'password']
+        return response_incomplete_parameters(params)
+
+    try:
+        url = login_url()
+    except Exception as e:
+        error_message = 'Incorrect url generated from the util'
+        return response_error_with_message(error_message)
+
+    try:
+        user = User.objects.get(username=username)
+        role = user_role(user)
+    except Exception as e:
+        error_message = 'No such user found or No such token found for the role'
+        return response_error_with_message(error_message)
+
+    if role == constants.DELIVERY_GUY:
+        dg = get_object_or_404(DeliveryGuy, user=user)
+        if dg.is_active is True:
+            try:
+                r = requests.post(url, data=json.dumps(request.data), headers=auth_headers())
+                content = r.json()
+                user_details = dg_details_dict(dg)
+                user_details['role'] = role
+                content['user_details'] = user_details
+                return response_with_payload(content, None)
+            except Exception as e:
+                error_message = 'Something went wrong'
+                return response_error_with_message(error_message)
+        else:
+            error_message = 'This DG is deactive'
+            return response_error_with_message(error_message)
+    elif role == constants.VENDOR:
+        vendor_agent = get_object_or_404(VendorAgent, user=user)
+        try:
+            r = requests.post(url, data=json.dumps(request.data), headers=auth_headers())
+            content = r.json()
+            vendor_details = vendor_details_dict(vendor_agent)
+            vendor_details['role'] = role
+            content['vendor_details'] = vendor_details
+            return response_with_payload(content, None)
+        except Exception as e:
+            error_message = 'Something went wrong'
+            return response_error_with_message(error_message)
+    else:
+        emp = get_object_or_404(Employee, user=user)
+        try:
+            r = requests.post(url, data=json.dumps(request.data), headers=auth_headers())
+            content = r.json()
+            emp_details = emp_details_dict(emp)
+            emp_details['role'] = emp.department
+            content['emp_details'] = emp_details
+            return response_with_payload(content, None)
+        except Exception as e:
+            error_message = 'Something went wrong'
+            return response_error_with_message(error_message)
 
 @api_view(['POST'])
 def register(request):

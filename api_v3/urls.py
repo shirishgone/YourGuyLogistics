@@ -16,6 +16,7 @@ urlpatterns = patterns(
     'api_v3.views',
     url(r'^auth/', include('djoser.urls')),
     url(r'^register/', view_user.register, name='Registration'),
+    url(r'^login/', view_user.login, name='login'),
     # url(r'^reset_password_link/', view_user.reset_password_link, name='reset_password_link'),
     # url(r'^reset_password/', view_user.reset_password, name='reset_password'),
     url(r'^add_address/', view_address.add_address, name='add_address'),

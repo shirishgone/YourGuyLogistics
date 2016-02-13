@@ -68,6 +68,9 @@ else:
   FRESHDESK_KEY = 'iUVZ8uJ1AywpVsQKL'
 
 # URL CONSTANTS
+STAGE_URL = 'https://yourguytestserver.herokuapp.com'
+PROD_URL = 'https://yourguy.herokuapp.com'
+LOCALHOST = 'http://localhost:8000'
 COMPLAINTS_URL = 'http://app.yourguy.in/#/home/complaints'
 FRESHDESK_BASEURL = 'https://yourguy.freshdesk.com'
 URL_EXPIRY_TIME = 300  # 300 seconds
