@@ -165,9 +165,9 @@ ygVendors.factory('Orders',function ($http,baseURl,$q,Errorhandler){
         start_time_string = (data.start_time)? "&time_start="+data.start_time:"";
         end_time_string = (data.end_time)? "&time_end="+data.end_time:"";
         cod_string = (data.cod)? "&is_cod="+data.cod:"";
-
-
-        return $http.get(baseURl.V2apiURL+"/order/?date="+data.date+vendor_string+dg_string+status_string+page_string+search_string+cod_string+start_time_string+end_time_string+order_ids_string).then(Errorhandler.successStatus,Errorhandler.errorStatus);
+        pincode_string = (data.pincode)? "&pincodes="+data.pincode:"";
+        retail_string = (data.retail)? "&is_retail="+data.retail:"";
+        return $http.get(baseURl.V3apiURL+"/order/?date="+data.date+vendor_string+dg_string+status_string+page_string+search_string+cod_string+start_time_string+end_time_string+order_ids_string+pincode_string+retail_string).then(Errorhandler.successStatus,Errorhandler.errorStatus);
     };
 
     getOrders.createOrder = function (data){
@@ -411,7 +411,7 @@ ygVendors.factory('GetJsonData', function ($http,$q,baseURl,StoreSession,$localS
         $q.all([getvendor,dg,pin_code]).then(function (value){
             jsonData.vendors = value[0].data;
             jsonData.dgs = value[1].data;
-            jsonData.pin_codes = value[2].data;
+            jsonData.pin_codes = value[2].data.payload.data;
             deferred.resolve(jsonData);
         }, function (error){
             deferred.reject("Could not retrieve data! Please reload the page"+error);
