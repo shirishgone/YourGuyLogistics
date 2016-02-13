@@ -598,7 +598,6 @@ class OrderViewSet(viewsets.ViewSet):
             delivery_guy = get_object_or_404(DeliveryGuy, user=request.user)
             delivery_status_queryset = delivery_status_queryset.filter(Q(delivery_guy=delivery_guy) |
                                                                        Q(pickup_guy=delivery_guy))
-
         else:
             if dg_phone_number is not None:
                 if dg_phone_number.isdigit():
@@ -629,16 +628,16 @@ class OrderViewSet(viewsets.ViewSet):
             delivery_status_queryset = delivery_status_queryset.filter(order__vendor=vendor)
         # ----------------------------------------------------------------------------
         
-        # RETAIL VENDOR FILTER -------------------------------------------------------
-        if role == constants.OPERATIONS and is_retail is not None:
-            is_retail = json.loads(is_retail.lower())
-            delivery_status_queryset = delivery_status_queryset.filter(order__vendor__is_retail=is_retail)
-        # ----------------------------------------------------------------------------
+        # # RETAIL VENDOR FILTER -------------------------------------------------------
+        # if role == constants.OPERATIONS and is_retail is not None:
+        #     is_retail = json.loads(is_retail.lower())
+        #     delivery_status_queryset = delivery_status_queryset.filter(order__vendor__is_retail=is_retail)
+        # # ----------------------------------------------------------------------------
 
-        # PINCODE FILTERING ----------------------------------------------------------
-        if pincodes is not None:
-            pincodes_array = pincodes.split(',')
-            delivery_status_queryset = delivery_status_queryset.filter(Q(order__pickup_address__pin_code__in = pincodes_array) | Q(order__delivery_address__pin_code__in = pincodes_array))
+        # # PINCODE FILTERING ----------------------------------------------------------
+        # if pincodes is not None:
+        #     pincodes_array = pincodes.split(',')
+        #     delivery_status_queryset = delivery_status_queryset.filter(Q(order__pickup_address__pin_code__in = pincodes_array) | Q(order__delivery_address__pin_code__in = pincodes_array))
         # ----------------------------------------------------------------------------
         
         # COD FILTERING --------------------------------------------------------------
