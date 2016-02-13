@@ -61,20 +61,32 @@
             <table st-table="diplay_orders" st-safe-src="orders_data" class="table">
                 <thead>
                     <tr class="orders" style="cursor:pointer;">
-                        <th class="reverse_td" st-sort="id">Order</th>
-                         <th  st-sort="consumer.user.first_name" style="width:20%;" >Customer</th>
-                         <th  st-sort="status" >Status</th>
-                        <th  st-sort="cod_amount" >COD</th>
+                        <th class="reverse_td">
+                            <label class="order-checkbox" >
+                                <input type="checkbox" ng-model="is_all_selected" name="select_all" ng-click="select_all_order(is_all_selected)"/>
+                                <span></span>
+                            </label>
+                        </th>
+                        <th>Order</th>
+                        <th style="width:20%;" >Customer</th>
+                        <th>Status</th>
+                        <th>COD</th>
                         <th> Date </th>
                     </tr>
                 </thead>
                 <tbody class="asLink" ng-repeat="order in diplay_orders" ng-click="redirect_to_details(order)" style="cursor:pointer;  border-top: 1px solid #ddd;">
                     <tr>
-                        <td class="reverse_td">
-                            <a ng-click="redirect_to_details(order)" >{{order.id}}</a>
+                        <td class="reverse_td" ng-click="$event.stopPropagation()">
+                            <label class="order-checkbox" >
+                                <input name="select_single" type="checkbox" ng-model="order.selected" name="test" ng-click="select_single_order(order)"/>
+                                <span></span>
+                            </label>
                             <div ng-if="order.is_reverse_pickup" class="reverse" tooltip="Reverse Pickup" tooltip-placement="right">
                                 <img src="/static/webapp/images/reverse.png" >
                             </div>
+                        </td>
+                        <td>
+                            <a ng-click="redirect_to_details(order)" >{{order.id}}</a>
                         </td>
                         <td>
                             {{order.customer_name | limitTo: 20 }}{{order.customer_name.length > 20 ? '...' : ''}}
