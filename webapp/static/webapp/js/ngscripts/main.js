@@ -453,7 +453,7 @@ ygVendors.controller('signupCntrl',function ($scope,$http,$state,AuthService,Cod
   }
 })
 
-ygVendors.controller('homeCntrl', function ($state,$scope,$interval,StoreSession,$q,$modal,GetJsonData,baseURl,Errorhandler,notification){
+ygVendors.controller('homeCntrl', function ($state,$scope,$interval,StoreSession,$q,$modal,GetJsonData,baseURl,Errorhandler,notification,Complaints){
   Date.prototype.addHours= function(h){
     this.setHours(this.getHours()+h);
     this.setMinutes(0)
@@ -553,9 +553,20 @@ ygVendors.controller('homeCntrl', function ($state,$scope,$interval,StoreSession
     })
   };
 
-  $scope.getCount();
+  $scope.getFreshdeskOpenCount = function(){
+    Complaints.getComplaintsCount().then(function(response){
+      $scope.freshdeskOpenCount = response.data.count;
+    })
+  };
 
-  $interval($scope.getCount , 120000)
+  $scope.getCount();
+  $scope.getFreshdeskOpenCount();
+
+  $interval(function(){
+    $scope.getCount();
+    $scope.getFreshdeskOpenCount();
+  }, 120000);
+
 })
 
 ygVendors.controller('newOrderCntrl',function ($scope,$stateParams,$state,$location,$modal,cfpLoadingBar,Orders,baseURl,Errorhandler,$timeout){
@@ -2829,8 +2840,9 @@ ygVendors.controller('createComplaintsCntrl',function ($scope,$timeout,$state,St
       else{
         cfpLoadingBar.complete()
         $scope.show_success_msg =true
-        $scope.success_msg = "Feedback submitted successfully"
+        $scope.success_msg = "Feedback submitted successfully";
         $timeout(function(){
+          $scope.getFreshdeskOpenCount();
           $state.go('home.complaints')
         },3000)
       }
@@ -2949,6 +2961,7 @@ ygVendors.controller('detailComplaintsCntrl', function ($scope,$stateParams,Stor
       }
       else{
         cfpLoadingBar.complete();
+        $scope.getFreshdeskOpenCount();
         $scope.ticket_data.note.helpdesk_note.body = undefined;
         $scope.show_note_section = false;
         $scope.submit_resolve = false;
