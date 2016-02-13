@@ -1,6 +1,7 @@
 angular.module('test',[]).constant('baseURl',{
   apiURL:'http://yourguytestserver.herokuapp.com/api/v1'
   ,V2apiURL:'http://yourguytestserver.herokuapp.com/api/v2'
+  ,V3apiURL :'http://yourguytestserver.herokuapp.com/api/v3'
   ,VENDOR:'vendor'
   ,OPS:'operations'
   ,STATUS : {
@@ -40,6 +41,7 @@ angular.module('test',[]).constant('baseURl',{
 angular.module('stage',[]).constant('baseURl',{
   apiURL:'/api/v1'
   ,V2apiURL:'/api/v2'
+  ,V3apiURL : '/api/v3'
   ,VENDOR:'vendor'
   ,OPS:'operations'
   ,STATUS : {
@@ -79,6 +81,7 @@ angular.module('stage',[]).constant('baseURl',{
 angular.module('production',[]).constant('baseURl',{
   apiURL:'/api/v1'
   ,V2apiURL:'/api/v2'
+  ,V3apiURL : '/api/v3'
   ,VENDOR:'vendor'
   ,OPS:'operations'
   ,STATUS : {
@@ -202,7 +205,7 @@ ygVendors.config(function ($stateProvider, $urlRouterProvider, $httpProvider,cfp
     }
   })
   .state('home.order', {
-    url: "/order?date&vendor&dg&status&start_time&end_time&cod&page&search&order_ids",
+    url: "/order?date&vendor&dg&status&start_time&end_time&cod&page&search&order_ids&pincode&retail",
     reloadOnSearch : false,
     data :{
       requireLogin:true
@@ -528,8 +531,9 @@ ygVendors.controller('homeCntrl', function ($state,$scope,$interval,StoreSession
       $scope.user.name  = baseURl.OPS.toUpperCase()
       GetJsonData.fetchFromServer().then(function (data){
         $scope.vendors = data.vendors.data;
-        $scope.area_codes = data.areas;
+        $scope.pin_codes = data.pin_codes;
         $scope.dgs = data.dgs;
+        $scope.$broadcast('userDataLoaded');
         $scope.dgs.unshift({user :{username:'UNASSIGNED',first_name:'Unassigned'}})
         $scope.dgs.unshift({user :{username:'UNASSIGNED_DELIVERY',first_name:'Unassigned Delivery'}})
         $scope.dgs.unshift({user :{username:'UNASSIGNED_PICKUP',first_name:'Unassigned Pickup'}})
@@ -547,7 +551,7 @@ ygVendors.controller('homeCntrl', function ($state,$scope,$interval,StoreSession
   $scope.getCount = function(){
     notification.pendingNotificationCount().then(function(response){
       if($scope.count!== undefined && $scope.count != response.data.count){
-        $scope.$broadcast('notificationUpdated')
+        $scope.$broadcast('notificationUpdated');
       }
       $scope.count = response.data.count;
     })
@@ -566,7 +570,6 @@ ygVendors.controller('homeCntrl', function ($state,$scope,$interval,StoreSession
     $scope.getCount();
     $scope.getFreshdeskOpenCount();
   }, 120000);
-
 })
 
 ygVendors.controller('newOrderCntrl',function ($scope,$stateParams,$state,$location,$modal,cfpLoadingBar,Orders,baseURl,Errorhandler,$timeout){
@@ -577,12 +580,14 @@ ygVendors.controller('newOrderCntrl',function ($scope,$stateParams,$state,$locat
   $scope.notification.type = null
   $scope.notification.message = null
   $scope.STATUS = baseURl.STATUS_OBJECT
-  $scope.order_params = $stateParams
+  $scope.order_params = $stateParams;
   $scope.order_params.date =($stateParams.date!= undefined) ? new Date($stateParams.date) : new Date();
   $scope.order_params.vendor = (!isNaN($stateParams.vendor))? parseInt($stateParams.vendor): undefined;
   $scope.order_params.page = (!isNaN($stateParams.page))? parseInt($stateParams.page): 1;
   $scope.order_params.status = ($stateParams.status)? $stateParams.status: [];
+  $scope.order_params.pincode = ($stateParams.pincode)? $stateParams.pincode: [];
   $scope.order_params.cod = ($stateParams.cod == 'true')? Boolean($stateParams.cod): false;
+  $scope.order_params.retail = ($stateParams.retail == 'true')? Boolean($stateParams.retail): false;
   if(typeof $scope.order_params.status == 'string'){
     $scope.order_params.status = [$scope.order_params.status]
   }
@@ -592,8 +597,21 @@ ygVendors.controller('newOrderCntrl',function ($scope,$stateParams,$state,$locat
         $scope.STATUS[i].selected = true
       }
     }
-  })
-  
+  });
+
+  if(typeof $scope.order_params.pincode == 'string'){
+    $scope.order_params.status = [$scope.order_params.status]
+  }
+  $scope.$on('userDataLoaded', function(e){
+    $scope.order_params.pincode.forEach(function(pincode){
+      for(var i=0;i<$scope.$parent.pin_codes.length;i++){
+        if(pincode == $scope.$parent.pin_codes[i].pincode){
+          $scope.$parent.pin_codes[i].selected = true
+        }
+      }
+    })
+  });
+
   $scope.searched_id = ($stateParams.search != undefined) ? $stateParams.search : null;
   $scope.assign_order = {}
   $scope.assign_order.order_ids = []
@@ -658,7 +676,15 @@ ygVendors.controller('newOrderCntrl',function ($scope,$stateParams,$state,$locat
   }
 
   var filterApplied = function(){
-    if($scope.order_params.status.length != 0|| $scope.order_params.vendor != undefined  || $scope.order_params.dg != undefined || $scope.order_params.search != undefined || $scope.order_params.end_time != undefined || $scope.order_params.start_time != undefined){
+    if($scope.order_params.status.length != 0     || 
+      $scope.order_params.vendor != undefined     || 
+      $scope.order_params.dg != undefined         || 
+      $scope.order_params.search != undefined     || 
+      $scope.order_params.end_time != undefined   || 
+      $scope.order_params.start_time != undefined || 
+      $scope.order_params.retail != false         ||
+      $scope.order_params.cod != false            || 
+      $scope.order_params.pincode != undefined){
       return true
     }
     else{
@@ -694,7 +720,7 @@ ygVendors.controller('newOrderCntrl',function ($scope,$stateParams,$state,$locat
   }
 
   $scope.selectOrderStatus = function(object){
-    $scope.st = false
+    $scope.st = false;
     if(object.selected){
       $scope.order_params.status.push(object.value)
     }
@@ -705,12 +731,32 @@ ygVendors.controller('newOrderCntrl',function ($scope,$stateParams,$state,$locat
   }
 
   $scope.unselectOrderStatus = function(){
-    $scope.st = true
+    $scope.st = true;
     $scope.order_params.status = []
     $scope.STATUS.forEach(function(status){
       status.selected = false
     })
     $scope.show_status = false
+  }
+
+  $scope.selectOrderPincode = function(object){
+    $scope.no_picode = false;
+    if(object.selected){
+      $scope.order_params.pincode.push(object.pincode)
+    }
+    else{
+      var index = $scope.order_params.pincode.indexOf(object.pincode);
+      $scope.order_params.pincode.splice(index,1)
+    }
+  }
+
+  $scope.unselectOrderPincode = function(){
+    $scope.no_picode = true;
+    $scope.order_params.pincode = [];
+    $scope.$parent.pin_codes.forEach(function(pc){
+      pc.selected = false
+    })
+    $scope.show_pincodes = false
   }
 
   $scope.selectTime = function(time){
@@ -747,7 +793,7 @@ ygVendors.controller('newOrderCntrl',function ($scope,$stateParams,$state,$locat
       if(status.has_error){
         $scope.error_handler('error',status.error)
       }
-      else if(status.data.total_orders == 0){
+      else if(status.data.payload.data.total_orders == 0){
         $scope.total_orders = 0;
         $scope.pending_orders = 0;
         $scope.unassigned_orders = 0;
@@ -759,10 +805,10 @@ ygVendors.controller('newOrderCntrl',function ($scope,$stateParams,$state,$locat
         }
       }
       else{
-        $scope.orders_data = status.data.data
-        $scope.total_orders = status.data.total_orders
-        $scope.pending_orders = status.data.pending_orders_count
-        $scope.unassigned_orders = status.data.unassigned_orders_count
+        $scope.orders_data = status.data.payload.data.data
+        $scope.total_orders = status.data.payload.data.total_orders
+        $scope.pending_orders = status.data.payload.data.pending_orders_count
+        $scope.unassigned_orders = status.data.payload.data.unassigned_orders_count
         $scope.orders_data.forEach(function (order){
           if($scope.assign_order.order_ids.indexOf(order.id) != -1){
               order.selected = true
