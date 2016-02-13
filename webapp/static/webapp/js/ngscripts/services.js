@@ -247,6 +247,11 @@ ygVendors.factory('Orders',function ($http,baseURl,$q,Errorhandler){
         return $http.get(baseURl.V2apiURL+'/consumer/?search='+query).then(Errorhandler.successStatus,Errorhandler.errorStatus);
     };
 
+    getOrders.cancelOrder = function(order_array){
+        Errorhandler.clear();
+        return $http.put(baseURl.V3apiURL+'/order/cancel/',order_array).then(Errorhandler.successStatus,Errorhandler.errorStatus);
+    };
+
 	return getOrders;
 });
 

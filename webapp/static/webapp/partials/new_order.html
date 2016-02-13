@@ -242,7 +242,7 @@
 					<div class="wid-15 wid-tab-13 sm-hide" style="padding-top:10px;">
 						<span class="label" ng-class="{
                             'label-success' : (order.status == 'DELIVERED'),
-                            'label-warning' : (order.status == 'INTRANSIT'),
+                            'label-warning' : (order.status == 'INTRANSIT' || order.status == 'OUTFORDELIVERY'),
                             'label-info' : (order.status == 'DELIVERYATTEMPTED'|| order.status == 'REJECTED' || order.status == 'CANCELLED' || order.status == 'PICKUPATTEMPTED'|| order.status == 'ATTEMPTED'),
                             'label-danger' : (order.status == 'QUEUED' || order.status == 'ORDER_PLACED')}">
                             {{order.status}}

@@ -775,7 +775,8 @@ ygVendors.controller('newOrderCntrl',function ($scope,$stateParams,$state,$locat
   $scope.getOrder = function(data){
     var params_for_orders = angular.copy(data)
     params_for_orders.date = params_for_orders.date.toISOString()
-    params_for_orders.status = data.status.toString()
+    params_for_orders.status = data.status.toString();
+    params_for_orders.pincode = data.pincode.toString()
     if(data.start_time && data.end_time){
       params_for_orders.start_time = new Date()
       params_for_orders.start_time.setHours(data.start_time)
@@ -1069,7 +1070,7 @@ ygVendors.controller('orderCntrl',function ($scope,$state,$stateParams,cfpLoadin
     if(data){
       $scope.orders_data.forEach(function (order){
         order.selected = data
-        $scope.$scope.selected_orders.push(order.id)
+        $scope.selected_orders.push(order.id)
       })
     }
     else if(!data){
@@ -1102,7 +1103,7 @@ ygVendors.controller('orderCntrl',function ($scope,$state,$stateParams,cfpLoadin
       if(status.has_error){
         $scope.error_handler('error',status.error)
       }
-      else if(status.data.total_orders == 0){
+      else if(status.data.payload.data.total_orders == 0){
         $scope.total_orders = 0;
         if(filterApplied()){
           $scope.order_not_found = 'no-orders-filter'
@@ -1112,11 +1113,10 @@ ygVendors.controller('orderCntrl',function ($scope,$state,$stateParams,cfpLoadin
         }
       }
       else{
-        console.log(status);
-        $scope.orders_data = status.data.data
-        $scope.total_orders = status.data.total_orders
+        $scope.orders_data = status.data.payload.data.data
+        $scope.total_orders = status.data.payload.data.total_orders
         $scope.orders_data.forEach(function (order){
-          if($scope.assign_order.order_ids.indexOf(order.id) != -1){
+          if($scope.selected_orders.indexOf(order.id) != -1){
               order.selected = true
           }
           else{
@@ -1154,8 +1154,58 @@ ygVendors.controller('orderCntrl',function ($scope,$state,$stateParams,cfpLoadin
     $scope.opened = true;
   };
 
+  $scope.$watch(function ($scope){return $scope.selected_orders.length},
+    function (newValue,oldValue){
+      if(newValue == 0){
+        $scope.is_order_selected = false
+      }
+      else if(newValue > 0){
+        $scope.is_order_selected = true
+      }
+    }
+  )
+
   $scope.redirect_to_details = function(order){
     $state.go('home.order_details',{orderId:order.id,dateId: new Date($scope.order_params.date).toISOString()})
+  }
+
+  $scope.cancleOrder = function (orderid_array){
+    Orders.cancelOrder({delivery_ids:orderid_array}).finally(function(){
+      var status  = Errorhandler.getStatus();
+      if(status.has_error){
+        $scope.error_handler('error',status.error.message);
+      }
+      else{
+        $scope.error_handler('success',status.data.payload.message);
+        $scope.getOrder($scope.order_params);
+        $scope.selected_orders = []
+        $scope.is_all_selected = false
+      }
+    })
+  }
+
+  $scope.cancleOrderPopup = function(){
+    if($scope.selected_orders.length > 10){
+      return alert('Please select less than 10 orders')
+    }
+    else{
+      var modalInstance =  $modal.open({
+        templateUrl:'/static/webapp/partials/modals/cancelOrderModal.html?nd=' + Date.now(),
+        controller:'cancelOrderCntrl',
+        backdropClass : 'modal_back',
+        windowClass :'modal_front',
+        resolve : {
+          details: function () {
+            var object = {}
+            object.order_ids = $scope.selected_orders
+            return object;
+          }
+        }
+      })
+      modalInstance.result.then(function (data) {
+         $scope.cancleOrder(data);
+       });
+    }
   }
 })
 
@@ -1621,7 +1671,7 @@ ygVendors.controller('orderDetailsCntrl',function ($scope,$q,$state,$stateParams
         deliver : null
       }
     }
-    else if(status == 'INTRANSIT'){
+    else if(status == 'INTRANSIT' || status == 'OUTFORDELIVERY'){
       $scope.order_status = {
         pickup : true,
         deliver : null
@@ -3311,4 +3361,17 @@ ygVendors.controller('addCustomerPopup', function ($scope,$modalInstance,details
   $scope.cancelPopup = function(){
     $modalInstance.dismiss();
   }
+})
+
+ygVendors.controller('cancelOrderCntrl', function ($scope,$modalInstance,details){
+  $scope.details = details;
+
+  $scope.details = details
+  $scope.ok = function(){
+    $modalInstance.close($scope.details.order_ids)
+  };
+
+  $scope.cancel = function(){
+    $modalInstance.dismiss('cancel');
+  };
 })
