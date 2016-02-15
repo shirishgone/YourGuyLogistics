@@ -192,7 +192,7 @@ ygVendors.factory('Orders',function ($http,baseURl,$q,Errorhandler){
 
     getOrders.rescheduleOrder = function(id,data){
         Errorhandler.clear();
-        return $http.post(baseURl.apiURL+'/order/'+id+'/reschedule/',data).then(Errorhandler.successStatus,Errorhandler.errorStatus);
+        return $http.put(baseURl.V3apiURL+'/order/'+id+'/reschedule/',data).then(Errorhandler.successStatus,Errorhandler.errorStatus);
     };
 
     getOrders.fileUpload = function(data){
@@ -442,10 +442,10 @@ ygVendors.factory('Dashboard', function ($http,baseURl,Errorhandler){
 ygVendors.factory('Complaints', function ($http,$q,baseURl,Errorhandler){
     var complaints = {};
 
-    complaints.getTicketAndGroup = function(){
+    complaints.getTicketAndGroup = function(data){
         var jsonData = {};
         var deferred =  $q.defer();
-        var getticket =  $http.get(baseURl.apiURL+"/freshdesk/all_tickets/");
+        var getticket =  $http.get(baseURl.V3apiURL+"/freshdesk/all_tickets/?page="+data.page);
         var getgroup =  $http.get(baseURl.apiURL+"/freshdesk/groups/");
         $q.all([getticket,getgroup]).then(function (value){
             jsonData.tickets = value[0].data;
@@ -474,8 +474,8 @@ ygVendors.factory('Complaints', function ($http,$q,baseURl,Errorhandler){
         return deferred.promise;
     };
     
-    complaints.getTickets = function(){
-        return $http.get(baseURl.apiURL+"/freshdesk/all_tickets/").then(Errorhandler.successStatus,Errorhandler.errorStatus);
+    complaints.getTickets = function(data){
+        return $http.get(baseURl.V3apiURL+"/freshdesk/all_tickets/?page="+data.page).then(Errorhandler.successStatus,Errorhandler.errorStatus);
     };
 
     complaints.getGroups =  function(){

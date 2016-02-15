@@ -131,6 +131,10 @@
 	background: url("../../images/checked_checkbox.png") top left no-repeat;
 }
 
+.order-checkbox input[type=checkbox]:disabled + span {
+	background: #EEE;
+}
+
 
 #no-padding{
 	padding-right: 5px;
