@@ -72,11 +72,6 @@
 								ng-disabled="!(order_with_id.status == 'ORDER_PLACED' || order_with_id.status == 'QUEUED' || order_with_id.status == 'PICKUPATTEMPTED')" >
 								Reschedule
 						</button>
-						<button class="button-success" ng-if="role.ops"
-								ng-click="openModal(order_with_id.id,'reschedule','reschedule_order')"  
-								ng-disabled="!(order_with_id.status == 'ORDER_PLACED' || order_with_id.status == 'QUEUED' || order_with_id.status == 'DELIVERYATTEMPTED')" >
-								Reschedule
-						</button>
 					</div>
 					<div id="button" ng-if="role.vendor">
 						<button class="button-danger" 

@@ -27,7 +27,7 @@
 					<tr>
 						<th style="width:20%">Order ID</th>
 						<th>Status</th>
-						<th ng-if="role.ops">Name</th>
+						<!-- <th ng-if="role.ops">Name</th> -->
 						<th>Created At</th>
 						<th>Type</th>
 						<th>Description</th>
@@ -39,16 +39,18 @@
 					</tr> -->
 				</thead>
 				<tbody>
-					<tr class="asLink" ng-repeat="cpl in filtered_complaints  = ( display_complaints | filter: searched_complaint)" ui-sref="home.complain_details({id:cpl.display_id})" >
+					<tr class="asLink" ng-repeat="cpl in filtered_complaints  = ( display_complaints | filter: searched_complaint)" ui-sref="home.complain_details({id:cpl.id})" >
         				<td style="width:20%">
         					{{cpl.subject | limitTo :20}}{{cpl.subject.length > 20 ? '...' : ''}}
         				</td>
         				<td style="padding-top:15px;">
-							<span class="label" ng-class="{'label-warning' : (cpl.status_name == 'Open'),'label-success' : (cpl.status_name == 'Resolved' || cpl.status_name == 'Closed')}">{{cpl.status_name}}</span>
+							<span class="label label-warning" ng-if="cpl.status == 2">Open</span>
+							<span class="label label-success" ng-if="cpl.status == 5">Closed</span>
+							<span class="label label-success" ng-if="cpl.status == 4">Resolved</span>
 						</td>
-						<td ng-if="role.ops">
+						<!-- <td ng-if="role.ops">
 							{{cpl.requester_name}}
-						</td>
+						</td> -->
         				<td>
         					{{cpl.created_at | date:'dd MMM yy'}} 
         				</td>
@@ -61,6 +63,11 @@
 					</tr>
 				</tbody>
 			</table>
+			<div ng-if="total_complains">
+				<div class="text-center">
+					<pagination total-items="total_complains" ng-model="params.page" items-per-page="itemsByPage" max-size="8" boundary-links="true" rotate="false" ng-change="getTicketAndGroup()"></pagination>
+				</div>
+			</div>
 		</div>
 	</div>
 </div>

@@ -341,7 +341,8 @@ ygVendors.config(function ($stateProvider, $urlRouterProvider, $httpProvider,cfp
     }
   })
   .state('home.complaints', {
-    url: "/complaints",
+    url: "/complaints?page",
+    reloadOnSearch : false,
     templateUrl: "/static/webapp/partials/complaints.html",
     controller: "complaintsCntrl",
     data :{
@@ -1174,6 +1175,9 @@ ygVendors.controller('orderCntrl',function ($scope,$state,$stateParams,cfpLoadin
       var status  = Errorhandler.getStatus();
       if(status.has_error){
         $scope.error_handler('error',status.error.message);
+        $scope.getOrder($scope.order_params);
+        $scope.selected_orders = []
+        $scope.is_all_selected = false
       }
       else{
         $scope.error_handler('success',status.data.payload.message);
@@ -2857,11 +2861,16 @@ ygVendors.controller('reportsCntrl', function ($scope,$timeout,Dashboard,Errorha
   }
 })
 
-ygVendors.controller('complaintsCntrl' , function ($scope,Complaints,StoreSessionData,Errorhandler,cfpLoadingBar){
+ygVendors.controller('complaintsCntrl' , function ($scope,$stateParams,$location,baseURl,Complaints,StoreSessionData,Errorhandler,cfpLoadingBar){
+  $scope.itemsByPage = baseURl.ItemByPage
+  $scope.params = $stateParams;
+  $scope.params.page = (!isNaN($stateParams.page))? parseInt($stateParams.page): 1;
+  
   $scope.getTicketAndGroup = function(){
+    $location.search($scope.params);
     if(StoreSessionData.getData('ticket_gruops')){
       cfpLoadingBar.start();
-      Complaints.getTickets().finally(function(){
+      Complaints.getTickets($scope.params).finally(function(){
         var status =  Errorhandler.getStatus()
         if(status.has_error){
           cfpLoadingBar.complete()
@@ -2871,30 +2880,32 @@ ygVendors.controller('complaintsCntrl' , function ($scope,Complaints,StoreSessio
         else{
           cfpLoadingBar.complete()
           $scope.groups = StoreSessionData.getData('ticket_gruops')
-          if(status.data.errors || status.data.length == 0){
+          if(status.data.payload.error || status.data.payload.data.data.length == 0){
             $scope.show_complaint_msg = true;
             $scope.complaint_msg = 'Happy to Help!';
           }
           else{
             $scope.show_complaint_msg = false;
-            $scope.complaints = status.data
+            $scope.complaints = status.data.payload.data.data;
+            $scope.total_complains = status.data.payload.data.total_tickets;
           }
         }
       })
     }
     else{
       cfpLoadingBar.start();
-      Complaints.getTicketAndGroup().then(function (data){
+      Complaints.getTicketAndGroup($scope.params).then(function (data){
         cfpLoadingBar.complete();
         $scope.groups = data.groups;
         StoreSessionData.setData('ticket_gruops',$scope.groups);
-        if(data.tickets.errors || data.tickets.length == 0 ){
+        if(data.tickets.errors || data.tickets.payload.data.data.length == 0 ){
             $scope.show_complaint_msg = true;
             $scope.complaint_msg = 'Happy to Help!';
         }
         else{
           $scope.show_complaint_msg = false;
-          $scope.complaints = data.tickets
+          $scope.complaints = data.tickets.payload.data.data;
+          $scope.total_complains = data.tickets.payload.data.total_tickets;
         }
       },function (err){
         cfpLoadingBar.complete()
