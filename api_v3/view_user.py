@@ -14,33 +14,33 @@ from api_v3.utils import response_access_denied, response_with_payload, response
 
 def dg_details_dict(delivery_guy):
     dg_detail_dict = {
-        'auth_token': '',
+        'auth_token': None,
         'id': delivery_guy.id,
         'username': delivery_guy.user.username,
         'shift_start_datetime': delivery_guy.shift_start_datetime,
         'shift_end_datetime': delivery_guy.shift_end_datetime,
         'is_teamlead': delivery_guy.is_teamlead,
-        'role': ''
+        'role': None
     }
     return dg_detail_dict
 
 
 def vendor_details_dict(vendor_agent):
     vendor_detail_dict = {
-        'auth_token': '',
+        'auth_token': None,
         'vendor_agent_username': vendor_agent.user.username,
         'vendor_agent_name': vendor_agent.user.first_name,
         'vendor_store_name': vendor_agent.vendor.store_name,
-        'role': ''
+        'role': None
     }
     return vendor_detail_dict
 
 
 def emp_details_dict(emp):
     emp_detail_dict = {
-        'auth_token': '',
+        'auth_token': None,
         'vendor_agent_name': emp.user.first_name,
-        'role': ''
+        'role': None
     }
     return emp_detail_dict
 
