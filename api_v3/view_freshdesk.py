@@ -20,24 +20,57 @@ def auth_headers():
     }
     return headers
 
+@api_view(['GET'])
+def get_open_ticket_count(request):
+    try:
+        role = user_role(request.user)
+        if role == constants.VENDOR:
+            vendor_agent = get_object_or_404(VendorAgent, user=request.user)
+            vendor = vendor_agent.vendor
+            count_url = '{}helpdesk/tickets/summary.json?view_name=open&email={}'.format(constants.FRESHDESK_BASEURL,vendor.email)
+        elif role == constants.OPERATIONS:
+            count_url = '{}helpdesk/tickets/summary.json?view_name=open'.format(constants.FRESHDESK_BASEURL)    
+        else:
+            return response_access_denied()
+
+        count_request = requests.get(count_url, headers=auth_headers())
+        count_response = count_request.json()
+        count = count_response['view_count']
+        response = {'count':count}
+        return response_with_payload(response, None)
+    except Exception as e:
+        error_message = 'Something went wrong'
+        return response_error_with_message(error_message)
 
 @api_view(['GET'])
 def all_tickets(request):
     role = user_role(request.user)
     page = request.QUERY_PARAMS.get('page', 1)
+    page = int(page)
     if role == constants.VENDOR:
         vendor_agent = get_object_or_404(VendorAgent, user=request.user)
         vendor = vendor_agent.vendor
-        url = '{}/api/v2/tickets?&email={}&per_page={}&page={}'.format(constants.FRESHDESK_BASEURL,
-                                                                                 vendor.email, constants.FRESHDESK_PAGE_COUNT, page)
+        url = '{}api/v2/tickets?updated_since=2015-01-19T02:00:00Z&email={}&per_page={}&page={}'.format(constants.FRESHDESK_BASEURL, vendor.email, constants.FRESHDESK_PAGE_COUNT, page)
     elif role == constants.OPERATIONS:
-        url = '{}/api/v2/tickets?&per_page={}&page={}'.format(constants.FRESHDESK_BASEURL, constants.FRESHDESK_PAGE_COUNT, page)
+        url = '{}api/v2/tickets?updated_since=2015-01-19T02:00:00Z&per_page={}&page={}'.format(constants.FRESHDESK_BASEURL, constants.FRESHDESK_PAGE_COUNT, page)
     else:
         return response_access_denied()
-    try:
+    
+    try: 
+        count_url = '{}helpdesk/tickets/summary.json?view_name=all'.format(constants.FRESHDESK_BASEURL)
+        count_request = requests.get(count_url, headers=auth_headers())
+        count_response = count_request.json()
+        count = count_response['view_count']
+        total_pages = int(count / constants.FRESHDESK_PAGE_COUNT) + 1
+
         r = requests.get(url, headers=auth_headers())
         content = r.json()
-        return response_with_payload(content, None)
+        response_content = {
+            "data": content,
+            "total_pages": total_pages,
+            "total_tickets": count
+        }
+        return response_with_payload(response_content, None)
     except Exception as e:
         error_message = 'Something went wrong'
         return response_error_with_message(error_message)
@@ -62,27 +95,6 @@ def create_ticket(request):
         r = requests.post(url, data=json.dumps(request.data), headers=auth_headers())
         content = r.json()
         return response_with_payload(content, None)
-    except Exception as e:
-        error_message = 'Something went wrong'
-        return response_error_with_message(error_message)
-
-@api_view(['GET'])
-def get_open_ticket_count(request):
-    role = user_role(request.user)
-    if role == constants.VENDOR:
-        vendor_agent = get_object_or_404(VendorAgent, user=request.user)
-        vendor = vendor_agent.vendor
-        url = '{}/helpdesk/tickets.json?email={}&filter_name=new_and_my_open'.format(constants.FRESHDESK_BASEURL,
-                                                                                 vendor.email)
-    elif role == constants.OPERATIONS:
-        url = '{}/helpdesk/tickets/filter/new_and_my_open?format=json'.format(constants.FRESHDESK_BASEURL)
-    else:
-        return response_access_denied()
-    try:
-        r = requests.get(url, headers=auth_headers())
-        content = r.json()
-        response = {'count':len(content)}
-        return response_with_payload(response, None)
     except Exception as e:
         error_message = 'Something went wrong'
         return response_error_with_message(error_message)
