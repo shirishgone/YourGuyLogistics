@@ -98,6 +98,13 @@ def retail_order_send_email(vendor, new_delivery_ids):
 
 def can_update_delivery_status(delivery_status):
     if delivery_status.order_status == constants.ORDER_STATUS_PLACED or \
+                    delivery_status.order_status == constants.ORDER_STATUS_QUEUED:
+        return True
+    else:
+        return False
+
+def is_reschedule_allowed(delivery_status):
+    if delivery_status.order_status == constants.ORDER_STATUS_PLACED or \
                     delivery_status.order_status == constants.ORDER_STATUS_QUEUED or \
                     delivery_status.order_status == constants.ORDER_STATUS_PICKUP_ATTEMPTED:
         return True
@@ -1580,7 +1587,7 @@ class OrderViewSet(viewsets.ViewSet):
             return response_error_with_message(error_message)
 
         if is_user_permitted_to_edit_order(request.user, delivery_status.order):
-            if can_update_delivery_status(delivery_status):
+            if is_reschedule_allowed(delivery_status):
                 delivery_status.date = new_date
                 if delivery_status.order_status == constants.ORDER_STATUS_PICKUP_ATTEMPTED:
                     delivery_status.order_status = constants.ORDER_STATUS_QUEUED
