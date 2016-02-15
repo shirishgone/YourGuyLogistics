@@ -7,7 +7,7 @@
 		<div class="page-title">
 			Feedback
 		</div>
-		<a ui-sref="home.create_complaints" class="new-user btn btn-success pull-right">
+		<a ng-if="role.vendor" ui-sref="home.create_complaints" class="new-user btn btn-success pull-right">
 			<span>New Ticket</span>
 		</a>
 	</div>

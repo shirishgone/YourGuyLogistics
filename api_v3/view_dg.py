@@ -710,27 +710,85 @@ class DGViewSet(viewsets.ModelViewSet):
         worked_hours = 0
 
         for single_dg in all_dgs:
-            if single_dg.is_active:
-                download_attendance_dict = download_attendance_excel_dict(single_dg)
+            if single_dg.is_active is False:
+                dg_deactivated_date = single_dg.deactivated_date
+                if dg_deactivated_date is None:
+                    dg_latest_attendance = DGAttendance.objects.filter(dg=single_dg)
+                    if dg_latest_attendance:
+                        dg_latest_attendance = DGAttendance.objects.filter(dg=single_dg).latest('date')
+                    else:
+                        dg_latest_attendance = DGAttendance.objects.create(dg=single_dg, date=datetime.now(pytz.utc))
+
+                    if dg_latest_attendance is not None:
+                        single_dg.deactivated_date = dg_latest_attendance.date
+                        deactivated_date = single_dg.deactivated_date
+                        now_date = datetime.now(pytz.utc)
+                        now_date = now_date.replace(day=deactivated_date.day, month=deactivated_date.month, year=deactivated_date.year, hour=00, minute=00, second=00, tzinfo=None)
+                        single_dg.deactivated_date = now_date
+                        single_dg.save()
+                    else:
+                        pass
+
+        # ===========================
+        # when dg is deactivated
+        # compare deactivated_date and start_date
+        # generate rule from start date till the deactivated date only
+        # loop from start date till this deactivated date
+        for single_dg in all_dgs:
+            download_attendance_dict = download_attendance_excel_dict(single_dg)
+            if single_dg.is_active is False:
+                dg_deactivated_date = single_dg.deactivated_date
+                if dg_deactivated_date is not None:
+                    start_month = start_date.month
+                    dg_deactivated_date = dg_deactivated_date.replace(tzinfo=None)
+                    deactivated_month = dg_deactivated_date.month
+                    start_date = start_date.replace(tzinfo=None)
+                    if start_date < dg_deactivated_date and start_month == deactivated_month:
+                        rule_daily_deactivated = rrule(DAILY, dtstart=start_date, until=dg_deactivated_date)
+                        till_deactivated_date = list(rule_daily_deactivated)
+                        for date in till_deactivated_date:
+                            datewise_dict = attendance_datewise_dict()
+                            dg_attendance = all_attendance.filter(dg=single_dg, date=date)
+                            if dg_attendance:
+                                for single in dg_attendance:
+                                    worked_hours = working_hours_calculation(single)
+                                    datewise_dict['date'] = date
+                                    datewise_dict['worked_hrs'] = worked_hours
+                            else:
+                                date = date
+                                worked_hours = 0
+
+                                datewise_dict['date'] = date
+                                datewise_dict['worked_hrs'] = worked_hours
+                            download_attendance_dict['attendance'].append(datewise_dict)
+                        all_dg_attendance.append(download_attendance_dict)
+                    elif start_date.replace(tzinfo=None) < dg_deactivated_date and start_month < deactivated_month:
+                        for date in alldates:
+                            datewise_dict = attendance_datewise_dict()
+                            dg_attendance = all_attendance.filter(dg=single_dg, date=date)
+                            if dg_attendance:
+                                for single in dg_attendance:
+                                    worked_hours = working_hours_calculation(single)
+                                    datewise_dict['date'] = date
+                                    datewise_dict['worked_hrs'] = worked_hours
+                            else:
+                                date = date
+                                worked_hours = 0
+
+                                datewise_dict['date'] = date
+                                datewise_dict['worked_hrs'] = worked_hours
+                            download_attendance_dict['attendance'].append(datewise_dict)
+                        all_dg_attendance.append(download_attendance_dict)
+
+            elif single_dg.is_active:
                 for date in alldates:
                     datewise_dict = attendance_datewise_dict()
                     dg_attendance = all_attendance.filter(dg=single_dg, date=date)
                     if dg_attendance:
                         for single in dg_attendance:
-                            if single.login_time is not None and single.logout_time is not None:
-                                worked_hours = (single.logout_time - single.login_time)
-                                total_seconds_worked = int(worked_hours.total_seconds())
-                                hours, remainder = divmod(total_seconds_worked, 60 * 60)
-                                worked_hours = "%d hrs" % hours
-                            elif single.login_time is not None and single.logout_time is None:
-                                worked_hours = (datetime.now(pytz.utc) - single.login_time)
-                                total_seconds_worked = int(worked_hours.total_seconds())
-                                hours, remainder = divmod(total_seconds_worked, 60 * 60)
-                                worked_hours = "%d hrs" % hours
-                            else:
-                                pass
-                        datewise_dict['date'] = date
-                        datewise_dict['worked_hrs'] = worked_hours
+                            worked_hours = working_hours_calculation(single)
+                            datewise_dict['date'] = date
+                            datewise_dict['worked_hrs'] = worked_hours
                     else:
                         date = date
                         worked_hours = 0
@@ -739,78 +797,10 @@ class DGViewSet(viewsets.ModelViewSet):
                         datewise_dict['worked_hrs'] = worked_hours
                     download_attendance_dict['attendance'].append(datewise_dict)
                 all_dg_attendance.append(download_attendance_dict)
-            else:
-                # when dg is deactivated
-                # compare deactivated_date and start_date
-                # generate rule from start date till the deactivated date only
-                # loop from start date till this deactivated date
-                start_month = start_date.month
-                dg_deactived_date = single_dg.deactivated_date
-                deactivated_month = dg_deactived_date.month
-                download_attendance_dict = download_attendance_excel_dict(single_dg)
-                if start_date < dg_deactived_date and start_month == deactivated_month:
-                    rule_daily_deactivated = rrule(DAILY, dtstart=start_date, until=dg_deactived_date)
-                    till_deactivated_date = list(rule_daily_deactivated)
-                    for date in till_deactivated_date:
-                        datewise_dict = attendance_datewise_dict()
-                        dg_attendance = all_attendance.filter(dg=single_dg, date=date)
-                        if dg_attendance:
-                            for single in dg_attendance:
-                                if single.login_time is not None and single.logout_time is not None:
-                                    worked_hours = (single.logout_time - single.login_time)
-                                    total_seconds_worked = int(worked_hours.total_seconds())
-                                    hours, remainder = divmod(total_seconds_worked, 60 * 60)
-                                    worked_hours = "%d hrs" % hours
-                                elif single.login_time is not None and single.logout_time is None:
-                                    worked_hours = (datetime.now(pytz.utc) - single.login_time)
-                                    total_seconds_worked = int(worked_hours.total_seconds())
-                                    hours, remainder = divmod(total_seconds_worked, 60 * 60)
-                                    worked_hours = "%d hrs" % hours
-                                else:
-                                    pass
-                            datewise_dict['date'] = date
-                            datewise_dict['worked_hrs'] = worked_hours
-                        else:
-                            date = date
-                            worked_hours = 0
-
-                            datewise_dict['date'] = date
-                            datewise_dict['worked_hrs'] = worked_hours
-                        download_attendance_dict['attendance'].append(datewise_dict)
-                    all_dg_attendance.append(download_attendance_dict)
-                elif start_date < dg_deactived_date and start_month < deactivated_month:
-                    rule_daily_deactivated = rrule(DAILY, dtstart=start_date, until=end_date)
-                    till_date = list(rule_daily_deactivated)
-                    for date in till_date:
-                        datewise_dict = attendance_datewise_dict()
-                        dg_attendance = all_attendance.filter(dg=single_dg, date=date)
-                        if dg_attendance:
-                            for single in dg_attendance:
-                                if single.login_time is not None and single.logout_time is not None:
-                                    worked_hours = (single.logout_time - single.login_time)
-                                    total_seconds_worked = int(worked_hours.total_seconds())
-                                    hours, remainder = divmod(total_seconds_worked, 60 * 60)
-                                    worked_hours = "%d hrs" % hours
-                                elif single.login_time is not None and single.logout_time is None:
-                                    worked_hours = (datetime.now(pytz.utc) - single.login_time)
-                                    total_seconds_worked = int(worked_hours.total_seconds())
-                                    hours, remainder = divmod(total_seconds_worked, 60 * 60)
-                                    worked_hours = "%d hrs" % hours
-                                else:
-                                    pass
-                            datewise_dict['date'] = date
-                            datewise_dict['worked_hrs'] = worked_hours
-                        else:
-                            date = date
-                            worked_hours = 0
-
-                            datewise_dict['date'] = date
-                            datewise_dict['worked_hrs'] = worked_hours
-                        download_attendance_dict['attendance'].append(datewise_dict)
-                    all_dg_attendance.append(download_attendance_dict)
 
         content = {'all_dg_attendance': all_dg_attendance}
         return response_with_payload(content, None)
+
 
 @api_view(['GET'])
 def dg_app_version(request):

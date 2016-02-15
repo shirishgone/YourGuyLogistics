@@ -1,6 +1,7 @@
 angular.module('test',[]).constant('baseURl',{
   apiURL:'http://yourguytestserver.herokuapp.com/api/v1'
   ,V2apiURL:'http://yourguytestserver.herokuapp.com/api/v2'
+  ,V3apiURL :'http://yourguytestserver.herokuapp.com/api/v3'
   ,VENDOR:'vendor'
   ,OPS:'operations'
   ,STATUS : {
@@ -40,6 +41,7 @@ angular.module('test',[]).constant('baseURl',{
 angular.module('stage',[]).constant('baseURl',{
   apiURL:'/api/v1'
   ,V2apiURL:'/api/v2'
+  ,V3apiURL : '/api/v3'
   ,VENDOR:'vendor'
   ,OPS:'operations'
   ,STATUS : {
@@ -79,6 +81,7 @@ angular.module('stage',[]).constant('baseURl',{
 angular.module('production',[]).constant('baseURl',{
   apiURL:'/api/v1'
   ,V2apiURL:'/api/v2'
+  ,V3apiURL : '/api/v3'
   ,VENDOR:'vendor'
   ,OPS:'operations'
   ,STATUS : {
@@ -202,7 +205,7 @@ ygVendors.config(function ($stateProvider, $urlRouterProvider, $httpProvider,cfp
     }
   })
   .state('home.order', {
-    url: "/order?date&vendor&dg&status&start_time&end_time&cod&page&search&order_ids",
+    url: "/order?date&vendor&dg&status&start_time&end_time&cod&page&search&order_ids&pincode&retail",
     reloadOnSearch : false,
     data :{
       requireLogin:true
@@ -453,7 +456,7 @@ ygVendors.controller('signupCntrl',function ($scope,$http,$state,AuthService,Cod
   }
 })
 
-ygVendors.controller('homeCntrl', function ($state,$scope,$interval,StoreSession,$q,$modal,GetJsonData,baseURl,Errorhandler,notification){
+ygVendors.controller('homeCntrl', function ($state,$scope,$interval,StoreSession,$q,$modal,GetJsonData,baseURl,Errorhandler,notification,Complaints){
   Date.prototype.addHours= function(h){
     this.setHours(this.getHours()+h);
     this.setMinutes(0)
@@ -528,8 +531,9 @@ ygVendors.controller('homeCntrl', function ($state,$scope,$interval,StoreSession
       $scope.user.name  = baseURl.OPS.toUpperCase()
       GetJsonData.fetchFromServer().then(function (data){
         $scope.vendors = data.vendors.data;
-        $scope.area_codes = data.areas;
+        $scope.pin_codes = data.pin_codes;
         $scope.dgs = data.dgs;
+        $scope.$broadcast('userDataLoaded');
         $scope.dgs.unshift({user :{username:'UNASSIGNED',first_name:'Unassigned'}})
         $scope.dgs.unshift({user :{username:'UNASSIGNED_DELIVERY',first_name:'Unassigned Delivery'}})
         $scope.dgs.unshift({user :{username:'UNASSIGNED_PICKUP',first_name:'Unassigned Pickup'}})
@@ -547,15 +551,25 @@ ygVendors.controller('homeCntrl', function ($state,$scope,$interval,StoreSession
   $scope.getCount = function(){
     notification.pendingNotificationCount().then(function(response){
       if($scope.count!== undefined && $scope.count != response.data.count){
-        $scope.$broadcast('notificationUpdated')
+        $scope.$broadcast('notificationUpdated');
       }
       $scope.count = response.data.count;
     })
   };
 
-  $scope.getCount();
+  $scope.getFreshdeskOpenCount = function(){
+    Complaints.getComplaintsCount().then(function(response){
+      $scope.freshdeskOpenCount = response.data.count;
+    })
+  };
 
-  $interval($scope.getCount , 120000)
+  $scope.getCount();
+  $scope.getFreshdeskOpenCount();
+
+  $interval(function(){
+    $scope.getCount();
+    $scope.getFreshdeskOpenCount();
+  }, 120000);
 })
 
 ygVendors.controller('newOrderCntrl',function ($scope,$stateParams,$state,$location,$modal,cfpLoadingBar,Orders,baseURl,Errorhandler,$timeout){
@@ -566,12 +580,14 @@ ygVendors.controller('newOrderCntrl',function ($scope,$stateParams,$state,$locat
   $scope.notification.type = null
   $scope.notification.message = null
   $scope.STATUS = baseURl.STATUS_OBJECT
-  $scope.order_params = $stateParams
+  $scope.order_params = $stateParams;
   $scope.order_params.date =($stateParams.date!= undefined) ? new Date($stateParams.date) : new Date();
   $scope.order_params.vendor = (!isNaN($stateParams.vendor))? parseInt($stateParams.vendor): undefined;
   $scope.order_params.page = (!isNaN($stateParams.page))? parseInt($stateParams.page): 1;
   $scope.order_params.status = ($stateParams.status)? $stateParams.status: [];
+  $scope.order_params.pincode = ($stateParams.pincode)? $stateParams.pincode: [];
   $scope.order_params.cod = ($stateParams.cod == 'true')? Boolean($stateParams.cod): false;
+  $scope.order_params.retail = ($stateParams.retail == 'true')? Boolean($stateParams.retail): false;
   if(typeof $scope.order_params.status == 'string'){
     $scope.order_params.status = [$scope.order_params.status]
   }
@@ -581,8 +597,21 @@ ygVendors.controller('newOrderCntrl',function ($scope,$stateParams,$state,$locat
         $scope.STATUS[i].selected = true
       }
     }
-  })
-  
+  });
+
+  if(typeof $scope.order_params.pincode == 'string'){
+    $scope.order_params.status = [$scope.order_params.status]
+  }
+  $scope.$on('userDataLoaded', function(e){
+    $scope.order_params.pincode.forEach(function(pincode){
+      for(var i=0;i<$scope.$parent.pin_codes.length;i++){
+        if(pincode == $scope.$parent.pin_codes[i].pincode){
+          $scope.$parent.pin_codes[i].selected = true
+        }
+      }
+    })
+  });
+
   $scope.searched_id = ($stateParams.search != undefined) ? $stateParams.search : null;
   $scope.assign_order = {}
   $scope.assign_order.order_ids = []
@@ -647,7 +676,15 @@ ygVendors.controller('newOrderCntrl',function ($scope,$stateParams,$state,$locat
   }
 
   var filterApplied = function(){
-    if($scope.order_params.status.length != 0|| $scope.order_params.vendor != undefined  || $scope.order_params.dg != undefined || $scope.order_params.search != undefined || $scope.order_params.end_time != undefined || $scope.order_params.start_time != undefined){
+    if($scope.order_params.status.length != 0     || 
+      $scope.order_params.vendor != undefined     || 
+      $scope.order_params.dg != undefined         || 
+      $scope.order_params.search != undefined     || 
+      $scope.order_params.end_time != undefined   || 
+      $scope.order_params.start_time != undefined || 
+      $scope.order_params.retail != false         ||
+      $scope.order_params.cod != false            || 
+      $scope.order_params.pincode != undefined){
       return true
     }
     else{
@@ -678,12 +715,14 @@ ygVendors.controller('newOrderCntrl',function ($scope,$stateParams,$state,$locat
     $scope.order_time = null
     $scope.order_params.cod = undefined
     $scope.order_params.status = []
+    $scope.order_params.pincode = []
+    $scope.order_params.retail = undefined
     $scope.order_params.order_ids = undefined
     $scope.unselectOrderStatus()
   }
 
   $scope.selectOrderStatus = function(object){
-    $scope.st = false
+    $scope.st = false;
     if(object.selected){
       $scope.order_params.status.push(object.value)
     }
@@ -694,12 +733,32 @@ ygVendors.controller('newOrderCntrl',function ($scope,$stateParams,$state,$locat
   }
 
   $scope.unselectOrderStatus = function(){
-    $scope.st = true
+    $scope.st = true;
     $scope.order_params.status = []
     $scope.STATUS.forEach(function(status){
       status.selected = false
     })
     $scope.show_status = false
+  }
+
+  $scope.selectOrderPincode = function(object){
+    $scope.no_picode = false;
+    if(object.selected){
+      $scope.order_params.pincode.push(object.pincode)
+    }
+    else{
+      var index = $scope.order_params.pincode.indexOf(object.pincode);
+      $scope.order_params.pincode.splice(index,1)
+    }
+  }
+
+  $scope.unselectOrderPincode = function(){
+    $scope.no_picode = true;
+    $scope.order_params.pincode = [];
+    $scope.$parent.pin_codes.forEach(function(pc){
+      pc.selected = false
+    })
+    $scope.show_pincodes = false
   }
 
   $scope.selectTime = function(time){
@@ -716,7 +775,8 @@ ygVendors.controller('newOrderCntrl',function ($scope,$stateParams,$state,$locat
   $scope.getOrder = function(data){
     var params_for_orders = angular.copy(data)
     params_for_orders.date = params_for_orders.date.toISOString()
-    params_for_orders.status = data.status.toString()
+    params_for_orders.status = data.status.toString();
+    params_for_orders.pincode = data.pincode.toString()
     if(data.start_time && data.end_time){
       params_for_orders.start_time = new Date()
       params_for_orders.start_time.setHours(data.start_time)
@@ -736,7 +796,7 @@ ygVendors.controller('newOrderCntrl',function ($scope,$stateParams,$state,$locat
       if(status.has_error){
         $scope.error_handler('error',status.error)
       }
-      else if(status.data.total_orders == 0){
+      else if(status.data.payload.data.total_orders == 0){
         $scope.total_orders = 0;
         $scope.pending_orders = 0;
         $scope.unassigned_orders = 0;
@@ -748,10 +808,10 @@ ygVendors.controller('newOrderCntrl',function ($scope,$stateParams,$state,$locat
         }
       }
       else{
-        $scope.orders_data = status.data.data
-        $scope.total_orders = status.data.total_orders
-        $scope.pending_orders = status.data.pending_orders_count
-        $scope.unassigned_orders = status.data.unassigned_orders_count
+        $scope.orders_data = status.data.payload.data.data
+        $scope.total_orders = status.data.payload.data.total_orders
+        $scope.pending_orders = status.data.payload.data.pending_orders_count
+        $scope.unassigned_orders = status.data.payload.data.unassigned_orders_count
         $scope.orders_data.forEach(function (order){
           if($scope.assign_order.order_ids.indexOf(order.id) != -1){
               order.selected = true
@@ -931,7 +991,7 @@ ygVendors.controller('newOrderCntrl',function ($scope,$stateParams,$state,$locat
 
 ygVendors.controller('orderCntrl',function ($scope,$state,$stateParams,cfpLoadingBar,$timeout,$location,$modal,StoreSession,Orders,baseURl,Errorhandler,DG,Vendors){
   $scope.toggle = false
-  $scope.oders_data = []
+  $scope.oders_data = [];
   $scope.itemsByPage = baseURl.ItemByPage
   $scope.STATUS = baseURl.STATUS_OBJECT
   $scope.format = 'dd-MMMM-yyyy'
@@ -941,6 +1001,7 @@ ygVendors.controller('orderCntrl',function ($scope,$state,$stateParams,cfpLoadin
   $scope.order_params.date =($stateParams.date!= undefined) ? new Date($stateParams.date) : new Date();
   $scope.order_params.page = (!isNaN($stateParams.page))? parseInt($stateParams.page): 1;
   $scope.order_params.status = ($stateParams.status)? $stateParams.status: [];
+  $scope.selected_orders = [];
   if(typeof $scope.order_params.status == 'string'){
     $scope.order_params.status = [$scope.order_params.status]
   }
@@ -1005,6 +1066,30 @@ ygVendors.controller('orderCntrl',function ($scope,$state,$stateParams,cfpLoadin
     $scope.show_status = false
   }
 
+  $scope.select_all_order =  function(data){
+    if(data){
+      $scope.orders_data.forEach(function (order){
+        order.selected = data
+        $scope.selected_orders.push(order.id)
+      })
+    }
+    else if(!data){
+      $scope.orders_data.forEach(function (order){
+        order.selected = data
+      })
+      $scope.selected_orders = []
+    }
+  }
+
+  $scope.select_single_order = function(order){
+    if(order.selected){
+      $scope.selected_orders.push(order.id)
+    }
+    else{
+      $scope.selected_orders.splice($scope.selected_orders.indexOf(order.id),1)
+    }
+  }
+
   $scope.getOrder = function(data){
     var params_for_orders = angular.copy(data)
     params_for_orders.date = params_for_orders.date.toISOString()
@@ -1018,7 +1103,7 @@ ygVendors.controller('orderCntrl',function ($scope,$state,$stateParams,cfpLoadin
       if(status.has_error){
         $scope.error_handler('error',status.error)
       }
-      else if(status.data.total_orders == 0){
+      else if(status.data.payload.data.total_orders == 0){
         $scope.total_orders = 0;
         if(filterApplied()){
           $scope.order_not_found = 'no-orders-filter'
@@ -1028,10 +1113,10 @@ ygVendors.controller('orderCntrl',function ($scope,$state,$stateParams,cfpLoadin
         }
       }
       else{
-        $scope.orders_data = status.data.data
-        $scope.total_orders = status.data.total_orders
+        $scope.orders_data = status.data.payload.data.data
+        $scope.total_orders = status.data.payload.data.total_orders
         $scope.orders_data.forEach(function (order){
-          if($scope.assign_order.order_ids.indexOf(order.id) != -1){
+          if($scope.selected_orders.indexOf(order.id) != -1){
               order.selected = true
           }
           else{
@@ -1069,8 +1154,58 @@ ygVendors.controller('orderCntrl',function ($scope,$state,$stateParams,cfpLoadin
     $scope.opened = true;
   };
 
+  $scope.$watch(function ($scope){return $scope.selected_orders.length},
+    function (newValue,oldValue){
+      if(newValue == 0){
+        $scope.is_order_selected = false
+      }
+      else if(newValue > 0){
+        $scope.is_order_selected = true
+      }
+    }
+  )
+
   $scope.redirect_to_details = function(order){
     $state.go('home.order_details',{orderId:order.id,dateId: new Date($scope.order_params.date).toISOString()})
+  }
+
+  $scope.cancleOrder = function (orderid_array){
+    Orders.cancelOrder({delivery_ids:orderid_array}).finally(function(){
+      var status  = Errorhandler.getStatus();
+      if(status.has_error){
+        $scope.error_handler('error',status.error.message);
+      }
+      else{
+        $scope.error_handler('success',status.data.payload.message);
+        $scope.getOrder($scope.order_params);
+        $scope.selected_orders = []
+        $scope.is_all_selected = false
+      }
+    })
+  }
+
+  $scope.cancleOrderPopup = function(){
+    if($scope.selected_orders.length > 10){
+      return alert('Please select less than 10 orders')
+    }
+    else{
+      var modalInstance =  $modal.open({
+        templateUrl:'/static/webapp/partials/modals/cancelOrderModal.html?nd=' + Date.now(),
+        controller:'cancelOrderCntrl',
+        backdropClass : 'modal_back',
+        windowClass :'modal_front',
+        resolve : {
+          details: function () {
+            var object = {}
+            object.order_ids = $scope.selected_orders
+            return object;
+          }
+        }
+      })
+      modalInstance.result.then(function (data) {
+         $scope.cancleOrder(data);
+       });
+    }
   }
 })
 
@@ -1536,7 +1671,7 @@ ygVendors.controller('orderDetailsCntrl',function ($scope,$q,$state,$stateParams
         deliver : null
       }
     }
-    else if(status == 'INTRANSIT'){
+    else if(status == 'INTRANSIT' || status == 'OUTFORDELIVERY'){
       $scope.order_status = {
         pickup : true,
         deliver : null
@@ -2829,8 +2964,9 @@ ygVendors.controller('createComplaintsCntrl',function ($scope,$timeout,$state,St
       else{
         cfpLoadingBar.complete()
         $scope.show_success_msg =true
-        $scope.success_msg = "Feedback submitted successfully"
+        $scope.success_msg = "Feedback submitted successfully";
         $timeout(function(){
+          $scope.getFreshdeskOpenCount();
           $state.go('home.complaints')
         },3000)
       }
@@ -2949,6 +3085,7 @@ ygVendors.controller('detailComplaintsCntrl', function ($scope,$stateParams,Stor
       }
       else{
         cfpLoadingBar.complete();
+        $scope.getFreshdeskOpenCount();
         $scope.ticket_data.note.helpdesk_note.body = undefined;
         $scope.show_note_section = false;
         $scope.submit_resolve = false;
@@ -3224,4 +3361,17 @@ ygVendors.controller('addCustomerPopup', function ($scope,$modalInstance,details
   $scope.cancelPopup = function(){
     $modalInstance.dismiss();
   }
+})
+
+ygVendors.controller('cancelOrderCntrl', function ($scope,$modalInstance,details){
+  $scope.details = details;
+
+  $scope.details = details
+  $scope.ok = function(){
+    $modalInstance.close($scope.details.order_ids)
+  };
+
+  $scope.cancel = function(){
+    $modalInstance.dismiss('cancel');
+  };
 })

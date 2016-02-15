@@ -82,6 +82,11 @@ def assign_dg():
             pass
     
     delivery_status_queryset = OrderDeliveryStatus.objects.filter(date__gte=day_start, date__lte=day_end)
+    delivery_status_queryset = delivery_status_queryset.filter(
+        Q(order_status=constants.ORDER_STATUS_PLACED) |
+        Q(order_status=constants.ORDER_STATUS_QUEUED) |
+        Q(order_status=constants.ORDER_STATUS_INTRANSIT))
+
     unassigned_pickups_queryset = delivery_status_queryset.filter(Q(pickup_guy=None)).values('order__vendor__store_name').annotate(the_count=Count('order__vendor__store_name'))
     unassigned_pickups_string = ''
     for unassigned_pickups in unassigned_pickups_queryset:

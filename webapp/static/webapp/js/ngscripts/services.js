@@ -165,9 +165,9 @@ ygVendors.factory('Orders',function ($http,baseURl,$q,Errorhandler){
         start_time_string = (data.start_time)? "&time_start="+data.start_time:"";
         end_time_string = (data.end_time)? "&time_end="+data.end_time:"";
         cod_string = (data.cod)? "&is_cod="+data.cod:"";
-
-
-        return $http.get(baseURl.V2apiURL+"/order/?date="+data.date+vendor_string+dg_string+status_string+page_string+search_string+cod_string+start_time_string+end_time_string+order_ids_string).then(Errorhandler.successStatus,Errorhandler.errorStatus);
+        pincode_string = (data.pincode)? "&pincodes="+data.pincode:"";
+        retail_string = (data.retail)? "&is_retail="+data.retail:"";
+        return $http.get(baseURl.V3apiURL+"/order/?date="+data.date+vendor_string+dg_string+status_string+page_string+search_string+cod_string+start_time_string+end_time_string+order_ids_string+pincode_string+retail_string).then(Errorhandler.successStatus,Errorhandler.errorStatus);
     };
 
     getOrders.createOrder = function (data){
@@ -245,6 +245,11 @@ ygVendors.factory('Orders',function ($http,baseURl,$q,Errorhandler){
     getOrders.searchCustomer = function(query){
         Errorhandler.clear();
         return $http.get(baseURl.V2apiURL+'/consumer/?search='+query).then(Errorhandler.successStatus,Errorhandler.errorStatus);
+    };
+
+    getOrders.cancelOrder = function(order_array){
+        Errorhandler.clear();
+        return $http.put(baseURl.V3apiURL+'/order/cancel/',order_array).then(Errorhandler.successStatus,Errorhandler.errorStatus);
     };
 
 	return getOrders;
@@ -407,9 +412,11 @@ ygVendors.factory('GetJsonData', function ($http,$q,baseURl,StoreSession,$localS
 
         var getvendor = $http.get(baseURl.V2apiURL+'/vendor/');
         var dg = $http.get(baseURl.apiURL+'/deliveryguy/');
-        $q.all([getvendor,dg]).then(function (value){
+        var pin_code = $http.get(baseURl.V3apiURL+'/servicible_pincodes/');
+        $q.all([getvendor,dg,pin_code]).then(function (value){
             jsonData.vendors = value[0].data;
             jsonData.dgs = value[1].data;
+            jsonData.pin_codes = value[2].data.payload.data;
             deferred.resolve(jsonData);
         }, function (error){
             deferred.reject("Could not retrieve data! Please reload the page"+error);
@@ -489,6 +496,10 @@ ygVendors.factory('Complaints', function ($http,$q,baseURl,Errorhandler){
 
     complaints.closeComplain = function(data){
         return $http.post(baseURl.apiURL+"/freshdesk/resolve/",data).then(Errorhandler.successStatus,Errorhandler.errorStatus);
+    };
+
+    complaints.getComplaintsCount = function(){
+        return $http.get(baseURl.apiURL+'/freshdesk/get_open_ticket_count/');
     };
 
     return complaints;
