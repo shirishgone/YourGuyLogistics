@@ -390,17 +390,3 @@ def check_month(month, year):
         'end_date': end_date
     }
 
-
-# Util for setting url in login api
-def login_url():
-    if settings.ENVIRONMENT == 'PRODUCTION':
-        url = '{}/api/v3/auth/login/'.format(constants.PROD_URL)
-        return url
-    elif settings.ENVIRONMENT == 'STAGE':
-        url = '{}/api/v3/auth/login/'.format(constants.STAGE_URL)
-        return url
-    elif settings.ENVIRONMENT == 'LOCAL':
-        url = '{}/api/v3/auth/login/'.format(constants.LOCALHOST)
-        return url
-    else:
-        return None

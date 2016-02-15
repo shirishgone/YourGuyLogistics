@@ -1,12 +1,12 @@
+from django.contrib.auth import authenticate
+from django.contrib.auth import login as auth_login
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view
 from rest_framework.exceptions import APIException
-
-import requests
-import json
+from rest_framework.authtoken.models import Token
 
 from api_v3 import constants
-from api_v3.utils import is_userexists, create_token, assign_usergroup_with_name, assign_usergroup, user_role, login_url
+from api_v3.utils import is_userexists, create_token, assign_usergroup_with_name, assign_usergroup, user_role
 from yourguy.models import User, Vendor, VendorAgent, Consumer, DeliveryGuy, Employee
 
 from api_v3.utils import response_access_denied, response_with_payload, response_error_with_message, response_success_with_message, response_invalid_pagenumber, response_incomplete_parameters
@@ -14,6 +14,7 @@ from api_v3.utils import response_access_denied, response_with_payload, response
 
 def dg_details_dict(delivery_guy):
     dg_detail_dict = {
+        'auth_token': '',
         'id': delivery_guy.id,
         'username': delivery_guy.user.username,
         'shift_start_datetime': delivery_guy.shift_start_datetime,
@@ -26,6 +27,7 @@ def dg_details_dict(delivery_guy):
 
 def vendor_details_dict(vendor_agent):
     vendor_detail_dict = {
+        'auth_token': '',
         'vendor_agent_username': vendor_agent.user.username,
         'vendor_agent_name': vendor_agent.user.first_name,
         'vendor_store_name': vendor_agent.vendor.store_name,
@@ -36,37 +38,25 @@ def vendor_details_dict(vendor_agent):
 
 def emp_details_dict(emp):
     emp_detail_dict = {
+        'auth_token': '',
         'vendor_agent_name': emp.user.first_name,
         'role': ''
     }
     return emp_detail_dict
 
 
-def auth_headers():
-    headers = {
-        'Content-Type': 'application/json;charset=UTF-8'
-    }
-    return headers
-
-
 # Login api is being developed as a wrapper around the djoser login api
 @api_view(['POST'])
 def login(request):
     try:
-        username = request.data.get('username')
-        password = request.data.get('password')
+        username = request.data['username']
+        password = request.data['password']
     except APIException:
         params = ['username', 'password']
         return response_incomplete_parameters(params)
 
     try:
-        url = login_url()
-    except Exception as e:
-        error_message = 'Incorrect url generated from the util'
-        return response_error_with_message(error_message)
-
-    try:
-        user = User.objects.get(username=username)
+        user = authenticate(username=username, password=password)
         role = user_role(user)
     except Exception as e:
         error_message = 'No such user found or No such token found for the role'
@@ -76,11 +66,14 @@ def login(request):
         dg = get_object_or_404(DeliveryGuy, user=user)
         if dg.is_active is True:
             try:
-                r = requests.post(url, data=json.dumps(request.data), headers=auth_headers())
-                content = r.json()
+                auth_login(request, user)
                 user_details = dg_details_dict(dg)
+                token = Token.objects.get(user=user)
+                if token is not None:
+                    auth_token = token.key
+                    user_details['auth_token'] = auth_token
                 user_details['role'] = role
-                content['user_details'] = user_details
+                content = user_details
                 return response_with_payload(content, None)
             except Exception as e:
                 error_message = 'Something went wrong'
@@ -91,11 +84,14 @@ def login(request):
     elif role == constants.VENDOR:
         vendor_agent = get_object_or_404(VendorAgent, user=user)
         try:
-            r = requests.post(url, data=json.dumps(request.data), headers=auth_headers())
-            content = r.json()
+            auth_login(request, user)
             vendor_details = vendor_details_dict(vendor_agent)
+            token = Token.objects.get(user=user)
+            if token is not None:
+                auth_token = token.key
+                vendor_details['auth_token'] = auth_token
             vendor_details['role'] = role
-            content['vendor_details'] = vendor_details
+            content = vendor_details
             return response_with_payload(content, None)
         except Exception as e:
             error_message = 'Something went wrong'
@@ -103,11 +99,14 @@ def login(request):
     else:
         emp = get_object_or_404(Employee, user=user)
         try:
-            r = requests.post(url, data=json.dumps(request.data), headers=auth_headers())
-            content = r.json()
+            auth_login(request, user)
             emp_details = emp_details_dict(emp)
+            token = Token.objects.get(user=user)
+            if token is not None:
+                auth_token = token.key
+                emp_details['auth_token'] = auth_token
             emp_details['role'] = emp.department
-            content['emp_details'] = emp_details
+            content = emp_details
             return response_with_payload(content, None)
         except Exception as e:
             error_message = 'Something went wrong'
