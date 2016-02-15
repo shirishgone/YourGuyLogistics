@@ -1044,6 +1044,7 @@ class OrderViewSet(viewsets.ViewSet):
             return response_incomplete_parameters(parameters)
         
         timestamp = datetime.now()
+        canceled_deliveries = []
         for delivery_id in delivery_ids:
             delivery_status = get_object_or_404(OrderDeliveryStatus, pk=delivery_id)
             if is_user_permitted_to_cancel_order(request.user, delivery_status.order) is False:
@@ -1053,11 +1054,15 @@ class OrderViewSet(viewsets.ViewSet):
                 delivery_status.save()
                 action = delivery_actions(constants.CANCELLED_CODE)
                 add_action_for_delivery(action, delivery_status, request.user, None, None, timestamp, None)
-            else:
-                error_message = 'Can\'t update this delivery now.'
-                return response_error_with_message(error_message)
-        success_message = 'Order has been canceled'
-        return response_success_with_message(success_message)
+                canceled_deliveries.append(delivery_status.id)
+
+        if len(canceled_deliveries) == 0:
+            error_message = 'Can\'t cancel deliveries which are already processed.'
+            return response_error_with_message(error_message)
+        else:
+            delivery_ids_string = ', '.join(str(delivery_id) for delivery_id in canceled_deliveries)
+            success_message = 'Canceled deliveries %s'%(delivery_ids_string)
+            return response_success_with_message(success_message)
 
     @list_route(methods=['put'])
     def report(self, request, pk=None):
