@@ -97,7 +97,16 @@ def retail_order_send_email(vendor, new_delivery_ids):
     send_email(constants.RETAIL_EMAIL_ID, subject, body)
 
 def can_update_delivery_status(delivery_status):
-    if delivery_status.order_status == constants.ORDER_STATUS_PLACED or delivery_status.order_status == constants.ORDER_STATUS_QUEUED:
+    if delivery_status.order_status == constants.ORDER_STATUS_PLACED or \
+                    delivery_status.order_status == constants.ORDER_STATUS_QUEUED:
+        return True
+    else:
+        return False
+
+def is_reschedule_allowed(delivery_status):
+    if delivery_status.order_status == constants.ORDER_STATUS_PLACED or \
+                    delivery_status.order_status == constants.ORDER_STATUS_QUEUED or \
+                    delivery_status.order_status == constants.ORDER_STATUS_PICKUP_ATTEMPTED:
         return True
     else:
         return False
@@ -555,7 +564,9 @@ class OrderViewSet(viewsets.ViewSet):
         filter_time_end = request.QUERY_PARAMS.get('time_end', None)
         is_cod = request.QUERY_PARAMS.get('is_cod', None)
         delivery_ids = request.QUERY_PARAMS.get('delivery_ids', None)
-
+        pincodes = request.QUERY_PARAMS.get('pincodes', None)
+        is_retail = request.QUERY_PARAMS.get('is_retail', None)
+        
         # ORDER STATUS CHECK --------------------------------------------------
         order_statuses = []
         if filter_order_status is not None:
@@ -596,7 +607,6 @@ class OrderViewSet(viewsets.ViewSet):
             delivery_guy = get_object_or_404(DeliveryGuy, user=request.user)
             delivery_status_queryset = delivery_status_queryset.filter(Q(delivery_guy=delivery_guy) |
                                                                        Q(pickup_guy=delivery_guy))
-
         else:
             if dg_phone_number is not None:
                 if dg_phone_number.isdigit():
@@ -626,7 +636,20 @@ class OrderViewSet(viewsets.ViewSet):
         if vendor is not None:
             delivery_status_queryset = delivery_status_queryset.filter(order__vendor=vendor)
         # ----------------------------------------------------------------------------
+        
+        # RETAIL VENDOR FILTER -------------------------------------------------------
+        if role == constants.OPERATIONS and is_retail is not None:
+            is_retail = json.loads(is_retail.lower())
+            if is_retail is True:
+                delivery_status_queryset = delivery_status_queryset.filter(order__vendor__is_retail=is_retail)
+        # ----------------------------------------------------------------------------
 
+        # PINCODE FILTERING ----------------------------------------------------------
+        if pincodes is not None and len(pincodes) > 0:
+            pincodes_array = pincodes.split(',')
+            delivery_status_queryset = delivery_status_queryset.filter(Q(order__pickup_address__pin_code__in = pincodes_array) | Q(order__delivery_address__pin_code__in = pincodes_array))
+        #----------------------------------------------------------------------------
+        
         # COD FILTERING --------------------------------------------------------------
         if is_cod is not None:
             is_cod_bool = json.loads(is_cod.lower())
@@ -1021,6 +1044,7 @@ class OrderViewSet(viewsets.ViewSet):
             return response_incomplete_parameters(parameters)
         
         timestamp = datetime.now()
+        canceled_deliveries = []
         for delivery_id in delivery_ids:
             delivery_status = get_object_or_404(OrderDeliveryStatus, pk=delivery_id)
             if is_user_permitted_to_cancel_order(request.user, delivery_status.order) is False:
@@ -1030,11 +1054,15 @@ class OrderViewSet(viewsets.ViewSet):
                 delivery_status.save()
                 action = delivery_actions(constants.CANCELLED_CODE)
                 add_action_for_delivery(action, delivery_status, request.user, None, None, timestamp, None)
-            else:
-                error_message = 'Can\'t update this delivery now.'
-                return response_error_with_message(error_message)
-        success_message = 'Order has been canceled'
-        return response_success_with_message(success_message)
+                canceled_deliveries.append(delivery_status.id)
+
+        if len(canceled_deliveries) == 0:
+            error_message = 'Can\'t cancel deliveries which are already processed.'
+            return response_error_with_message(error_message)
+        else:
+            delivery_ids_string = ', '.join(str(delivery_id) for delivery_id in canceled_deliveries)
+            success_message = 'Canceled deliveries %s'%(delivery_ids_string)
+            return response_success_with_message(success_message)
 
     @list_route(methods=['put'])
     def report(self, request, pk=None):
@@ -1564,8 +1592,10 @@ class OrderViewSet(viewsets.ViewSet):
             return response_error_with_message(error_message)
 
         if is_user_permitted_to_edit_order(request.user, delivery_status.order):
-            if can_update_delivery_status(delivery_status):
+            if is_reschedule_allowed(delivery_status):
                 delivery_status.date = new_date
+                if delivery_status.order_status == constants.ORDER_STATUS_PICKUP_ATTEMPTED:
+                    delivery_status.order_status = constants.ORDER_STATUS_QUEUED
                 delivery_status.save()
                 action = delivery_actions(constants.RESCHEDULED_CODE)
                 add_action_for_delivery(action, delivery_status, request.user, None, None, datetime.now(), None)

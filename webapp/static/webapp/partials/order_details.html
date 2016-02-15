@@ -67,13 +67,13 @@
 				</div>
 				<div class="status-action">
 					<div id="button">
-						<button class="button-success" 
+						<button class="button-success" ng-if="role.vendor"
 								ng-click="openModal(order_with_id.id,'reschedule','reschedule_order')"  
-								ng-disabled="!(order_with_id.status == 'ORDER_PLACED' || order_with_id.status == 'QUEUED' || order_with_id.status == 'PICKUP_ATTEMPTED')" >
+								ng-disabled="!(order_with_id.status == 'ORDER_PLACED' || order_with_id.status == 'QUEUED' || order_with_id.status == 'PICKUPATTEMPTED')" >
 								Reschedule
 						</button>
 					</div>
-					<div id="button">
+					<div id="button" ng-if="role.vendor">
 						<button class="button-danger" 
 								ng-click="openModal(order_with_id,'cancel','delete_order')"
 								ng-disabled="order_with_id.status != 'QUEUED' && order_with_id.status != 'ORDER_PLACED'">

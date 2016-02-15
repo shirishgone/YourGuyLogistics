@@ -68,7 +68,7 @@
                     <li>
                         <a ui-sref="home.complaints" ng-click="hideSidebar()" style="cursor:pointer" ui-sref-active="active">
                             <img class="sidebar-image" src="/static/webapp/images/menubar-icons/feedback_icon.png">&nbsp;&nbsp;
-                            Feedback
+                            Feedback &nbsp; <span class="label label-danger" ng-if="freshdeskOpenCount > 0">{{freshdeskOpenCount}}</span>
                         </a>
                     </li>
                     <li class="option sm-hide tab-hide" >

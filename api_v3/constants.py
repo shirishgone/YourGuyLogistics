@@ -62,12 +62,15 @@ GCM_PUSH_API_KEY = 'AIzaSyCmXulcUBViokrkYZ9Z9bWJgEWgXyeNh1U'
 GCM_SENDER_ID = '559449819463'
 
 # FRESHDESK CONSTATNS
-FRESHDESK_TEST_KEY = 'wxMmvYfVzHCaYaXi1yln'
-FRESHDESK_PRODUCTION_KEY = 'iUVZ8uJ1AywpVsQKL'
+FRESHDESK_BASEURL = 'https://yourguy.freshdesk.com/'
+FRESHDESK_PAGE_COUNT = 50
+if settings.ENVIRONMENT == 'PRODUCTION':
+  FRESHDESK_KEY = 'iUVZ8uJ1AywpVsQKL'
+else:
+  FRESHDESK_KEY = 'iUVZ8uJ1AywpVsQKL'
 
 # URL CONSTANTS
 COMPLAINTS_URL = 'http://app.yourguy.in/#/home/complaints'
-FRESHDESK_BASEURL = 'https://yourguy.freshdesk.com'
 URL_EXPIRY_TIME = 300  # 300 seconds
 SMS_URL = "http://api.smscountry.com/SMSCwebservice_bulk.aspx?User=yourguy&passwd=yourguydotin&mobilenumber=" \
           "{mobile_number}&message={message_text}&sid=YOURGY&mtype=N&DR=Y"

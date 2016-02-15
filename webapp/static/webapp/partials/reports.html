@@ -15,7 +15,7 @@
                 <i class="glyphicon glyphicon-calendar" style="font-size:16.5px;"></i>
               </button>
             </span>
-            <input type="text" class="input-sm form-control" ng-click="open($event,'start_date')" datepicker-popup="{{format}}" ng-model="dash_data.start_date" is-open="datePicker.start_date" show-weeks="false" ng-change="send_dates()" />
+            <input type="text" class="input-sm form-control" ng-click="open($event,'start_date')" datepicker-popup="{{format}}" ng-model="dash_data.start_date" is-open="datePicker.start_date" min-date="'2015-01-01'" show-weeks="false" ng-change="send_dates()" />
           </div>
 
           <p class="pull-left">to</p>
@@ -34,17 +34,17 @@
     <div notification-bar message="notification.message" noticetype="notification.type" ng-show="notification.type" >
     </div>
     <div class="content-wrapper">
-      <div ng-hide="dashboard_value.total_orders == 0" ng-if="dashboard_value.total_orders">
-        <div style="overflow:auto;">
-          <div id="no-padding" class="col-md-4 col-sm-8 col-xs-6" ng-if="$parent.role.ops">
-            <select class="form-control" ng-model="dash_data.vendor_id" ng-options="vendor.id as vendor.name for vendor in vendors">
-              <option value=''> All Vendor </option>
-            </select>
-          </div>
-          <div >
-            <button type="button" class="btn btn-default pull-right" ng-click="downloadExcelData()" azy-load="true" ng-csv="excel_data" filename="orders.csv">Download Report</button>
-          </div>
+      <div style="overflow:auto;" ng-hide="dashboard_value.total_orders == undefined">
+        <div id="no-padding" class="col-md-4 col-sm-8 col-xs-6" ng-if="$parent.role.ops">
+          <select class="form-control" ng-model="dash_data.vendor_id" ng-options="vendor.id as vendor.name for vendor in vendors">
+            <option value=''> All Vendor </option>
+          </select>
         </div>
+        <div ng-if="dashboard_value.total_orders" >
+          <button type="button" class="btn btn-default pull-right" ng-click="downloadExcelData()" azy-load="true" ng-csv="excel_data" filename="orders.csv">Download Report</button>
+        </div>
+      </div>
+      <div ng-hide="dashboard_value.total_orders == 0" ng-if="dashboard_value.total_orders">
         <!-- metrix -->
         <div class="metrics clearfix">
           <div class="metric">
