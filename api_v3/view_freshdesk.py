@@ -90,7 +90,7 @@ def groups(request):
 
 @api_view(['POST'])
 def create_ticket(request):
-    url = '{}/helpdesk/tickets.json'.format(constants.FRESHDESK_BASEURL)
+    url = '{}api/v2/tickets'.format(constants.FRESHDESK_BASEURL)
     try:
         r = requests.post(url, data=json.dumps(request.data), headers=auth_headers())
         content = r.json()
