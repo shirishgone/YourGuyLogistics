@@ -57,7 +57,13 @@ def all_tickets(request):
         return response_access_denied()
     
     try: 
-        count_url = '{}helpdesk/tickets/summary.json?view_name=all'.format(constants.FRESHDESK_BASEURL)
+        if role == constants.VENDOR:
+            count_url = '{}helpdesk/tickets/summary.json?view_name=all&email={}'.format(constants.FRESHDESK_BASEURL,vendor.email)
+        elif role == constants.OPERATIONS:
+            count_url = '{}helpdesk/tickets/summary.json?view_name=all'.format(constants.FRESHDESK_BASEURL)
+        else:
+            return response_access_denied()
+        
         count_request = requests.get(count_url, headers=auth_headers())
         count_response = count_request.json()
         count = count_response['view_count']
