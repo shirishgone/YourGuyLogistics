@@ -58,6 +58,8 @@ def all_tickets(request):
     
     try: 
         if role == constants.VENDOR:
+            vendor_agent = get_object_or_404(VendorAgent, user=request.user)
+            vendor = vendor_agent.vendor
             count_url = '{}helpdesk/tickets/summary.json?view_name=all&email={}'.format(constants.FRESHDESK_BASEURL,vendor.email)
         elif role == constants.OPERATIONS:
             count_url = '{}helpdesk/tickets/summary.json?view_name=all'.format(constants.FRESHDESK_BASEURL)
