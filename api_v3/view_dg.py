@@ -41,6 +41,14 @@ def dg_list_dict(delivery_guy, attendance, no_of_assigned_orders, no_of_executed
     return dg_list_dict
 
 
+def associated_guys_details(delivery_guy):
+    associated_guys_detail_dict = {
+        'dg_id': delivery_guy.id,
+        'dg_name': delivery_guy.user.first_name
+    }
+    return associated_guys_detail_dict
+
+
 def dg_details_dict(delivery_guy):
     dg_detail_dict = {
         'id': delivery_guy.id,
@@ -800,6 +808,33 @@ class DGViewSet(viewsets.ModelViewSet):
 
         content = {'all_dg_attendance': all_dg_attendance}
         return response_with_payload(content, None)
+
+    @detail_route(methods=['get'])
+    def tl_associated_dgs(self, request, pk):
+        all_associated_dgs = []
+        role = user_role(request.user)
+        if role == constants.DELIVERY_GUY:
+            delivery_guy = get_object_or_404(DeliveryGuy, pk=pk)
+            if delivery_guy.is_teamlead is True and delivery_guy.is_active is True:
+                try:
+                    delivery_guy_tl = DeliveryTeamLead.objects.get(delivery_guy=delivery_guy)
+                    associated_dgs = delivery_guy_tl.associate_delivery_guys.all()
+                    associated_dgs = associated_dgs.filter(is_active=True)
+                    for single in associated_dgs:
+                        associated_guys_detail_dict = associated_guys_details(single)
+                        all_associated_dgs.append(associated_guys_detail_dict)
+                    response_content = {
+                        'all_associated_dgs': all_associated_dgs
+                    }
+                    return response_with_payload(response_content, None)
+                except Exception as e:
+                    error_message = 'No such Delivery Team Lead exists'
+                    return response_error_with_message(error_message)
+            else:
+                error_message = 'This is not a DG team lead or this is a deactivated DG team lead'
+                return response_error_with_message(error_message)
+        else:
+            return response_access_denied()
 
 
 @api_view(['GET'])
