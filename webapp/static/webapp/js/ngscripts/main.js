@@ -2964,9 +2964,9 @@ ygVendors.controller('createComplaintsCntrl',function ($scope,$timeout,$state,St
 
   $scope.doComplain = function(){
     cfpLoadingBar.start();
-    $scope.complain_btn_disable = true
+    $scope.complain_btn_disable = true;
     Complaints.creatTickets($scope.tickets).finally(function(){
-      var status =  Errorhandler.getStatus()
+      var status =  Errorhandler.getStatus();
       if(status.has_error){
         cfpLoadingBar.complete()
         alert(status.error)
