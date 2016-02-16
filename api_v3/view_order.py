@@ -440,7 +440,7 @@ def webapp_list(delivery_status):
             'is_reported': delivery_status.is_reported,
             'reported_reason': delivery_status.reported_reason,
             'cod_amount': delivery_status.order.cod_amount,
-            'cod_collected_amount': delivery_status.cod_collected_amount,
+            'cod_collected': delivery_status.cod_collected_amount,
             'customer_name': delivery_status.order.consumer.user.first_name,
             'vendor_name': delivery_status.order.vendor.store_name,
             'delivered_at': delivery_status.delivered_at,

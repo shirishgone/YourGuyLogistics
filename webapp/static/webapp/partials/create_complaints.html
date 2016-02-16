@@ -8,7 +8,7 @@
 			Send A Feedback
 		</div>
 	</div>
-	<div class="content-wrapper">
+	<div class="content-wrapper" ng-if="user">
 		<div ng-hide="show_success_msg">
 			<form class="form-horizontal content-form" ng-submit="complain_form.$valid && doComplain()" name="complain_form">
 				<div class="form-group">
