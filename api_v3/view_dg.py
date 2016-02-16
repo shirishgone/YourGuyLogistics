@@ -5,18 +5,19 @@ from django.db.models import Q
 from django.db.models.functions import Lower
 from django.shortcuts import get_object_or_404
 from django.utils.dateparse import parse_datetime
-from rest_framework import status, authentication, viewsets
+from rest_framework import authentication, viewsets
 from rest_framework.decorators import api_view
 from rest_framework.decorators import detail_route, list_route
 from rest_framework.decorators import authentication_classes, permission_classes
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
 from api_v3 import constants
-from api_v3.utils import paginate, user_role, ist_day_start, ist_day_end, is_userexists, create_token, assign_usergroup
+from api_v3.utils import paginate, user_role, ist_day_start, ist_day_end, is_userexists, create_token, assign_usergroup, \
+    check_month, ist_datetime
 from yourguy.models import DeliveryGuy, DGAttendance, Location, OrderDeliveryStatus, User, Employee, DeliveryTeamLead, \
     ServiceablePincode, Picture
 
+from api_v3.utils import response_access_denied, response_with_payload, response_error_with_message, response_success_with_message, response_invalid_pagenumber, response_incomplete_parameters
 
 def dg_list_dict(delivery_guy, attendance, no_of_assigned_orders, no_of_executed_orders, worked_hours):
     dg_list_dict = {
@@ -64,20 +65,27 @@ def dg_details_dict(delivery_guy):
     return dg_detail_dict
 
 
-def dg_attendance_list_dict(dg_attendance):
+def dg_attendance_list_dict(dg):
     dg_attendance_dict = {
-        'id': dg_attendance.dg.user.id,
-        'employee_code': dg_attendance.dg.employee_code,
-        'name': dg_attendance.dg.user.first_name,
-        'date': dg_attendance.date,
-        'status': dg_attendance.status,
-        'login_time': dg_attendance.login_time,
-        'logout_time': dg_attendance.logout_time,
-        'shift_start_datetime': dg_attendance.dg.shift_start_datetime,
-        'shift_end_datetime': dg_attendance.dg.shift_end_datetime
+        'id': dg.user.id,
+        'employee_code': dg.employee_code,
+        'name': dg.user.first_name,
+        'attendance': []
     }
 
     return dg_attendance_dict
+
+
+def attendance_list_datewise(date, worked_hrs):
+    datewise_dict = {
+        'date': date,
+        'login_time': '',
+        'logout_time': '',
+        'shift_start_datetime': '',
+        'shift_end_datetime': '',
+        'worked_hrs': worked_hrs
+    }
+    return datewise_dict
 
 
 def download_attendance_excel_dict(dg):
@@ -95,6 +103,25 @@ def attendance_datewise_dict():
         }
     return datewise_dict
 
+
+# Util for calculating worked hours
+def working_hours_calculation(dg_attendance):
+    worked_hours = 0
+    if dg_attendance.login_time is not None and dg_attendance.logout_time is not None:
+        worked_hours = (dg_attendance.logout_time - dg_attendance.login_time)
+        total_seconds_worked = int(worked_hours.total_seconds())
+        hours, remainder = divmod(total_seconds_worked, 60 * 60)
+        worked_hours = "%d hrs" % hours
+    elif dg_attendance.login_time is not None and dg_attendance.logout_time is None:
+        worked_hours = (datetime.now(pytz.utc) - dg_attendance.login_time)
+        total_seconds_worked = int(worked_hours.total_seconds())
+        hours, remainder = divmod(total_seconds_worked, 60 * 60)
+        worked_hours = "%d hrs" % hours
+    else:
+        pass
+    return worked_hours
+
+
 class DGViewSet(viewsets.ModelViewSet):
     """
     DeliveryGuy viewset that provides the standard actions
@@ -104,16 +131,12 @@ class DGViewSet(viewsets.ModelViewSet):
     queryset = DeliveryGuy.objects.all()
 
     def destroy(self, request, pk=None):
-        role = user_role(request.user)
-        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        return response_access_denied()
 
     def retrieve(self, request, pk=None):
         role = user_role(request.user)
         if role == constants.VENDOR:
-            content = {
-                'error': 'You don\'t have permissions to view delivery guy info'
-            }
-            return Response(content, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+            return response_access_denied()
         else:
             delivery_guy = get_object_or_404(DeliveryGuy, id=pk)
             detail_dict = dg_details_dict(delivery_guy)
@@ -123,10 +146,8 @@ class DGViewSet(viewsets.ModelViewSet):
                 try:
                     delivery_guy_tl = DeliveryTeamLead.objects.get(delivery_guy=delivery_guy)
                 except Exception as e:
-                    content = {
-                        "Description": "No such Delivery Team Lead exists"
-                    }
-                    return Response(content, status=status.HTTP_400_BAD_REQUEST)
+                    error_message = 'No such Delivery Team Lead exists'
+                    return response_error_with_message(error_message)
 
                 if delivery_guy_tl.serving_pincodes is not None:
                     pincodes = delivery_guy_tl.serving_pincodes.all()
@@ -149,10 +170,8 @@ class DGViewSet(viewsets.ModelViewSet):
                 for single_ops_mngr in associated_ops_mngr:
                     detail_dict['ops_managers'].append('%s' % (single_ops_mngr.user.first_name))
 
-            content = {
-                "data": detail_dict
-            }
-            return Response(content, status=status.HTTP_200_OK)
+            content = {'data': detail_dict}
+            return response_with_payload(content, None)
 
     def list(self, request):
         page = self.request.QUERY_PARAMS.get('page', None)
@@ -183,17 +202,12 @@ class DGViewSet(viewsets.ModelViewSet):
                     or attendance_status == 'CHECKEDIN_AND_CHECKEDOUT':
                 pass
             else:
-                content = {
-                    'error': "Wrong attendance_status. Options: ALL or ONLY_CHECKEDIN or NOT_CHECKEDIN"
-                }
-                return Response(content, status=status.HTTP_400_BAD_REQUEST)
+                error_message = 'Wrong attendance_status. Options: ALL or ONLY_CHECKEDIN or NOT_CHECKEDIN'
+                return response_error_with_message(error_message)
         # ---------------------------------------------------------------------------
 
-        if role == 'vendor':
-            content = {
-                'error': "You don\'t have permissions to view delivery guy info"
-            }
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+        if role == constants.VENDOR:
+            return response_access_denied()
         else:
             all_dgs = DeliveryGuy.objects.order_by('user__first_name')
 
@@ -213,9 +227,7 @@ class DGViewSet(viewsets.ModelViewSet):
                         or attendance_status == 'CHECKEDIN_AND_CHECKEDOUT':
                     for delivery_guy in all_dgs:
                         try:
-                            attendance = DGAttendance.objects.filter(dg=delivery_guy, date__year=date.year,
-                                                                     date__month=date.month, date__day=date.day).latest(
-                                'date')
+                            attendance = DGAttendance.objects.filter(dg = delivery_guy, login_time__gte=day_start, login_time__lte=day_end).latest('date')
                         except Exception as e:
                             attendance = None
 
@@ -236,10 +248,7 @@ class DGViewSet(viewsets.ModelViewSet):
             total_pages = int(total_dg_count / constants.PAGINATION_PAGE_SIZE) + 1
 
             if page > total_pages or page <= 0:
-                response_content = {
-                    "error": "Invalid page number"
-                }
-                return Response(response_content, status=status.HTTP_400_BAD_REQUEST)
+                return response_invalid_pagenumber()
             else:
                 result_dgs = paginate(final_dgs, page)
 
@@ -287,7 +296,7 @@ class DGViewSet(viewsets.ModelViewSet):
                 "total_pages": total_pages,
                 "total_dg_count": total_dg_count
             }
-            return Response(content, status=status.HTTP_200_OK)
+            return response_with_payload(content, None)
 
     # boolean is_teamlead will be sent if the create dg api is used to create a team lead
     # also only servicable pincodes will be considered for team lead creation
@@ -309,27 +318,15 @@ class DGViewSet(viewsets.ModelViewSet):
                 is_teamlead = request.data.get('is_teamlead')
 
             except Exception as e:
-                content = {
-                    'error': 'Incomplete params',
-                    'description': 'MANDATORY: phone_number, password, name. '
-                                   'OPTIONAL: serviceable_pincodes, shift_start_datetime, shift_end_datetime, '
-                                   'transportation_mode, ops_manager_ids, team_lead_ids, profile_picture, is_teamlead'
-                }
-                return Response(content, status=status.HTTP_400_BAD_REQUEST)
+                params = ['phone_number', 'password', 'name', 'serviceable_pincodes(optional)', 'shift_start_datetime(optional)', 'shift_end_datetime(optional)', 'transportation_mode(optional)', 'ops_manager_ids(optional)', 'team_lead_ids(optional)', 'profile_picture(optional)', 'is_teamlead(optional)']
+                return response_incomplete_parameters(params)
         else:
-            content = {
-                'error': 'API Access limited.',
-                'description': 'You cant access this API'
-            }
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
-
+            return response_access_denied()
+        
         # CHECK IF USER EXISTS  -----------------------------------
         if is_userexists(phone_number):
-            content = {
-                'error': 'User already exists',
-                'description': 'User with same phone number already exists'
-            }
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+            error_message = 'User with same phone number already exists'
+            return response_error_with_message(error_message)
         # ---------------------------------------------------------------
         user = User.objects.create_user(username=phone_number, password=password, first_name=name)
         user.save()
@@ -381,10 +378,8 @@ class DGViewSet(viewsets.ModelViewSet):
             delivery_guy.profile_picture = profile_pic
 
         delivery_guy.save()
-        content = {
-            'auth_token': token.key
-        }
-        return Response(content, status=status.HTTP_201_CREATED)
+        content = {'auth_token': token.key}
+        return response_with_payload(content, None)
 
     # Workflows handled are edit dg, edit dg tl
     # req param being sent is is_teamlead flag, check this flag and do a get object or 404 with this data,
@@ -405,14 +400,9 @@ class DGViewSet(viewsets.ModelViewSet):
             is_teamlead = request.data.get('is_teamlead')
 
         except Exception as e:
-            content = {
-                'error': 'Only following params can be edited',
-                'description': 'OPTIONAL: name, serviceable_pincodes, shift_start_datetime, '
-                               'shift_end_datetime, transportation_mode, ops_manager_ids, team_lead_ids, '
-                               'profile_picture, is_teamlead'
-            }
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
-
+            params = ['name(optional)', 'serviceable_pincodes(optional)', 'shift_start_datetime(optional)', 'shift_end_datetime(optional)', 'transportation_mode(optional)', 'ops_manager_ids(optional)', 'team_lead_ids(optional)', 'profile_picture(optional)', 'is_teamlead(optional)']
+            return response_incomplete_parameters(params)
+        
         if role == constants.OPERATIONS or role == constants.OPERATIONS_MANAGER:
             delivery_guy = get_object_or_404(DeliveryGuy, id=pk)
 
@@ -464,17 +454,11 @@ class DGViewSet(viewsets.ModelViewSet):
                     delivery_guy.profile_picture = profile_pic
 
                 delivery_guy.save()
-
-                content = {
-                    "description": 'Delivery guy updated'
-                }
-                return Response(content, status=status.HTTP_200_OK)
-
+                success_message = 'Delivery guy updated.'
+                return response_success_with_message(success_message)
             else:
-                content = {
-                    'error': "You can only edit active dg"
-                }
-                return Response(content, status=status.HTTP_400_BAD_REQUEST)
+                error_message = 'You can only edit active delivery guys'
+                return response_error_with_message(error_message)
 
     @detail_route(methods=['put'])
     def deactivate(self, request, pk=None):
@@ -482,12 +466,9 @@ class DGViewSet(viewsets.ModelViewSet):
         try:
             deactivate_reason = request.data['deactivate_reason']
         except Exception as e:
-            content = {
-                'error': 'Incomplete params',
-                'description': 'MANDATORY: deactivate_reason'
-            }
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
-
+            params = ['deactivate_reason']
+            return response_incomplete_parameters(params)
+        
         if role == constants.OPERATIONS:
             delivery_guy = get_object_or_404(DeliveryGuy, id=pk)
             if delivery_guy.is_active is True:
@@ -501,19 +482,12 @@ class DGViewSet(viewsets.ModelViewSet):
                     'deactivate_reason': deactivate_reason,
                     'deactivated_date': deactivated_date
                 }
-                return Response(content, status=status.HTTP_200_OK)
+                return response_with_payload(content, None)
             else:
-                content = {
-                    'error': 'DG already deactivated',
-                    'description': 'This dg had already been deactivated'
-                }
-                return Response(content, status=status.HTTP_400_BAD_REQUEST)
+                error_message = 'This delivery boy had already been deactivated'
+                return response_error_with_message(error_message)
         else:
-            content = {
-                'error': 'API Access limited.',
-                'description': 'You cant access this API'
-            }
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+            return response_access_denied()
 
     @detail_route(methods=['put'])
     def check_in(self, request, pk=None):
@@ -522,42 +496,40 @@ class DGViewSet(viewsets.ModelViewSet):
         longitude = request.data.get('longitude')
 
         dg = get_object_or_404(DeliveryGuy, user=request.user)
+        if dg.is_active:
+            dg.status = constants.DG_STATUS_AVAILABLE
+            if app_version is not None:
+                dg.app_version = app_version
+            dg.save()
 
-        dg.status = constants.DG_STATUS_AVAILABLE
-        if app_version is not None:
-            dg.app_version = app_version
-        dg.save()
+            today = datetime.now()
+            is_today_checkedIn = False
 
-        today = datetime.now()
-        is_today_checkedIn = False
+            attendance_list = DGAttendance.objects.filter(dg=dg, date__year=today.year, date__month=today.month,
+                                                          date__day=today.day)
 
-        attendance_list = DGAttendance.objects.filter(dg=dg, date__year=today.year, date__month=today.month,
-                                                      date__day=today.day)
+            if len(attendance_list) > 0:
+                is_today_checkedIn = True
 
-        if len(attendance_list) > 0:
-            is_today_checkedIn = True
+            if is_today_checkedIn == False:
+                attendance = DGAttendance.objects.create(dg=dg, date=today, login_time=today)
+                attendance.status = constants.DG_STATUS_WORKING
+                attendance.save()
+                is_today_checkedIn = True
+                if latitude is not None and longitude is not None:
+                    checkin_location = Location.objects.create(latitude=latitude, longitude=longitude)
+                    attendance.checkin_location = checkin_location
+                    attendance.save()
 
-        if is_today_checkedIn == False:
-            attendance = DGAttendance.objects.create(dg=dg, date=today, login_time=today)
-            attendance.status = constants.DG_STATUS_WORKING
-            attendance.save()
-            is_today_checkedIn = True
-
-        if latitude is not None and longitude is not None:
-            checkin_location = Location.objects.create(latitude=latitude, longitude=longitude)
-            attendance.checkin_location = checkin_location
-            attendance.save()
-
-        if is_today_checkedIn is True:
-            content = {
-                'description': 'Thanks for checking in.'
-            }
-            return Response(content, status=status.HTTP_200_OK)
+            if is_today_checkedIn is True:
+                success_message = 'Thanks for checking in.'
+                return response_success_with_message(success_message)
+            else:
+                error_message = 'something went wrong'
+                return response_error_with_message(error_message)
         else:
-            content = {
-                'error': 'Something went wrong'
-            }
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+            error_message = 'Deactivated DG cannot perform checkin'
+            return response_error_with_message(error_message)
 
     @detail_route(methods=['put'])
     def check_out(self, request, pk=None):
@@ -570,10 +542,8 @@ class DGViewSet(viewsets.ModelViewSet):
                 attendance = DGAttendance.objects.filter(dg=dg, date__year=today_now.year, date__month=today_now.month,
                                                          date__day=today_now.day).latest('date')
             except Exception as e:
-                content = {
-                    'error': 'You havent checked-in properly or forgot to checkout the day before.'
-                }
-                return Response(content, status=status.HTTP_200_OK)
+                error_message = 'You havent checked-in properly or forgot to checkout the day before.'
+                return response_error_with_message(error_message)
 
             attendance.logout_time = today_now
             attendance.save()
@@ -587,33 +557,103 @@ class DGViewSet(viewsets.ModelViewSet):
                 attendance.checkout_location = checkout_location
                 attendance.save()
 
-            content = {
-                'description': 'Thanks for checking out.'
-            }
-            return Response(content, status=status.HTTP_200_OK)
+            success_message = 'Thanks for checking out.'
+            return response_success_with_message(success_message)
         except Exception as e:
-            content = {
-                'error': 'Something went wrong'
-            }
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+            error_message = 'Something went wrong'
+            return response_error_with_message(error_message)
 
     @detail_route(methods=['put'])
     def attendance(self, request, pk):
-        month = request.data.get('month')
-        year = request.data.get('year')
+        try:
+            month = request.data.get('month')
+            year = request.data.get('year')
+        except Exception as e:
+            params = ['month', 'year']
+            return response_incomplete_parameters(params)
+        # Util method to generate the start_date and end_date based on the month and year input
+        dates = check_month(month, year)
+        start_date = dates['start_date']
+        end_date = dates['end_date']
+        start_month = start_date.month
+
+        rule_daily = rrule(DAILY, dtstart=start_date, until=end_date)
+        alldates = list(rule_daily)
 
         dg = get_object_or_404(DeliveryGuy, pk=pk)
-        all_dg_attendance = DGAttendance.objects.filter(dg=dg, date__year=year, date__month=month)
+        dg_full_month_attendance = DGAttendance.objects.filter(dg=dg, date__year=year, date__month=month)
+        dg_monthly_attendance = []
+        dg_attendance_dict = dg_attendance_list_dict(dg)
 
-        all_dgs_array = []
-        for dg_attendance in all_dg_attendance:
-            dg_attendance_dict = dg_attendance_list_dict(dg_attendance)
-            all_dgs_array.append(dg_attendance_dict)
+        # ================================
+        # when dg is deactivated
+        # if deactivated_date is None
+        #   pull out the latest attendance record for this dg and use this date as the deactivated date
+        #   assign this deactivated date to the dg and save data to db
+        if dg.is_active is False:
+            dg_deactivated_date = dg.deactivated_date
+            if dg_deactivated_date is None:
+                dg_latest_attendance = DGAttendance.objects.filter(dg=dg).latest('date')
+                if dg_latest_attendance is not None:
+                    dg.deactivated_date = dg_latest_attendance.date
+                    deactivated_date = dg.deactivated_date
+                    now_date = datetime.now(pytz.utc)
+                    now_date = now_date.replace(day=deactivated_date.day, month=deactivated_date.month, year=deactivated_date.year, hour=00, minute=00, second=00, tzinfo=None)
+                    dg.deactivated_date = now_date
+                    dg.save()
+                else:
+                    pass
 
+        # when dg is deactivated
+        # if deactivated_date is not None
+        #   compare deactivated_date and start_date
+        #   generate rule from start date till the deactivated date only
+        #   loop from start date till this deactivated date
+        if dg.is_active is False:
+            dg_deactivated_date = dg.deactivated_date
+            if dg_deactivated_date is not None:
+                dg_deactivated_date = dg_deactivated_date.replace(tzinfo=None)
+                deactivated_month = dg_deactivated_date.month
+                if start_date < dg_deactivated_date and start_month == deactivated_month:
+                    rule_daily_deactivated = rrule(DAILY, dtstart=start_date, until=dg_deactivated_date)
+                    till_deactivated_date = list(rule_daily_deactivated)
+                    for date in till_deactivated_date:
+                        dg_attendance = dg_full_month_attendance.filter(dg=dg, date=date)
+                        for single in dg_attendance:
+                            if single is None:
+                                worked_hours = 0
+                                date = date
+                                datewise_dict = attendance_list_datewise(date, worked_hours)
+                                dg_attendance_list_dict['attendance'].append(datewise_dict)
+                            else:
+                                worked_hours = working_hours_calculation(single)
+                                datewise_dict = attendance_list_datewise(date, worked_hours)
+                                datewise_dict['login_time'] = single.login_time
+                                datewise_dict['logout_time'] = single.logout_time
+                                datewise_dict['shift_start_datetime'] = single.dg.shift_start_datetime
+                                datewise_dict['shift_end_datetime'] = single.dg.shift_end_datetime
+                            dg_attendance_dict['attendance'].append(datewise_dict)
+                    dg_monthly_attendance.append(dg_attendance_dict)
+
+        if dg.is_active or (dg.is_active is False and
+                            start_date < dg.deactivated_date.replace(tzinfo=None) and
+                            start_month < dg.deactivated_date.month):
+            for date in alldates:
+                dg_attendance = dg_full_month_attendance.filter(dg=dg, date=date)
+                for single in dg_attendance:
+                    worked_hours = working_hours_calculation(single)
+                    datewise_dict = attendance_list_datewise(date, worked_hours)
+                    datewise_dict['login_time'] = single.login_time
+                    datewise_dict['logout_time'] = single.logout_time
+                    datewise_dict['shift_start_datetime'] = single.dg.shift_start_datetime
+                    datewise_dict['shift_end_datetime'] = single.dg.shift_end_datetime
+                    dg_attendance_dict['attendance'].append(datewise_dict)
+            dg_monthly_attendance.append(dg_attendance_dict)
         content = {
-            'attendance': all_dgs_array
+            'dg_monthly_attendance': dg_monthly_attendance
         }
-        return Response(content, status=status.HTTP_200_OK)
+        return response_with_payload(content, None)
+
 
     @list_route()
     def all_dg_attendance(self, request):
@@ -630,10 +670,8 @@ class DGViewSet(viewsets.ModelViewSet):
             dg_attendance_dict = dg_attendance_list_dict(attendance)
             all_dg_attendance.append(dg_attendance_dict)
 
-        content = {
-            'all_dg_attendance': all_dg_attendance
-        }
-        return Response(content, status=status.HTTP_200_OK)
+        content = {'all_dg_attendance': all_dg_attendance}
+        return response_with_payload(content, None)
 
     @detail_route(methods=['put'])
     def update_pushtoken(self, request, pk=None):
@@ -642,11 +680,8 @@ class DGViewSet(viewsets.ModelViewSet):
         dg = get_object_or_404(DeliveryGuy, user=request.user)
         dg.device_token = push_token
         dg.save()
-
-        content = {
-            'description': 'Push Token updated'
-        }
-        return Response(content, status=status.HTTP_200_OK)
+        success_message = 'Push Token updated.'
+        return response_success_with_message(success_message)
 
     @list_route()
     def download_attendance(self, request):
@@ -655,17 +690,13 @@ class DGViewSet(viewsets.ModelViewSet):
             end_date_string = self.request.QUERY_PARAMS.get('end_date')
 
             start_date = parse_datetime(start_date_string)
-            start_date = ist_day_start(start_date)
-            start_date = start_date.date()
+            start_date = ist_datetime(start_date)
 
             end_date = parse_datetime(end_date_string)
-            end_date = ist_day_end(end_date)
-            end_date = end_date.date()
+            end_date = ist_datetime(end_date)
         except Exception as e:
-            content = {
-                'error': 'Error in params: start_date, end_date'
-            }
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+            params = ['start_date', 'end_date']
+            return response_incomplete_parameters(params)
 
         # CREATE DATE RULE -----------------------------------------------------------
         rule_daily = rrule(DAILY, dtstart=start_date, until=end_date)
@@ -679,27 +710,85 @@ class DGViewSet(viewsets.ModelViewSet):
         worked_hours = 0
 
         for single_dg in all_dgs:
-            if single_dg.is_active:
-                download_attendance_dict = download_attendance_excel_dict(single_dg)
+            if single_dg.is_active is False:
+                dg_deactivated_date = single_dg.deactivated_date
+                if dg_deactivated_date is None:
+                    dg_latest_attendance = DGAttendance.objects.filter(dg=single_dg)
+                    if dg_latest_attendance:
+                        dg_latest_attendance = DGAttendance.objects.filter(dg=single_dg).latest('date')
+                    else:
+                        dg_latest_attendance = DGAttendance.objects.create(dg=single_dg, date=datetime.now(pytz.utc))
+
+                    if dg_latest_attendance is not None:
+                        single_dg.deactivated_date = dg_latest_attendance.date
+                        deactivated_date = single_dg.deactivated_date
+                        now_date = datetime.now(pytz.utc)
+                        now_date = now_date.replace(day=deactivated_date.day, month=deactivated_date.month, year=deactivated_date.year, hour=00, minute=00, second=00, tzinfo=None)
+                        single_dg.deactivated_date = now_date
+                        single_dg.save()
+                    else:
+                        pass
+
+        # ===========================
+        # when dg is deactivated
+        # compare deactivated_date and start_date
+        # generate rule from start date till the deactivated date only
+        # loop from start date till this deactivated date
+        for single_dg in all_dgs:
+            download_attendance_dict = download_attendance_excel_dict(single_dg)
+            if single_dg.is_active is False:
+                dg_deactivated_date = single_dg.deactivated_date
+                if dg_deactivated_date is not None:
+                    start_month = start_date.month
+                    dg_deactivated_date = dg_deactivated_date.replace(tzinfo=None)
+                    deactivated_month = dg_deactivated_date.month
+                    start_date = start_date.replace(tzinfo=None)
+                    if start_date < dg_deactivated_date and start_month == deactivated_month:
+                        rule_daily_deactivated = rrule(DAILY, dtstart=start_date, until=dg_deactivated_date)
+                        till_deactivated_date = list(rule_daily_deactivated)
+                        for date in till_deactivated_date:
+                            datewise_dict = attendance_datewise_dict()
+                            dg_attendance = all_attendance.filter(dg=single_dg, date=date)
+                            if dg_attendance:
+                                for single in dg_attendance:
+                                    worked_hours = working_hours_calculation(single)
+                                    datewise_dict['date'] = date
+                                    datewise_dict['worked_hrs'] = worked_hours
+                            else:
+                                date = date
+                                worked_hours = 0
+
+                                datewise_dict['date'] = date
+                                datewise_dict['worked_hrs'] = worked_hours
+                            download_attendance_dict['attendance'].append(datewise_dict)
+                        all_dg_attendance.append(download_attendance_dict)
+                    elif start_date.replace(tzinfo=None) < dg_deactivated_date and start_month < deactivated_month:
+                        for date in alldates:
+                            datewise_dict = attendance_datewise_dict()
+                            dg_attendance = all_attendance.filter(dg=single_dg, date=date)
+                            if dg_attendance:
+                                for single in dg_attendance:
+                                    worked_hours = working_hours_calculation(single)
+                                    datewise_dict['date'] = date
+                                    datewise_dict['worked_hrs'] = worked_hours
+                            else:
+                                date = date
+                                worked_hours = 0
+
+                                datewise_dict['date'] = date
+                                datewise_dict['worked_hrs'] = worked_hours
+                            download_attendance_dict['attendance'].append(datewise_dict)
+                        all_dg_attendance.append(download_attendance_dict)
+
+            elif single_dg.is_active:
                 for date in alldates:
                     datewise_dict = attendance_datewise_dict()
                     dg_attendance = all_attendance.filter(dg=single_dg, date=date)
                     if dg_attendance:
                         for single in dg_attendance:
-                            if single.login_time is not None and single.logout_time is not None:
-                                worked_hours = (single.logout_time - single.login_time)
-                                total_seconds_worked = int(worked_hours.total_seconds())
-                                hours, remainder = divmod(total_seconds_worked, 60 * 60)
-                                worked_hours = "%d hrs" % hours
-                            elif single.login_time is not None and single.logout_time is None:
-                                worked_hours = (datetime.now(pytz.utc) - single.login_time)
-                                total_seconds_worked = int(worked_hours.total_seconds())
-                                hours, remainder = divmod(total_seconds_worked, 60 * 60)
-                                worked_hours = "%d hrs" % hours
-                            else:
-                                pass
-                        datewise_dict['date'] = date
-                        datewise_dict['worked_hrs'] = worked_hours
+                            worked_hours = working_hours_calculation(single)
+                            datewise_dict['date'] = date
+                            datewise_dict['worked_hrs'] = worked_hours
                     else:
                         date = date
                         worked_hours = 0
@@ -708,88 +797,15 @@ class DGViewSet(viewsets.ModelViewSet):
                         datewise_dict['worked_hrs'] = worked_hours
                     download_attendance_dict['attendance'].append(datewise_dict)
                 all_dg_attendance.append(download_attendance_dict)
-            else:
-                # when dg is deactivated
-                # compare deactivated_date and start_date
-                # generate rule from start date till the deactivated date only
-                # loop from start date till this deactivated date
-                start_month = start_date.month
-                dg_deactived_date = single_dg.deactivated_date
-                deactivated_month = dg_deactived_date.month
-                download_attendance_dict = download_attendance_excel_dict(single_dg)
-                if start_date < dg_deactived_date and start_month == deactivated_month:
-                    rule_daily_deactivated = rrule(DAILY, dtstart=start_date, until=dg_deactived_date)
-                    till_deactivated_date = list(rule_daily_deactivated)
-                    for date in till_deactivated_date:
-                        datewise_dict = attendance_datewise_dict()
-                        dg_attendance = all_attendance.filter(dg=single_dg, date=date)
-                        if dg_attendance:
-                            for single in dg_attendance:
-                                if single.login_time is not None and single.logout_time is not None:
-                                    worked_hours = (single.logout_time - single.login_time)
-                                    total_seconds_worked = int(worked_hours.total_seconds())
-                                    hours, remainder = divmod(total_seconds_worked, 60 * 60)
-                                    worked_hours = "%d hrs" % hours
-                                elif single.login_time is not None and single.logout_time is None:
-                                    worked_hours = (datetime.now(pytz.utc) - single.login_time)
-                                    total_seconds_worked = int(worked_hours.total_seconds())
-                                    hours, remainder = divmod(total_seconds_worked, 60 * 60)
-                                    worked_hours = "%d hrs" % hours
-                                else:
-                                    pass
-                            datewise_dict['date'] = date
-                            datewise_dict['worked_hrs'] = worked_hours
-                        else:
-                            date = date
-                            worked_hours = 0
 
-                            datewise_dict['date'] = date
-                            datewise_dict['worked_hrs'] = worked_hours
-                        download_attendance_dict['attendance'].append(datewise_dict)
-                    all_dg_attendance.append(download_attendance_dict)
-                elif start_date < dg_deactived_date and start_month < deactivated_month:
-                    rule_daily_deactivated = rrule(DAILY, dtstart=start_date, until=end_date)
-                    till_date = list(rule_daily_deactivated)
-                    for date in till_date:
-                        datewise_dict = attendance_datewise_dict()
-                        dg_attendance = all_attendance.filter(dg=single_dg, date=date)
-                        if dg_attendance:
-                            for single in dg_attendance:
-                                if single.login_time is not None and single.logout_time is not None:
-                                    worked_hours = (single.logout_time - single.login_time)
-                                    total_seconds_worked = int(worked_hours.total_seconds())
-                                    hours, remainder = divmod(total_seconds_worked, 60 * 60)
-                                    worked_hours = "%d hrs" % hours
-                                elif single.login_time is not None and single.logout_time is None:
-                                    worked_hours = (datetime.now(pytz.utc) - single.login_time)
-                                    total_seconds_worked = int(worked_hours.total_seconds())
-                                    hours, remainder = divmod(total_seconds_worked, 60 * 60)
-                                    worked_hours = "%d hrs" % hours
-                                else:
-                                    pass
-                            datewise_dict['date'] = date
-                            datewise_dict['worked_hrs'] = worked_hours
-                        else:
-                            date = date
-                            worked_hours = 0
+        content = {'all_dg_attendance': all_dg_attendance}
+        return response_with_payload(content, None)
 
-                            datewise_dict['date'] = date
-                            datewise_dict['worked_hrs'] = worked_hours
-                        download_attendance_dict['attendance'].append(datewise_dict)
-                    all_dg_attendance.append(download_attendance_dict)
-
-        content = {
-            'all_dg_attendance': all_dg_attendance
-        }
-        return Response(content, status=status.HTTP_200_OK)
 
 @api_view(['GET'])
 def dg_app_version(request):
-    response_content = {
-        "app_version": constants.LATEST_DG_APP_VERSION
-    }
-    return Response(response_content, status=status.HTTP_200_OK)
-
+    content = {'app_version': constants.LATEST_DG_APP_VERSION}
+    return response_with_payload(content, None)
 
 @api_view(['GET'])
 @authentication_classes((TokenAuthentication,))
@@ -800,9 +816,6 @@ def profile(request):
         delivery_guy = get_object_or_404(DeliveryGuy, user=request.user)
         detail_dict = dg_details_dict(delivery_guy)
         response_content = {"data": detail_dict}
-        return Response(response_content, status=status.HTTP_200_OK)
+        return response_with_payload(response_content, None)
     else:
-        content = {
-            'error': 'You dont have permissions to view delivery guy info'
-        }
-        return Response(content, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        return response_access_denied()

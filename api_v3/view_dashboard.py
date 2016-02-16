@@ -3,16 +3,15 @@ from dateutil.rrule import rrule, DAILY
 from django.db.models import Sum, Q
 from django.shortcuts import get_object_or_404
 from django.utils.dateparse import parse_datetime
-from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.exceptions import APIException
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
 
 from api_v3 import constants
-from api_v3.utils import user_role, ist_day_start, ist_day_end
+from api_v3.utils import user_role, ist_day_start, ist_day_end, ist_datetime
 from yourguy.models import OrderDeliveryStatus, Vendor, VendorAgent
 
+from api_v3.utils import response_access_denied, response_with_payload, response_error_with_message, response_success_with_message, response_invalid_pagenumber, response_incomplete_parameters
 
 @api_view(['PUT'])
 @permission_classes((IsAuthenticated,))
@@ -28,10 +27,8 @@ def excel_download(request):
         end_date = ist_day_end(end_date)
 
     except APIException as e:
-        content = {
-            'error': 'Error in params: start_date, end_date'
-        }
-        return Response(content, status=status.HTTP_400_BAD_REQUEST)
+        params = ['start_date', 'end_date']
+        return response_incomplete_parameters(params)
 
     # VENDOR FILTERING -----------------------------------------------------------
     vendor = None
@@ -58,10 +55,8 @@ def excel_download(request):
     # ------------------------------------------------------------------------------
 
     if len(delivery_status_queryset) > 5000:
-        content = {
-            'error': 'Too many records. Please check lesser dates'
-        }
-        return Response(content, status=status.HTTP_400_BAD_REQUEST)
+        error_message = 'Too many records. Max of 5000 deliveries can be downloaded at a time.'
+        return response_error_with_message(error_message)
 
     # CONSTRUCTING RESPONSE ---------------------------------------------------------------
     ist_timedelta = timedelta(hours=5, minutes=30)
@@ -92,11 +87,8 @@ def excel_download(request):
             excel_order_details.append(excel_order)
         except Exception as e:
             pass
-
-    content = {
-        'orders': excel_order_details
-    }
-    return Response(content, status=status.HTTP_200_OK)
+    content = {'orders': excel_order_details}
+    return response_with_payload(content, None)
 
 @api_view(['POST'])
 @permission_classes((IsAuthenticated,))
@@ -106,16 +98,14 @@ def dashboard_stats(request):
         end_date_string = request.data['end_date']
 
         start_date = parse_datetime(start_date_string)
-        start_date = ist_day_start(start_date)
+        start_date = ist_datetime(start_date)
 
         end_date = parse_datetime(end_date_string)
-        end_date = ist_day_end(end_date)
+        end_date = ist_datetime(end_date)
 
     except APIException as e:
-        content = {
-            'error': 'Error in params: start_date, end_date'
-        }
-        return Response(content, status=status.HTTP_400_BAD_REQUEST)
+        params = ['start_date', 'end_date']
+        return response_incomplete_parameters(params)
 
     # CREATE DATE RULE -----------------------------------------------------------
     rule_daily = rrule(DAILY, dtstart=start_date, until=end_date)
@@ -209,5 +199,4 @@ def dashboard_stats(request):
         'cod_collected': cod_collected,
         'orders': orders_graph
     }
-    return Response(content, status=status.HTTP_200_OK)
-
+    return response_with_payload(content, None)

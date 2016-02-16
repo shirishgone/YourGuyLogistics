@@ -61,20 +61,38 @@
             <table st-table="diplay_orders" st-safe-src="orders_data" class="table">
                 <thead>
                     <tr class="orders" style="cursor:pointer;">
-                        <th class="reverse_td" st-sort="id">Order</th>
-                         <th  st-sort="consumer.user.first_name" style="width:20%;" >Customer</th>
-                         <th  st-sort="status" >Status</th>
-                        <th  st-sort="cod_amount" >COD</th>
+                        <th class="reverse_td" style="width:10%;">
+                            <label class="order-checkbox" style="margin-bottom:0">
+                                <input type="checkbox" ng-model="is_all_selected" name="select_all" ng-click="select_all_order(is_all_selected)"/>
+                                <span></span>
+                            </label>
+                            <div ng-show="is_order_selected"  class="dropdown order_bulk_action">
+                                <a class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-triangle-bottom"></span></a>
+                                <ul class="dropdown-menu">
+                                    <li><a style="cursor:pointer;" ng-click="cancleOrderPopup()">Cancel Orders</a></li>
+                                </ul>
+                            </div>
+                        </th>
+                        <th>Order</th>
+                        <th style="width:20%;" >Customer</th>
+                        <th>Status</th>
+                        <th>COD</th>
                         <th> Date </th>
                     </tr>
                 </thead>
                 <tbody class="asLink" ng-repeat="order in diplay_orders" ng-click="redirect_to_details(order)" style="cursor:pointer;  border-top: 1px solid #ddd;">
                     <tr>
-                        <td class="reverse_td">
-                            <a ng-click="redirect_to_details(order)" >{{order.id}}</a>
+                        <td class="reverse_td" ng-click="$event.stopPropagation()">
+                            <label class="order-checkbox" style="margin-bottom:0">
+                                <input name="select_single" type="checkbox" ng-model="order.selected" name="test" ng-click="select_single_order(order)"/>
+                                <span></span>
+                            </label>
                             <div ng-if="order.is_reverse_pickup" class="reverse" tooltip="Reverse Pickup" tooltip-placement="right">
                                 <img src="/static/webapp/images/reverse.png" >
                             </div>
+                        </td>
+                        <td>
+                            <a ng-click="redirect_to_details(order)" >{{order.id}}</a>
                         </td>
                         <td>
                             {{order.customer_name | limitTo: 20 }}{{order.customer_name.length > 20 ? '...' : ''}}
@@ -82,7 +100,7 @@
                         <td style="padding-top:15px;">
                             <span class="label" ng-class="{
                             'label-success' : (order.status == 'DELIVERED'),
-                            'label-warning' : (order.status == 'INTRANSIT'),
+                            'label-warning' : (order.status == 'INTRANSIT' || order.status == 'OUTFORDELIVERY'),
                             'label-info' : (order.status == 'DELIVERYATTEMPTED'|| order.status == 'REJECTED' || order.status == 'CANCELLED' || order.status == 'PICKUPATTEMPTED'|| order.status == 'ATTEMPTED'),
                             'label-danger' : (order.status == 'QUEUED' || order.status == 'ORDER_PLACED')}">{{order.status}}</span>
                         </td>

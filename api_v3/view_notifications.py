@@ -1,7 +1,6 @@
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view
-from rest_framework.response import Response
-from rest_framework import status, authentication
+from rest_framework import authentication
 from rest_framework.decorators import authentication_classes, permission_classes
 from rest_framework.authentication import TokenAuthentication
 from rest_framework import viewsets
@@ -14,6 +13,7 @@ from api_v2.views import paginate
 
 import requests
 import constants
+from api_v3.utils import response_access_denied, response_with_payload, response_error_with_message, response_success_with_message, response_invalid_pagenumber, response_incomplete_parameters
 
 def notification_dict(notification):
     res_order = {
@@ -38,7 +38,7 @@ class NotificationViewSet(viewsets.ViewSet):
     queryset = Notification.objects.all()
     
     def destroy(self, request, pk= None):
-        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        return response_access_denied()
 
     def retrieve(self, request, pk = None):
         role = user_role(request.user)
@@ -54,17 +54,11 @@ class NotificationViewSet(viewsets.ViewSet):
             
             if is_permitted == True:
                 notif_dict = notification_dict(notification)
-                return Response(notif_dict, status = status.HTTP_200_OK)      
+                return response_with_payload(notif_dict, None)
             else:
-                content = {
-                'error':'You dont have permissions to view notification details'
-                }
-                return Response(content, status = status.HTTP_405_METHOD_NOT_ALLOWED)                
+                return response_access_denied()                
         else:
-            content = {
-            'error':'You dont have permissions to view notification details.'
-            }
-            return Response(content, status = status.HTTP_405_METHOD_NOT_ALLOWED)
+            return response_access_denied()            
 
     def list(self, request):
         page = self.request.QUERY_PARAMS.get('page', '1')
@@ -76,10 +70,7 @@ class NotificationViewSet(viewsets.ViewSet):
             notifications_count = len(notifications)
             total_pages =  int(notifications_count/constants.PAGINATION_PAGE_SIZE) + 1
             if page > total_pages or page<=0:
-                response_content = {
-                "error": "Invalid page number"
-                }
-                return Response(response_content, status = status.HTTP_400_BAD_REQUEST)
+                return response_invalid_pagenumber()
             else:
                 notifications = paginate(notifications, page)
             # ----------------------------------------------------------------------------        
@@ -93,11 +84,11 @@ class NotificationViewSet(viewsets.ViewSet):
             "total_pages": total_pages, 
             "total_notifications" : notifications_count
             }
-            return Response(response_content, status = status.HTTP_200_OK)      
+            return response_with_payload(response_content, None)
         else:       
-            content = {'description':'You dont have any notifications for now.'}
-            return Response(status = status.HTTP_200_OK)
-    
+            success_message = 'You dont have any notifications for now.'
+            return response_success_with_message(success_message)
+
     @detail_route(methods=['post'])
     def read(self, request, pk):
         role = user_role(request.user)
@@ -113,15 +104,12 @@ class NotificationViewSet(viewsets.ViewSet):
             if is_permitted == True:
                 notification.read = True
                 notification.save()
-                return Response(status = status.HTTP_200_OK)      
+                success_message = 'Notification marked as read.'
+                return response_success_with_message(success_message)
             else:
-                content = {
-                'error':'You dont have permissions to update this notification'
-                }
-                return Response(content, status = status.HTTP_405_METHOD_NOT_ALLOWED)                
+                return response_access_denied()
         else:
-            content = {'description':'You dont have permissions to update this notification'}
-            return Response(status = status.HTTP_200_OK)
+            return response_access_denied()
     
     @list_route(methods=['GET'])
     def pending(self, request):        
@@ -129,10 +117,8 @@ class NotificationViewSet(viewsets.ViewSet):
         if role == constants.OPERATIONS:
            employee = get_object_or_404(Employee, user = request.user) 
            notifications_count = employee.notifications.filter(read = False).count()
-           response_content = {
-           "count": notifications_count
-           }
-           return Response(response_content, status = status.HTTP_200_OK)      
-        else:       
-            content = {'description':'You dont have any pending notifications for now.'}
-            return Response(status = status.HTTP_200_OK)
+           response_content = {"count": notifications_count}
+           return response_with_payload(response_content, None)
+        else:  
+            success_message = 'You dont have any pending notifications for now.'
+            return response_success_with_message(success_message)

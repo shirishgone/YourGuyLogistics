@@ -12,7 +12,7 @@ from rest_framework.decorators import api_view
 
 from yourguy.models import Order, OrderDeliveryStatus, Consumer, Vendor, DeliveryGuy, Area, VendorAgent, Address, Product, OrderItem, User
 from datetime import datetime, timedelta, time
-from api.views import user_role, is_userexists, is_vendorexists, is_consumerexists, is_dgexists, is_address_exists, days_in_int, send_sms, normalize_offset_awareness, ist_day_start, ist_day_end
+from api.views import user_role, is_userexists, is_vendorexists, is_consumerexists, is_dgexists, is_address_exists, days_in_int, send_sms, normalize_offset_awareness, ist_day_start, ist_day_end, ist_datetime
 
 import constants
 import json
@@ -115,10 +115,10 @@ def report(request):
 		end_date_string = request.data['end_date']	
 		
 		start_date = parse_datetime(start_date_string)
-		start_date = ist_day_start(start_date)
+		start_date = ist_datetime(start_date)
 		
 		end_date = parse_datetime(end_date_string)
-		end_date = ist_day_end(end_date)
+		end_date = ist_datetime(end_date)
 
 	except Exception, e:
 		content = {'error':'Error in params: start_date, end_date'}

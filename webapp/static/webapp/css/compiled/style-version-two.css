@@ -131,6 +131,10 @@
 	background: url("../../images/checked_checkbox.png") top left no-repeat;
 }
 
+.order-checkbox input[type=checkbox]:disabled + span {
+	background: #EEE;
+}
+
 
 #no-padding{
 	padding-right: 5px;
@@ -745,8 +749,10 @@
 
 .status_filter ul{
 	float: left;
+	overflow: auto;
+	max-height: 300px;
     min-width: 160px;
-    padding: 5px 10px;
+    padding: 5px 0px;
     margin: 2px 0 0;
     list-style: none;
     font-size: 14px;
@@ -757,6 +763,12 @@
     -webkit-box-shadow: 0 6px 12px rgba(0,0,0,.175);
     box-shadow: 0 6px 12px rgba(0,0,0,.175);
     background-clip: padding-box;
+}
+.status_filter ul li {
+	padding:0px 10px;
+}
+.status_filter ul li:hover {
+	background-color: #FFD6A4
 }
 
 .order .no-orders{

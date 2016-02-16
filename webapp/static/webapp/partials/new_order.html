@@ -106,20 +106,39 @@
 				</div>
 			</div>
 			<div class="col-md-12 filter-lvl2" id="no-padding" ng-show="show_filter">
-				<div class="col-xs-6 md-hide" id="no-padding">
+				<div class="col-xs-4 md-hide" id="no-padding">
 					<select class="form-control" ng-model="order_params.vendor" ng-options="vendor.id as vendor.name group by vendor.type for vendor in vendors">
                         <option value=''> All Vendors </option>
                     </select>
 				</div>
-				<div  class="col-xs-6 md-hide" id="no-padding">
+				<div  class="col-xs-4 md-hide" id="no-padding">
 					<select class="form-control" ng-model="order_params.dg" ng-options="dg.user.username as dg.user.first_name for dg in dgs">
                         <option value=''> All Delivery Boys </option>
                     </select>
 				</div>
-				<div class="col-md-2 col-xs-4 sm-pad" id="no-padding">
-					<select class="form-control" ng-model="order_time" ng-change="selectTime(order_time)" ng-options="time.time as time.value for time in time_data" >
-                        <option value=''> 24 Hours </option>
-                    </select>
+				<div class="col-md-2 col-xs-4" id="no-padding">
+					<!-- <select class="form-control"  ng-model="order_params.pincode" ng-options="pc.pincode as (pc.pincode+'-'+pc.city) for pc in pin_codes" >
+                        <option value=''> Pin Codes </option>
+                    </select> -->
+                    <div class="status_filter">
+						<button click-outside showcontent="show_pincodes" id="single-button" type="button" class="btn btn-default">
+							<span class="caret"></span>
+							<span ng-if="order_params.pincode.length == 0">All PinCodes</span>
+							<span ng-if="order_params.pincode.length != 0">{{order_params.pincode[0]}} 
+								<span ng-show="order_params.pincode.length != 1">+{{order_params.pincode.length -1 }}</span>
+							</span>
+						</button>
+						<ul role="menu" ng-show="show_pincodes" style="position:fixed;">
+							<li class="asAnchor" ng-click="unselectOrderPincode()">
+								<input type="checkbox" name="select_pincode" ng-model="no_picode"/>&nbsp;&nbsp;All PinCodes
+							</li>
+							<li class="asAnchor" ng-repeat="pc in pin_codes" ng-click="pc.selected = !pc.selected; selectOrderPincode(pc)">
+								<span>
+									<input type="checkbox" name="select_pincode" ng-model="pc.selected" ng-click="$event.stopPropagation();selectOrderPincode(pc)"/>&nbsp;&nbsp;{{pc.pincode}}
+								</span>
+							</li>
+						</ul>
+					</div>
 				</div>
 				<div class="col-xs-4 md-hide sm-pad" id="no-padding">
 					<div class="status_filter">
@@ -142,9 +161,19 @@
 						</ul>
 					</div>
 				</div>
+				<div class="col-md-2 col-xs-2 sm-pad" id="no-padding">
+					<select class="form-control" ng-model="order_time" ng-change="selectTime(order_time)" ng-options="time.time as time.value for time in time_data" >
+                        <option value=''> 24 Hours </option>
+                    </select>
+				</div>
 				<div class="col-md-2 col-xs-2 cod-switch">
 					<md-switch ng-model="order_params.cod" class="md-primary md-block" aria-label="Switch 1" class="md-block" style="margin:0px;">
 						COD
+					</md-switch>
+				</div>
+				<div class="col-md-2 col-xs-2 cod-switch">
+					<md-switch ng-model="order_params.retail" class="md-primary md-block" aria-label="Switch 2" class="md-block" style="margin:0px;">
+						Retail
 					</md-switch>
 				</div>
 				<div class="col-md-2 col-xs-1 reset" id="no-padding" ng-click="reset_filter()" style="cursor:pointer;">
@@ -213,7 +242,7 @@
 					<div class="wid-15 wid-tab-13 sm-hide" style="padding-top:10px;">
 						<span class="label" ng-class="{
                             'label-success' : (order.status == 'DELIVERED'),
-                            'label-warning' : (order.status == 'INTRANSIT'),
+                            'label-warning' : (order.status == 'INTRANSIT' || order.status == 'OUTFORDELIVERY'),
                             'label-info' : (order.status == 'DELIVERYATTEMPTED'|| order.status == 'REJECTED' || order.status == 'CANCELLED' || order.status == 'PICKUPATTEMPTED'|| order.status == 'ATTEMPTED'),
                             'label-danger' : (order.status == 'QUEUED' || order.status == 'ORDER_PLACED')}">
                             {{order.status}}

@@ -2,16 +2,15 @@ from django.contrib.auth.models import User
 from django.db.models import Q
 from django.db.models.functions import Lower
 from django.shortcuts import get_object_or_404
-from rest_framework import authentication, status
+from rest_framework import authentication
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
 from rest_framework.decorators import list_route
 
 from api_v3 import constants
 from api_v3.utils import user_role, paginate, is_userexists, is_consumerexists
 from yourguy.models import Consumer, VendorAgent
-
+from api_v3.utils import response_access_denied, response_with_payload, response_error_with_message, response_success_with_message, response_invalid_pagenumber, response_incomplete_parameters
 
 def create_consumer(username, phone_number, address):
     # FETCH USER WITH PHONE NUMBER -------------------------------
@@ -91,18 +90,11 @@ class ConsumerViewSet(viewsets.ModelViewSet):
             vendor = vendor_agent.vendor
             consumer = get_object_or_404(Consumer, pk=pk)
             consumer.associated_vendor.remove(vendor)
-
-            content = {
-                'description': 'Customer removed.'
-            }
-            return Response(content, status=status.HTTP_200_OK)
-
+            success_message = 'Customer removed.'
+            return response_success_with_message(success_message)
         else:
-            content = {
-                'description': 'You don\'t have permissions to remove the customer.'
-            }
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
-
+            return response_access_denied()
+    
     def retrieve(self, request, pk=None):
         consumer = get_object_or_404(Consumer, id=pk)
         role = user_role(request.user)
@@ -116,21 +108,13 @@ class ConsumerViewSet(viewsets.ModelViewSet):
                     break
             if is_consumer_associated_to_vendor:
                 detail_dict = consumer_detail_dict(consumer)
-                content = {
-                    "data": detail_dict
-                }
-                return Response(content, status=status.HTTP_200_OK)
+                content = {'data': detail_dict}
+                return response_with_payload(content, None)
             else:
-                content = {
-                    'error': 'You don\'t have permissions to view this consumer.'
-                }
-                return Response(content, status=status.HTTP_400_BAD_REQUEST)
+                return response_access_denied()
         else:
-            content = {
-                'error': 'You don\'t have permissions to view this consumer.'
-            }
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
-
+            return response_access_denied()
+    
     def list(self, request):
         page = self.request.QUERY_PARAMS.get('page', '1')
         search_query = request.QUERY_PARAMS.get('search', None)
@@ -159,10 +143,7 @@ class ConsumerViewSet(viewsets.ModelViewSet):
             total_pages = int(total_customers_count / constants.PAGINATION_PAGE_SIZE) + 1
 
             if page > total_pages or page <= 0:
-                content = {
-                    "error": "Invalid page number"
-                }
-                return Response(content, status=status.HTTP_400_BAD_REQUEST)
+                return response_invalid_pagenumber()
             else:
                 customers = paginate(total_consumers_of_vendor, page)
 
@@ -174,15 +155,10 @@ class ConsumerViewSet(viewsets.ModelViewSet):
                     consumer_dict = consumer_list_dict(consumer)
                 result.append(consumer_dict)
 
-            content = {
-                "data": result, "total_pages": total_pages
-            }
-            return Response(content, status=status.HTTP_200_OK)
+            content = {"data": result, "total_pages": total_pages}
+            return response_with_payload(content, None)
         else:
-            content = {
-                'error': 'You don\'t have permissions to view all Consumers'
-            }
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+            return response_access_denied()
 
     @list_route(methods=['get'])
     def file_download(self, request):
@@ -196,13 +172,7 @@ class ConsumerViewSet(viewsets.ModelViewSet):
                 consumer_dict = excel_download_consumer_detail(consumer)
                 result.append(consumer_dict)
 
-            response_content = {
-            "data": result
-            }
-            return Response(response_content, status = status.HTTP_200_OK)
+            response_content = {'data': result}
+            return response_with_payload(response_content, None)
         else:
-            content = {
-            'error':'No permissions to access customers',
-            'description':'You dont have permissions to fetch customers list'
-            }
-            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+            return response_access_denied()
