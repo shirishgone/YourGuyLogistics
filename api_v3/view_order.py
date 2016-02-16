@@ -258,7 +258,7 @@ def can_update_order(delivery_status, status):
         else:
             return False
     elif status == constants.ORDER_STATUS_DELIVERY_ATTEMPTED:
-        if delivery_status.order_status == constants.ORDER_STATUS_INTRANSIT:
+        if delivery_status.order_status == constants.ORDER_STATUS_INTRANSIT or delivery_status.order_status == constants.ORDER_STATUS_OUTFORDELIVERY:
             return True
         else:
             return False
