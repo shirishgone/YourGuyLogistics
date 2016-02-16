@@ -157,7 +157,7 @@ ygVendors.factory('Orders',function ($http,baseURl,$q,Errorhandler){
             search_string = "";
         }
         if(data.order_ids){
-            order_ids_string = "&order_ids="+data.order_ids;
+            order_ids_string = "&delivery_ids="+data.order_ids;
         }
         else{
             order_ids_string = "";
