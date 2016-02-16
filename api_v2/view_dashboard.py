@@ -113,13 +113,13 @@ def report(request):
 	try:
 		start_date_string = request.data['start_date']
 		end_date_string = request.data['end_date']	
-		
+
 		start_date = parse_datetime(start_date_string)
-		start_date = ist_datetime(start_date)
+		start_date = ist_day_start(start_date)
 		
 		end_date = parse_datetime(end_date_string)
-		end_date = ist_datetime(end_date)
-
+		end_date = ist_day_end(end_date)
+		
 	except Exception, e:
 		content = {'error':'Error in params: start_date, end_date'}
 		return Response(content, status = status.HTTP_400_BAD_REQUEST)
