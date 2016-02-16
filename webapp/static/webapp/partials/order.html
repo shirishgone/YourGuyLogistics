@@ -105,7 +105,7 @@
                             'label-danger' : (order.status == 'QUEUED' || order.status == 'ORDER_PLACED')}">{{order.status}}</span>
                         </td>
                         <td>
-                            <span ng-class="compareCOD(order)">{{order.cod_collected_amount}}rs</span>/{{order.cod_amount}}rs
+                            <span ng-class="compareCOD(order)">{{order.cod_collected}}rs</span>/{{order.cod_amount}}rs
                         </td>
                         <td class="recurring_td">
                            {{order.pickup_datetime | date:'dd MMM yyyy @ h:mm a'}}
