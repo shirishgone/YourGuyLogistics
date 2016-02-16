@@ -61,12 +61,12 @@
             <table st-table="diplay_orders" st-safe-src="orders_data" class="table">
                 <thead>
                     <tr class="orders" style="cursor:pointer;">
-                        <th class="reverse_td" style="width:10%;">
-                            <label class="order-checkbox" style="margin-bottom:0">
+                        <th class="reverse_td" style="width:90px;padding-right: 10px;padding-left: 40px;text-align: left;">
+                            <label class="order-checkbox" style="margin-bottom:0;">
                                 <input type="checkbox" ng-model="is_all_selected" name="select_all" ng-click="select_all_order(is_all_selected)"/>
                                 <span></span>
                             </label>
-                            <div ng-show="is_order_selected"  class="dropdown order_bulk_action">
+                            <div ng-show="is_order_selected"  class="dropdown order_bulk_action" style="float: right;">
                                 <a class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-triangle-bottom"></span></a>
                                 <ul class="dropdown-menu">
                                     <li><a style="cursor:pointer;" ng-click="cancleOrderPopup()">Cancel Orders</a></li>
@@ -82,7 +82,7 @@
                 </thead>
                 <tbody class="asLink" ng-repeat="order in diplay_orders" ng-click="redirect_to_details(order)" style="cursor:pointer;  border-top: 1px solid #ddd;">
                     <tr>
-                        <td class="reverse_td" ng-click="$event.stopPropagation()">
+                        <td class="reverse_td" style="padding-right: 10px;padding-left: 40px;text-align: left;" ng-click="$event.stopPropagation()">
                             <label class="order-checkbox" style="margin-bottom:0">
                                 <input name="select_single" type="checkbox" ng-model="order.selected" name="test" ng-click="select_single_order(order)"/>
                                 <span></span>
@@ -105,7 +105,7 @@
                             'label-danger' : (order.status == 'QUEUED' || order.status == 'ORDER_PLACED')}">{{order.status}}</span>
                         </td>
                         <td>
-                            <span ng-class="compareCOD(order)">{{order.cod_collected}}rs</span>/{{order.cod_amount}}rs
+                            <span ng-class="compareCOD(order)">{{order.cod_collected_amount}}rs</span>/{{order.cod_amount}}rs
                         </td>
                         <td class="recurring_td">
                            {{order.pickup_datetime | date:'dd MMM yyyy @ h:mm a'}}
