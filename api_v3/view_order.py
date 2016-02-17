@@ -1317,7 +1317,7 @@ class OrderViewSet(viewsets.ViewSet):
         # ----------------------------------------------------------------
         
         if can_update_order(delivery_status, constants.ORDER_STATUS_DELIVERY_ATTEMPTED):
-            update_delivery_status_delivery_attempted(delivery_status, remarks, delivered_datetime)
+            update_delivery_status_delivery_attempted(delivery_status, remarks, attempted_datetime)
             action = delivery_actions(constants.DELIVERY_ATTEMPTED_CODE)
             add_action_for_delivery(action, delivery_status, request.user, latitude, longitude, attempted_datetime, remarks)
             success_message = 'Delivery updated'
