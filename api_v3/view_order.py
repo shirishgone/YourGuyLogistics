@@ -1606,3 +1606,38 @@ class OrderViewSet(viewsets.ViewSet):
                 return response_error_with_message(error_message)
         else:
             return response_access_denied()
+
+    # ALl the orders will be initially assigned to dg tl, then he will transfer to his associated dgs
+    # DG id will be the pg/dg or both to whom the order will be transferred
+    # TL will initiate this so we have handle over TL to pull his associated dgs
+    @list_route(methods=['put'])
+    def tl_transfer_orders(self, request, pk=None):
+        try:
+            dg_id = request.data['dg_id']
+            delivery_ids = request.data['delivery_ids']
+        except Exception as e:
+            parameters = ['dg_id', 'delivery_ids']
+            return response_incomplete_parameters(parameters)
+
+        role = user_role(request.user)
+        if role == constants.DELIVERY_GUY:
+            dg_tl = get_object_or_404(DeliveryGuy, user=request.user)
+            dg = get_object_or_404(DeliveryGuy, id=dg_id)
+            if dg.is_active is True:
+                for delivery_id in delivery_ids:
+                    delivery_status = get_object_or_404(OrderDeliveryStatus, pk=delivery_id)
+                    if delivery_status.pickup_guy is not None and delivery_status.pickup_guy == dg_tl:
+                        delivery_status.pickup_guy = dg
+                        delivery_status.save()
+
+                    if delivery_status.delivery_guy is not None and delivery_status.delivery_guy == dg_tl:
+                        delivery_status.delivery_guy = dg
+                        delivery_status.save()
+
+                success_message = 'Orders assigned successfully'
+                return response_success_with_message(success_message)
+            else:
+                error_message = 'This is not a active DG.'
+                return response_error_with_message(error_message)
+        else:
+            return response_access_denied()
