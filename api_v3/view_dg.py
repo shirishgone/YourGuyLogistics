@@ -822,11 +822,8 @@ class DGViewSet(viewsets.ModelViewSet):
                     associated_dgs = associated_dgs.filter(is_active=True)
                     for single in associated_dgs:
                         associated_guys_detail_dict = associated_guys_details(single)
-                        all_associated_dgs.append(associated_guys_detail_dict)
-                    response_content = {
-                        'all_associated_dgs': all_associated_dgs
-                    }
-                    return response_with_payload(response_content, None)
+                        all_associated_dgs.append(associated_guys_detail_dict)                    
+                    return response_with_payload(all_associated_dgs, None)
                 except Exception as e:
                     error_message = 'No such Delivery Team Lead exists'
                     return response_error_with_message(error_message)
