@@ -1629,16 +1629,11 @@ class OrderViewSet(viewsets.ViewSet):
                     if delivery_status.pickup_guy is not None and delivery_status.pickup_guy == dg_tl:
                         delivery_status.pickup_guy = dg
                         delivery_status.save()
-                    elif delivery_status.pickup_guy is not None and delivery_status.pickup_guy != dg_tl:
-                        error_message = 'currently assigned pickup guy is not the dg tl'
-                        return response_error_with_message(error_message)
 
                     if delivery_status.delivery_guy is not None and delivery_status.delivery_guy == dg_tl:
                         delivery_status.delivery_guy = dg
                         delivery_status.save()
-                    elif delivery_status.delivery_guy is not None and delivery_status.delivery_guy != dg_tl:
-                        error_message = 'currently assigned delivery guy is not the dg tl'
-                        return response_error_with_message(error_message)
+
                 success_message = 'Orders assigned successfully'
                 return response_success_with_message(success_message)
             else:
