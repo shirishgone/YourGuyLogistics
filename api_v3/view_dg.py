@@ -317,7 +317,7 @@ class DGViewSet(viewsets.ModelViewSet):
                 shift_time = request.data.get('shift_time')
                 transportation_mode = request.data.get('transportation_mode')
                 ops_manager_id = request.data.get('ops_manager_id')
-                team_lead_ids = request.data.get('team_lead_ids')
+                team_lead_dg_ids = request.data.get('team_lead_dg_ids')
             except Exception as e:
                 params = ['phone_number', 'password', 'name', 'shift_start_datetime(optional)', 'shift_end_datetime(optional)', 'transportation_mode(optional)', 'ops_manager_ids(optional)', 'team_lead_ids(optional)']
                 return response_incomplete_parameters(params)
@@ -362,10 +362,10 @@ class DGViewSet(viewsets.ModelViewSet):
                 ops_manager.associate_delivery_guys.add(delivery_guy)
                 ops_manager.save()
                 
-            if team_lead_ids is not None:
-                for single_team_lead_id in team_lead_ids:
-                    team_lead_id = single_team_lead_id
-                    team_lead = get_object_or_404(DeliveryTeamLead, id=team_lead_id)
+            if team_lead_dg_ids is not None:
+                for single_team_lead_dg_id in team_lead_dg_ids:
+                    team_lead_delivery_guy = get_object_or_404(DeliveryGuy, id = single_team_lead_dg_id)
+                    team_lead = get_object_or_404(DeliveryTeamLead, delivery_guy=team_lead_delivery_guy)
                     team_lead.associate_delivery_guys.add(delivery_guy)
                     team_lead.save()
             delivery_guy.save()    
@@ -388,7 +388,7 @@ class DGViewSet(viewsets.ModelViewSet):
             shift_end_datetime = request.data.get('shift_end_datetime')
             transportation_mode = request.data.get('transportation_mode')
             ops_manager_ids = request.data.get('ops_manager_ids')
-            team_lead_ids = request.data.get('team_lead_ids')
+            team_lead_dg_ids = request.data.get('team_lead_dg_ids')
             profile_picture = request.data.get('profile_pic_name')
             is_teamlead = request.data.get('is_teamlead')
 
@@ -435,10 +435,10 @@ class DGViewSet(viewsets.ModelViewSet):
                         ops_manager.associate_delivery_guys.add(delivery_guy)
                         ops_manager.save()
 
-                if team_lead_ids is not None and delivery_guy.is_teamlead is False:
-                    for single_team_lead_id in team_lead_ids:
-                        team_lead_id = single_team_lead_id
-                        team_lead = get_object_or_404(DeliveryTeamLead, id=team_lead_id)
+                if team_lead_dg_ids is not None and delivery_guy.is_teamlead is False:
+                    for team_lead_dg_id in team_lead_dg_ids:
+                        team_lead_delivery_guy = get_object_or_404(DeliveryGuy, id = team_lead_dg_id)
+                        team_lead = get_object_or_404(DeliveryTeamLead, delivery_guy=team_lead_delivery_guy)
                         team_lead.associate_delivery_guys.add(delivery_guy)
                         team_lead.save()
 
@@ -818,6 +818,22 @@ class DGViewSet(viewsets.ModelViewSet):
         else:
             return response_access_denied()
 
+    @list_route()
+    def delivery_teamleads(self, request, pk):
+        role = user_role(request.user)
+        if role == constants.OPERATIONS or role == constants.OPERATIONS_MANAGER:
+            all_tls = DeliveryTeamLead.objects.all()
+            all_tls_dict = []
+            for teamlead in all_tls:
+                delivery_guy = teamlead.delivery_guy
+                tl_dict = {
+                'name': delivery_guy.user.first_name,
+                'dg_id':delivery_guy.id
+                }
+                all_tls.append(tl_dict)
+            return response_with_payload(all_tls_dict)
+        else:
+            return response_access_denied()
 
 @api_view(['GET'])
 def dg_app_version(request):
