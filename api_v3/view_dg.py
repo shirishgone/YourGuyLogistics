@@ -309,7 +309,7 @@ class DGViewSet(viewsets.ModelViewSet):
 
     def create(self, request):
         role = user_role(request.user)
-        if role == constants.OPERATIONS_MANAGER:
+        if role == constants.OPERATIONS:
             try:
                 name = request.data['name']
                 phone_number = request.data['phone_number']
