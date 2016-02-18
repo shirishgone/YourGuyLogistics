@@ -819,7 +819,7 @@ class DGViewSet(viewsets.ModelViewSet):
             return response_access_denied()
 
     @list_route()
-    def delivery_teamleads(self, request):
+    def teamleads(self, request):
         role = user_role(request.user)
         if role == constants.OPERATIONS or role == constants.OPERATIONS_MANAGER:
             all_tls = DeliveryTeamLead.objects.all()
@@ -831,7 +831,7 @@ class DGViewSet(viewsets.ModelViewSet):
                 'dg_id':delivery_guy.id
                 }
                 all_tls_dict.append(tl_dict)
-            return response_with_payload(all_tls_dict)
+            return response_with_payload(all_tls_dict, None)
         else:
             return response_access_denied()
 
