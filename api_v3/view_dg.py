@@ -830,7 +830,7 @@ class DGViewSet(viewsets.ModelViewSet):
                 'name': delivery_guy.user.first_name,
                 'dg_id':delivery_guy.id
                 }
-                all_tls.append(tl_dict)
+                all_tls_dict.append(tl_dict)
             return response_with_payload(all_tls_dict)
         else:
             return response_access_denied()
