@@ -403,7 +403,7 @@
 	};
 	
 	angular.module('ygVendorApp')
-	.factory('DeliverGuy', [
+	.factory('DeliveryGuy', [
 		'$resource',
 		'constants', 
 		DeliverGuy
@@ -462,35 +462,35 @@
 		Vendor
 	]);
 })();
-(function(){
-	'use strict';
-	var DgList = function ($q,DeliverGuy){
-		var deliveryguy = {};
-		var fetchdg = function() {
-			var deferred = $q.defer();
-			DeliverGuy.dgListQuery.query(function (response) {
-				deferred.resolve(angular.extend(deliveryguy, {
-					dgs : response,
-					$refresh: fetchdg,
-				}));
+// (function(){
+// 	'use strict';
+// 	var DgList = function ($q,DeliverGuy){
+// 		var deliveryguy = {};
+// 		var fetchdg = function() {
+// 			var deferred = $q.defer();
+// 			DeliverGuy.dgListQuery.query(function (response) {
+// 				deferred.resolve(angular.extend(deliveryguy, {
+// 					dgs : response,
+// 					$refresh: fetchdg,
+// 				}));
 
-			}, function (error){
-				deferred.reject(angular.extend(deliveryguy , error ,{
-					$refresh : fetchdg,
-				}));
-			});
-			return deferred.promise;
-		};
-		return fetchdg();
-	};
+// 			}, function (error){
+// 				deferred.reject(angular.extend(deliveryguy , error ,{
+// 					$refresh : fetchdg,
+// 				}));
+// 			});
+// 			return deferred.promise;
+// 		};
+// 		return fetchdg();
+// 	};
 
-	angular.module('ygVendorApp')
-	.factory('DgList', [
-		'$q',
-		'DeliverGuy', 
-		DgList
-	]);
-})();
+// 	angular.module('ygVendorApp')
+// 	.factory('DgList', [
+// 		'$q',
+// 		'DeliverGuy', 
+// 		DgList
+// 	]);
+// })();
 (function(){
 	'use strict';
 	var errorHandler = function ($q,$localStorage,$location){
@@ -519,11 +519,14 @@
 			}
 		});
 		$rootScope.$on("$stateChangeStart",function (event, toState, toParams, fromState, fromParams){
-			console.log("start");
 			angular.element($document[0].getElementsByClassName('request-loader')).removeClass('request-loader-hidden');
 		});
 		$rootScope.$on("$stateChangeSuccess",function (event, toState, toParams, fromState, fromParams){
-			console.log('end');
+			$rootScope.previousState = {
+				state : fromState.name,
+				params : fromParams
+			};
+			console.log($rootScope.previousState);
 			angular.element($document[0].getElementsByClassName('request-loader')).addClass('request-loader-hidden');
 		});
 	};
@@ -754,7 +757,7 @@
 })();
 (function(){
 	'use strict';
-	var opsOrderCntrl = function ($state,$mdSidenav,$stateParams,vendorClients,orderResource,orders,DeliverGuy,constants,orderSelection){
+	var opsOrderCntrl = function ($state,$mdSidenav,$stateParams,vendorClients,DeliverGuy,orders,constants,orderSelection){
 		/*
 			 Variable definations
 		*/
@@ -886,8 +889,7 @@
     		controller: "opsOrderCntrl",
     		resolve: {
     			vendorClients : 'vendorClients',
-    			orderResource : 'Order',
-    			DeliverGuy : 'DeliverGuy',
+    			DeliveryGuy : 'DeliveryGuy',
     			access: ["Access","constants", function (Access,constants) { 
     						return Access.hasRole(constants.userRole.ADMIN); 
     					}],
@@ -916,9 +918,8 @@
 		'$mdSidenav',
 		'$stateParams',
 		'vendorClients',
-		'orderResource',
+		'DeliveryGuy',
 		'orders',
-		'DeliverGuy',
 		'constants',
 		'orderSelection',
 		opsOrderCntrl
@@ -1030,20 +1031,28 @@
 			controllerAs : 'dgList',
     		controller: "dgListCntrl",
     		resolve : {
-    			dgs: ['DeliverGuy','$stateParams', function (DeliverGuy,$stateParams){
+    			access: ["Access","constants", function (Access,constants) { 
+    						return Access.hasRole(constants.userRole.ADMIN); 
+    					}],
+    			dgs: ['DeliveryGuy','$stateParams', function (DeliveryGuy,$stateParams){
     						$stateParams.date = ($stateParams.date !== undefined) ? new Date($stateParams.date).toISOString() : new Date().toISOString();
     						$stateParams.attendance = ($stateParams.attendance!== undefined) ? $stateParams.attendance : 'ALL';
     						$stateParams.page = (!isNaN($stateParams.page))? parseInt($stateParams.page): 1;
-    						return DeliverGuy.dgPageQuery.query($stateParams).$promise;
+    						return DeliveryGuy.dgPageQuery.query($stateParams).$promise;
+    					}],
+    		}
+		})
+		.state('home.dgCreate', {
+			url: "^/deliveryguy/create",
+			templateUrl: "/static/modules/deliveryguy/create/create.html",
+			controllerAs : 'dgCreate',
+    		controller: "dgCreateCntrl",
+    		resolve : {
+    			access: ["Access","constants", function (Access,constants) { 
+    						return Access.hasRole(constants.userRole.ADMIN); 
     					}],
     		}
 		});
-		// .state('home.dgCreate', {
-		// 	url: "^/deliveryguy/create",
-		// 	templateUrl: "/static/modules/deliveryguy/create/create.html",
-		// 	controllerAs : 'dgList',
-  //   		controller: "dgListCntrl",
-		// })
 		// .state('home.dgDetail', {
 		// 	url: "^/deliveryguy/detail",
 		// 	templateUrl: "/static/modules/deliveryguy/detail/detail.html",
@@ -1051,6 +1060,92 @@
   //   		controller: "dgListCntrl",
 		// });
 	}]);
+})();
+(function(){
+	'use strict';
+	/*
+		Constant for storing all the static value required for dgs.
+		1. Dg shift timings
+		2. Dg transportation mode
+	*/
+	var dgConstantData = {
+		shift_timings : [
+			{
+				start_time : '06:00',
+				end_time   : '15:-1'
+			},
+			{
+				start_time : '07:00',
+				end_time   : '16:00'
+			},
+			{
+				start_time : '09:00',
+				end_time   : '18:00'
+			},
+			{
+				start_time : '10:00',
+				end_time   : '19:00'
+			},
+			{
+				start_time : '10:30',
+				end_time   : '19:30'
+			},
+			{
+				start_time : '11:00',
+				end_time   : '20:00'
+			},
+			{
+				start_time : '13:00',
+				end_time   : '22:00'
+			},
+			{
+				start_time : '14:00',
+				end_time   : '23:00'
+			}
+		],
+		transportation_mode : [
+			{
+				key: 'Biker',
+				value : 'BIKER'
+			},
+			{
+				key: 'Walker',
+				value : 'WALKER'
+			},
+			{
+				key: 'Car Driver',
+				value : 'CAR_DRIVER'
+			}
+		]
+	};
+
+	angular.module('deliveryguy')
+	.constant('dgConstants', dgConstantData);
+})();
+(function(){
+	'use strict';
+	/*
+		filter to convert a time string to specific format for displaying it in dropdown. 
+		For eg: 09:00:00 with beconverted to a format to 09:00 AM, 
+		which can be shown in dropdowns or any place for ease of user.
+	*/
+	var timeAsDate = function($filter){
+		return function(input){
+			if(input) {
+				var time = input.split(':');
+				return moment().hour(time[0]).minute(time[1]).format('hh:mm A');
+			}
+			else {
+				return false;
+			}
+			
+		};
+	};
+	angular.module('deliveryguy')
+	.filter('timeAsDate',[
+		'$filter',
+		timeAsDate
+	]);
 })();
 (function(){
 	'use strict';
@@ -1068,9 +1163,9 @@
 		/*
 			@dgs: resolved dgs list accordign to the url prameters.
 		*/
-		this.dgs = dgs.data;
-		this.total_pages = dgs.total_pages;
-		this.total_dgs = dgs.total_dg_count;
+		this.dgs = dgs.payload.data.data;
+		this.total_pages = dgs.payload.data.total_pages;
+		this.total_dgs = dgs.payload.data.total_dg_count;
 
 		/*
 			 @ toggleFilter : main sidenav toggle function, this function toggle the sidebar of the filets of the dg page page.
@@ -1117,5 +1212,22 @@
 		'dgs',
 		'constants',
 		dgListCntrl 
+	]);
+})();
+(function(){
+	'use strict';
+	var dgCreateCntrl = function ($mdSidenav,$stateParams,dgConstants){
+		console.log(dgConstants);
+		var self = this;
+		self.shift_timings = dgConstants.shift_timings;
+		self.transportation_mode = dgConstants.transportation_mode;
+	};
+
+	angular.module('deliveryguy')
+	.controller('dgCreateCntrl', [
+		'$mdSidenav', 
+		'$stateParams',
+		'dgConstants',
+		dgCreateCntrl
 	]);
 })();

@@ -1,6 +1,6 @@
 {
-  "name": "Vendor-Webapp",
-  "description": "This is the Yourguy  web application for their business clients",
+  "name": "Vendor-Webaap",
+  "description": "All the js files required from bower for vendor webapp",
   "main": "",
   "authors": [
     "shahwarcoder <aquid.shahwar@gmail.com>"
@@ -8,6 +8,7 @@
   "license": "MIT",
   "moduleType": [],
   "homepage": "",
+  "private": true,
   "ignore": [
     "**/.*",
     "node_modules",
@@ -16,18 +17,14 @@
     "tests"
   ],
   "dependencies": {
-    "angular": "1.4.8",
-    "angular-resource": "~1.4.8",
-    "angular-ui-router": "~0.2.15",
-    "ngstorage": "~0.3.10",
+    "angular": "~1.5.0",
+    "angular-resource": "~1.5.0",
+    "angular-animate": "~1.5.0",
+    "angular-aria": "~1.5.0",
+    "angular-material": "~1.0.5",
+    "angular-ui-router": "~0.2.18",
     "angular-base64": "~2.0.5",
-    "angular-material": "~1.0.1",
-    "angular-material-sass-files": "~0.8.3"
-  },
-  "resolutions": {
-    "angular": "1.4.8",
-    "angular-material": "~1.0.1",
-    "angular-animate": "^1.4.8",
-    "angular-aria": "^1.4.8"
+    "ngstorage": "~0.3.10",
+    "moment": "~2.11.2"
   }
 }

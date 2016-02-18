@@ -18,7 +18,7 @@
 	};
 	
 	angular.module('ygVendorApp')
-	.factory('DeliverGuy', [
+	.factory('DeliveryGuy', [
 		'$resource',
 		'constants', 
 		DeliverGuy

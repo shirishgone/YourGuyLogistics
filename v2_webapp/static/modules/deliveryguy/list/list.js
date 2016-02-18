@@ -14,9 +14,9 @@
 		/*
 			@dgs: resolved dgs list accordign to the url prameters.
 		*/
-		this.dgs = dgs.data;
-		this.total_pages = dgs.total_pages;
-		this.total_dgs = dgs.total_dg_count;
+		this.dgs = dgs.payload.data.data;
+		this.total_pages = dgs.payload.data.total_pages;
+		this.total_dgs = dgs.payload.data.total_dg_count;
 
 		/*
 			 @ toggleFilter : main sidenav toggle function, this function toggle the sidebar of the filets of the dg page page.

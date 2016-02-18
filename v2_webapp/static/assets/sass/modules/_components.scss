@@ -102,3 +102,12 @@ body {
 		}
 	}
 }
+
+.md-button.md-accent.md-lg-btn {
+	padding: 8px 20px;
+	font-weight: 600;
+	max-width : 130px;
+	span {
+		color: $white-color;
+	}
+}

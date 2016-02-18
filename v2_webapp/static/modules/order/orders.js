@@ -1,6 +1,6 @@
 (function(){
 	'use strict';
-	var opsOrderCntrl = function ($state,$mdSidenav,$stateParams,vendorClients,orderResource,orders,DeliverGuy,constants,orderSelection){
+	var opsOrderCntrl = function ($state,$mdSidenav,$stateParams,vendorClients,DeliverGuy,orders,constants,orderSelection){
 		/*
 			 Variable definations
 		*/
@@ -132,8 +132,7 @@
     		controller: "opsOrderCntrl",
     		resolve: {
     			vendorClients : 'vendorClients',
-    			orderResource : 'Order',
-    			DeliverGuy : 'DeliverGuy',
+    			DeliveryGuy : 'DeliveryGuy',
     			access: ["Access","constants", function (Access,constants) { 
     						return Access.hasRole(constants.userRole.ADMIN); 
     					}],
@@ -162,9 +161,8 @@
 		'$mdSidenav',
 		'$stateParams',
 		'vendorClients',
-		'orderResource',
+		'DeliveryGuy',
 		'orders',
-		'DeliverGuy',
 		'constants',
 		'orderSelection',
 		opsOrderCntrl

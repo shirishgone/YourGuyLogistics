@@ -26,11 +26,14 @@
 			}
 		});
 		$rootScope.$on("$stateChangeStart",function (event, toState, toParams, fromState, fromParams){
-			console.log("start");
 			angular.element($document[0].getElementsByClassName('request-loader')).removeClass('request-loader-hidden');
 		});
 		$rootScope.$on("$stateChangeSuccess",function (event, toState, toParams, fromState, fromParams){
-			console.log('end');
+			$rootScope.previousState = {
+				state : fromState.name,
+				params : fromParams
+			};
+			console.log($rootScope.previousState);
 			angular.element($document[0].getElementsByClassName('request-loader')).addClass('request-loader-hidden');
 		});
 	};

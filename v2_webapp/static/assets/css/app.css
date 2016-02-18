@@ -123,6 +123,17 @@ body {
   }
 }
 
+/* line 106, ../sass/modules/_components.scss */
+.md-button.md-accent.md-lg-btn {
+  padding: 8px 20px;
+  font-weight: 600;
+  max-width: 130px;
+}
+/* line 110, ../sass/modules/_components.scss */
+.md-button.md-accent.md-lg-btn span {
+  color: #ffffff;
+}
+
 /* line 1, ../sass/modules/_login.scss */
 .login-page {
   height: 100%;
@@ -432,4 +443,23 @@ body {
   position: absolute;
   bottom: 30px;
   right: 50px;
+}
+
+/* line 2, ../sass/modules/_dgCreate.scss */
+.dgCreate .dgCreateForm {
+  padding-top: 15px;
+}
+/* line 4, ../sass/modules/_dgCreate.scss */
+.dgCreate .dgCreateForm .form-section {
+  max-width: 800px;
+}
+/* line 6, ../sass/modules/_dgCreate.scss */
+.dgCreate .dgCreateForm .form-section md-input-container {
+  margin: 0;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+/* line 10, ../sass/modules/_dgCreate.scss */
+.dgCreate .dgCreateForm .form-section md-input-container .error_msg {
+  height: 24px;
 }
