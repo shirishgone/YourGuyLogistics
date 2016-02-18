@@ -835,6 +835,22 @@ class DGViewSet(viewsets.ModelViewSet):
         else:
             return response_access_denied()
 
+    @list_route()
+    def ops_executives(self, request):
+        role = user_role(request.user)
+        if role == constants.OPERATIONS or role == constants.OPERATIONS_MANAGER:
+            ops_executives = Employee.objects.filter(Q(department = constants.OPERATIONS) | Q(department = constants.OPERATIONS_MANAGER))
+            ops_exec_dict = []
+            for ops_exec in ops_executives:
+                ops_dict = {
+                'name': ops_exec.user.first_name,
+                'employee_id':ops_exec.id
+                }
+                ops_exec_dict.append(ops_dict)
+            return response_with_payload(ops_exec_dict, None)
+        else:
+            return response_access_denied()
+
 @api_view(['GET'])
 def dg_app_version(request):
     content = {'app_version': constants.LATEST_DG_APP_VERSION}
