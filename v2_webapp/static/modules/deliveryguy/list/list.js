@@ -1,7 +1,7 @@
 (function(){
 	'use strict';
 	/*
-		dgListCntrl is the controller for the delivery guy lst page. 
+		dgListCntrl is the controller for the delivery guy list page. 
 		Its resolved after loading all the dgs from the server.
 			
 	*/

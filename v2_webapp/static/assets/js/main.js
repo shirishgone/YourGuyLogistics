@@ -387,7 +387,7 @@
 	'use strict';
 	var DeliverGuy = function ($resource,constants){
 		return {
-			dgListQuery : $resource(constants.v1baseUrl+'deliveryguy/:id',{id:"@id"},{
+			dg : $resource(constants.v3baseUrl+'deliveryguy/:id',{id:"@id"},{
 				query :{
 					method: 'GET',
 					isArray: true
@@ -398,7 +398,19 @@
 					method: 'GET',
 					isArray: false
 				}
-			})
+			}),
+			dgTeamLeadQuery : $resource(constants.v3baseUrl+'deliveryguy/teamleads/', {}, {
+				query : {
+					method : 'GET',
+					isArray : false
+				}
+			}),
+			dgOpsManagerQuery : $resource(constants.v3baseUrl+'deliveryguy/ops_executives/', {}, {
+				query : {
+					method : 'GET',
+					isArray : false
+				}
+			}),
 		};
 	};
 	
@@ -526,7 +538,6 @@
 				state : fromState.name,
 				params : fromParams
 			};
-			console.log($rootScope.previousState);
 			angular.element($document[0].getElementsByClassName('request-loader')).addClass('request-loader-hidden');
 		});
 	};
@@ -548,6 +559,39 @@
 		'$document',
 		stateChangeHandler
 	]);
+})();
+(function(){
+	'use strict';
+	/*
+		A service to handle and move to the previous state with all the url parameters,
+		this fucntion uses the rootscope previousState object and redirects from the current page 
+		to the previous page, and if the page is reloaded or the previous state is empty it returns 
+		a boolean data to do validation check and handle the edge case.
+	*/
+	var PreviousState = function($rootScope,$state){
+		return {
+			isAvailable : function(){
+				if($rootScope.previousState){
+					return true;
+				}
+				else{
+					return false;
+				}
+			},
+			redirectToPrevious : function(){
+				$state.go($rootScope.previousState.state,$rootScope.previousState.params);
+				return;
+			}
+		};
+	};
+
+	angular.module('ygVendorApp')
+	.factory('PreviousState', [
+		'$rootScope',
+		'$state',
+		PreviousState
+	]);
+
 })();
 (function(){
 	'use strict';
@@ -1039,7 +1083,7 @@
     						$stateParams.attendance = ($stateParams.attendance!== undefined) ? $stateParams.attendance : 'ALL';
     						$stateParams.page = (!isNaN($stateParams.page))? parseInt($stateParams.page): 1;
     						return DeliveryGuy.dgPageQuery.query($stateParams).$promise;
-    					}],
+    					}]
     		}
 		})
 		.state('home.dgCreate', {
@@ -1048,8 +1092,15 @@
 			controllerAs : 'dgCreate',
     		controller: "dgCreateCntrl",
     		resolve : {
+    			DeliveryGuy : 'DeliveryGuy',
     			access: ["Access","constants", function (Access,constants) { 
     						return Access.hasRole(constants.userRole.ADMIN); 
+    					}],
+    			leadUserList : ['DeliveryGuy','$q', function (DeliveryGuy,$q){
+		    				return $q.all ({
+		    					TeamLead : DeliveryGuy.dgTeamLeadQuery.query().$promise,
+		    					OpsManager : DeliveryGuy.dgOpsManagerQuery.query().$promise
+		    				});
     					}],
     		}
 		});
@@ -1057,7 +1108,7 @@
 		// 	url: "^/deliveryguy/detail",
 		// 	templateUrl: "/static/modules/deliveryguy/detail/detail.html",
 		// 	controllerAs : 'dgList',
-  //   		controller: "dgListCntrl",
+		//  controller: "dgListCntrl",
 		// });
 	}]);
 })();
@@ -1150,7 +1201,7 @@
 (function(){
 	'use strict';
 	/*
-		dgListCntrl is the controller for the delivery guy lst page. 
+		dgListCntrl is the controller for the delivery guy list page. 
 		Its resolved after loading all the dgs from the server.
 			
 	*/
@@ -1216,11 +1267,51 @@
 })();
 (function(){
 	'use strict';
-	var dgCreateCntrl = function ($mdSidenav,$stateParams,dgConstants){
-		console.log(dgConstants);
+	/*
+		dgCreateCntrl is the controller for the delivery guy create page. 
+		Its resolved only after loading all the operation manager and team leads.
+			
+	*/
+	var dgCreateCntrl = function ($mdSidenav,$stateParams,dgConstants,DeliveryGuy,leadUserList,PreviousState){
 		var self = this;
+		/*
+			@shift_timings,@transportation_mode : 
+			is the list of all the available shift timings and transportation modes for creating dg,
+			this is currently static as constant data in constants/constants.js
+		*/
 		self.shift_timings = dgConstants.shift_timings;
 		self.transportation_mode = dgConstants.transportation_mode;
+		/*
+			@OpsManagers: resolved operation manager list.
+			@TeamLeads  : resolved team leads list.
+		*/
+		self.OpsManagers = leadUserList.OpsManager.payload.data;
+		self.TeamLeads   = leadUserList.TeamLead.payload.data;
+		/*
+			@dg: is a instance of delliveryguy.dg resource for saving the dg data a with ease
+		*/
+		self.dg = new DeliveryGuy.dg();
+		/*
+			function to redirect back to the previous page or parent page.
+		*/
+		self.goBack =function(){
+			if(PreviousState.isAvailable){
+				PreviousState.redirectToPrevious();
+			}
+			else{
+				$state.go('home.dgList');
+			}
+		};
+		/*
+			create : A function for creation delivery guys and using angular resource.
+			It redirects to list view on succesfull creation of dg or handle's error on creation.
+		*/
+		self.create = function(){
+			self.dg.shift_timing = angular.fromJson(self.dg.shift_timing);
+			self.dg.$save(function(){
+				self.goBack();
+			});
+		};
 	};
 
 	angular.module('deliveryguy')
@@ -1228,6 +1319,9 @@
 		'$mdSidenav', 
 		'$stateParams',
 		'dgConstants',
+		'DeliveryGuy',
+		'leadUserList',
+		'PreviousState',
 		dgCreateCntrl
 	]);
 })();

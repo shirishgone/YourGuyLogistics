@@ -15,7 +15,7 @@ body {
 /* line 9, ../sass/modules/_components.scss */
 .request-loader {
   display: block !important;
-  position: absolute;
+  position: fixed;
   width: 100%;
   height: 5px;
   z-index: 100;

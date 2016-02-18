@@ -33,7 +33,6 @@
 				state : fromState.name,
 				params : fromParams
 			};
-			console.log($rootScope.previousState);
 			angular.element($document[0].getElementsByClassName('request-loader')).addClass('request-loader-hidden');
 		});
 	};

@@ -90,7 +90,6 @@ module.exports = function(grunt){
 					cssDir : 'css',
 					fontsDir: 'fonts',
 					imagesDir :'images',
-					importPath : 'bower_components/angular-material-sass-files',
 					raw: 'preferred_syntax = :scss\n'
 				}
 			}

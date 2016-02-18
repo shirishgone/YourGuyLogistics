@@ -17,7 +17,7 @@
     						$stateParams.attendance = ($stateParams.attendance!== undefined) ? $stateParams.attendance : 'ALL';
     						$stateParams.page = (!isNaN($stateParams.page))? parseInt($stateParams.page): 1;
     						return DeliveryGuy.dgPageQuery.query($stateParams).$promise;
-    					}],
+    					}]
     		}
 		})
 		.state('home.dgCreate', {
@@ -26,8 +26,15 @@
 			controllerAs : 'dgCreate',
     		controller: "dgCreateCntrl",
     		resolve : {
+    			DeliveryGuy : 'DeliveryGuy',
     			access: ["Access","constants", function (Access,constants) { 
     						return Access.hasRole(constants.userRole.ADMIN); 
+    					}],
+    			leadUserList : ['DeliveryGuy','$q', function (DeliveryGuy,$q){
+		    				return $q.all ({
+		    					TeamLead : DeliveryGuy.dgTeamLeadQuery.query().$promise,
+		    					OpsManager : DeliveryGuy.dgOpsManagerQuery.query().$promise
+		    				});
     					}],
     		}
 		});
@@ -35,7 +42,7 @@
 		// 	url: "^/deliveryguy/detail",
 		// 	templateUrl: "/static/modules/deliveryguy/detail/detail.html",
 		// 	controllerAs : 'dgList',
-  //   		controller: "dgListCntrl",
+		//  controller: "dgListCntrl",
 		// });
 	}]);
 })();
