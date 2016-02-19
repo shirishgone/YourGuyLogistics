@@ -169,15 +169,13 @@ class DGViewSet(viewsets.ModelViewSet):
             if delivery_guy.is_teamlead is False:
                 associated_tl = DeliveryTeamLead.objects.filter(
                     associate_delivery_guys__user__username=delivery_guy.user.username)
-                if not associated_tl:
-                    for single_tl in associated_tl:
-                        detail_dict['team_leads'].append('%s' % (single_tl.delivery_guy.user.first_name))
+                for single_tl in associated_tl:
+                    detail_dict['team_leads'].append('%s' % (single_tl.delivery_guy.user.first_name))
 
             associated_ops_mngr = Employee.objects.filter(
                 associate_delivery_guys__user__username=delivery_guy.user.username)
-            if not associated_ops_mngr:
-                for single_ops_mngr in associated_ops_mngr:
-                    detail_dict['ops_managers'].append('%s' % (single_ops_mngr.user.first_name))
+            for single_ops_mngr in associated_ops_mngr:
+                detail_dict['ops_managers'].append('%s' % (single_ops_mngr.user.first_name))
 
             content = {'data': detail_dict}
             return response_with_payload(content, None)
