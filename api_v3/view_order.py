@@ -1191,7 +1191,7 @@ class OrderViewSet(viewsets.ViewSet):
                 if role == constants.OPERATIONS:
                     order_status = constants.ORDER_STATUS_INTRANSIT
                 elif role == constants.DELIVERY_GUY:
-                    if delivery_status.delivery_guy.user == request.user:
+                    if delivery_status.delivery_guy is not None and delivery_status.delivery_guy.user == request.user:
                         order_status = constants.ORDER_STATUS_OUTFORDELIVERY
                     else:
                         order_status = constants.ORDER_STATUS_INTRANSIT
