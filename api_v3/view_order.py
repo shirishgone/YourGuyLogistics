@@ -698,14 +698,7 @@ class OrderViewSet(viewsets.ViewSet):
                 delivery_status_dict = delivery_guy_app(single_delivery)
                 if delivery_status_dict is not None:
                     result.append(delivery_status_dict)
-
-            response_content = {
-                "data": result,
-                "total_pages": 1,
-                "total_orders": total_orders_count
-            }
-            return response_with_payload(response_content, None)
-
+            return response_with_payload(result, None)
         else:
             # PAGINATION  ----------------------------------------------------------------
             if page is not None:
