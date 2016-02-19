@@ -1552,7 +1552,7 @@ class OrderViewSet(viewsets.ViewSet):
                                              notes=extra_note)
 
             delivery_status = OrderDeliveryStatus.objects.create(date=pickup_datetime, order=new_order)
-            created_orders.append(dg_created_orders(delivery_status))
+            created_orders.append(delivery_guy_app(delivery_status))
 
             # ASSIGN PICKUP AS SAME BOY -------------------------------------------
             delivery_status.pickup_guy = delivery_boy
