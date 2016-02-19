@@ -353,7 +353,10 @@ def update_delivery_status_delivered(delivery_status, delivered_at, delivered_da
 
 def common_params(delivery_status):
     res_order = {}
-    
+
+    if delivery_status.order.vendor.id is not None:
+        res_order['vendor_id'] = delivery_status.order.vendor.id
+
     if delivery_status.order.pickup_datetime is not None:
         new_pickup_datetime = datetime.combine(delivery_status.date, delivery_status.order.pickup_datetime.time())
         res_order['pickup_datetime'] = pytz.utc.localize(new_pickup_datetime)
@@ -394,6 +397,7 @@ def common_params(delivery_status):
         order_items_array.append(order_item_obj)
 
     res_order['order_items'] = order_items_array
+
     return res_order
 
 def delivery_guy_app(delivery_status):
