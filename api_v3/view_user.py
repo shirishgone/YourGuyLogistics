@@ -184,7 +184,9 @@ def register(request):
         assign_usergroup(user)
     else:
         token = None
-
+    
+    employee.save()
+    
     if token is not None:
         content = {'auth_token': token.key}
     else:
