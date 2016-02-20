@@ -317,7 +317,7 @@ class DGViewSet(viewsets.ModelViewSet):
                 ops_manager_id = request.data.get('ops_manager_id')
                 team_lead_dg_ids = request.data.get('team_lead_dg_ids')
             except Exception as e:
-                params = ['phone_number', 'password', 'name', 'shift_start_datetime(optional)', 'shift_end_datetime(optional)', 'transportation_mode(optional)', 'ops_manager_ids(optional)', 'team_lead_ids(optional)']
+                params = ['phone_number', 'password', 'name', 'shift_time(optional)', 'transportation_mode(optional)', 'ops_manager_ids(optional)', 'team_lead_ids(optional)']
                 return response_incomplete_parameters(params)
         else:
             return response_access_denied()
@@ -337,38 +337,34 @@ class DGViewSet(viewsets.ModelViewSet):
         delivery_guy.is_active = True
         delivery_guy.save()
 
-        try:
-            if shift_time is not None:
-                try:
-                    start_time = time.strptime(timeslots['start_time'], "%H:%M:%S")
-                    end_time = time.strptime(timeslots['end_time'], "%H:%M:%S")
-                    delivery_guy.shift_start_datetime = start_time
-                    delivery_guy.shift_end_datetime = end_time
-                except Exception as e:
-                    error_message = 'shift time has two parameters named start_time, end_time e.g. HH:MM:SS'
-                    return response_error_with_message(error_message)
+        if shift_time is not None:
+            try:
+                delivery_guy.shift_start_datetime = shift_time['start_time']
+                delivery_guy.shift_end_datetime = shift_time['end_time']
+                delivery_guy.save()
+            except Exception as e:
+                error_message = 'shift time has two parameters named start_time, end_time e.g. HH:MM:SS'
+                return response_error_with_message(error_message)
 
-            if transportation_mode is not None:
-                if transportation_mode == 'BIKER' or transportation_mode == 'WALKER' or transportation_mode == 'CAR_DRIVER':
-                    delivery_guy.transportation_mode = transportation_mode
-                else:
-                    parameters = ['BIKER', 'WALKER', 'CAR_DRIVER']
-                    return response_incomplete_parameters(parameters)            
-            
-            if ops_manager_id is not None:
-                ops_manager = get_object_or_404(Employee, id=ops_manager_id)
-                ops_manager.associate_delivery_guys.add(delivery_guy)
-                ops_manager.save()
-                
-            if team_lead_dg_ids is not None:
-                for single_team_lead_dg_id in team_lead_dg_ids:
-                    team_lead_delivery_guy = get_object_or_404(DeliveryGuy, id = single_team_lead_dg_id)
-                    team_lead = get_object_or_404(DeliveryTeamLead, delivery_guy=team_lead_delivery_guy)
-                    team_lead.associate_delivery_guys.add(delivery_guy)
-                    team_lead.save()
-            delivery_guy.save()    
-        except Exception, e:
-            pass
+        if transportation_mode is not None:
+            if transportation_mode == 'BIKER' or transportation_mode == 'WALKER' or transportation_mode == 'CAR_DRIVER':
+                delivery_guy.transportation_mode = transportation_mode
+            else:
+                parameters = ['BIKER', 'WALKER', 'CAR_DRIVER']
+                return response_incomplete_parameters(parameters)
+
+        if ops_manager_id is not None:
+            ops_manager = get_object_or_404(Employee, id=ops_manager_id)
+            ops_manager.associate_delivery_guys.add(delivery_guy)
+            ops_manager.save()
+
+        if team_lead_dg_ids is not None:
+            for single_team_lead_dg_id in team_lead_dg_ids:
+                team_lead_delivery_guy = get_object_or_404(DeliveryGuy, id = single_team_lead_dg_id)
+                team_lead = get_object_or_404(DeliveryTeamLead, delivery_guy=team_lead_delivery_guy)
+                team_lead.associate_delivery_guys.add(delivery_guy)
+                team_lead.save()
+        delivery_guy.save()
         content = {'auth_token': token.key}
         return response_with_payload(content, None)
 
@@ -382,8 +378,7 @@ class DGViewSet(viewsets.ModelViewSet):
             role = user_role(request.user)
             name = request.data.get('name')
             serviceable_pincodes = request.data.get('serviceable_pincodes')
-            shift_start_datetime = request.data.get('shift_start_datetime')
-            shift_end_datetime = request.data.get('shift_end_datetime')
+            shift_time = request.data.get('shift_time')
             transportation_mode = request.data.get('transportation_mode')
             ops_manager_ids = request.data.get('ops_manager_ids')
             team_lead_dg_ids = request.data.get('team_lead_dg_ids')
@@ -391,18 +386,18 @@ class DGViewSet(viewsets.ModelViewSet):
             is_teamlead = request.data.get('is_teamlead')
 
         except Exception as e:
-            params = ['name(optional)', 'serviceable_pincodes(optional)', 'shift_start_datetime(optional)', 'shift_end_datetime(optional)', 'transportation_mode(optional)', 'ops_manager_ids(optional)', 'team_lead_ids(optional)', 'profile_picture(optional)', 'is_teamlead(optional)']
+            params = ['name(optional)', 'serviceable_pincodes(optional)', 'shift_time(optional)', 'transportation_mode(optional)', 'ops_manager_ids(optional)', 'team_lead_ids(optional)', 'profile_picture(optional)', 'is_teamlead(optional)']
             return response_incomplete_parameters(params)
         
         if role == constants.OPERATIONS or role == constants.OPERATIONS_MANAGER:
             delivery_guy = get_object_or_404(DeliveryGuy, id=pk)
-
             if delivery_guy.is_active:
                 if name is not None:
                     delivery_guy.user.first_name = name
                     delivery_guy.user.save()
                 # Here filter on dg tl instead of using get /get_404 to avoid exception
                 if is_teamlead is True:
+                    delivery_guy.is_teamlead = True
                     if serviceable_pincodes is not None:
                         for single_serviceable_pincodes in serviceable_pincodes:
                             single_pincode = single_serviceable_pincodes
@@ -416,12 +411,14 @@ class DGViewSet(viewsets.ModelViewSet):
                                 for single_tl in delivery_guy_tl:
                                     single_tl.serving_pincodes.add(pincode)
                                     single_tl.save()
-
-                if shift_start_datetime is not None:
-                    delivery_guy.shift_start_datetime = shift_start_datetime
-
-                if shift_end_datetime is not None:
-                    delivery_guy.shift_end_datetime = shift_end_datetime
+                if shift_time is not None:
+                    try:
+                        delivery_guy.shift_start_datetime = shift_time['start_time']
+                        delivery_guy.shift_end_datetime = shift_time['end_time']
+                        delivery_guy.save()
+                    except Exception as e:
+                        error_message = 'shift time has two parameters named start_time, end_time e.g. HH:MM:SS'
+                        return response_error_with_message(error_message)
 
                 if transportation_mode is not None:
                     delivery_guy.transportation_mode = transportation_mode
