@@ -74,6 +74,7 @@ def dg_details_dict(delivery_guy):
         'last_connected_time': delivery_guy.last_connected_time,
         'assignment_type': delivery_guy.assignment_type,
         'transportation_mode': delivery_guy.transportation_mode,
+        'is_teamlead': delivery_guy.is_teamlead,
         'profile_picture': '',
         'pincode': [],
         'ops_managers': [],
@@ -821,12 +822,19 @@ class DGViewSet(viewsets.ModelViewSet):
         else:
             return response_access_denied()
 
-    @detail_route(methods=['get'])
-    def dg_associated_tls(self, request, pk):
+    @list_route()
+    def teamleads(self, request):
         role = user_role(request.user)
-        all_associated_tls = []
-        if role == constants.DELIVERY_GUY:
-            delivery_guy = get_object_or_404(DeliveryGuy, pk=pk)
+        if role == constants.OPERATIONS or role == constants.OPERATIONS_MANAGER:
+            all_tls = DeliveryTeamLead.objects.all()
+            all_tls_dict = []
+            for teamlead in all_tls:
+                associated_dg_tl_detail_dict = associated_dg_tl_details(teamlead)
+                all_tls_dict.append(associated_dg_tl_detail_dict)
+            return response_with_payload(all_tls_dict, None)
+        elif role == constants.DELIVERY_GUY:
+            all_associated_tls = []
+            delivery_guy = get_object_or_404(DeliveryGuy, user=request.user)
             if delivery_guy.is_teamlead is False and delivery_guy.is_active is True:
                 all_tls = DeliveryTeamLead.objects.all()
                 dgs_tl = all_tls.filter(associate_delivery_guys=delivery_guy)
@@ -837,23 +845,6 @@ class DGViewSet(viewsets.ModelViewSet):
             else:
                 error_message = 'This DG is a team lead or this is a deactivated DG'
                 return response_error_with_message(error_message)
-        else:
-            return response_access_denied()
-
-    @list_route()
-    def teamleads(self, request):
-        role = user_role(request.user)
-        if role == constants.OPERATIONS or role == constants.OPERATIONS_MANAGER:
-            all_tls = DeliveryTeamLead.objects.all()
-            all_tls_dict = []
-            for teamlead in all_tls:
-                delivery_guy = teamlead.delivery_guy
-                tl_dict = {
-                'name': delivery_guy.user.first_name,
-                'dg_id':delivery_guy.id
-                }
-                all_tls_dict.append(tl_dict)
-            return response_with_payload(all_tls_dict, None)
         else:
             return response_access_denied()
 
