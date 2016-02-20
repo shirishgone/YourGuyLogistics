@@ -15,6 +15,7 @@ OPERATIONS_MANAGER = 'operations_manager'
 ACCOUNTS = 'accounts'
 CALLER = 'caller'
 ADMIN = 'admin'
+HR = 'hr'
 
 # CONTACTS CONSTANTS
 OPS_PHONE_NUMBER = '+919820252216'
