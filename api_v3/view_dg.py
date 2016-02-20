@@ -1,5 +1,4 @@
 from datetime import datetime
-import time
 from dateutil.rrule import rrule, DAILY
 import pytz
 from django.db.models import Q
@@ -19,6 +18,7 @@ from yourguy.models import DeliveryGuy, DGAttendance, Location, OrderDeliverySta
     ServiceablePincode, Picture
 
 from api_v3.utils import response_access_denied, response_with_payload, response_error_with_message, response_success_with_message, response_invalid_pagenumber, response_incomplete_parameters
+
 
 def dg_list_dict(delivery_guy, attendance, no_of_assigned_orders, no_of_executed_orders, worked_hours):
     dg_list_dict = {
@@ -50,6 +50,14 @@ def associated_guys_details(delivery_guy):
     return associated_guys_detail_dict
 
 
+def associated_dg_tl_details(dg_tl):
+    associated_dg_tl_detail_dict = {
+        'dg_tl_id': dg_tl.id,
+        'dg_tl_name': dg_tl.delivery_guy.user.first_name
+    }
+    return associated_dg_tl_detail_dict
+
+
 def dg_details_dict(delivery_guy):
     dg_detail_dict = {
         'id': delivery_guy.id,
@@ -66,6 +74,7 @@ def dg_details_dict(delivery_guy):
         'last_connected_time': delivery_guy.last_connected_time,
         'assignment_type': delivery_guy.assignment_type,
         'transportation_mode': delivery_guy.transportation_mode,
+        'is_teamlead': delivery_guy.is_teamlead,
         'profile_picture': '',
         'pincode': [],
         'ops_managers': [],
@@ -831,13 +840,22 @@ class DGViewSet(viewsets.ModelViewSet):
             all_tls = DeliveryTeamLead.objects.all()
             all_tls_dict = []
             for teamlead in all_tls:
-                delivery_guy = teamlead.delivery_guy
-                tl_dict = {
-                'name': delivery_guy.user.first_name,
-                'dg_id':delivery_guy.id
-                }
-                all_tls_dict.append(tl_dict)
+                associated_dg_tl_detail_dict = associated_dg_tl_details(teamlead)
+                all_tls_dict.append(associated_dg_tl_detail_dict)
             return response_with_payload(all_tls_dict, None)
+        elif role == constants.DELIVERY_GUY:
+            all_associated_tls = []
+            delivery_guy = get_object_or_404(DeliveryGuy, user=request.user)
+            if delivery_guy.is_teamlead is False and delivery_guy.is_active is True:
+                all_tls = DeliveryTeamLead.objects.all()
+                dgs_tl = all_tls.filter(associate_delivery_guys=delivery_guy)
+                for teamlead in dgs_tl:
+                    associated_dg_tl_detail_dict = associated_dg_tl_details(teamlead)
+                    all_associated_tls.append(associated_dg_tl_detail_dict)
+                return response_with_payload(all_associated_tls, None)
+            else:
+                error_message = 'This DG is a team lead or this is a deactivated DG'
+                return response_error_with_message(error_message)
         else:
             return response_access_denied()
 
