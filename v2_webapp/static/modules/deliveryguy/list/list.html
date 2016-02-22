@@ -42,7 +42,7 @@
 						</tr>
 					</thead>
 					<tbody  class="table-body">
-						<tr ng-repeat="dg in dgList.dgs" layout="row" layout-align="center start">
+						<tr ng-repeat="dg in dgList.dgs" layout="row" layout-align="center start" ui-sref="home.dgDetail({id:dg.id})">
 							<td flex-xs="10" flex="10">{{dg.employee_code}}</td>
 							<td flex-xs="30" flex="30">{{dg.name}}</td>
 							<td flex-xs="20" flex="20">{{dg.phone_number}}</td>

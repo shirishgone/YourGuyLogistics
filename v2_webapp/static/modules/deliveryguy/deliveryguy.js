@@ -37,12 +37,27 @@
 		    				});
     					}],
     		}
+		})
+		.state('home.dgDetail', {
+			url: "^/deliveryguy/detail/:id",
+			templateUrl: "/static/modules/deliveryguy/detail/detail.html",
+			controllerAs : 'dgDetail',
+		 	controller: "dgDetailCntrl",
+		 	resolve  : {
+		 		access: ["Access","constants", function (Access,constants) { 
+    						return Access.hasRole(constants.userRole.ADMIN); 
+    					}],
+    			DG    : ['DeliveryGuy','$stateParams',function(DeliveryGuy,$stateParams){
+    						var dg =  new DeliveryGuy.dg();
+    						return DeliveryGuy.dg.get($stateParams).$promise;
+    					}],
+    			leadUserList : ['DeliveryGuy','$q', function (DeliveryGuy,$q){
+		    				return $q.all ({
+		    					TeamLead : DeliveryGuy.dgTeamLeadQuery.query().$promise,
+		    					OpsManager : DeliveryGuy.dgOpsManagerQuery.query().$promise
+		    				});
+    					}],
+		 	}
 		});
-		// .state('home.dgDetail', {
-		// 	url: "^/deliveryguy/detail",
-		// 	templateUrl: "/static/modules/deliveryguy/detail/detail.html",
-		// 	controllerAs : 'dgList',
-		//  controller: "dgListCntrl",
-		// });
 	}]);
 })();

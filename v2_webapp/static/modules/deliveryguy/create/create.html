@@ -1,5 +1,5 @@
 <md-toolbar class="yg-toolbar md-primary md-whiteframe-z2">
-	<div class="md-toolbar-tools" ng-if="!dgList.searchDgActive">
+	<div class="md-toolbar-tools">
 		<md-button ng-click="dgCreate.goBack()" class="md-icon-button" aria-label="Menu Icon">
 			<md-icon>arrow_back</md-icon>
 		</md-button>
@@ -40,7 +40,7 @@
 				<label>Team Lead</label>
 				<md-select name="teamlead" ng-model="dgCreate.dg.team_lead_ids" ng-required="true">
 					<md-option ng-repeat="lead in dgCreate.TeamLeads" value="{{lead.dg_id}}">
-						{{lead.name}}
+						{{lead.dg_tl_name}}
 					</md-option>
 				</md-select>
 				<div ng-messages="dgCreateForm.dg.team_lead_ids.$error">

@@ -9,11 +9,11 @@
 	var PreviousState = function($rootScope,$state){
 		return {
 			isAvailable : function(){
-				if($rootScope.previousState){
-					return true;
+				if(!$rootScope.previousState.state || $rootScope.previousState.state === ''){
+					return false;
 				}
 				else{
-					return false;
+					return true;
 				}
 			},
 			redirectToPrevious : function(){

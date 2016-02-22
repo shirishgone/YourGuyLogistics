@@ -26,7 +26,7 @@ module.exports = function(grunt){
 				options: {
 					mangle: true,
 					compress: true,
-					preserveComments: false,
+					preserveComments: true,
 					sourceMap: true,
 					banner:  '/*! <%= pkg.name %> - v<%= pkg.version %> - ' +
     					'<%= grunt.template.today("yyyy-mm-dd") %> */',
@@ -37,6 +37,7 @@ module.exports = function(grunt){
 			},
 			development : {
 				options: {
+					beautify : true,
 					mangle: true,
 					compress: true,
 					preserveComments: true,
@@ -68,6 +69,7 @@ module.exports = function(grunt){
 					'static/modules/deliveryguy/dgFilter.js',
 					'static/modules/deliveryguy/list/*.js',
 					'static/modules/deliveryguy/create/*.js',
+					'static/modules/deliveryguy/detail/*.js',
 				],
 				dest : 'static/assets/js/main.js'
 			}

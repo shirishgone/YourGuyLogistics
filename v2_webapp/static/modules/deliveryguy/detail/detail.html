@@ -1,0 +1,69 @@
+<md-toolbar class="yg-toolbar md-primary md-whiteframe-z2">
+	<div class="md-toolbar-tools">
+		<md-button ng-click="dgDetail.goBack()" class="md-icon-button" aria-label="Menu Icon">
+			<md-icon>arrow_back</md-icon>
+		</md-button>
+		<p>{{dgDetail.DG.name}}</p>
+		<span flex></span>
+		<md-button ng-click="dgDetail.showEditDialog($event)" id="dgEditDialog" class="md-icon-button" aria-label="Menu Icon">
+			<md-icon>edit</md-icon>
+		</md-button>
+		<md-button ng-click="" class="md-icon-button" aria-label="Menu Icon">
+			<md-icon>more_vert</md-icon>
+		</md-button>
+	</div>
+</md-toolbar>
+<md-content flex layout-fill class="dgDetail" layout="column">
+	<section layout="row" layout-fill layout-wrap class="profile-view">
+		<div flex="20" flex-xs="100">
+			PROFILE IMAGE
+		</div>
+		<div flex flex-xs="100" layout="row" layout-wrap>
+			<div flex="30" flex-xs="50" class="profile-data">
+				<label>Name</label>
+				<h5>{{dgDetail.DG.name}}</h5>
+			</div>
+			<div flex="30" flex-xs="50"class="profile-data">
+				<label>Phone Number</label>
+				<h5>{{dgDetail.DG.phone_number}}</h5>
+			</div>
+			<div flex="30" flex-xs="50" class="profile-data">
+				<label>Transportation Mode</label>
+				<h5>{{dgDetail.DG.transportation_mode}}</h5>
+			</div>
+			<div flex="30" flex-xs="50" class="profile-data">
+				<label>Pin Codes</label>
+				<div ng-repeat=" pin in dgDetail.DG.pincode">
+					<h5>{{dgDetail.DG.pin}}</h5>
+				</div>
+			</div>
+			<div flex="30" flex-xs="50" class="profile-data">
+				<label>Team Lead</label>
+				<div ng-repeat=" lead in dgDetail.DG.team_leads">
+					<h5>{{lead.name}}</h5>
+				</div>
+			</div>
+			<div flex="30" flex-xs="50" class="profile-data">
+				<label>operational Managers</label>
+				<div ng-repeat="op in dgDetail.DG.ops_managers">
+					<h5>{{op.name}}</h5>
+				</div>
+			</div>
+			<div flex="30" flex-xs="50" class="profile-data">
+				<label>Shift Time</label>
+				<h5>{{dgDetail.DG.shift_start_datetime | timeAsDate}} - {{dgDetail.DG.shift_end_datetime | timeAsDate}}</h5>
+			</div>
+			<div flex="30" flex-xs="50" class="profile-data">
+				<label>Weekly Off</label>
+				<h5>{{dgDetail.DG.pincode}}</h5>
+			</div>
+			<div flex="30" flex-xs="50" class="profile-data">
+				<label>COD</label>
+				<h5>{{dgDetail.DG.pincode}}</h5>
+			</div>
+		</div>
+	</section>
+	<section class="tabs-view">
+		
+	</section>
+</md-content>

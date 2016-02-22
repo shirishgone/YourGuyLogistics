@@ -5,7 +5,7 @@
 		Its resolved only after loading all the operation manager and team leads.
 			
 	*/
-	var dgCreateCntrl = function ($mdSidenav,$stateParams,dgConstants,DeliveryGuy,leadUserList,PreviousState){
+	var dgCreateCntrl = function ($state,$mdSidenav,dgConstants,DeliveryGuy,leadUserList,PreviousState){
 		var self = this;
 		/*
 			@shift_timings,@transportation_mode : 
@@ -28,7 +28,7 @@
 			function to redirect back to the previous page or parent page.
 		*/
 		self.goBack =function(){
-			if(PreviousState.isAvailable){
+			if(PreviousState.isAvailable()){
 				PreviousState.redirectToPrevious();
 			}
 			else{
@@ -49,8 +49,8 @@
 
 	angular.module('deliveryguy')
 	.controller('dgCreateCntrl', [
+		'$state',
 		'$mdSidenav', 
-		'$stateParams',
 		'dgConstants',
 		'DeliveryGuy',
 		'leadUserList',
