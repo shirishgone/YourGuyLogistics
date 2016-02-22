@@ -353,7 +353,10 @@ def update_delivery_status_delivered(delivery_status, delivered_at, delivered_da
 
 def common_params(delivery_status):
     res_order = {}
-    
+
+    if delivery_status.order.vendor.id is not None:
+        res_order['vendor_id'] = delivery_status.order.vendor.id
+
     if delivery_status.order.pickup_datetime is not None:
         new_pickup_datetime = datetime.combine(delivery_status.date, delivery_status.order.pickup_datetime.time())
         res_order['pickup_datetime'] = pytz.utc.localize(new_pickup_datetime)
@@ -394,6 +397,7 @@ def common_params(delivery_status):
         order_items_array.append(order_item_obj)
 
     res_order['order_items'] = order_items_array
+
     return res_order
 
 def delivery_guy_app(delivery_status):
@@ -694,14 +698,7 @@ class OrderViewSet(viewsets.ViewSet):
                 delivery_status_dict = delivery_guy_app(single_delivery)
                 if delivery_status_dict is not None:
                     result.append(delivery_status_dict)
-
-            response_content = {
-                "data": result,
-                "total_pages": 1,
-                "total_orders": total_orders_count
-            }
-            return response_with_payload(response_content, None)
-
+            return response_with_payload(result, None)
         else:
             # PAGINATION  ----------------------------------------------------------------
             if page is not None:
@@ -1187,7 +1184,7 @@ class OrderViewSet(viewsets.ViewSet):
                 if role == constants.OPERATIONS:
                     order_status = constants.ORDER_STATUS_INTRANSIT
                 elif role == constants.DELIVERY_GUY:
-                    if delivery_status.delivery_guy.user == request.user:
+                    if delivery_status.delivery_guy is not None and delivery_status.delivery_guy.user == request.user:
                         order_status = constants.ORDER_STATUS_OUTFORDELIVERY
                     else:
                         order_status = constants.ORDER_STATUS_INTRANSIT
@@ -1548,7 +1545,7 @@ class OrderViewSet(viewsets.ViewSet):
                                              notes=extra_note)
 
             delivery_status = OrderDeliveryStatus.objects.create(date=pickup_datetime, order=new_order)
-            created_orders.append(dg_created_orders(delivery_status))
+            
 
             # ASSIGN PICKUP AS SAME BOY -------------------------------------------
             delivery_status.pickup_guy = delivery_boy
@@ -1556,7 +1553,8 @@ class OrderViewSet(viewsets.ViewSet):
                 delivery_status.delivery_guy = delivery_boy
             delivery_status.save()
             # ---------------------------------------------------------------------
-
+            created_orders.append(delivery_guy_app(delivery_status))
+            
         # SEND AN EMAIL ABOUT ADDITIONAL ORDERS TO VENDOR AND OPS/SALES -----------
         email_ids = constants.EMAIL_ADDITIONAL_ORDERS
         email_ids.append(vendor.email)

@@ -231,6 +231,7 @@ class Employee(YGUser):
     ACCOUNTS = 'accounts'
     CALLER = 'caller'
     ADMIN = 'admin'
+    HR = 'HR'
     DEPARTMENT_CHOICES = (
             (SALES, 'sales'),
             (SALES_MANAGER, 'sales_manager'),
@@ -238,6 +239,7 @@ class Employee(YGUser):
             (OPERATIONS_MANAGER, 'operations_manager'),
             (ACCOUNTS, 'accounts'),
             (CALLER, 'caller'),
+            (HR, 'hr'),
             (ADMIN, 'admin')
             )
     department = models.CharField(max_length = 50, choices = DEPARTMENT_CHOICES, default = CALLER)

@@ -148,7 +148,7 @@ def register(request):
     if email is not None:
         user.email = email
     user.save()
-
+    
     token = None
     if role == constants.VENDOR:
         token = create_token(user, constants.VENDOR)
@@ -177,9 +177,26 @@ def register(request):
         employee = Employee.objects.create(user=user)
         employee.department = constants.SALES
         assign_usergroup(user)
+    elif role == constants.HR:
+        token = create_token(user, constants.HR)
+        employee = Employee.objects.create(user=user)
+        employee.department = constants.HR
+        assign_usergroup(user)
+    elif role == constants.ACCOUNTS:
+        token = create_token(user, constants.ACCOUNTS)
+        employee = Employee.objects.create(user=user)
+        employee.department = constants.ACCOUNTS
+        assign_usergroup(user)
+    elif role == constants.CALLER:
+        token = create_token(user, constants.CALLER)
+        employee = Employee.objects.create(user=user)
+        employee.department = constants.CALLER
+        assign_usergroup(user)
     else:
         token = None
-
+    
+    employee.save()
+    
     if token is not None:
         content = {'auth_token': token.key}
     else:
