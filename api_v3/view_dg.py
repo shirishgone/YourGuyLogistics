@@ -45,7 +45,8 @@ def dg_list_dict(delivery_guy, attendance, no_of_assigned_orders, no_of_executed
 def associated_guys_details(delivery_guy):
     associated_guys_detail_dict = {
         'dg_id': delivery_guy.id,
-        'dg_name': delivery_guy.user.first_name
+        'dg_name': delivery_guy.user.first_name,
+        'dg_phonenumber':delivery_guy.user.username
     }
     return associated_guys_detail_dict
 

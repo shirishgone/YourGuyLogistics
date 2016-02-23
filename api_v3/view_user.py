@@ -39,7 +39,7 @@ def vendor_details_dict(vendor_agent):
 def emp_details_dict(emp):
     emp_detail_dict = {
         'auth_token': None,
-        'vendor_agent_name': emp.user.first_name,
+        'employee_name': emp.user.first_name,
         'role': None
     }
     return emp_detail_dict
