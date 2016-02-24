@@ -231,7 +231,7 @@ class Employee(YGUser):
     ACCOUNTS = 'accounts'
     CALLER = 'caller'
     ADMIN = 'admin'
-    HR = 'HR'
+    HR = 'hr'
     DEPARTMENT_CHOICES = (
             (SALES, 'sales'),
             (SALES_MANAGER, 'sales_manager'),

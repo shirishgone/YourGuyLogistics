@@ -52,7 +52,7 @@ def associated_guys_details(delivery_guy):
 
 def associated_dg_tl_details(dg_tl):
     associated_dg_tl_detail_dict = {
-        'dg_tl_id': dg_tl.id,
+        'dg_tl_id': dg_tl.delivery_guy.id,
         'dg_tl_name': dg_tl.delivery_guy.user.first_name
     }
     return associated_dg_tl_detail_dict
@@ -66,8 +66,6 @@ def dg_details_dict(delivery_guy):
         'phone_number': delivery_guy.user.username,
         'app_version': delivery_guy.app_version,
         'status': delivery_guy.status,
-        'shift_start_datetime': delivery_guy.shift_start_datetime,
-        'shift_end_datetime': delivery_guy.shift_end_datetime,
         'current_load': delivery_guy.current_load,
         'capacity': delivery_guy.capacity,
         'battery_percentage': delivery_guy.battery_percentage,
@@ -80,6 +78,12 @@ def dg_details_dict(delivery_guy):
         'ops_managers': [],
         'team_leads': []
     }
+    shift_time = {
+    'start_time':delivery_guy.shift_start_datetime,
+    'end_time':delivery_guy.shift_end_datetime
+    }
+    dg_detail_dict['shift_time'] = shift_time
+    
     return dg_detail_dict
 
 
