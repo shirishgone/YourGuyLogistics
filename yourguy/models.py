@@ -231,7 +231,7 @@ class Employee(YGUser):
     ACCOUNTS = 'accounts'
     CALLER = 'caller'
     ADMIN = 'admin'
-    HR = 'HR'
+    HR = 'hr'
     DEPARTMENT_CHOICES = (
             (SALES, 'sales'),
             (SALES_MANAGER, 'sales_manager'),
@@ -363,11 +363,13 @@ class Order(models.Model):
     def __unicode__(self):
         return u"%s - %s - %s" % (self.id, self.vendor.store_name, self.consumer.user.first_name)
 
+
 class DeliveryAction(models.Model):
     code = models.CharField(max_length=10, blank=True)
     title = models.CharField(max_length = 100)
     def __unicode__(self):
         return u"%s" % (self.title)
+
 
 class DeliveryTransaction(models.Model):
     action = models.ForeignKey(DeliveryAction, on_delete=models.PROTECT)
@@ -377,6 +379,38 @@ class DeliveryTransaction(models.Model):
     remarks = models.CharField(max_length = 500, blank = True)
     def __unicode__(self):
         return u"%s" % (self.action)
+
+
+class CODAction(models.Model):
+    code = models.CharField(max_length=10, blank=True)
+    title = models.CharField(max_length=100)
+
+    def __unicode__(self):
+        return u"%s" % self.title
+
+
+class CODTransaction(models.Model):
+    action = models.ForeignKey(CODAction, on_delete=models.PROTECT)
+    by_user = models.ForeignKey(User, blank=True, null=True)
+    time_stamp = models.DateTimeField(blank=True, null=True)
+    location = models.ForeignKey(Location, blank=True, null=True)
+    remarks = models.CharField(max_length=500, blank=True)
+    transaction_type = models.CharField(max_length=200, blank=True)
+    transaction_status = models.CharField(max_length=200, blank=True)
+
+    def __unicode__(self):
+        return u"%s" % self.action
+
+
+class ProofOfBankDeposit(models.Model):
+    by_user = models.ForeignKey(User, blank=True, null=True)
+    date_time = models.DateTimeField(auto_now_add=True)
+    receipt = models.ManyToManyField(Picture, blank=True)
+    total_cod = models.FloatField(default=0.0)
+
+    def __unicode__(self):
+        return u"%s" % self.id
+
 
 class OrderDeliveryStatus(models.Model):
     date = models.DateTimeField()
@@ -438,6 +472,27 @@ class OrderDeliveryStatus(models.Model):
     cod_collected_amount = models.FloatField(default = 0.0)
     cod_remarks = models.CharField(max_length = 500, blank = True)
     delivery_transactions = models.ManyToManyField(DeliveryTransaction, blank = True)
+
+    COD_PENDING = 'COD_PENDING'
+    COD_COLLECTED = 'COD_COLLECTED'
+    COD_TRANSFERRED_TO_TL = 'COD_TRANSFERRED_TO_TL'
+    COD_BANK_DEPOSITED = 'COD_BANK_DEPOSITED'
+    COD_VERIFIED = 'COD_VERIFIED'
+    COD_TRANSFERRED_TO_CLIENT = 'COD_TRANSFERRED_TO_CLIENT'
+    COD_CLOSED = 'COD_CLOSED'
+
+    COD_CHOICES = (
+        (COD_PENDING, 'COD_PENDING'),
+        (COD_COLLECTED, 'COD_COLLECTED'),
+        (COD_TRANSFERRED_TO_TL, 'COD_TRANSFERRED_TO_TL'),
+        (COD_BANK_DEPOSITED, 'COD_BANK_DEPOSITED'),
+        (COD_VERIFIED, 'COD_VERIFIED'),
+        (COD_TRANSFERRED_TO_CLIENT, 'COD_TRANSFERRED_TO_CLIENT'),
+        (COD_CLOSED, 'COD_CLOSED')
+    )
+    cod_status = models.CharField(max_length=100, choices=COD_CHOICES, default=COD_PENDING)
+    cod_transactions = models.ManyToManyField(CODTransaction, blank=True)
+
 
     def __unicode__(self):
         return u"%s - %s" % (self.id, self.order)
