@@ -23,4 +23,16 @@
 		}
 		
 	}
+	.tabs-view {
+		md-tabs.md-ygBlueTheme-theme.md-hue-3 md-ink-bar {
+			height: 4px;
+			color: primary-color('700');
+			background-color: primary-color('600');
+		}
+		.md-ygBlueTheme-theme.md-hue-3 .md-datepicker-input{
+			color: rgb(0, 0, 0);
+			background-color: rgb(255,255,255);
+		}
+	}
+	
 }

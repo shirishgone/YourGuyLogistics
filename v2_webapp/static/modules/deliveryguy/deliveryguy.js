@@ -44,6 +44,7 @@
 			controllerAs : 'dgDetail',
 		 	controller: "dgDetailCntrl",
 		 	resolve  : {
+		 		DeliveryGuy : 'DeliveryGuy',
 		 		access: ["Access","constants", function (Access,constants) { 
     						return Access.hasRole(constants.userRole.ADMIN); 
     					}],

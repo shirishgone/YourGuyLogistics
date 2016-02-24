@@ -69,7 +69,7 @@
 		v1baseUrl : 'https://yourguytestserver.herokuapp.com/api/v1/',
 		v2baseUrl : 'https://yourguytestserver.herokuapp.com/api/v2/',
 		v3baseUrl : 'https://yourguytestserver.herokuapp.com/api/v3/',
-		userRole  : { ADMIN : 'operations', VENDOR: 'vendor'},
+		userRole  : { ADMIN : 'operations', VENDOR: 'vendor',HR :'hr'},
 		status    : STATUS_OBJECT,
 		time      : time_data,
 		dg_status : dg_checkin_status

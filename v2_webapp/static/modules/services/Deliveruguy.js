@@ -6,6 +6,14 @@
 				query :{
 					method: 'GET',
 					isArray: true
+				},
+				$update : {
+					url : constants.v3baseUrl+'deliveryguy/:id'+'/edit_dg_details/',
+					method: 'PUT'
+				},
+				attendance : {
+					url : constants.v3baseUrl+'deliveryguy/:id'+'/attendance/',
+					method : 'PUT'
 				}
 			}),
 			dgPageQuery : $resource(constants.v3baseUrl+'deliveryguy/:id/',{id:"@id"},{

@@ -5,7 +5,9 @@ body {
 	min-height : 100%;
 	// font-family: "Roboto";
 }
-
+.md-select-value *:first-child { 
+	flex: 1 1 auto; 
+}
 .request-loader {
 	display  : block !important;
 	position : fixed;

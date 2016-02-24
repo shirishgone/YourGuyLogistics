@@ -1,5 +1,5 @@
-<md-dialog aria-label="EDIT DG" ng-cloak>
-    <form name="dgEditForm">
+<md-dialog aria-label="EDIT DG" ng-cloak class="dgEdit">
+    <form name="dgEditForm" class="dgEditForm">
         <md-toolbar>
             <div class="md-toolbar-tools">
                 <h2>EDIT DG</h2>
@@ -12,11 +12,11 @@
         <md-dialog-content>
             <div class="md-dialog-content">
                 <section layout="row" layout-fill layout-wrap class="edit-view">
-                  <div flex="20" flex-xs="100">
+                  <!-- <div flex="20" flex-xs="100">
                     PROFILE IMAGE
-                  </div>
-                  <div flex flex-xs="100" layout="row" layout-wrap>
-                    <div flex="30" flex-xs="50" class="profile-data">
+                  </div> -->
+                  <div flex flex-xs="100" layout="row" layout-wrap >
+                    <div flex="50" flex-xs="50" class="profile-data">
                         <md-input-container class="md-block">
                             <label>Delivery Guy Name</label>
                             <input required name="name" ng-model="dgEdit.DG.name">
@@ -25,19 +25,13 @@
                             </div>
                         </md-input-container>
                     </div>
-                    <div flex="30" flex-xs="50" class="profile-data">
-                        <md-input-container class="md-block">
+                    <div flex="50" flex-xs="50" class="profile-data">
+                        <md-input-container class="md-block" >
                             <label>Phone Number</label>
-                            <input name="phonenumber" ng-model="dgEdit.DG.phone_number" md-maxlength="11" minlength="10" ng-pattern="/^[0-9]{10,11}$/" required>
-                            <div ng-messages="dgEditForm.phonenumber.$error" ng-show="dgEditForm.$dirty">
-                                <div ng-message="required">This is required.</div>
-                                <div ng-message="md-maxlength">Phone number should be maximum 11 digit!</div>
-                                <div ng-message="minlength">Phone number should be minimum 10 digit!</div>
-                                <div ng-message="pattern">Phone number should only contain numbers!</div>
-                            </div>
+                            <input name="phonenumber" ng-model="dgEdit.DG.phone_number" md-maxlength="11" minlength="10" ng-pattern="/^[0-9]{10,11}$/" ng-disabled="true">
                         </md-input-container>
                     </div>
-                    <div flex="30" flex-xs="50" class="profile-data">
+                    <div flex="50" flex-xs="50" class="profile-data">
                         <md-input-container class="md-block">
                             <label>Transportaion</label>
                             <md-select layout="column" name="transportation" ng-model="dgEdit.DG.transportation_mode" ng-required="true">
@@ -45,17 +39,17 @@
                                     {{mode.key}}
                                 </md-option>
                             </md-select>
-                            <div class="error_msg" ng-messages="dgEditForm.transportation.$error">
+                            <div class="error_msg" ng-messages="dgEditForm.transportation.$error" >
                                 <div ng-message="required">This is required.</div>
                             </div>
                         </md-input-container>
                     </div>
-                    <div flex="30" flex-xs="50" class="profile-data">
+                    <div flex="50" flex-xs="50" class="profile-data">
                         <md-input-container class="md-block">
                             <label>Team Lead</label>
                             <md-select name="teamlead" multiple ng-model="dgEdit.DG.team_lead_ids" ng-required="true">
                                 <md-option ng-repeat="lead in dgEdit.TeamLeads" value="{{lead.dg_tl_id}}">
-                                    {{lead}}
+                                    {{lead.dg_tl_name}}
                                 </md-option>
                             </md-select>
                             <div ng-messages="dgEditForm.teamlead.$error">
@@ -63,7 +57,7 @@
                             </div>
                         </md-input-container>
                     </div>
-                    <div flex="30" flex-xs="50" class="profile-data">
+                    <div flex="50" flex-xs="50" class="profile-data">
                         <md-input-container class="md-block">
                             <label>Operational Manager</label>
                             <md-select name="operationalmanager" multiple ng-model="dgEdit.DG.ops_manager_ids" ng-required="true">
@@ -76,38 +70,38 @@
                             </div>
                         </md-input-container>
                     </div>
-                    <div flex="30" flex-xs="50" class="profile-data">
+                    <div flex="50" flex-xs="50" class="profile-data">
                         <md-input-container class="md-block">
                             <label>Shift Timings</label>
-                            <md-select layout="column" name="shifttime" ng-model="dgCreate.dg.shift_timing" ng-required="true">
-                                <md-option ng-repeat="time in dgCreate.shift_timings" value="{{time}}">
+                            <md-select layout="column" name="shifttime" ng-model="dgEdit.DG.shift_timing" ng-required="true">
+                                <md-option ng-repeat="time in dgEdit.shift_timings" value="{{time}}">
                                     {{time.start_time | timeAsDate}} - {{time.end_time | timeAsDate}}
                                 </md-option>
                             </md-select>
-                            <div class="error_msg" ng-messages="dgCreateForm.shifttime.$error">
+                            <div class="error_msg" ng-messages="dgEditForm.shifttime.$error">
                                 <div ng-message="required">This is required.</div>
                             </div>
                         </md-input-container>
                     </div>
-                    <div flex="30" flex-xs="50" class="profile-data">
+                    <!-- <div flex="30" flex-xs="50" class="profile-data">
                       <label>Weekly Off</label>
                       <h5>{{dgEdit.DG.pincode}}</h5>
                     </div>
                     <div flex="30" flex-xs="50" class="profile-data">
                       <label>COD</label>
                       <h5>{{dgEdit.DG.pincode}}</h5>
-                    </div>
+                    </div> -->
                   </div>
                 </section>
             </div>
         </md-dialog-content>
         <md-dialog-actions layout="row">
             <span flex></span>
-            <md-button ng-click="dgEdit.answer('not useful')">
-             Not Useful
+            <md-button ng-click="dgEdit.cancel()" class="md-warn">
+                Cancel
             </md-button>
-            <md-button ng-click="dgEdit.answer('useful')" style="margin-right:20px;">
-              Useful
+            <md-button ng-click="dgEdit.answer(dgEdit.DG)" class="md-primary" style="margin-right:20px;">
+                Done
             </md-button>
         </md-dialog-actions>
     </form>

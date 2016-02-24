@@ -51,7 +51,7 @@
 			</div>
 			<div flex="30" flex-xs="50" class="profile-data">
 				<label>Shift Time</label>
-				<h5>{{dgDetail.DG.shift_start_datetime | timeAsDate}} - {{dgDetail.DG.shift_end_datetime | timeAsDate}}</h5>
+				<h5>{{dgDetail.DG.shift_time.start_time | timeAsDate}} - {{dgDetail.DG.shift_time.end_time | timeAsDate}}</h5>
 			</div>
 			<div flex="30" flex-xs="50" class="profile-data">
 				<label>Weekly Off</label>
@@ -63,7 +63,73 @@
 			</div>
 		</div>
 	</section>
-	<section class="tabs-view">
-		
+	<section flex class="tabs-view" layout-fill>
+		<md-content>
+			<md-tabs md-selected="0" md-dynamic-height md-border-bottom class="md-primary md-hue-3">
+				<md-tab label="WORK DETAILS" >
+					<md-content class="md-padding">
+						<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla venenatis ante augue. Phasellus volutpat neque ac dui mattis vulputate. Etiam consequat aliquam cursus. In sodales pretium ultrices. Maecenas lectus est, sollicitudin consectetur felis nec, feugiat ultricies mi.</p>
+					</md-content>
+				</md-tab>
+				<md-tab label="ATTENDANCE" md-on-select="dgDetail.getAttendance()">
+					<md-content class="md-padding" >
+						<div layout="column" layout-fill class="attendance" >
+							<div class="attendance-action" layout="row">
+								<md-datepicker ng-model="dgDetail.attendance_date" md-placeholder="Enter date" md-min-date="dgDetail.attendanceMinDate" md-max-date="dgDetail.attendanceMaxDate" md-date-filter="dgDetail.onlyMonthsPredicate" ng-change="dgDetail.getAttendance()"></md-datepicker>
+								<span flex></span>
+								<md-button class="md-raised md-warn">ATTENDANCE</md-button>
+							</div>
+							<div class="attendance-table">
+								<table flex>
+									<thead>
+										<tr>
+											<th>
+												Date
+											</th>
+											<th>
+												In Time
+											</th>
+											<th>
+												Out Time
+											</th>
+											<th>
+												Total Hours
+											</th>
+											<!-- <th>
+												Delivery Executed / Assigned
+											</th> -->
+										</tr>
+									</thead>
+									<tbody>
+										<tr ng-repeat="attendance in dgDetail.dg_monthly_attendance">
+											<td>
+												{{attendance.date | date :'MMM d'}}
+											</td>
+											<td>
+												{{attendance.login_time | date :'h mm a'}}
+											</td>
+											<td>
+												{{attendance.logout_time | date :'h mm a'}}
+											</td>
+											<td>
+												{{attendance.worked_hrs}}
+											</td>
+											<!-- <td>
+												attendance.date
+											</td> -->
+										</tr>
+									</tbody>
+								</table>
+							</div>
+						</div>
+					</md-content>
+				</md-tab>
+				<md-tab label="TEAM LEAD">
+					<md-content class="md-padding">
+						<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla venenatis ante augue. Phasellus volutpat neque ac dui mattis vulputate. Etiam consequat aliquam cursus. In sodales pretium ultrices. Maecenas lectus est, sollicitudin consectetur felis nec, feugiat ultricies mi.</p>
+					</md-content>
+				</md-tab>
+			</md-tabs>
+		</md-content>
 	</section>
 </md-content>

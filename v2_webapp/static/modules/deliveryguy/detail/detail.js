@@ -1,9 +1,14 @@
 (function(){
 	'use strict';
 
-	var dgDetailCntrl = function($state,$mdDialog,$mdMedia,dgConstants,leadUserList,DG,PreviousState){
+	var dgDetailCntrl = function($state,$mdDialog,$mdMedia,DeliveryGuy,dgConstants,leadUserList,DG,PreviousState){
 		console.log(DG);
 		var self = this;
+		self.DG = DG.payload.data.data;
+		self.attendance_date = moment().date(1).toDate();
+		console.log(self.attendance_date);
+		self.attendanceMinDate = moment('2015-01-01').toDate();
+		self.attendanceMaxDate = moment().toDate();
 		self.OpsManagers = leadUserList.OpsManager.payload.data;
 		self.TeamLeads   = leadUserList.TeamLead.payload.data;
 		self.showEditDialog = function(){
@@ -23,8 +28,10 @@
 				   		 TeamLeads : self.TeamLeads
 				},
 			})
-			.then(function(answer) {
-				self.status = 'You said the information was "' + answer + '".';
+			.then(function(dg) {
+				DeliveryGuy.dg.$update(dg,function(response){
+					console.log(response);
+				});
 			}, function() {
 				self.status = 'You cancelled the dialog.';
 			});
@@ -41,7 +48,23 @@
 			}
 		};
 
-		self.DG = DG.payload.data.data;
+		self.onlyMonthsPredicate = function(date) {
+			var day = moment(date).date();
+			return day === 1;
+		};
+
+		self.getAttendance = function(){
+			var attendance_params = {
+				id    : self.DG.id,
+				month : moment(self.attendance_date).month(),
+   				year  : moment(self.attendance_date).year()
+			};
+			DeliveryGuy.dg.attendance(attendance_params,function(response){
+				self.dg_monthly_attendance = response.payload.data.dg_monthly_attendance[0].attendance;
+				console.log(response);
+			});
+			// console.log(attendance_params);
+		};
 	};
 
 	function EditDgCntrl($mdDialog,dgConstants,DG,OpsManagers,TeamLeads){
@@ -77,6 +100,7 @@
 		'$state',
 		'$mdDialog',
 		'$mdMedia',
+		'DeliveryGuy',
 		'dgConstants',
 		'leadUserList',
 		'DG',
