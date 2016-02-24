@@ -205,6 +205,26 @@ def register(request):
 
     return response_with_payload(content, None)
 
+
+@api_view(['GET'])
+def profile(request):
+    role = user_role(request.user)
+    if role == constants.VENDOR:
+        vendor_agent = VendorAgent.objects.get(user=request.user)
+        name = vendor_agent.vendor.store_name
+    elif role == constants.OPERATIONS or role == constants.OPERATIONS_MANAGER or role == constants.SALES or role == constants.HR or role == constants.ACCOUNTS or role == constants.CALLER:
+        employee = Employee.objects.get(user = request.user)
+        name = employee.user.first_name
+    else:
+        return response_access_denied()
+
+    result = {
+    'name':name,
+    'role':role
+    }
+    return response_with_payload(result, None)
+
+
 # DO NOT DELETE
 # Reset password implementation will be implemented later on
 
