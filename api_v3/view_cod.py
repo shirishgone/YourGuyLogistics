@@ -1,12 +1,19 @@
-from datetime import datetime
 from django.db.models import Sum
 from api_v3.utils import cod_actions, response_access_denied, get_object_or_404, response_error_with_message, response_with_payload, response_incomplete_parameters
 from api_v3 import constants
-from yourguy.models import CODTransaction, Location, DeliveryGuy, OrderDeliveryStatus, DeliveryTeamLead
+from yourguy.models import CODTransaction, DeliveryGuy, OrderDeliveryStatus, DeliveryTeamLead
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 from api_v3.utils import user_role
+import uuid
+
+
+def add_cod_action_for_delivery(action, delivery, user, dg_id, dg_tl_id, cod_amount, transaction_id, delivery_ids):
+    cod_transaction = CODTransaction.objects.create(action=action, by_user=user, dg_id=dg_id, dg_tl_id=dg_tl_id, cod_amount=cod_amount, transaction_id=transaction_id, deliveries=delivery_ids)
+    cod_transaction.save()
+    delivery.cod_transactions.add(cod_transaction)
+    delivery.save()
 
 
 def dg_collections_dict(delivery_status):
@@ -134,18 +141,19 @@ def qr_code(request):
     if role == constants.DELIVERY_GUY:
         dg = get_object_or_404(DeliveryGuy, user=request.user)
         if dg.is_active is True and dg.is_teamlead is False:
-            # logic for creating unique transaction id and send it back in response to client
-             # Client will send dg id, order ids, tl id and amount
             try:
                 dg_id = request.data['dg_id']
                 dg_tl_id = request.data['dg_tl_id']
-                cod_amount = request.data.get('cod_amount')
-                order_ids = request.data.get('order_ids')
+                cod_amount = request.data['cod_amount']
+                delivery_ids = request.data['delivery_ids']
             except Exception as e:
                 params = ['dg_id', 'dg_tl_id', 'cod_amount', 'order_ids']
                 return response_incomplete_parameters(params)
-            qr_code_generation_time = datetime.now()
-            transaction_id = '%d-%d-%s' % (dg_id, dg_tl_id, qr_code_generation_time)
+            transaction_id = uuid.uuid4()
+            for delivery_id in delivery_ids:
+                delivery_status = get_object_or_404(OrderDeliveryStatus, pk=delivery_id)
+                cod_action = cod_actions(constants.COD_COLLECTED_CODE)
+                add_cod_action_for_delivery(cod_action, delivery_status, request.user, dg_id, dg_tl_id, cod_amount, transaction_id, delivery_ids)
             content = {'transaction_id': transaction_id}
             return response_with_payload(content, None)
         else:

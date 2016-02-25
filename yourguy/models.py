@@ -396,8 +396,37 @@ class CODTransaction(models.Model):
     time_stamp = models.DateTimeField(blank=True, null=True)
     location = models.ForeignKey(Location, blank=True, null=True)
     remarks = models.CharField(max_length=500, blank=True)
-    transaction_type = models.CharField(max_length=200, blank=True)
-    transaction_status = models.CharField(max_length=200, blank=True)
+
+    TRANSFER = 'TRANSFER'
+    BANKDEPOSIT = 'BANKDEPOSIT'
+    UNKNOWN = 'UNKNOWN'
+
+    TRANSACTION_TYPE_CHOICES = (
+            (TRANSFER, 'TRANSFER'),
+            (BANKDEPOSIT, 'BANKDEPOSIT'),
+            (UNKNOWN, 'UNKNOWN')
+            )
+
+    transaction_type = models.CharField(max_length=30, choices=TRANSACTION_TYPE_CHOICES, default=UNKNOWN)
+
+    INITIATED = 'INITIATED'
+    VERIFIED = 'VERIFIED'
+    DECLINED = 'DECLINED'
+
+    TRANSACTION_STATUS_CHOICES = (
+            (INITIATED, 'INITIATED'),
+            (VERIFIED, 'VERIFIED'),
+            (DECLINED, 'DECLINED')
+            )
+
+    transaction_status = models.CharField(max_length=30, choices=TRANSACTION_STATUS_CHOICES, default=INITIATED)
+
+    transaction_id = models.CharField(max_length=500, blank=True, null=True)
+    dg_id = models.IntegerField(blank=True, null=True, auto_created=False)
+    dg_tl_id = models.IntegerField(blank=True, null=True, auto_created=False)
+    cod_amount = models.FloatField(default=0.0)
+    deliveries = models.CharField(max_length=500, blank=True, null=True)
+
 
     def __unicode__(self):
         return u"%s" % self.action
