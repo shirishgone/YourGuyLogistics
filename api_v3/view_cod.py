@@ -126,7 +126,7 @@ def collections(request):
     else:
         return response_access_denied()
 
-@api_view(['GET'])
+@api_view(['POST'])
 @authentication_classes((TokenAuthentication,))
 @permission_classes((IsAuthenticated,))
 def qr_code(request):
@@ -139,16 +139,18 @@ def qr_code(request):
             try:
                 dg_id = request.data['dg_id']
                 dg_tl_id = request.data['dg_tl_id']
-                cod_amount = request.data['cod_amount']
-                order_ids = request.data('order_ids')
+                cod_amount = request.data.get('cod_amount')
+                order_ids = request.data.get('order_ids')
             except Exception as e:
                 params = ['dg_id', 'dg_tl_id', 'cod_amount', 'order_ids']
                 return response_incomplete_parameters(params)
             qr_code_generation_time = datetime.now()
             transaction_id = '%d-%d-%s' % (dg_id, dg_tl_id, qr_code_generation_time)
-            return response_with_payload(transaction_id, None)
+            content = {'transaction_id': transaction_id}
+            return response_with_payload(content, None)
         else:
             error_message = 'This is a deactivated dg OR a DG TL'
             return response_error_with_message(error_message)
     else:
         return response_access_denied()
+
