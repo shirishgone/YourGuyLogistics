@@ -519,6 +519,46 @@ body {
   width: 100%;
   border-collapse: collapse;
 }
+/* line 51, ../sass/modules/_dgDetail.scss */
+.dgDetail .team-members {
+  padding: 15px;
+}
+/* line 53, ../sass/modules/_dgDetail.scss */
+.dgDetail .team-members h5 {
+  margin: 10px 10px;
+  font-size: 14px;
+  color: #9E9E9E;
+}
+/* line 58, ../sass/modules/_dgDetail.scss */
+.dgDetail .team-members table {
+  border-collapse: collapse;
+  width: 100%;
+  text-align: left;
+  color: #616161;
+}
+/* line 64, ../sass/modules/_dgDetail.scss */
+.dgDetail .team-members table thead tr {
+  border-bottom: 1px solid #E0E0E0;
+}
+/* line 66, ../sass/modules/_dgDetail.scss */
+.dgDetail .team-members table thead tr th {
+  padding: 15px 15px;
+  font-size: 12px;
+}
+/* line 73, ../sass/modules/_dgDetail.scss */
+.dgDetail .team-members table tbody tr, .dgDetail .team-members table tfoot tr {
+  border-bottom: 1px solid #E0E0E0;
+}
+/* line 75, ../sass/modules/_dgDetail.scss */
+.dgDetail .team-members table tbody tr td, .dgDetail .team-members table tfoot tr td {
+  padding: 15px 15px;
+  font-size: 14px;
+}
+/* line 81, ../sass/modules/_dgDetail.scss */
+.dgDetail .team-members table tfoot {
+  cursor: pointer;
+  color: #FCC06A;
+}
 
 /* line 1, ../sass/modules/_dgEdit.scss */
 .dgEdit {
@@ -542,4 +582,11 @@ body {
 /* line 15, ../sass/modules/_dgEdit.scss */
 .dgEdit .edit-view .profile-data md-input-container .error_msg {
   height: 24px;
+}
+
+/* line 1, ../sass/modules/_addTeamMembers.scss */
+.dgTeamLead {
+  min-width: 300px;
+  min-height: 500px;
+  max-width: 1024px;
 }

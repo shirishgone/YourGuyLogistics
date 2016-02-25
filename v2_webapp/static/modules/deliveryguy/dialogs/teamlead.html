@@ -1,0 +1,53 @@
+<md-dialog aria-label="ADD TEAM LEAD" ng-cloak class="dgTeamLead">
+	<md-toolbar>
+        <div class="md-toolbar-tools">
+            <h2>Add Team Members</h2>
+            <span flex></span>
+            <md-button ng-click="dgTeamLead.cancel()" class="md-icon-button" aria-label="close dg edit">
+            	<md-icon>clear</md-icon>
+            </md-button>
+        </div>
+    </md-toolbar>
+	<md-dialog-content>
+		<div class="md-dialog-content">
+			<h2>TEAM LEAD</h2>
+			<div>
+				<h3>Select Team Members</h3>
+				<md-chips 
+					ng-model="dgTeamLead.selectedTeamMembers" 
+					md-autocomplete-snap 
+					md-transform-chip="dgTeamLead.transformChip($chip)" 
+					md-require-match="true"
+					md-on-add="dgTeamLead.addTeamDg($chip)">
+					<md-autocomplete 
+						md-no-cache="true"
+						md-selected-item="dgTeamLead.selectedItem" 
+						md-search-text="dgTeamLead.searchedDg" 
+						md-items="dg in dgTeamLead.dgSearch(dgTeamLead.searchedDg)" 
+						md-item-text="dg.name" 
+						placeholder="Search for a vegetable">
+						<span md-highlight-text="dgTeamLead.searchedDg">{{dg.name}}</span>
+						<md-not-found>
+							No states matching "{{opsOrder.searchedDg}}" were found.
+						</md-not-found>
+					</md-autocomplete>
+					<md-chip-template>
+						<span>
+							<strong>{{$chip.name}}</strong>
+							<em>({{$chip.phone_number}})</em>
+						</span>
+					</md-chip-template>
+				</md-chips>
+			</div>
+		</div>
+	</md-dialog-content>
+	<md-dialog-actions layout="row">
+        <span flex></span>
+        <md-button ng-click="dgTeamLead.cancel()" class="md-warn">
+            Cancel
+        </md-button>
+        <md-button ng-click="dgTeamLead.cancel()" class="md-primary" style="margin-right:20px;">
+            Done
+        </md-button>
+    </md-dialog-actions>
+</md-dialog>

@@ -50,17 +50,42 @@
 			var day = moment(date).date();
 			return day === 1;
 		};
+		self.getTeamMembers = function(){
+			DeliveryGuy.dg.associated_dgs({id:self.DG.id},function(response){
+				self.associated_dg_list = response.payload.data;
+			});
+		};
+		self.toTeamlead = function(){
+			var useFullScreen = ($mdMedia('sm') || $mdMedia('xs'));
+			$mdDialog.show({
+				controller         : ('AddTeamLeadCntrl',['$mdDialog','DG','DeliveryGuy',AddTeamLeadCntrl]),
+				controllerAs       : 'dgTeamLead',
+				templateUrl        : '/static/modules/deliveryguy/dialogs/teamlead.html',
+				parent             : angular.element(document.body),
+				clickOutsideToClose: false,
+				fullscreen         : useFullScreen,
+				locals             : {
+					DG : self.DG,
+				},
+			})
+			.then(function(dg) {
+				DeliveryGuy.dg.$update(dg,function(response){
+					console.log(response);
+				});
+			}, function() {
+				self.status = 'You cancelled the dialog.';
+			});
+		};
 
 		self.getAttendance = function(){
 			var attendance_params = {
 				id    : self.DG.id,
 				month : moment(self.attendance_date).month() + 1,
-   				year  : moment(self.attendance_date).year()
+				year  : moment(self.attendance_date).year()
 			};
 			DeliveryGuy.dg.attendance(attendance_params,function(response){
 				self.dg_monthly_attendance = response.payload.data.dg_monthly_attendance[0].attendance;
 			});
-			// console.log(attendance_params);
 		};
 	};
 
@@ -90,6 +115,38 @@
 		dgEdit.answer = function(answer) {
 			$mdDialog.hide(answer);
 		};
+	}
+
+	function AddTeamLeadCntrl($mdDialog,DG,DeliveryGuy){
+		var dgTeamLead = this;
+		dgTeamLead.selectedTeamMembers = [];
+		dgTeamLead.cancel = function() {
+			$mdDialog.cancel();
+		};
+
+		dgTeamLead.addTeamDg = function(chip){
+			console.log(chip);
+			console.log(dgTeamLead.selectedTeamMembers);
+		};
+
+		dgTeamLead.dgSearch = function(text){
+			var search = {
+				search : text
+			};
+			return DeliveryGuy.dgPageQuery.query(search).$promise.then(function (response){
+				return response.payload.data.data;
+			});
+		};
+
+		dgTeamLead.transformChip = function(chip) {
+			// If it is an object, it's already a known chip
+			if (angular.isObject(chip)) {
+				return {name: chip.name, phone_number: chip.phone_number,id: chip.id};
+			}
+			// Otherwise, create a new one
+			return { name: chip, phone_number: 'none',id: 'none' };
+		};
+
 	}
 
 	angular.module('deliveryguy')

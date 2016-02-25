@@ -14,6 +14,10 @@
 				attendance : {
 					url : constants.v3baseUrl+'deliveryguy/:id'+'/attendance/',
 					method : 'PUT'
+				},
+				associated_dgs : {
+					url : constants.v3baseUrl+'deliveryguy/:id'+'/tl_associated_dgs/',
+					method : 'GET'
 				}
 			}),
 			dgPageQuery : $resource(constants.v3baseUrl+'deliveryguy/:id/',{id:"@id"},{

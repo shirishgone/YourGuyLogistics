@@ -1,6 +1,6 @@
 (function(){
 	'use strict';
-	var opsOrderCntrl = function ($state,$mdSidenav,$stateParams,DeliverGuy,orders,constants,orderSelection){
+	var opsOrderCntrl = function ($state,$mdSidenav,$stateParams,DeliveryGuy,orders,constants,orderSelection){
 		/*
 			 Variable definations
 		*/
@@ -74,7 +74,7 @@
 			var search = {
 				search : text
 			};
-			return DeliverGuy.dgPageQuery.query(search).$promise.then(function (response){
+			return DeliveryGuy.dgPageQuery.query(search).$promise.then(function (response){
 				return response.data;
 			});
 		};

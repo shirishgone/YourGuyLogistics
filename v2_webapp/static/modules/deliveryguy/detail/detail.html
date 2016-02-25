@@ -34,10 +34,10 @@
 			<div flex="30" flex-xs="50" class="profile-data" ng-if="dgDetail.DG.pincode.length > 0">
 				<label>Pin Codes</label>
 				<div ng-repeat=" pin in dgDetail.DG.pincode">
-					<h5>{{dgDetail.DG.pin}}</h5>
+					<h5>{{pin}}</h5>
 				</div>
 			</div>
-			<div flex="30" flex-xs="50" class="profile-data">
+			<div flex="30" flex-xs="50" class="profile-data" ng-if="!dgDetail.DG.is_teamlead">
 				<label>Team Lead</label>
 				<div ng-repeat=" lead in dgDetail.DG.team_leads">
 					<h5>{{lead.name}}</h5>
@@ -59,12 +59,10 @@
 			</div> -->
 			<div flex="30" flex-xs="50" class="profile-data">
 				<label>COD</label>
-				<h5>{{dgDetail.DG.pincode}}</h5>
+				<h5>{{dgDetail.DG.cod}}</h5>
 			</div>
 			<div flex="30" flex-xs="50" class="profile-data">
-				<!-- <label>Team Lead</label>
-				<h5>{{dgDetail.DG.pincode}}</h5> -->
-				<md-checkbox ng-model="dgDetail.DG.is_teamlead" aria-label="TEAM LEAD">
+				<md-checkbox ng-checked="dgDetail.DG.is_teamlead" ng-click="dgDetail.toTeamlead()" aria-label="TEAM LEAD">
             		Team Lead
           		</md-checkbox>
 			</div>
@@ -73,11 +71,11 @@
 	<section flex class="tabs-view" layout-fill>
 		<md-content>
 			<md-tabs md-selected="0" md-dynamic-height md-border-bottom class="md-primary md-hue-3">
-				<md-tab label="WORK DETAILS" >
+				<!-- <md-tab label="WORK DETAILS" md-on-select="dgDetail.getWorkDetails()">
 					<md-content class="md-padding">
 						<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla venenatis ante augue. Phasellus volutpat neque ac dui mattis vulputate. Etiam consequat aliquam cursus. In sodales pretium ultrices. Maecenas lectus est, sollicitudin consectetur felis nec, feugiat ultricies mi.</p>
 					</md-content>
-				</md-tab>
+				</md-tab> -->
 				<md-tab label="ATTENDANCE" md-on-select="dgDetail.getAttendance()">
 					<md-content>
 						<div layout="column" layout-fill class="attendance" >
@@ -131,10 +129,41 @@
 						</div>
 					</md-content>
 				</md-tab>
-				<md-tab label="TEAM LEAD">
-					<md-content class="md-padding">
-						<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla venenatis ante augue. Phasellus volutpat neque ac dui mattis vulputate. Etiam consequat aliquam cursus. In sodales pretium ultrices. Maecenas lectus est, sollicitudin consectetur felis nec, feugiat ultricies mi.</p>
-					</md-content>
+				<md-tab md-on-select="dgDetail.getTeamMembers()" ng-if="dgDetail.DG.is_teamlead">
+					<md-tab-label>
+						TEAM LEAD
+					</md-tab-label>
+					<md-tab-body>
+						<md-content class="md-padding">
+							<div class="team-members">
+								<h5>Team Members</h5>
+								<table class="md-whiteframe-3dp">
+									<thead>
+										<tr>
+											<th>Name</th>
+											<th>Phone Number</th>
+										</tr>
+									</thead>
+									<tbody>
+										<tr ng-repeat="member in dgDetail.associated_dg_list">
+											<td>{{member.dg_name}}</td>
+											<td>{{member.dg_phonenumber}}</td>
+										</tr>
+									</tbody>
+									<tfoot ng-click="dgDetail.toTeamlead()">
+										<tr>
+											<td>
+												Add team Members
+											</td>
+											<td>
+												
+											</td>
+										</tr>
+									</tfoot>
+								</table>
+							</div>
+						</md-content>
+					</md-tab-body>
 				</md-tab>
 			</md-tabs>
 		</md-content>

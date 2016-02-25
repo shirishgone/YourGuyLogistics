@@ -48,6 +48,42 @@
 			}
 		}
 	}
+	.team-members {
+		padding: 15px;
+		h5 {
+			margin: 10px 10px;
+			font-size: 14px;
+			color: grey-color('500');
+		}
+		table {
+			border-collapse: collapse;
+			width: 100%;
+			text-align: left;
+			color: grey-color('700');
+			thead {
+				tr {
+					border-bottom: 1px solid grey-color('300');
+					th{
+						padding: 15px 15px;
+						font-size: 12px;
+					}
+				}
+			}
+			tbody,tfoot {
+				tr {
+					border-bottom: 1px solid grey-color('300');
+					td{
+						padding: 15px 15px;
+						font-size: 14px;
+					}
+				}
+			}
+			tfoot {
+				cursor: pointer;
+				color: orange-accent-color('500');
+			}
+		}
+	}
 	
 	
 }
