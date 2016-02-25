@@ -1,5 +1,6 @@
+from datetime import datetime
 from django.db.models import Sum
-from api_v3.utils import cod_actions, response_access_denied, get_object_or_404, response_error_with_message, response_with_payload
+from api_v3.utils import cod_actions, response_access_denied, get_object_or_404, response_error_with_message, response_with_payload, response_incomplete_parameters
 from api_v3 import constants
 from yourguy.models import CODTransaction, Location, DeliveryGuy, OrderDeliveryStatus, DeliveryTeamLead
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
@@ -121,6 +122,33 @@ def collections(request):
                 return response_with_payload(dg_total_cod_amount, None)
         else:
             error_message = 'This is a deactivated dg'
+            return response_error_with_message(error_message)
+    else:
+        return response_access_denied()
+
+@api_view(['GET'])
+@authentication_classes((TokenAuthentication,))
+@permission_classes((IsAuthenticated,))
+def qr_code(request):
+    role = user_role(request.user)
+    if role == constants.DELIVERY_GUY:
+        dg = get_object_or_404(DeliveryGuy, user=request.user)
+        if dg.is_active is True and dg.is_teamlead is False:
+            # logic for creating unique transaction id and send it back in response to client
+             # Client will send dg id, order ids, tl id and amount
+            try:
+                dg_id = request.data['dg_id']
+                dg_tl_id = request.data['dg_tl_id']
+                cod_amount = request.data['cod_amount']
+                order_ids = request.data('order_ids')
+            except Exception as e:
+                params = ['dg_id', 'dg_tl_id', 'cod_amount', 'order_ids']
+                return response_incomplete_parameters(params)
+            qr_code_generation_time = datetime.now()
+            transaction_id = '%d-%d-%s' % (dg_id, dg_tl_id, qr_code_generation_time)
+            return response_with_payload(transaction_id, None)
+        else:
+            error_message = 'This is a deactivated dg OR a DG TL'
             return response_error_with_message(error_message)
     else:
         return response_access_denied()
