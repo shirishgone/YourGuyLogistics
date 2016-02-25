@@ -39,7 +39,7 @@ def vendor_details_dict(vendor_agent):
 def emp_details_dict(emp):
     emp_detail_dict = {
         'auth_token': None,
-        'vendor_agent_name': emp.user.first_name,
+        'employee_name': emp.user.first_name,
         'role': None
     }
     return emp_detail_dict
@@ -204,6 +204,26 @@ def register(request):
                    'user created for group: ': role}
 
     return response_with_payload(content, None)
+
+
+@api_view(['GET'])
+def profile(request):
+    role = user_role(request.user)
+    if role == constants.VENDOR:
+        vendor_agent = VendorAgent.objects.get(user=request.user)
+        name = vendor_agent.vendor.store_name
+    elif role == constants.OPERATIONS or role == constants.OPERATIONS_MANAGER or role == constants.SALES or role == constants.HR or role == constants.ACCOUNTS or role == constants.CALLER:
+        employee = Employee.objects.get(user = request.user)
+        name = employee.user.first_name
+    else:
+        return response_access_denied()
+
+    result = {
+    'name':name,
+    'role':role
+    }
+    return response_with_payload(result, None)
+
 
 # DO NOT DELETE
 # Reset password implementation will be implemented later on
