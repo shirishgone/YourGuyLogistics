@@ -839,7 +839,7 @@ class DGViewSet(viewsets.ModelViewSet):
     @list_route()
     def teamleads(self, request):
         role = user_role(request.user)
-        if role == constants.OPERATIONS or role == constants.OPERATIONS_MANAGER:
+        if role == constants.OPERATIONS or role == constants.OPERATIONS_MANAGER or role == constants.HR:
             all_tls = DeliveryTeamLead.objects.all()
             all_tls_dict = []
             for teamlead in all_tls:
@@ -893,7 +893,7 @@ class DGViewSet(viewsets.ModelViewSet):
     @list_route()
     def ops_executives(self, request):
         role = user_role(request.user)
-        if role == constants.OPERATIONS or role == constants.OPERATIONS_MANAGER:
+        if role == constants.OPERATIONS or role == constants.OPERATIONS_MANAGER or role == constants.HR:
             ops_executives = Employee.objects.filter(Q(department = constants.OPERATIONS) | Q(department = constants.OPERATIONS_MANAGER))
             ops_exec_dict = []
             for ops_exec in ops_executives:
