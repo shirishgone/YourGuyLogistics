@@ -14,10 +14,10 @@
 	</div>
 </md-toolbar>
 <md-content flex layout-fill class="dgDetail" layout="column">
-	<section layout="row" layout-fill layout-wrap class="profile-view">
-		<div flex="20" flex-xs="100">
+	<section flex="none" layout="row" layout-fill layout-wrap class="profile-view">
+		<!-- <div flex="20" flex-xs="100">
 			PROFILE IMAGE
-		</div>
+		</div> -->
 		<div flex flex-xs="100" layout="row" layout-wrap>
 			<div flex="30" flex-xs="50" class="profile-data">
 				<label>Name</label>
@@ -31,7 +31,7 @@
 				<label>Transportation Mode</label>
 				<h5>{{dgDetail.DG.transportation_mode}}</h5>
 			</div>
-			<div flex="30" flex-xs="50" class="profile-data">
+			<div flex="30" flex-xs="50" class="profile-data" ng-if="dgDetail.DG.pincode.length > 0">
 				<label>Pin Codes</label>
 				<div ng-repeat=" pin in dgDetail.DG.pincode">
 					<h5>{{dgDetail.DG.pin}}</h5>
@@ -53,13 +53,20 @@
 				<label>Shift Time</label>
 				<h5>{{dgDetail.DG.shift_time.start_time | timeAsDate}} - {{dgDetail.DG.shift_time.end_time | timeAsDate}}</h5>
 			</div>
-			<div flex="30" flex-xs="50" class="profile-data">
+			<!-- <div flex="30" flex-xs="50" class="profile-data">
 				<label>Weekly Off</label>
 				<h5>{{dgDetail.DG.pincode}}</h5>
-			</div>
+			</div> -->
 			<div flex="30" flex-xs="50" class="profile-data">
 				<label>COD</label>
 				<h5>{{dgDetail.DG.pincode}}</h5>
+			</div>
+			<div flex="30" flex-xs="50" class="profile-data">
+				<!-- <label>Team Lead</label>
+				<h5>{{dgDetail.DG.pincode}}</h5> -->
+				<md-checkbox ng-model="dgDetail.DG.is_teamlead" aria-label="TEAM LEAD">
+            		Team Lead
+          		</md-checkbox>
 			</div>
 		</div>
 	</section>
@@ -72,16 +79,16 @@
 					</md-content>
 				</md-tab>
 				<md-tab label="ATTENDANCE" md-on-select="dgDetail.getAttendance()">
-					<md-content class="md-padding" >
+					<md-content>
 						<div layout="column" layout-fill class="attendance" >
 							<div class="attendance-action" layout="row">
 								<md-datepicker ng-model="dgDetail.attendance_date" md-placeholder="Enter date" md-min-date="dgDetail.attendanceMinDate" md-max-date="dgDetail.attendanceMaxDate" md-date-filter="dgDetail.onlyMonthsPredicate" ng-change="dgDetail.getAttendance()"></md-datepicker>
 								<span flex></span>
-								<md-button class="md-raised md-warn">ATTENDANCE</md-button>
+								<md-button yd-excel-download workbook-data="dgDetail.dg_monthly_attendance" class="md-raised md-warn" ng-if="dgDetail.dg_monthly_attendance">ATTENDANCE</md-button>
 							</div>
 							<div class="attendance-table">
-								<table flex>
-									<thead>
+								<table flex class="table-list">
+									<thead class="table-header">
 										<tr>
 											<th>
 												Date
@@ -100,7 +107,7 @@
 											</th> -->
 										</tr>
 									</thead>
-									<tbody>
+									<tbody class="table-body">
 										<tr ng-repeat="attendance in dgDetail.dg_monthly_attendance">
 											<td>
 												{{attendance.date | date :'MMM d'}}

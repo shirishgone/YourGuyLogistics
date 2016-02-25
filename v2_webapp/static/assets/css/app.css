@@ -469,7 +469,13 @@ body {
   height: 24px;
 }
 
-/* line 3, ../sass/modules/_dgDetail.scss */
+/* line 2, ../sass/modules/_dgDetail.scss */
+.dgDetail .profile-view {
+  min-height: 300px;
+  max-width: 1024px;
+  padding: 15px;
+}
+/* line 6, ../sass/modules/_dgDetail.scss */
 .dgDetail .profile-view .profile-data {
   min-height: 30px;
   max-height: 100px;
@@ -477,32 +483,41 @@ body {
   max-width: 300px;
   margin-top: 20px;
 }
-/* line 9, ../sass/modules/_dgDetail.scss */
+/* line 12, ../sass/modules/_dgDetail.scss */
 .dgDetail .profile-view .profile-data label {
   margin: 0;
   padding: 0;
-  font-size: 11px;
+  font-size: 12px;
   color: #9E9E9E;
   text-transform: uppercase;
 }
-/* line 16, ../sass/modules/_dgDetail.scss */
+/* line 19, ../sass/modules/_dgDetail.scss */
 .dgDetail .profile-view .profile-data h5 {
   margin: 5px 0px;
   padding: 0;
-  font-size: 12px;
+  font-size: 14px;
   color: #757575;
   text-transform: uppercase;
 }
-/* line 27, ../sass/modules/_dgDetail.scss */
+/* line 30, ../sass/modules/_dgDetail.scss */
 .dgDetail .tabs-view md-tabs.md-ygBlueTheme-theme.md-hue-3 md-ink-bar {
   height: 4px;
   color: #1CB8E3;
   background-color: #37C0E7;
 }
-/* line 32, ../sass/modules/_dgDetail.scss */
+/* line 35, ../sass/modules/_dgDetail.scss */
 .dgDetail .tabs-view .md-ygBlueTheme-theme.md-hue-3 .md-datepicker-input {
   color: black;
   background-color: white;
+}
+/* line 41, ../sass/modules/_dgDetail.scss */
+.dgDetail .attendance .attendance-action {
+  padding: 15px;
+}
+/* line 45, ../sass/modules/_dgDetail.scss */
+.dgDetail .attendance .attendance-table table {
+  width: 100%;
+  border-collapse: collapse;
 }
 
 /* line 1, ../sass/modules/_dgEdit.scss */

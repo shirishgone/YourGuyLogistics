@@ -1,18 +1,11 @@
 (function(){
 	'use strict';
-	var homeCntrl = function($state,$mdSidenav,$mdDialog,constants,vendorClients){
-		// Redirect to admin or vendor page accorfing to the credentials.
-		if(vendorClients.$hasRole(constants.userRole.ADMIN)){
-			this.admin = true;
-			// $state.go('home.opsorder');
-		}
-		else if(vendorClients.$hasRole(constants.userRole.VENDOR)){
-			this.vendor = true;
-			// $state.go('home.order');
-		}
+	var homeCntrl = function($state,$mdSidenav,$mdDialog,constants,UserProfile){
+		// Show tabs page accorfing to the credentials.
+		this.tabs =  constants.permissible_tabs[UserProfile.role];
 		// Controller logic for common items between vendor and admin.
 		var self = this;
-		this.store_name = vendorClients.store_name;
+		this.user_name = UserProfile.name;
 		var confirm = $mdDialog.confirm()
 		.parent(angular.element(document.querySelector('#body')))
 		.clickOutsideToClose(false)
@@ -28,8 +21,8 @@
 			$mdSidenav('left').toggle();
 		};
 		this.logout = function(){
-			vendorClients.$clearUserRole();
-			vendorClients.$refresh().then(function (vendor){
+			UserProfile.$clearUserRole();
+			UserProfile.$refresh().then(function (vendor){
 				$state.go('login');
 			});
 		};
@@ -46,10 +39,11 @@
 		.state('home',{
 			url: "/home",
 			templateUrl: "/static/modules/home/home.html",
+			abstract: true,
 			controllerAs : 'home',
     		controller: "homeCntrl",
     		resolve: {
-    			vendorClients : 'vendorClients',
+    			UserProfile : 'UserProfile',
     			access: ["Access",function (Access){ 
     				return Access.isAuthenticated(); 
     			}]
@@ -61,7 +55,7 @@
 		'$mdSidenav',
 		'$mdDialog',
 		'constants',
-		'vendorClients',
+		'UserProfile',
 		homeCntrl
 	]);
 })();

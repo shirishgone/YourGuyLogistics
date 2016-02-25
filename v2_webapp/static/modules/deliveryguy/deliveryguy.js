@@ -10,7 +10,8 @@
     		controller: "dgListCntrl",
     		resolve : {
     			access: ["Access","constants", function (Access,constants) { 
-    						return Access.hasRole(constants.userRole.ADMIN); 
+    						var allowed_user = [constants.userRole.OPS,constants.userRole.OPS_MANAGER,constants.userRole.SALES,constants.userRole.SALES_MANAGER,constants.userRole.HR];
+    						return Access.hasAnyRole(allowed_user); 
     					}],
     			dgs: ['DeliveryGuy','$stateParams', function (DeliveryGuy,$stateParams){
     						$stateParams.date = ($stateParams.date !== undefined) ? new Date($stateParams.date).toISOString() : new Date().toISOString();
@@ -28,7 +29,7 @@
     		resolve : {
     			DeliveryGuy : 'DeliveryGuy',
     			access: ["Access","constants", function (Access,constants) { 
-    						return Access.hasRole(constants.userRole.ADMIN); 
+    						return Access.hasRole(constants.userRole.HR); 
     					}],
     			leadUserList : ['DeliveryGuy','$q', function (DeliveryGuy,$q){
 		    				return $q.all ({
@@ -46,7 +47,8 @@
 		 	resolve  : {
 		 		DeliveryGuy : 'DeliveryGuy',
 		 		access: ["Access","constants", function (Access,constants) { 
-    						return Access.hasRole(constants.userRole.ADMIN); 
+		 					var allowed_user = [constants.userRole.OPS,constants.userRole.OPS_MANAGER,constants.userRole.SALES,constants.userRole.SALES_MANAGER,constants.userRole.HR];
+    						return Access.hasAnyRole(allowed_user); 
     					}],
     			DG    : ['DeliveryGuy','$stateParams',function(DeliveryGuy,$stateParams){
     						var dg =  new DeliveryGuy.dg();

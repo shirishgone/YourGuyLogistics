@@ -1,6 +1,6 @@
 (function(){
 	'use strict';
-	var opsOrderCntrl = function ($state,$mdSidenav,$stateParams,vendorClients,DeliverGuy,orders,constants,orderSelection){
+	var opsOrderCntrl = function ($state,$mdSidenav,$stateParams,DeliverGuy,orders,constants,orderSelection){
 		/*
 			 Variable definations
 		*/
@@ -8,7 +8,6 @@
 		this.params = $stateParams;
 		this.statusArray = ($stateParams.dg === undefined) ? [] : $stateParams.dg.split(',');
 		this.params.date = new Date(this.params.date);
-		this.vendor_list = vendorClients.vendors;
 		/*
 			 scope Orders variable assignments are done from this section for the controller
 		*/
@@ -131,10 +130,10 @@
 			controllerAs : 'opsOrder',
     		controller: "opsOrderCntrl",
     		resolve: {
-    			vendorClients : 'vendorClients',
     			DeliveryGuy : 'DeliveryGuy',
     			access: ["Access","constants", function (Access,constants) { 
-    						return Access.hasRole(constants.userRole.ADMIN); 
+    						var allowed_user = [constants.userRole.OPS,constants.userRole.OPS_MANAGER,constants.userRole.SALES,constants.userRole.SALES_MANAGER];
+    						return Access.hasAnyRole(allowed_user); 
     					}],
     			orders: ['Order','$stateParams', function (Order,$stateParams){
     						$stateParams.date = ($stateParams.date !== undefined) ? new Date($stateParams.date).toISOString() : new Date().toISOString();
@@ -149,7 +148,6 @@
 			controllerAs : 'order',
     		controller: "vendorOrderCntrl",
     		resolve: {
-    			vendorClients : 'vendorClients',
     			access: ["Access","constants", function (Access,constants) { 
     				return Access.hasRole(constants.userRole.VENDOR); 
     			}]
@@ -160,7 +158,6 @@
 		'$state',
 		'$mdSidenav',
 		'$stateParams',
-		'vendorClients',
 		'DeliveryGuy',
 		'orders',
 		'constants',

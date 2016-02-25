@@ -6,7 +6,10 @@ module.exports = function(grunt){
 				dest: 'static/assets/js/vendors.js',
 				exclude: [
 					'angular-material-sass-files'
-				]
+				],
+				dependencies: {
+					'alasql': ['jszip','js-xlsx','js-xls','es6-promise']
+				},
 			}
 		},
 		shell: {
@@ -26,7 +29,7 @@ module.exports = function(grunt){
 				options: {
 					mangle: true,
 					compress: true,
-					preserveComments: true,
+					preserveComments: false,
 					sourceMap: true,
 					banner:  '/*! <%= pkg.name %> - v<%= pkg.version %> - ' +
     					'<%= grunt.template.today("yyyy-mm-dd") %> */',

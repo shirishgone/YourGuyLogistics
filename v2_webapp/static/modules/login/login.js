@@ -1,6 +1,6 @@
 (function(){
 	'use strict';
-	var LoginCntrl = function ($state,AuthService,$localStorage,vendorClients){
+	var LoginCntrl = function ($state,AuthService,UserProfile,$localStorage,constants){
 		this.loader = false;
 		this.userLogin = function(){
 			this.loader = true;
@@ -10,14 +10,21 @@
 				password : this.password
 			};
 			AuthService.login(data).then(function (response){
-				$localStorage.token = response.data.auth_token;
-				vendorClients.$refresh().then(function (vendor){
-					vendor.$updateuserRole();
-					$state.go('home');
+				$localStorage.token = response.data.payload.data.auth_token;
+				UserProfile.$refresh().then(function (user){
+					if(user.role === constants.userRole.OPS_MANAGER || user.role === constants.userRole.OPS){
+						$state.go('home.opsorder');
+					}
+					else if(user.role === constants.userRole.VENDOR){
+						$state.go('home.order');
+					}
+					else if(user.role === constants.userRole.HR){
+						$state.go('home.dgList');
+					}
 				});
 			},function (error){
 				self.loader = false;
-				self.error_message = error.data.non_field_errors[0];
+				self.error_message = error.data.error.message;
 			});
 		};
 	};
@@ -31,7 +38,7 @@
 			controllerAs : 'login',
 			controller: 'LoginCntrl',
 			resolve: {
-				vendorClients : "vendorClients",
+				UserProfile : "UserProfile",
 				access : ["Access",function (Access){
 					return Access.isAnonymous();
 				}]
@@ -41,8 +48,9 @@
 	.controller('LoginCntrl', [
 		'$state', 
 		'AuthService',
+		'UserProfile',
 		'$localStorage',
-		'vendorClients',
+		'constants',
 		LoginCntrl
 	]);
 })();

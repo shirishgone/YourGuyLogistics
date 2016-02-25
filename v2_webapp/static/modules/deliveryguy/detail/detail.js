@@ -2,11 +2,9 @@
 	'use strict';
 
 	var dgDetailCntrl = function($state,$mdDialog,$mdMedia,DeliveryGuy,dgConstants,leadUserList,DG,PreviousState){
-		console.log(DG);
 		var self = this;
 		self.DG = DG.payload.data.data;
 		self.attendance_date = moment().date(1).toDate();
-		console.log(self.attendance_date);
 		self.attendanceMinDate = moment('2015-01-01').toDate();
 		self.attendanceMaxDate = moment().toDate();
 		self.OpsManagers = leadUserList.OpsManager.payload.data;
@@ -56,12 +54,11 @@
 		self.getAttendance = function(){
 			var attendance_params = {
 				id    : self.DG.id,
-				month : moment(self.attendance_date).month(),
+				month : moment(self.attendance_date).month() + 1,
    				year  : moment(self.attendance_date).year()
 			};
 			DeliveryGuy.dg.attendance(attendance_params,function(response){
 				self.dg_monthly_attendance = response.payload.data.dg_monthly_attendance[0].attendance;
-				console.log(response);
 			});
 			// console.log(attendance_params);
 		};

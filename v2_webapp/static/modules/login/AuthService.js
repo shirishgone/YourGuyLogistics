@@ -3,7 +3,7 @@
 	var AuthService = function ($http,constants){
 		return{
 			login : function(userdata) {
-				return $http.post(constants.v1baseUrl+'auth/login/',userdata);
+				return $http.post(constants.v3baseUrl+'login/',userdata);
 			}
 		};
 	};

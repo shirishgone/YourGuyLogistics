@@ -1,5 +1,91 @@
 (function(){
 	'use strict';
+	var permissible_tabs = {
+		operations : {
+			order:true,
+			dg:true,
+			vendor: true,
+			reports: true,
+			COD: false,
+			customer: false,
+			products: false,
+			feedback: true,
+			tutorial: false,
+			notification : true
+		},
+		vendor: {
+			order:true,
+			dg:false,
+			vendor: false,
+			reports: true,
+			COD: false,
+			customer: true,
+			products: true,
+			feedback: true,
+			tutorial: true,
+			notification : false
+		},
+		hr:{
+			order:false,
+			dg:true,
+			vendor: true,
+			reports: false,
+			COD: false,
+			customer: false,
+			products: false,
+			feedback: false,
+			tutorial: false,
+			notification : false
+		},
+		operations_manager:{
+			order:true,
+			dg:true,
+			vendor: true,
+			reports: true,
+			COD: false,
+			customer: false,
+			products: false,
+			feedback: true,
+			tutorial: false,
+			notification : true
+		},
+		accounts: {
+			order:true,
+			dg:true,
+			vendor: true,
+			reports: true,
+			COD: true,
+			customer: false,
+			products: false,
+			feedback: false,
+			tutorial: false,
+			notification : false
+		},
+		sales : {
+			order:true,
+			dg:true,
+			vendor: true,
+			reports: true,
+			COD: false,
+			customer: false,
+			products: false,
+			feedback: true,
+			tutorial: false,
+			notification : false
+		},
+		sales_manager : {
+			order:true,
+			dg:true,
+			vendor: true,
+			reports: true,
+			COD: false,
+			customer: false,
+			products: false,
+			feedback: true,
+			tutorial: false,
+			notification : true
+		},
+	};
 	var STATUS_OBJECT = [
     	{status:'Intransit',value:'INTRANSIT'},
     	{status:'Queued',value:'QUEUED',selected:false},
@@ -51,28 +137,55 @@
 		v1baseUrl : '/api/v1/',
 		v2baseUrl : '/api/v2/',
 		v3baseUrl : '/api/v3/',
-		userRole  : { ADMIN : 'operations', VENDOR : 'vendor'},
+		userRole  : { 
+			OPS           : 'operations', 
+			VENDOR        : 'vendor',
+			HR            : 'hr',
+			OPS_MANAGER   : 'operations_manager',
+			ACCOUNTS      : 'accounts',
+			SALES         : 'sales',
+			SALES_MANAGER : 'sales_manager'
+		},
 		status    : STATUS_OBJECT,
 		time      :time_data,
-		dg_status : dg_checkin_status
+		dg_status : dg_checkin_status,
+		permissible_tabs: permissible_tabs
 	};
 	var prodConstants = {
 		v1baseUrl : 'http://yourguy.herokuapp.com/api/v1/',
 		v2baseUrl : 'http://yourguy.herokuapp.com/api/v2/',
 		v3baseUrl : 'http://yourguy.herokuapp.com/api/v3/',
-		userRole  : { ADMIN : 'operations', VENDOR : 'vendor'},
+		userRole  : { 
+			OPS           : 'operations', 
+			VENDOR        : 'vendor',
+			HR            : 'hr',
+			OPS_MANAGER   : 'operations_manager',
+			ACCOUNTS      : 'accounts',
+			SALES         : 'sales',
+			SALES_MANAGER : 'sales_manager'
+		},
 		status    : STATUS_OBJECT,
 		time      : time_data,
-		dg_status : dg_checkin_status
+		dg_status : dg_checkin_status,
+		permissible_tabs : permissible_tabs
 	};
 	var testConstants = {
 		v1baseUrl : 'https://yourguytestserver.herokuapp.com/api/v1/',
 		v2baseUrl : 'https://yourguytestserver.herokuapp.com/api/v2/',
 		v3baseUrl : 'https://yourguytestserver.herokuapp.com/api/v3/',
-		userRole  : { ADMIN : 'operations', VENDOR: 'vendor',HR :'hr'},
+		userRole  : { 
+			OPS           : 'operations', 
+			VENDOR        : 'vendor',
+			HR            : 'hr',
+			OPS_MANAGER   : 'operations_manager',
+			ACCOUNTS      : 'accounts',
+			SALES         : 'sales',
+			SALES_MANAGER : 'sales_manager'
+		},
 		status    : STATUS_OBJECT,
 		time      : time_data,
-		dg_status : dg_checkin_status
+		dg_status : dg_checkin_status,
+		permissible_tabs: permissible_tabs
 	};
 
 	angular.module('ygVendorApp')

@@ -14,10 +14,9 @@
 					is_authenticated : authenticated
 				};
 			},
-			$setUserRole : function(){
-				if($localStorage.token){
-					var x = $base64.decode($localStorage.token).split(':');
-					userrole = x[1];
+			$setUserRole : function(role){
+				if(role){
+					userrole = role;
 					authenticated = true;
 				}
 				else{

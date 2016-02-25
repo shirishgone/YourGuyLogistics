@@ -1,6 +1,6 @@
 (function(){
 	'use strict';
-	var LoginCntrl = function ($state,AuthService,$localStorage,vendorClients){
+	var LoginCntrl = function ($state,AuthService,UserProfile,$localStorage,constants){
 		this.loader = false;
 		this.userLogin = function(){
 			this.loader = true;
@@ -10,14 +10,21 @@
 				password : this.password
 			};
 			AuthService.login(data).then(function (response){
-				$localStorage.token = response.data.auth_token;
-				vendorClients.$refresh().then(function (vendor){
-					vendor.$updateuserRole();
-					$state.go('home');
+				$localStorage.token = response.data.payload.data.auth_token;
+				UserProfile.$refresh().then(function (user){
+					if(user.role === constants.userRole.OPS_MANAGER || user.role === constants.userRole.OPS){
+						$state.go('home.opsorder');
+					}
+					else if(user.role === constants.userRole.VENDOR){
+						$state.go('home.order');
+					}
+					else if(user.role === constants.userRole.HR){
+						$state.go('home.dgList');
+					}
 				});
 			},function (error){
 				self.loader = false;
-				self.error_message = error.data.non_field_errors[0];
+				self.error_message = error.data.error.message;
 			});
 		};
 	};
@@ -31,7 +38,7 @@
 			controllerAs : 'login',
 			controller: 'LoginCntrl',
 			resolve: {
-				vendorClients : "vendorClients",
+				UserProfile : "UserProfile",
 				access : ["Access",function (Access){
 					return Access.isAnonymous();
 				}]
@@ -41,8 +48,9 @@
 	.controller('LoginCntrl', [
 		'$state', 
 		'AuthService',
+		'UserProfile',
 		'$localStorage',
-		'vendorClients',
+		'constants',
 		LoginCntrl
 	]);
 })();
@@ -51,7 +59,7 @@
 	var AuthService = function ($http,constants){
 		return{
 			login : function(userdata) {
-				return $http.post(constants.v1baseUrl+'auth/login/',userdata);
+				return $http.post(constants.v3baseUrl+'login/',userdata);
 			}
 		};
 	};
@@ -65,19 +73,12 @@
 })();
 (function(){
 	'use strict';
-	var homeCntrl = function($state,$mdSidenav,$mdDialog,constants,vendorClients){
-		// Redirect to admin or vendor page accorfing to the credentials.
-		if(vendorClients.$hasRole(constants.userRole.ADMIN)){
-			this.admin = true;
-			// $state.go('home.opsorder');
-		}
-		else if(vendorClients.$hasRole(constants.userRole.VENDOR)){
-			this.vendor = true;
-			// $state.go('home.order');
-		}
+	var homeCntrl = function($state,$mdSidenav,$mdDialog,constants,UserProfile){
+		// Show tabs page accorfing to the credentials.
+		this.tabs =  constants.permissible_tabs[UserProfile.role];
 		// Controller logic for common items between vendor and admin.
 		var self = this;
-		this.store_name = vendorClients.store_name;
+		this.user_name = UserProfile.name;
 		var confirm = $mdDialog.confirm()
 		.parent(angular.element(document.querySelector('#body')))
 		.clickOutsideToClose(false)
@@ -93,8 +94,8 @@
 			$mdSidenav('left').toggle();
 		};
 		this.logout = function(){
-			vendorClients.$clearUserRole();
-			vendorClients.$refresh().then(function (vendor){
+			UserProfile.$clearUserRole();
+			UserProfile.$refresh().then(function (vendor){
 				$state.go('login');
 			});
 		};
@@ -111,10 +112,11 @@
 		.state('home',{
 			url: "/home",
 			templateUrl: "/static/modules/home/home.html",
+			abstract: true,
 			controllerAs : 'home',
     		controller: "homeCntrl",
     		resolve: {
-    			vendorClients : 'vendorClients',
+    			UserProfile : 'UserProfile',
     			access: ["Access",function (Access){ 
     				return Access.isAuthenticated(); 
     			}]
@@ -126,7 +128,7 @@
 		'$mdSidenav',
 		'$mdDialog',
 		'constants',
-		'vendorClients',
+		'UserProfile',
 		homeCntrl
 	]);
 })();
@@ -250,6 +252,92 @@
 })();
 (function(){
 	'use strict';
+	var permissible_tabs = {
+		operations : {
+			order:true,
+			dg:true,
+			vendor: true,
+			reports: true,
+			COD: false,
+			customer: false,
+			products: false,
+			feedback: true,
+			tutorial: false,
+			notification : true
+		},
+		vendor: {
+			order:true,
+			dg:false,
+			vendor: false,
+			reports: true,
+			COD: false,
+			customer: true,
+			products: true,
+			feedback: true,
+			tutorial: true,
+			notification : false
+		},
+		hr:{
+			order:false,
+			dg:true,
+			vendor: true,
+			reports: false,
+			COD: false,
+			customer: false,
+			products: false,
+			feedback: false,
+			tutorial: false,
+			notification : false
+		},
+		operations_manager:{
+			order:true,
+			dg:true,
+			vendor: true,
+			reports: true,
+			COD: false,
+			customer: false,
+			products: false,
+			feedback: true,
+			tutorial: false,
+			notification : true
+		},
+		accounts: {
+			order:true,
+			dg:true,
+			vendor: true,
+			reports: true,
+			COD: true,
+			customer: false,
+			products: false,
+			feedback: false,
+			tutorial: false,
+			notification : false
+		},
+		sales : {
+			order:true,
+			dg:true,
+			vendor: true,
+			reports: true,
+			COD: false,
+			customer: false,
+			products: false,
+			feedback: true,
+			tutorial: false,
+			notification : false
+		},
+		sales_manager : {
+			order:true,
+			dg:true,
+			vendor: true,
+			reports: true,
+			COD: false,
+			customer: false,
+			products: false,
+			feedback: true,
+			tutorial: false,
+			notification : true
+		},
+	};
 	var STATUS_OBJECT = [
     	{status:'Intransit',value:'INTRANSIT'},
     	{status:'Queued',value:'QUEUED',selected:false},
@@ -301,28 +389,55 @@
 		v1baseUrl : '/api/v1/',
 		v2baseUrl : '/api/v2/',
 		v3baseUrl : '/api/v3/',
-		userRole  : { ADMIN : 'operations', VENDOR : 'vendor'},
+		userRole  : { 
+			OPS           : 'operations', 
+			VENDOR        : 'vendor',
+			HR            : 'hr',
+			OPS_MANAGER   : 'operations_manager',
+			ACCOUNTS      : 'accounts',
+			SALES         : 'sales',
+			SALES_MANAGER : 'sales_manager'
+		},
 		status    : STATUS_OBJECT,
 		time      :time_data,
-		dg_status : dg_checkin_status
+		dg_status : dg_checkin_status,
+		permissible_tabs: permissible_tabs
 	};
 	var prodConstants = {
 		v1baseUrl : 'http://yourguy.herokuapp.com/api/v1/',
 		v2baseUrl : 'http://yourguy.herokuapp.com/api/v2/',
 		v3baseUrl : 'http://yourguy.herokuapp.com/api/v3/',
-		userRole  : { ADMIN : 'operations', VENDOR : 'vendor'},
+		userRole  : { 
+			OPS           : 'operations', 
+			VENDOR        : 'vendor',
+			HR            : 'hr',
+			OPS_MANAGER   : 'operations_manager',
+			ACCOUNTS      : 'accounts',
+			SALES         : 'sales',
+			SALES_MANAGER : 'sales_manager'
+		},
 		status    : STATUS_OBJECT,
 		time      : time_data,
-		dg_status : dg_checkin_status
+		dg_status : dg_checkin_status,
+		permissible_tabs : permissible_tabs
 	};
 	var testConstants = {
 		v1baseUrl : 'https://yourguytestserver.herokuapp.com/api/v1/',
 		v2baseUrl : 'https://yourguytestserver.herokuapp.com/api/v2/',
 		v3baseUrl : 'https://yourguytestserver.herokuapp.com/api/v3/',
-		userRole  : { ADMIN : 'operations', VENDOR: 'vendor',HR :'hr'},
+		userRole  : { 
+			OPS           : 'operations', 
+			VENDOR        : 'vendor',
+			HR            : 'hr',
+			OPS_MANAGER   : 'operations_manager',
+			ACCOUNTS      : 'accounts',
+			SALES         : 'sales',
+			SALES_MANAGER : 'sales_manager'
+		},
 		status    : STATUS_OBJECT,
 		time      : time_data,
-		dg_status : dg_checkin_status
+		dg_status : dg_checkin_status,
+		permissible_tabs: permissible_tabs
 	};
 
 	angular.module('ygVendorApp')
@@ -330,7 +445,7 @@
 })();
 (function(){
 	'use strict';
-	var Access = function($q,vendorClients){
+	var Access = function($q,UserProfile){
 		var Access = {
 			OK: 200,
 			UNAUTHORIZED: 401,
@@ -338,11 +453,11 @@
 
     		hasRole : function(role){
     			var deferred = $q.defer();
-    			vendorClients.then(function (vendorClients){
-    				if(vendorClients.$hasRole(role)){
+    			UserProfile.then(function (UserProfile){
+    				if(UserProfile.$hasRole(role)){
     					deferred.resolve(Access.OK);
     				}
-    				else if(vendorClients.$isAnonymous()){
+    				else if(UserProfile.$isAnonymous()){
     					deferred.reject(Access.UNAUTHORIZED);
     				}
     				else{
@@ -351,10 +466,23 @@
     			});
     			return deferred.promise;
     		},
+            hasAnyRole: function(roles) {
+                var deferred = $q.defer();
+                UserProfile.then(function(userProfile) {
+                    if (userProfile.$hasAnyRole(roles)) {
+                        deferred.resolve(Access.OK);
+                    } else if (userProfile.$isAnonymous()) {
+                        deferred.reject(Access.UNAUTHORIZED);
+                    } else {
+                        deferred.reject(Access.FORBIDDEN);
+                    }
+                });
+              return deferred.promise;
+            },
     		isAuthenticated : function(){
     			var deferred = $q.defer();
-    			vendorClients.then(function (vendorClients){
-    				if(vendorClients.$isAuthenticated()){
+    			UserProfile.then(function (UserProfile){
+    				if(UserProfile.$isAuthenticated()){
     					deferred.resolve(Access.Ok);
     				}
     				else{
@@ -365,8 +493,8 @@
     		},
     		isAnonymous : function(){
     			var deferred = $q.defer();
-    			vendorClients.then(function (vendorClients){
-    				if(vendorClients.$isAnonymous()){
+    			UserProfile.then(function (UserProfile){
+    				if(UserProfile.$isAnonymous()){
     					deferred.resolve(Access.OK);
     				}
     				else{
@@ -382,7 +510,7 @@
 	angular.module('ygVendorApp').
 	factory('Access', [
 		'$q',
-		'vendorClients',
+		'UserProfile',
 		Access
 	]);
 })();
@@ -450,6 +578,28 @@
 		'$resource',
 		'constants', 
 		Order
+	]);
+})();
+(function(){
+	'use strict';
+	var Profile = function ($resource,constants){
+		return $resource(constants.v3baseUrl+'profile/',{},{
+			profile: {
+				method: 'GET',
+				transformResponse: function(data,headers){
+					var response = angular.fromJson(data);
+					response.payload.data.is_authenticated = response.success;
+					return response.payload.data;
+				}
+			}
+		});
+	};
+	
+	angular.module('ygVendorApp')
+	.factory('Profile', [
+		'$resource',
+		'constants', 
+		Profile
 	]);
 })();
 (function(){
@@ -628,6 +778,66 @@
 	}]);
 })();
 (function(){
+	'use strict';
+	var UserProfile = function ($q,role,Profile){
+		var userProfile = {};
+		var fetchUserProfile = function() {
+			var deferred = $q.defer();
+			Profile.profile(function (response) {
+				deferred.resolve(angular.extend(userProfile, response, {
+					$refresh: fetchUserProfile,
+					$clearUserRole: function(){
+						return role.$resetUserRole();
+					},
+					$hasRole: function(roleValue) {
+						return userProfile.role === roleValue;
+					},
+					$hasAnyRole: function(roles) {
+						return roles.indexOf(userProfile.role) >= 0;
+					},
+					$isAuthenticated: function() {
+						return userProfile.is_authenticated;
+					},
+					$isAnonymous: function() {
+						return !userProfile.is_authenticated;
+					}
+				}));
+
+			}, function (error){
+				userProfile = {};
+				deferred.resolve(angular.extend(userProfile ,{
+					$refresh : fetchUserProfile,
+					$clearUserRole: function(){
+						return role.$resetUserRole();
+					},
+					$hasRole : function (roleValue){
+						return userProfile.role == roleValue;
+					},
+					$hasAnyRole: function(roles) {
+						return roles.indexOf(userProfile.role) >= 0;
+					},
+					$isAuthenticated: function() {
+						return userProfile.is_authenticated;
+					},
+					$isAnonymous: function() {
+						return !userProfile.is_authenticated;
+					}
+				}));
+			});
+			return deferred.promise;
+		};
+		return fetchUserProfile();
+	};
+
+	angular.module('ygVendorApp')
+	.factory('UserProfile', [
+		'$q',
+		'role',
+		'Profile', 
+		UserProfile
+	]);
+})();
+(function(){
 	'use strice';
 
 	var role = function ($base64,$localStorage){
@@ -643,10 +853,9 @@
 					is_authenticated : authenticated
 				};
 			},
-			$setUserRole : function(){
-				if($localStorage.token){
-					var x = $base64.decode($localStorage.token).split(':');
-					userrole = x[1];
+			$setUserRole : function(role){
+				if(role){
+					userrole = role;
 					authenticated = true;
 				}
 				else{
@@ -673,63 +882,42 @@
 })();
 (function(){
 	'use strict';
-	var vendorClients = function ($q,role,Vendor){
-		var vendorClients = {};
-		var fetchVendors = function() {
-			var deferred = $q.defer();
-			Vendor.query(function (response) {
-				deferred.resolve(angular.extend(vendorClients, response, {
-					$refresh: fetchVendors,
-					$updateuserRole: function(){
-						return role.$setUserRole();
-					},
-					$clearUserRole: function(){
-						return role.$resetUserRole();
-					},
-					$hasRole: function(roleValue) {
-						return role.$getUserRole().userrole == roleValue;
-					},
+	var ydExcelDownload = function(){
+		// Runs during compile
+		return {
+			// name: '',
+			// priority: 1,
+			// terminal: true,
+			// controller: function($scope, $element, $attrs, $transclude) {},
+			// require: 'ngModel', // Array = multiple requires, ? = optional, ^ = check parent elements
+			
+			// template: '',
+			// templateUrl: '',
+			// replace: true,
+			// transclude: true,
+			// compile: function(tElement, tAttrs, function transclude(function(scope, cloneLinkingFn){ return function linking(scope, elm, attrs){}})),
+			scope: {
+				workbookData : '=',
 
-					$isAuthenticated: function() {
-						return role.$getUserRole().is_authenticated;
-					},
-					$isAnonymous: function() {
-						return !role.$getUserRole().is_authenticated;
-					}
-				}));
-
-			}, function (error){
-				deferred.resolve(angular.extend(vendorClients ,{
-					$refresh : fetchVendors,
-					$updateuserRole: function(){
-						return role.$setUserRole();
-					},
-					$clearUserRole: function(){
-						return role.$resetUserRole();
-					},
-					$hasRole : function (roleValue){
-						return role,$getUserRole().userrole == roleValue;
-					},
-					$isAuthenticated: function() {
-						return role.$getUserRole().is_authenticated;
-					},
-					$isAnonymous: function() {
-						return !role.$getUserRole().is_authenticated;
-					}
-				}));
-			});
-			return deferred.promise;
+			}, // {} = isolate, true = child, false/undefined = no change
+			restrict: 'AE', // E = Element, A = Attribute, C = Class, M = Comment
+			link: function($scope, iElm, iAttrs, controller) {
+				// alasql.fn.toUpperCasse = function(name){
+				// 	name = name.toUpperCasse();
+				// 	name = name.replace(/[^a-zA-Z0-9]/g,' ');
+				// };
+				var download = function(){
+					alasql('SELECT * INTO XLSX("orders.xlsx",{headers:true}) FROM ?',[$scope.workbookData]);
+				};
+				iElm.bind('click',download);
+			}
 		};
-		return fetchVendors();
 	};
-
 	angular.module('ygVendorApp')
-	.factory('vendorClients', [
-		'$q',
-		'role',
-		'Vendor', 
-		vendorClients
-	]);
+	.directive('ydExcelDownload', 
+		ydExcelDownload
+	);
+
 })();
 (function(){
 	'use strict';
@@ -812,7 +1000,7 @@
 })();
 (function(){
 	'use strict';
-	var opsOrderCntrl = function ($state,$mdSidenav,$stateParams,vendorClients,DeliverGuy,orders,constants,orderSelection){
+	var opsOrderCntrl = function ($state,$mdSidenav,$stateParams,DeliverGuy,orders,constants,orderSelection){
 		/*
 			 Variable definations
 		*/
@@ -820,7 +1008,6 @@
 		this.params = $stateParams;
 		this.statusArray = ($stateParams.dg === undefined) ? [] : $stateParams.dg.split(',');
 		this.params.date = new Date(this.params.date);
-		this.vendor_list = vendorClients.vendors;
 		/*
 			 scope Orders variable assignments are done from this section for the controller
 		*/
@@ -943,10 +1130,10 @@
 			controllerAs : 'opsOrder',
     		controller: "opsOrderCntrl",
     		resolve: {
-    			vendorClients : 'vendorClients',
     			DeliveryGuy : 'DeliveryGuy',
     			access: ["Access","constants", function (Access,constants) { 
-    						return Access.hasRole(constants.userRole.ADMIN); 
+    						var allowed_user = [constants.userRole.OPS,constants.userRole.OPS_MANAGER,constants.userRole.SALES,constants.userRole.SALES_MANAGER];
+    						return Access.hasAnyRole(allowed_user); 
     					}],
     			orders: ['Order','$stateParams', function (Order,$stateParams){
     						$stateParams.date = ($stateParams.date !== undefined) ? new Date($stateParams.date).toISOString() : new Date().toISOString();
@@ -961,7 +1148,6 @@
 			controllerAs : 'order',
     		controller: "vendorOrderCntrl",
     		resolve: {
-    			vendorClients : 'vendorClients',
     			access: ["Access","constants", function (Access,constants) { 
     				return Access.hasRole(constants.userRole.VENDOR); 
     			}]
@@ -972,7 +1158,6 @@
 		'$state',
 		'$mdSidenav',
 		'$stateParams',
-		'vendorClients',
 		'DeliveryGuy',
 		'orders',
 		'constants',
@@ -1087,7 +1272,8 @@
     		controller: "dgListCntrl",
     		resolve : {
     			access: ["Access","constants", function (Access,constants) { 
-    						return Access.hasRole(constants.userRole.ADMIN); 
+    						var allowed_user = [constants.userRole.OPS,constants.userRole.OPS_MANAGER,constants.userRole.SALES,constants.userRole.SALES_MANAGER,constants.userRole.HR];
+    						return Access.hasAnyRole(allowed_user); 
     					}],
     			dgs: ['DeliveryGuy','$stateParams', function (DeliveryGuy,$stateParams){
     						$stateParams.date = ($stateParams.date !== undefined) ? new Date($stateParams.date).toISOString() : new Date().toISOString();
@@ -1105,7 +1291,7 @@
     		resolve : {
     			DeliveryGuy : 'DeliveryGuy',
     			access: ["Access","constants", function (Access,constants) { 
-    						return Access.hasRole(constants.userRole.ADMIN); 
+    						return Access.hasRole(constants.userRole.HR); 
     					}],
     			leadUserList : ['DeliveryGuy','$q', function (DeliveryGuy,$q){
 		    				return $q.all ({
@@ -1123,7 +1309,8 @@
 		 	resolve  : {
 		 		DeliveryGuy : 'DeliveryGuy',
 		 		access: ["Access","constants", function (Access,constants) { 
-    						return Access.hasRole(constants.userRole.ADMIN); 
+		 					var allowed_user = [constants.userRole.OPS,constants.userRole.OPS_MANAGER,constants.userRole.SALES,constants.userRole.SALES_MANAGER,constants.userRole.HR];
+    						return Access.hasAnyRole(allowed_user); 
     					}],
     			DG    : ['DeliveryGuy','$stateParams',function(DeliveryGuy,$stateParams){
     						var dg =  new DeliveryGuy.dg();
@@ -1356,11 +1543,9 @@
 	'use strict';
 
 	var dgDetailCntrl = function($state,$mdDialog,$mdMedia,DeliveryGuy,dgConstants,leadUserList,DG,PreviousState){
-		console.log(DG);
 		var self = this;
 		self.DG = DG.payload.data.data;
 		self.attendance_date = moment().date(1).toDate();
-		console.log(self.attendance_date);
 		self.attendanceMinDate = moment('2015-01-01').toDate();
 		self.attendanceMaxDate = moment().toDate();
 		self.OpsManagers = leadUserList.OpsManager.payload.data;
@@ -1410,12 +1595,11 @@
 		self.getAttendance = function(){
 			var attendance_params = {
 				id    : self.DG.id,
-				month : moment(self.attendance_date).month(),
+				month : moment(self.attendance_date).month() + 1,
    				year  : moment(self.attendance_date).year()
 			};
 			DeliveryGuy.dg.attendance(attendance_params,function(response){
 				self.dg_monthly_attendance = response.payload.data.dg_monthly_attendance[0].attendance;
-				console.log(response);
 			});
 			// console.log(attendance_params);
 		};
