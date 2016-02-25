@@ -62,6 +62,11 @@ def dg_tl_collections_dict():
 
     return dg_tl_collections
 
+
+# for dg tl, order object if he is the assigned dg(order id, cod amount collected, customer name, vendor name, delivery date time)
+# dg object of his associated dg who has transferred the cod(dg id, dg name, transaction date time,
+# for dg, filter OrderDeliveryStatus for cod status(this is cumulative cod not yet transferred to tl)
+# for each order(order id, cod amount collected, customer name, vendor name, delivery date time)
 @api_view(['GET'])
 @authentication_classes((TokenAuthentication,))
 @permission_classes((IsAuthenticated,))
@@ -71,9 +76,8 @@ def collections(request):
         dg = get_object_or_404(DeliveryGuy, user=request.user)
         if dg.is_active is True:
             if dg.is_teamlead is True:
-                # for this dg tl, order object if he is the assigned dg(order id, cod amount collected, customer name, vendor name, delivery date time)
-                # dg object of his associated dg who has transferred the cod(dg id, dg name, transaction date time,
                 dg_tl_entire_collections = []
+                asso_dg_collections = []
                 dg_tl_collections = dg_tl_collections_dict()
                 delivery_statuses = OrderDeliveryStatus.objects.filter(delivery_guy=dg,
                                                                        cod_status=constants.COD_STATUS_COLLECTED)
@@ -87,7 +91,6 @@ def collections(request):
                     for single in delivery_statuses:
                         dg_collections = dg_collections_dict(single)
                         dg_tl_collections['tls_collections'] = dg_collections
-                    # dg_tl_entire_collections.append(dg_tl_collections)
 
                 delivery_guy_tl = DeliveryTeamLead.objects.get(delivery_guy=dg)
                 associated_dgs = delivery_guy_tl.associate_delivery_guys.all()
@@ -101,19 +104,17 @@ def collections(request):
                         associated_dgs_collections = associated_dgs_collections_dict(single_dg)
                         associated_dgs_collections['cod_transferred'] = delivery_statuses[0]['sum_of_cod_collected']
 
-                    # Need to figure out how to send this transferred time to client
-                    # cod_action = cod_actions(constants.COD_TRANSFERRED_TO_TL_CODE)
-                    # cod_transactions = CODTransaction.objects.filter(user=single_dg.user, action=cod_action, transaction_type=constants.TRANSFER_TO_TL)
-                    # associated_dgs_collections['transferred_time'] =
+                        # Need to figure out how to send this transferred time to client
+                        # cod_action = cod_actions(constants.COD_TRANSFERRED_TO_TL_CODE)
+                        # cod_transactions = CODTransaction.objects.filter(user=single_dg.user, action=cod_action, transaction_type=constants.TRANSFER_TO_TL)
+                        # associated_dgs_collections['transferred_time'] =
 
-                        dg_tl_collections['associated_dg_collections'] = associated_dgs_collections
-                        dg_tl_entire_collections.append(dg_tl_collections)
-                # tl_total_cod_amount['dg_collections'] = dg_tl_entire_collections
+                        asso_dg_collections.append(associated_dgs_collections)
+                dg_tl_collections['associated_dg_collections'].append(asso_dg_collections)
+                dg_tl_entire_collections.append(dg_tl_collections)
                 tl_total_cod_amount['collections'] = dg_tl_entire_collections
                 return response_with_payload(tl_total_cod_amount, None)
             else:
-                # for this dg, filter OrderDeliveryStatus for cod status(this is cumulative cod not yet transferred to tl)
-                # for each order(order id, cod amount collected, customer name, vendor name, delivery date time)
                 dg_entire_collections = []
                 delivery_statuses = OrderDeliveryStatus.objects.filter(delivery_guy=dg,
                                                                        cod_status=constants.COD_STATUS_COLLECTED)
