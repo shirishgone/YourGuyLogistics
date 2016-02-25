@@ -45,7 +45,8 @@ def dg_list_dict(delivery_guy, attendance, no_of_assigned_orders, no_of_executed
 def associated_guys_details(delivery_guy):
     associated_guys_detail_dict = {
         'dg_id': delivery_guy.id,
-        'dg_name': delivery_guy.user.first_name
+        'dg_name': delivery_guy.user.first_name,
+        'dg_phonenumber':delivery_guy.user.username
     }
     return associated_guys_detail_dict
 
@@ -407,6 +408,7 @@ class DGViewSet(viewsets.ModelViewSet):
                 team_lead_dg_ids = request.data.get('team_lead_dg_ids')
                 profile_picture = request.data.get('profile_pic_name')
                 is_teamlead = request.data.get('is_teamlead')
+                associated_dgs = request.data.get('associate_dgs')
 
             except Exception as e:
                 params = ['name(optional)', 'serviceable_pincodes(optional)', 'shift_time(optional)', 'transportation_mode(optional)', 'ops_manager_ids(optional)', 'team_lead_ids(optional)', 'profile_picture(optional)', 'is_teamlead(optional)']
@@ -419,22 +421,30 @@ class DGViewSet(viewsets.ModelViewSet):
             if name is not None:
                 delivery_guy.user.first_name = name
                 delivery_guy.user.save()
+            
             # Here filter on dg tl instead of using get /get_404 to avoid exception
             if is_teamlead is True:
-                delivery_guy.is_teamlead = True
+                dg_team_lead = DeliveryTeamLead.objects.get(delivery_guy=delivery_guy)
                 if serviceable_pincodes is not None:
                     for single_serviceable_pincodes in serviceable_pincodes:
                         single_pincode = single_serviceable_pincodes
                         pincode = ServiceablePincode.objects.get(pincode=single_pincode)
-                        delivery_guy_tl = DeliveryTeamLead.objects.all().filter(delivery_guy=delivery_guy)
-                        if not delivery_guy_tl:
-                            delivery_guy_tl = DeliveryTeamLead.objects.create(delivery_guy=delivery_guy)
-                            delivery_guy_tl.serving_pincodes.add(pincode)
-                            delivery_guy_tl.save()
-                        else:
-                            for single_tl in delivery_guy_tl:
-                                single_tl.serving_pincodes.add(pincode)
-                                single_tl.save()
+                        dg_team_lead.serving_pincodes.add(pincode)
+                        dg_team_lead.save()
+
+                if associated_dgs is not None:
+                    for assiocate_dg_id in associated_dgs:
+                        associate_delivery_guy = DeliveryGuy.objects.get(id = assiocate_dg_id)
+                        dg_team_lead.associated_dgs.add(associate_delivery_guy)
+                        dg_team_lead.save()                        
+            else:
+                if team_lead_dg_ids is not None:
+                    for team_lead_dg_id in team_lead_dg_ids:
+                        team_lead_delivery_guy = get_object_or_404(DeliveryGuy, id = team_lead_dg_id)
+                        team_lead = get_object_or_404(DeliveryTeamLead, delivery_guy=team_lead_delivery_guy)
+                        team_lead.associate_delivery_guys.add(delivery_guy)
+                        team_lead.save()
+            
             if shift_time is not None:
                 try:
                     delivery_guy.shift_start_datetime = shift_time['start_time']
@@ -453,17 +463,6 @@ class DGViewSet(viewsets.ModelViewSet):
                     ops_manager = get_object_or_404(Employee, id=ops_manager_id)
                     ops_manager.associate_delivery_guys.add(delivery_guy)
                     ops_manager.save()
-
-            if team_lead_dg_ids is not None and delivery_guy.is_teamlead is False:
-                for team_lead_dg_id in team_lead_dg_ids:
-                    team_lead_delivery_guy = get_object_or_404(DeliveryGuy, id = team_lead_dg_id)
-                    team_lead = get_object_or_404(DeliveryTeamLead, delivery_guy=team_lead_delivery_guy)
-                    team_lead.associate_delivery_guys.add(delivery_guy)
-                    team_lead.save()
-
-            if profile_picture is not None:
-                profile_pic = Picture.objects.create(name=profile_picture)
-                delivery_guy.profile_picture = profile_pic
 
             delivery_guy.save()
             success_message = 'Delivery guy updated.'
@@ -840,7 +839,7 @@ class DGViewSet(viewsets.ModelViewSet):
     @list_route()
     def teamleads(self, request):
         role = user_role(request.user)
-        if role == constants.OPERATIONS or role == constants.OPERATIONS_MANAGER:
+        if role == constants.OPERATIONS or role == constants.OPERATIONS_MANAGER or role == constants.HR:
             all_tls = DeliveryTeamLead.objects.all()
             all_tls_dict = []
             for teamlead in all_tls:
@@ -863,10 +862,38 @@ class DGViewSet(viewsets.ModelViewSet):
         else:
             return response_access_denied()
 
+    @detail_route(methods=['put'])
+    def promote_to_teamlead(self, request, pk = None):
+        role = user_role(request.user)
+        if role == constants.HR:
+            delivery_guy = DeliveryGuy.objects.get(id = pk)
+            associated_dgs = request.data['associate_dgs']
+            serviceable_pincodes = request.data['pincodes']
+            if delivery_guy.is_teamlead is False:
+                dg_team_lead = DeliveryTeamLead.objects.create(delivery_guy=delivery_guy)
+                delivery_guy.is_teamlead = True
+                delivery_guy.save()
+                for pincode in serviceable_pincodes:
+                    pincode_obj = ServiceablePincode.objects.get(pincode=pincode)
+                    dg_team_lead.serving_pincodes.add(pincode_obj)
+                    dg_team_lead.save()
+                for assiocate_dg_id in associated_dgs:
+                    associate_delivery_guy = DeliveryGuy.objects.get(id = assiocate_dg_id)
+                    dg_team_lead.associate_delivery_guys.add(associate_delivery_guy)
+                    dg_team_lead.save()                        
+                dg_team_lead.save()
+                success_message = 'successfully promoted to team lead'
+                return response_success_with_message(success_message)
+            else:
+                error_message = 'The DeliveryBoy is already a team lead'    
+                return response_error_with_message(error_message)
+        else:
+            return response_access_denied()
+
     @list_route()
     def ops_executives(self, request):
         role = user_role(request.user)
-        if role == constants.OPERATIONS or role == constants.OPERATIONS_MANAGER:
+        if role == constants.OPERATIONS or role == constants.OPERATIONS_MANAGER or role == constants.HR:
             ops_executives = Employee.objects.filter(Q(department = constants.OPERATIONS) | Q(department = constants.OPERATIONS_MANAGER))
             ops_exec_dict = []
             for ops_exec in ops_executives:
