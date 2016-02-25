@@ -480,7 +480,7 @@ class DGViewSet(viewsets.ModelViewSet):
             params = ['deactivate_reason']
             return response_incomplete_parameters(params)
         
-        if role == constants.OPERATIONS:
+        if role == constants.HR:
             delivery_guy = get_object_or_404(DeliveryGuy, id=pk)
             if delivery_guy.is_active is True:
                 delivery_guy.is_active = False
@@ -816,7 +816,7 @@ class DGViewSet(viewsets.ModelViewSet):
     def tl_associated_dgs(self, request, pk):
         all_associated_dgs = []
         role = user_role(request.user)
-        if role == constants.DELIVERY_GUY:
+        if role == constants.DELIVERY_GUY or role == constants.OPERATIONS or role == constants.OPERATIONS_MANAGER or role == constants.HR:
             delivery_guy = get_object_or_404(DeliveryGuy, pk=pk)
             if delivery_guy.is_teamlead is True and delivery_guy.is_active is True:
                 try:
@@ -839,7 +839,7 @@ class DGViewSet(viewsets.ModelViewSet):
     @list_route()
     def teamleads(self, request):
         role = user_role(request.user)
-        if role == constants.OPERATIONS or role == constants.OPERATIONS_MANAGER:
+        if role == constants.OPERATIONS or role == constants.OPERATIONS_MANAGER or role == constants.HR:
             all_tls = DeliveryTeamLead.objects.all()
             all_tls_dict = []
             for teamlead in all_tls:
@@ -893,7 +893,7 @@ class DGViewSet(viewsets.ModelViewSet):
     @list_route()
     def ops_executives(self, request):
         role = user_role(request.user)
-        if role == constants.OPERATIONS or role == constants.OPERATIONS_MANAGER:
+        if role == constants.OPERATIONS or role == constants.OPERATIONS_MANAGER or role == constants.HR:
             ops_executives = Employee.objects.filter(Q(department = constants.OPERATIONS) | Q(department = constants.OPERATIONS_MANAGER))
             ops_exec_dict = []
             for ops_exec in ops_executives:
