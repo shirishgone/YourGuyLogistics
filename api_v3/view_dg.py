@@ -484,7 +484,7 @@ class DGViewSet(viewsets.ModelViewSet):
             params = ['deactivate_reason']
             return response_incomplete_parameters(params)
         
-        if role == constants.OPERATIONS:
+        if role == constants.HR:
             delivery_guy = get_object_or_404(DeliveryGuy, id=pk)
             if delivery_guy.is_active is True:
                 delivery_guy.is_active = False
@@ -827,7 +827,7 @@ class DGViewSet(viewsets.ModelViewSet):
     def tl_associated_dgs(self, request, pk):
         all_associated_dgs = []
         role = user_role(request.user)
-        if role == constants.DELIVERY_GUY:
+        if role == constants.DELIVERY_GUY or role == constants.OPERATIONS or role == constants.OPERATIONS_MANAGER or role == constants.HR:
             delivery_guy = get_object_or_404(DeliveryGuy, pk=pk)
             if delivery_guy.is_teamlead is True and delivery_guy.is_active is True:
                 try:
@@ -878,8 +878,13 @@ class DGViewSet(viewsets.ModelViewSet):
         role = user_role(request.user)
         if role == constants.HR:
             delivery_guy = DeliveryGuy.objects.get(id = pk)
-            associated_dgs = request.data['associate_dgs']
-            serviceable_pincodes = request.data['pincodes']
+            try:
+                associated_dgs = request.data['associate_dgs']
+                serviceable_pincodes = request.data['pincodes']
+            except Exception, e:
+                params = ['pincodes', 'associate_dgs']
+                return response_incomplete_parameters(params)
+            
             if delivery_guy.is_teamlead is False:
                 dg_team_lead = DeliveryTeamLead.objects.create(delivery_guy=delivery_guy)
                 delivery_guy.is_teamlead = True

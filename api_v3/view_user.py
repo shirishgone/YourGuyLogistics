@@ -4,6 +4,9 @@ from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view
 from rest_framework.exceptions import APIException
 from rest_framework.authtoken.models import Token
+from rest_framework.decorators import authentication_classes, permission_classes
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.permissions import IsAuthenticated
 
 from api_v3 import constants
 from api_v3.utils import is_userexists, create_token, assign_usergroup_with_name, assign_usergroup, user_role
@@ -206,7 +209,11 @@ def register(request):
     return response_with_payload(content, None)
 
 
+
+
 @api_view(['GET'])
+@authentication_classes((TokenAuthentication,))
+@permission_classes((IsAuthenticated,))
 def profile(request):
     role = user_role(request.user)
     if role == constants.VENDOR:
