@@ -1,4 +1,4 @@
-<md-dialog aria-label="ADD TEAM LEAD" ng-cloak class="dgTeamLead">
+<md-dialog aria-label="ADD TEAM LEAD" ng-cloak class="dgTeamLead" flex="50">
 	<md-toolbar>
         <div class="md-toolbar-tools">
             <h2>Add Team Members</h2>
@@ -10,22 +10,22 @@
     </md-toolbar>
 	<md-dialog-content>
 		<div class="md-dialog-content">
-			<h2>TEAM LEAD</h2>
-			<div>
+			<div class="team">
 				<h3>Select Team Members</h3>
 				<md-chips 
 					ng-model="dgTeamLead.selectedTeamMembers" 
 					md-autocomplete-snap 
 					md-transform-chip="dgTeamLead.transformChip($chip)" 
 					md-require-match="true"
-					md-on-add="dgTeamLead.addTeamDg($chip)">
+					md-on-add="dgTeamLead.addTeamDgs($chip)"
+					md-on-remove="dgTeamLead.removeTeamDgs($chip)">
 					<md-autocomplete 
 						md-no-cache="true"
 						md-selected-item="dgTeamLead.selectedItem" 
 						md-search-text="dgTeamLead.searchedDg" 
 						md-items="dg in dgTeamLead.dgSearch(dgTeamLead.searchedDg)" 
 						md-item-text="dg.name" 
-						placeholder="Search for a vegetable">
+						placeholder="Search for a DG">
 						<span md-highlight-text="dgTeamLead.searchedDg">{{dg.name}}</span>
 						<md-not-found>
 							No states matching "{{opsOrder.searchedDg}}" were found.
@@ -39,6 +39,34 @@
 					</md-chip-template>
 				</md-chips>
 			</div>
+			<div class="pincode">
+				<h3>Select Pin Codes</h3>
+				<md-chips 
+					ng-model="dgTeamLead.selectedPincodes" 
+					md-autocomplete-snap 
+					md-transform-chip="dgTeamLead.chip($chip)" 
+					md-require-match="true"
+					md-on-add="dgTeamLead.addTlPincode($chip)"
+					md-on-remove="dgTeamLead.removeTlPincode($chip)">
+					<md-autocomplete 
+						md-no-cache="true"
+						md-selected-item="dgTeamLead.selectedPin" 
+						md-search-text="dgTeamLead.searchedPincode" 
+						md-items="dg in dgTeamLead.pincodes" 
+						md-item-text="dg.pincode" 
+						placeholder="Search for a Pin Code">
+						<span md-highlight-text="dgTeamLead.searchedPincode">{{dg.pincode}}</span>
+						<md-not-found>
+							No states matching "{{opsOrder.searchedPincode}}" were found.
+						</md-not-found>
+					</md-autocomplete>
+					<md-chip-template>
+						<span>
+							<strong>{{$chip.pincode}}</strong>
+						</span>
+					</md-chip-template>
+				</md-chips>
+			</div>
 		</div>
 	</md-dialog-content>
 	<md-dialog-actions layout="row">
@@ -46,7 +74,7 @@
         <md-button ng-click="dgTeamLead.cancel()" class="md-warn">
             Cancel
         </md-button>
-        <md-button ng-click="dgTeamLead.cancel()" class="md-primary" style="margin-right:20px;">
+        <md-button ng-click="dgTeamLead.submitTlData()" class="md-primary" ng-disabled="dgTeamLead.selectedTeamMembers.length == 0 || dgTeamLead.selectedPincodes.length == 0" style="margin-right:20px;">
             Done
         </md-button>
     </md-dialog-actions>

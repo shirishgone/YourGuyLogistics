@@ -1,8 +1,9 @@
 (function(){
 	'use strict';
 
-	var dgDetailCntrl = function($state,$mdDialog,$mdMedia,DeliveryGuy,dgConstants,leadUserList,DG,PreviousState){
+	var dgDetailCntrl = function($state,$stateParams,$mdDialog,$mdMedia,DeliveryGuy,dgConstants,leadUserList,DG,PreviousState){
 		var self = this;
+		self.params = $stateParams;
 		self.DG = DG.payload.data.data;
 		self.attendance_date = moment().date(1).toDate();
 		self.attendanceMinDate = moment('2015-01-01').toDate();
@@ -27,8 +28,9 @@
 				},
 			})
 			.then(function(dg) {
+				dg.shift_time = angular.fromJson(dg.shift_time);
 				DeliveryGuy.dg.$update(dg,function(response){
-					console.log(response);
+					self.getDgDetails();
 				});
 			}, function() {
 				self.status = 'You cancelled the dialog.';
@@ -56,21 +58,20 @@
 			});
 		};
 		self.toTeamlead = function(){
-			var useFullScreen = ($mdMedia('sm') || $mdMedia('xs'));
 			$mdDialog.show({
 				controller         : ('AddTeamLeadCntrl',['$mdDialog','DG','DeliveryGuy',AddTeamLeadCntrl]),
 				controllerAs       : 'dgTeamLead',
 				templateUrl        : '/static/modules/deliveryguy/dialogs/teamlead.html',
 				parent             : angular.element(document.body),
 				clickOutsideToClose: false,
-				fullscreen         : useFullScreen,
+				fullscreen         : true,
 				locals             : {
 					DG : self.DG,
 				},
 			})
-			.then(function(dg) {
-				DeliveryGuy.dg.$update(dg,function(response){
-					console.log(response);
+			.then(function(data) {
+				DeliveryGuy.dg.promoteToTL(data,function(response){
+					self.getDgDetails();
 				});
 			}, function() {
 				self.status = 'You cancelled the dialog.';
@@ -86,6 +87,10 @@
 			DeliveryGuy.dg.attendance(attendance_params,function(response){
 				self.dg_monthly_attendance = response.payload.data.dg_monthly_attendance[0].attendance;
 			});
+		};
+
+		self.getDgDetails = function(){
+			$state.transitionTo($state.current, self.params, { reload: true, inherit: false, notify: true });
 		};
 	};
 
@@ -104,8 +109,6 @@
 		});	
 		dgEdit.OpsManagers = OpsManagers;
 		dgEdit.TeamLeads = TeamLeads;
-		console.log(dgEdit.DG);
-
 		dgEdit.shift_timings = dgConstants.shift_timings;
 		dgEdit.transportation_mode = dgConstants.transportation_mode;
 
@@ -120,13 +123,34 @@
 	function AddTeamLeadCntrl($mdDialog,DG,DeliveryGuy){
 		var dgTeamLead = this;
 		dgTeamLead.selectedTeamMembers = [];
+		dgTeamLead.selectedPincodes = [];
+		dgTeamLead.teamLeadData = {
+			id: DG.id,
+			pincodes : [],
+			associate_dgs : []
+		};
+
 		dgTeamLead.cancel = function() {
 			$mdDialog.cancel();
 		};
 
-		dgTeamLead.addTeamDg = function(chip){
-			console.log(chip);
-			console.log(dgTeamLead.selectedTeamMembers);
+		DeliveryGuy.dgServicablePincodes.query().$promise.then(function (response){
+				dgTeamLead.pincodes =  response.payload.data;
+		});
+
+		dgTeamLead.addTeamDgs = function(chip){
+			dgTeamLead.teamLeadData.associate_dgs.push(chip.id);
+		};
+		dgTeamLead.removeTeamDgs = function(chip){
+			var index = dgTeamLead.teamLeadData.associate_dgs.indexOf(chip.id);
+			dgTeamLead.teamLeadData.associate_dgs.splice(index,1);
+		};
+		dgTeamLead.addTlPincode = function(chip){
+			dgTeamLead.teamLeadData.pincodes.push(chip.pincode);
+		};
+		dgTeamLead.removeTlPincode = function(chip){
+			var index = dgTeamLead.teamLeadData.pincodes.indexOf(chip.pincode);
+			dgTeamLead.teamLeadData.pincodes.splice(index,1);
 		};
 
 		dgTeamLead.dgSearch = function(text){
@@ -143,15 +167,24 @@
 			if (angular.isObject(chip)) {
 				return {name: chip.name, phone_number: chip.phone_number,id: chip.id};
 			}
-			// Otherwise, create a new one
-			return { name: chip, phone_number: 'none',id: 'none' };
 		};
 
+		dgTeamLead.transformPinChip = function(chip) {
+			// If it is an object, it's already a known chip
+			if (angular.isObject(chip)) {
+				return chip;
+			}
+		};
+
+		dgTeamLead.submitTlData = function(){
+			$mdDialog.hide(dgTeamLead.teamLeadData);
+		};
 	}
 
 	angular.module('deliveryguy')
 	.controller('dgDetailCntrl', [
 		'$state',
+		'$stateParams',
 		'$mdDialog',
 		'$mdMedia',
 		'DeliveryGuy',

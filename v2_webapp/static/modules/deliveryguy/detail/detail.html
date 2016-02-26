@@ -28,6 +28,10 @@
 				<h5>{{dgDetail.DG.phone_number}}</h5>
 			</div>
 			<div flex="30" flex-xs="50" class="profile-data">
+				<label>Shift Time</label>
+				<h5>{{dgDetail.DG.shift_time.start_time | timeAsDate}} - {{dgDetail.DG.shift_time.end_time | timeAsDate}}</h5>
+			</div>
+			<div flex="30" flex-xs="50" class="profile-data">
 				<label>Transportation Mode</label>
 				<h5>{{dgDetail.DG.transportation_mode}}</h5>
 			</div>
@@ -49,18 +53,15 @@
 					<h5>{{op.name}}</h5>
 				</div>
 			</div>
-			<div flex="30" flex-xs="50" class="profile-data">
-				<label>Shift Time</label>
-				<h5>{{dgDetail.DG.shift_time.start_time | timeAsDate}} - {{dgDetail.DG.shift_time.end_time | timeAsDate}}</h5>
-			</div>
+			
 			<!-- <div flex="30" flex-xs="50" class="profile-data">
 				<label>Weekly Off</label>
 				<h5>{{dgDetail.DG.pincode}}</h5>
 			</div> -->
-			<div flex="30" flex-xs="50" class="profile-data">
+			<!-- <div flex="30" flex-xs="50" class="profile-data">
 				<label>COD</label>
 				<h5>{{dgDetail.DG.cod}}</h5>
-			</div>
+			</div> -->
 			<div flex="30" flex-xs="50" class="profile-data">
 				<md-checkbox ng-checked="dgDetail.DG.is_teamlead" ng-click="dgDetail.toTeamlead()" aria-label="TEAM LEAD">
             		Team Lead

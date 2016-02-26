@@ -44,7 +44,7 @@
                             </div>
                         </md-input-container>
                     </div>
-                    <div flex="50" flex-xs="50" class="profile-data">
+                    <div flex="50" flex-xs="50" class="profile-data" ng-if="!dgEdit.DG.is_teamlead">
                         <md-input-container class="md-block">
                             <label>Team Lead</label>
                             <md-select name="teamlead" multiple ng-model="dgEdit.DG.team_lead_ids" ng-required="true">
@@ -73,7 +73,7 @@
                     <div flex="50" flex-xs="50" class="profile-data">
                         <md-input-container class="md-block">
                             <label>Shift Timings</label>
-                            <md-select layout="column" name="shifttime" ng-model="dgEdit.DG.shift_timing" ng-required="true">
+                            <md-select layout="column" name="shifttime" ng-model="dgEdit.DG.shift_time" ng-required="true">
                                 <md-option ng-repeat="time in dgEdit.shift_timings" value="{{time}}">
                                     {{time.start_time | timeAsDate}} - {{time.end_time | timeAsDate}}
                                 </md-option>

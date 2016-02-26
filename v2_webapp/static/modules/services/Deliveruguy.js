@@ -18,6 +18,10 @@
 				associated_dgs : {
 					url : constants.v3baseUrl+'deliveryguy/:id'+'/tl_associated_dgs/',
 					method : 'GET'
+				},
+				promoteToTL : {
+					url : constants.v3baseUrl+'deliveryguy/:id'+'/promote_to_teamlead/',
+					method : 'PUT'
 				}
 			}),
 			dgPageQuery : $resource(constants.v3baseUrl+'deliveryguy/:id/',{id:"@id"},{
@@ -38,6 +42,12 @@
 					isArray : false
 				}
 			}),
+			dgServicablePincodes : $resource(constants.v3baseUrl+'servicible_pincodes/', {}, {
+				query : {
+					method : 'GET',
+					isArray : false
+				}
+			})
 		};
 	};
 	
