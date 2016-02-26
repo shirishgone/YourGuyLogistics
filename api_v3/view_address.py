@@ -61,12 +61,11 @@ def remove_address(request):
     else:
         return response_access_denied()
 
-
 @api_view(['GET'])
 @permission_classes((IsAuthenticated,))
 def servicible_pincodes(request):
     role = user_role(request.user)
-    if role == constants.VENDOR or role == constants.OPERATIONS:
+    if role == constants.VENDOR or role == constants.OPERATIONS or role == constants.OPERATIONS_MANAGER or role == constants.HR: 
         all_pincodes = ServiceablePincode.objects.all()
         result = []
         for pincode in all_pincodes:
