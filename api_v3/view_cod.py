@@ -76,6 +76,8 @@ def collections(request):
         dg = get_object_or_404(DeliveryGuy, user=request.user)
         if dg.is_active is True:
             if dg.is_teamlead is True:
+                dg_tl_id = dg.id
+                deliveries = []
                 dg_tl_entire_collections = []
                 asso_dg_collections = []
                 dg_tl_collections = dg_tl_collections_dict()
@@ -97,17 +99,28 @@ def collections(request):
                 associated_dgs = associated_dgs.filter(is_active=True)
                 for single_dg in associated_dgs:
                     delivery_statuses = OrderDeliveryStatus.objects.filter(delivery_guy=single_dg, cod_status=constants.COD_STATUS_TRANSFERRED_TO_TL)
+                    for single in delivery_statuses:
+                        deliveries.append(single.id)
                     delivery_statuses = delivery_statuses.values('delivery_guy__user__username').annotate(sum_of_cod_collected=Sum('cod_collected_amount'))
-                    if len(delivery_statuses) >0:
+                    if len(delivery_statuses) > 0:
                         balance_amount = balance_amount + delivery_statuses[0]['sum_of_cod_collected']
                         tl_total_cod_amount['total_cod_amount'] = balance_amount
                         associated_dgs_collections = associated_dgs_collections_dict(single_dg)
                         associated_dgs_collections['cod_transferred'] = delivery_statuses[0]['sum_of_cod_collected']
 
                         # Need to figure out how to send this transferred time to client
-                        # cod_action = cod_actions(constants.COD_TRANSFERRED_TO_TL_CODE)
-                        # cod_transactions = CODTransaction.objects.filter(user=single_dg.user, action=cod_action, transaction_type=constants.TRANSFER_TO_TL)
-                        # associated_dgs_collections['transferred_time'] =
+                        cod_action = cod_actions(constants.COD_TRANSFERRED_TO_TL_CODE)
+                        cod_transaction = CODTransaction.objects.filter(action__title=cod_action,
+                                                                        transaction_type=constants.TRANSFER,
+                                                                        dg_id=single_dg.id,
+                                                                        dg_tl_id=dg_tl_id,
+                                                                        transaction_status=constants.VERIFIED,
+                                                                        cod_amount=delivery_statuses[0]['sum_of_cod_collected'],
+                                                                        deliveries__in=deliveries)
+                        if len(cod_transaction) > 0 and cod_transaction[0].time_stamp is not None:
+                            associated_dgs_collections['transferred_time'] = cod_transaction[0].time_stamp
+                        else:
+                            associated_dgs_collections['transferred_time'] = None
 
                         asso_dg_collections.append(associated_dgs_collections)
                 dg_tl_collections['associated_dg_collections'].append(asso_dg_collections)

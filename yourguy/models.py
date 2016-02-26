@@ -425,7 +425,7 @@ class CODTransaction(models.Model):
     dg_id = models.IntegerField(blank=True, null=True, auto_created=False)
     dg_tl_id = models.IntegerField(blank=True, null=True, auto_created=False)
     cod_amount = models.FloatField(default=0.0)
-    deliveries = models.CharField(max_length=500, blank=True, null=True)
+    deliveries = models.CommaSeparatedIntegerField(max_length=500, blank=True, null=True)
 
 
     def __unicode__(self):
