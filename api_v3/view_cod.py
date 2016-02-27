@@ -63,6 +63,14 @@ def dg_tl_collections_dict():
     return dg_tl_collections
 
 
+def associated_dgs_pending_cod_details(delivery_guy):
+    associated_dgs_pending_cod_details_dict = {
+        'dg_id': delivery_guy.id,
+        'dg_name': delivery_guy.user.first_name,
+        'cod_amount': None
+    }
+    return associated_dgs_pending_cod_details_dict
+
 # for dg tl, order object if he is the assigned dg(order id, cod amount collected, customer name, vendor name, delivery date time)
 # dg object of his associated dg who has transferred the cod(dg id, dg name, transaction date time,
 # for dg, filter OrderDeliveryStatus for cod status(this is cumulative cod not yet transferred to tl)
@@ -133,14 +141,18 @@ def collections(request):
                                                                        cod_status=constants.COD_STATUS_COLLECTED)
                 delivery_statuses_total = delivery_statuses.values('delivery_guy__user__username').\
                     annotate(sum_of_cod_collected=Sum('cod_collected_amount'))
-                dg_total_cod_amount = dg_total_cod_amount_dict(delivery_statuses_total[0])
-                dg_total_cod_amount['total_cod_amount'] = delivery_statuses_total[0]['sum_of_cod_collected']
+                if len(delivery_statuses) > 0 and len(delivery_statuses_total) > 0:
+                    dg_total_cod_amount = dg_total_cod_amount_dict(delivery_statuses_total[0])
+                    dg_total_cod_amount['total_cod_amount'] = delivery_statuses_total[0]['sum_of_cod_collected']
 
-                for single in delivery_statuses:
-                    dg_collections = dg_collections_dict(single)
-                    dg_entire_collections.append(dg_collections)
-                dg_total_cod_amount['dg_collections'] = dg_entire_collections
-                return response_with_payload(dg_total_cod_amount, None)
+                    for single in delivery_statuses:
+                        dg_collections = dg_collections_dict(single)
+                        dg_entire_collections.append(dg_collections)
+                    dg_total_cod_amount['dg_collections'] = dg_entire_collections
+                    return response_with_payload(dg_total_cod_amount, None)
+                else:
+                    error_message = 'No COD collection pending to transfer to TL'
+                    return response_error_with_message(error_message)
         else:
             error_message = 'This is a deactivated dg'
             return response_error_with_message(error_message)
@@ -176,3 +188,37 @@ def qr_code(request):
     else:
         return response_access_denied()
 
+
+@api_view(['GET'])
+@authentication_classes((TokenAuthentication,))
+@permission_classes((IsAuthenticated,))
+def associated_dgs_collections(request):
+    all_associated_dgs = []
+    role = user_role(request.user)
+    if role == constants.DELIVERY_GUY:
+        delivery_guy = get_object_or_404(DeliveryGuy, user=request.user)
+        if delivery_guy.is_teamlead is True and delivery_guy.is_active is True:
+            try:
+                delivery_guy_tl = DeliveryTeamLead.objects.get(delivery_guy=delivery_guy)
+                associated_dgs = delivery_guy_tl.associate_delivery_guys.all()
+                associated_dgs = associated_dgs.filter(is_active=True)
+                for single in associated_dgs:
+                    delivery_statuses = OrderDeliveryStatus.objects.filter(delivery_guy=single,
+                                                                           cod_status=constants.COD_STATUS_COLLECTED)
+                    delivery_statuses_total = delivery_statuses.values('delivery_guy__user__username').\
+                        annotate(sum_of_cod_collected=Sum('cod_collected_amount'))
+                    associated_guys_detail_dict = associated_dgs_pending_cod_details(single)
+                    if len(delivery_statuses) > 0:
+                        associated_guys_detail_dict['cod_amount'] = delivery_statuses_total[0]['sum_of_cod_collected']
+                    else:
+                        associated_guys_detail_dict['cod_amount'] = 0
+                    all_associated_dgs.append(associated_guys_detail_dict)
+                return response_with_payload(all_associated_dgs, None)
+            except Exception as e:
+                error_message = 'No such Delivery Team Lead exists'
+                return response_error_with_message(error_message)
+        else:
+            error_message = 'This is not a DG team lead or this is a deactivated DG team lead'
+            return response_error_with_message(error_message)
+    else:
+        return response_access_denied()

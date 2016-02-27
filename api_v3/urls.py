@@ -43,6 +43,7 @@ urlpatterns = patterns(
     url(r'^deliveryguy/profile/', view_dg.profile, name='dg_profile'),
     url(r'^collections', view_cod.collections, name='collections'),
     url(r'^qr_code', view_cod.qr_code, name='qr_code'),
+    url(r'^associated_dgs_collections', view_cod.associated_dgs_collections, name='associated_dgs_collections'),
     
     # STAFF METHODS -----------------------------------------
     url(r'^new_order_id_for_old_order_id/', view_internals.new_order_id_for_old_order_id,
