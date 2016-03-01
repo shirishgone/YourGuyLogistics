@@ -391,23 +391,13 @@ class CODAction(models.Model):
 
 
 class CODTransaction(models.Model):
-    action = models.ForeignKey(CODAction, on_delete=models.PROTECT)
-    by_user = models.ForeignKey(User, blank=True, null=True)
-    time_stamp = models.DateTimeField(blank=True, null=True)
+    transaction = models.ForeignKey(CODAction, on_delete=models.PROTECT)
+    created_by_user = models.ForeignKey(User, blank=True, null=True, related_name='created_by_user')
+    created_time_stamp = models.DateTimeField(blank=True, null=True)
+    verified_by_user = models.ForeignKey(User, blank=True, null=True, related_name='verified_by_user')
+    verified_time_stamp = models.DateTimeField(blank=True, null=True)
     location = models.ForeignKey(Location, blank=True, null=True)
     remarks = models.CharField(max_length=500, blank=True)
-
-    TRANSFER = 'TRANSFER'
-    BANKDEPOSIT = 'BANKDEPOSIT'
-    UNKNOWN = 'UNKNOWN'
-
-    TRANSACTION_TYPE_CHOICES = (
-            (TRANSFER, 'TRANSFER'),
-            (BANKDEPOSIT, 'BANKDEPOSIT'),
-            (UNKNOWN, 'UNKNOWN')
-            )
-
-    transaction_type = models.CharField(max_length=30, choices=TRANSACTION_TYPE_CHOICES, default=UNKNOWN)
 
     INITIATED = 'INITIATED'
     VERIFIED = 'VERIFIED'
@@ -421,7 +411,7 @@ class CODTransaction(models.Model):
 
     transaction_status = models.CharField(max_length=30, choices=TRANSACTION_STATUS_CHOICES, default=INITIATED)
 
-    transaction_id = models.CharField(max_length=500, blank=True, null=True)
+    transaction_uuid = models.CharField(max_length=500)
     dg_id = models.IntegerField(blank=True, null=True, auto_created=False)
     dg_tl_id = models.IntegerField(blank=True, null=True, auto_created=False)
     cod_amount = models.FloatField(default=0.0)
@@ -429,7 +419,7 @@ class CODTransaction(models.Model):
 
 
     def __unicode__(self):
-        return u"%s" % self.action
+        return u"%s" % self.transaction
 
 
 class ProofOfBankDeposit(models.Model):
@@ -503,24 +493,22 @@ class OrderDeliveryStatus(models.Model):
     cod_remarks = models.CharField(max_length = 500, blank = True)
     delivery_transactions = models.ManyToManyField(DeliveryTransaction, blank = True)
 
-    COD_PENDING = 'COD_PENDING'
+    COD_NOT_AVAILABLE = 'COD_NOT_AVAILABLE'
     COD_COLLECTED = 'COD_COLLECTED'
     COD_TRANSFERRED_TO_TL = 'COD_TRANSFERRED_TO_TL'
     COD_BANK_DEPOSITED = 'COD_BANK_DEPOSITED'
     COD_VERIFIED = 'COD_VERIFIED'
     COD_TRANSFERRED_TO_CLIENT = 'COD_TRANSFERRED_TO_CLIENT'
-    COD_CLOSED = 'COD_CLOSED'
 
     COD_CHOICES = (
-        (COD_PENDING, 'COD_PENDING'),
+        (COD_NOT_AVAILABLE,'COD_NOT_AVAILABLE'),
         (COD_COLLECTED, 'COD_COLLECTED'),
         (COD_TRANSFERRED_TO_TL, 'COD_TRANSFERRED_TO_TL'),
         (COD_BANK_DEPOSITED, 'COD_BANK_DEPOSITED'),
         (COD_VERIFIED, 'COD_VERIFIED'),
-        (COD_TRANSFERRED_TO_CLIENT, 'COD_TRANSFERRED_TO_CLIENT'),
-        (COD_CLOSED, 'COD_CLOSED')
+        (COD_TRANSFERRED_TO_CLIENT, 'COD_TRANSFERRED_TO_CLIENT')
     )
-    cod_status = models.CharField(max_length=100, choices=COD_CHOICES, default=COD_PENDING)
+    cod_status = models.CharField(max_length=100, choices=COD_CHOICES)
     cod_transactions = models.ManyToManyField(CODTransaction, blank=True)
 
 

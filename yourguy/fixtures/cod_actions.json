@@ -4,7 +4,7 @@
     "pk": 1,
     "fields": {
       "code": "yg_cod_01",
-      "title": "CODPending"
+      "title": "CODCollected"
     }
   },
   {
@@ -12,7 +12,7 @@
     "pk": 2,
     "fields": {
       "code": "yg_cod_02",
-      "title": "CODCollected"
+      "title": "CODTransferredToTL"
     }
   },
   {
@@ -20,7 +20,7 @@
     "pk": 3,
     "fields": {
       "code": "yg_cod_03",
-      "title": "CODTransferredToTL"
+      "title": "CODBankDeposited"
     }
   },
   {
@@ -28,7 +28,7 @@
     "pk": 4,
     "fields": {
       "code": "yg_cod_04",
-      "title": "CODBankDeposited"
+      "title": "CODVerified"
     }
   },
   {
@@ -36,23 +36,7 @@
     "pk": 5,
     "fields": {
       "code": "yg_cod_05",
-      "title": "CODVerified"
-    }
-  },
-  {
-    "model": "yourguy.CODAction",
-    "pk": 6,
-    "fields": {
-      "code": "yg_cod_06",
       "title": "CODTransferredToClient"
-    }
-  },
-  {
-    "model": "yourguy.CODAction",
-    "pk": 7,
-    "fields": {
-      "code": "yg_cod_07",
-      "title": "CODClosed"
     }
   }
 ]

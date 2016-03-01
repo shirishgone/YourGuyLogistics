@@ -8,6 +8,7 @@ from api_v3.view_product import ProductViewSet
 from api_v3.view_vendor import VendorViewSet
 from api_v3.view_vendoragent import VendorAgentViewSet
 from api_v3.view_notifications import NotificationViewSet
+from api_v3.view_cod import CODViewSet
 
 from api_v3 import view_dg, view_cod
 from api_v3 import view_notifications
@@ -41,10 +42,7 @@ urlpatterns = patterns(
     url(r'^assign_dg/', cron_jobs.assign_dg, name='assign_dg'),
     url(r'^dg_app_version/', view_dg.dg_app_version, name='dg_app_version'),
     url(r'^deliveryguy/profile/', view_dg.profile, name='dg_profile'),
-    url(r'^collections', view_cod.collections, name='collections'),
-    url(r'^qr_code', view_cod.qr_code, name='qr_code'),
-    url(r'^associated_dgs_collections', view_cod.associated_dgs_collections, name='associated_dgs_collections'),
-    
+
     # STAFF METHODS -----------------------------------------
     url(r'^new_order_id_for_old_order_id/', view_internals.new_order_id_for_old_order_id,
         name='new_order_id_for_old_order_id'),
@@ -65,6 +63,7 @@ router.register(r'consumer', ConsumerViewSet)
 router.register(r'order', OrderViewSet, base_name='orders')
 router.register(r'product', ProductViewSet)
 router.register(r'notification', NotificationViewSet)
+router.register(r'cod', CODViewSet, base_name='cod')
 
 urlpatterns += router.urls
 # urlpatterns = format_suffix_patterns(urlpatterns)
