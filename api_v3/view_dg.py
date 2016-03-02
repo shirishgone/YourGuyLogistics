@@ -411,7 +411,6 @@ class DGViewSet(viewsets.ModelViewSet):
                 ops_manager_ids = request.data.get('ops_manager_ids')
                 team_lead_dg_ids = request.data.get('team_lead_dg_ids')
                 profile_picture = request.data.get('profile_pic_name')
-                is_teamlead = request.data.get('is_teamlead')
                 associated_dgs = request.data.get('associate_dgs')
 
             except Exception as e:
@@ -427,7 +426,7 @@ class DGViewSet(viewsets.ModelViewSet):
                 delivery_guy.user.save()
             
             # Here filter on dg tl instead of using get /get_404 to avoid exception
-            if is_teamlead is True:
+            if delivery_guy.is_teamlead is True:
                 dg_team_lead = DeliveryTeamLead.objects.get(delivery_guy=delivery_guy)
                 if serviceable_pincodes is not None:
                     for single_serviceable_pincodes in serviceable_pincodes:
