@@ -405,7 +405,7 @@ class DGViewSet(viewsets.ModelViewSet):
             try:
                 role = user_role(request.user)
                 name = request.data.get('name')
-                serviceable_pincodes = request.data.get('serviceable_pincodes')
+                serviceable_pincodes = request.data.get('pincodes')
                 shift_time = request.data.get('shift_time')
                 transportation_mode = request.data.get('transportation_mode')
                 ops_manager_ids = request.data.get('ops_manager_ids')
@@ -415,7 +415,7 @@ class DGViewSet(viewsets.ModelViewSet):
                 associated_dgs = request.data.get('associate_dgs')
 
             except Exception as e:
-                params = ['name(optional)', 'serviceable_pincodes(optional)', 'shift_time(optional)', 'transportation_mode(optional)', 'ops_manager_ids(optional)', 'team_lead_ids(optional)', 'profile_picture(optional)', 'is_teamlead(optional)']
+                params = ['name(optional)', 'pincodes(optional)', 'shift_time(optional)', 'transportation_mode(optional)', 'ops_manager_ids(optional)', 'team_lead_ids(optional)', 'profile_picture(optional)', 'is_teamlead(optional)', 'associated_dgs']
                 return response_incomplete_parameters(params)
         else:
             return response_access_denied()
@@ -439,7 +439,7 @@ class DGViewSet(viewsets.ModelViewSet):
                 if associated_dgs is not None:
                     for assiocate_dg_id in associated_dgs:
                         associate_delivery_guy = DeliveryGuy.objects.get(id = assiocate_dg_id)
-                        dg_team_lead.associated_dgs.add(associate_delivery_guy)
+                        dg_team_lead.associate_delivery_guys.add(associate_delivery_guy)
                         dg_team_lead.save()                        
             else:
                 if team_lead_dg_ids is not None:
