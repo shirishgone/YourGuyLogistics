@@ -168,6 +168,7 @@
 		'home',
 		'order',
 		'deliveryguy',
+    'vendor',
 		'forbidden'
 	])
 	.config([
@@ -441,7 +442,7 @@
 	};
 
 	angular.module('ygVendorApp')
-	.constant('constants', constants);
+	.constant('constants', testConstants);
 })();
 (function(){
 	'use strict';
@@ -619,25 +620,13 @@
 (function(){
 	'use strict';
 	var Vendor = function ($resource,constants){
-		return $resource(constants.v1baseUrl+'vendor/:id',{id:"@id"},{
+		return $resource(constants.v3baseUrl+'vendor/:id',{id:"@id"},{
 			profile: {
 				method: 'GET'
 			},
 			query :{
 				method: 'GET',
 				isArray: false,
-				transformResponse: function(data){
-					var response = angular.fromJson(data);
-					if(angular.isArray(response)){
-						var object = {};
-						object.store_name = 'Operations';
-						object.vendors = response;
-						return object;
-					}
-					else{
-						return response;
-					}
-				}
 			}
 		});
 	};
@@ -1625,9 +1614,16 @@
 				},
 			})
 			.then(function(data) {
-				DeliveryGuy.dg.promoteToTL(data,function(response){
-					self.getDgDetails();
-				});
+				if(self.DG.is_teamlead){
+					DeliveryGuy.dg.$update(data,function(response){
+						self.getDgDetails();
+					});
+				}
+				else{
+					DeliveryGuy.dg.promoteToTL(data,function(response){
+						self.getDgDetails();
+					});
+				}
 			}, function() {
 				self.status = 'You cancelled the dialog.';
 			});
@@ -1677,6 +1673,7 @@
 
 	function AddTeamLeadCntrl($mdDialog,DG,DeliveryGuy){
 		var dgTeamLead = this;
+		dgTeamLead.DG = DG;
 		dgTeamLead.selectedTeamMembers = [];
 		dgTeamLead.selectedPincodes = [];
 		dgTeamLead.teamLeadData = {
@@ -1748,5 +1745,81 @@
 		'DG',
 		'PreviousState',
 		dgDetailCntrl
+	]);
+})();
+(function(){
+	'use strict';
+	angular.module('vendor', [])
+	.config(['$stateProvider',function($stateProvider) {
+		$stateProvider
+		.state('home.vendorList',{
+			url: "^/vendor/list?date&search&page",
+			templateUrl: "/static/modules/vendor/list/list.html",
+			controllerAs : 'vendorList',
+    		controller: "vendorListCntrl",
+    		resolve : {
+    			access: ["Access","constants", function (Access,constants) { 
+    						var allowed_user = [constants.userRole.OPS,constants.userRole.OPS_MANAGER,constants.userRole.SALES,constants.userRole.SALES_MANAGER,constants.userRole.ACCOUNTS];
+    						return Access.hasAnyRole(allowed_user); 
+    					}],
+    			vendors: ['Vendor','$stateParams', function (Vendor,$stateParams){
+    						$stateParams.date = ($stateParams.date !== undefined) ? new Date($stateParams.date).toISOString() : new Date().toISOString();
+    						$stateParams.page = (!isNaN($stateParams.page))? parseInt($stateParams.page): 1;
+    						return Vendor.query($stateParams).$promise;
+    					}]
+    		}
+		});
+	}]);
+})();
+(function(){
+	'use strict';
+	var vendorListCntrl = function($state,$mdSidenav,$stateParams,vendors){
+		var self = this;
+		self.params = $stateParams;
+		this.searchVendorActive = (this.params.search !== undefined) ? true : false;
+		/*
+			@vendors: resolved vendors list accordign to the url prameters.
+		*/
+		self.vendors = vendors.payload.data.data;
+		self.total_pages = vendors.payload.data.total_pages;
+		self.total_vendors = vendors.payload.data.total_vendor_count;
+		/*
+			@paginate is a function to paginate to the next and previous page of the delivery guy list
+		*/
+		self.paginate = {
+			nextpage : function(){
+				self.params.page = self.params.page + 1;
+				self.getVendors();
+			},
+			previouspage : function(){
+				self.params.page = self.params.page - 1;
+				self.getVendors();
+			}
+		};
+
+		/*
+			@backFromSearch is a function to revert back from a searched delivery guy name to complete list view of delivery guys
+		*/ 
+		self.backFromSearch = function(){
+			self.params.search = undefined;
+			self.searchVendorActive = false;
+			self.getVendors();
+			
+		};
+		/*
+			@getOrders rleoads the order controller according too the filter to get the new filtered data.
+		*/
+		self.getVendors = function(){
+			$state.transitionTo($state.current, self.params, { reload: true, inherit: false, notify: true });
+		};
+	};
+
+	angular.module('vendor')
+	.controller('vendorListCntrl', [
+		'$state',
+		'$mdSidenav',
+		'$stateParams',
+		'vendors',
+		vendorListCntrl
 	]);
 })();

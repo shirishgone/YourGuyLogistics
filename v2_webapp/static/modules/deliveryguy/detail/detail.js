@@ -70,9 +70,16 @@
 				},
 			})
 			.then(function(data) {
-				DeliveryGuy.dg.promoteToTL(data,function(response){
-					self.getDgDetails();
-				});
+				if(self.DG.is_teamlead){
+					DeliveryGuy.dg.$update(data,function(response){
+						self.getDgDetails();
+					});
+				}
+				else{
+					DeliveryGuy.dg.promoteToTL(data,function(response){
+						self.getDgDetails();
+					});
+				}
 			}, function() {
 				self.status = 'You cancelled the dialog.';
 			});
@@ -122,6 +129,7 @@
 
 	function AddTeamLeadCntrl($mdDialog,DG,DeliveryGuy){
 		var dgTeamLead = this;
+		dgTeamLead.DG = DG;
 		dgTeamLead.selectedTeamMembers = [];
 		dgTeamLead.selectedPincodes = [];
 		dgTeamLead.teamLeadData = {

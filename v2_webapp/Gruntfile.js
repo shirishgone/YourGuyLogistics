@@ -73,6 +73,8 @@ module.exports = function(grunt){
 					'static/modules/deliveryguy/list/*.js',
 					'static/modules/deliveryguy/create/*.js',
 					'static/modules/deliveryguy/detail/*.js',
+					'static/modules/vendor/vendor.js',
+					'static/modules/vendor/list/*.js',
 				],
 				dest : 'static/assets/js/main.js'
 			}

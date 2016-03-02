@@ -74,7 +74,10 @@
         <md-button ng-click="dgTeamLead.cancel()" class="md-warn">
             Cancel
         </md-button>
-        <md-button ng-click="dgTeamLead.submitTlData()" class="md-primary" ng-disabled="dgTeamLead.selectedTeamMembers.length == 0 || dgTeamLead.selectedPincodes.length == 0" style="margin-right:20px;">
+        <md-button ng-click="dgTeamLead.submitTlData()" class="md-primary" ng-disabled="dgTeamLead.selectedTeamMembers.length == 0 || dgTeamLead.selectedPincodes.length == 0" ng-if="!dgTeamLead.DG.is_teamlead" style="margin-right:20px;">
+            Done
+        </md-button>
+        <md-button ng-click="dgTeamLead.submitTlData()" class="md-primary" ng-disabled="dgTeamLead.selectedTeamMembers.length == 0" ng-if="dgTeamLead.DG.is_teamlead" style="margin-right:20px;">
             Done
         </md-button>
     </md-dialog-actions>
