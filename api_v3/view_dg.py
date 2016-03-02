@@ -881,7 +881,7 @@ class DGViewSet(viewsets.ModelViewSet):
             try:
                 associated_dgs = request.data['associate_dgs']
                 serviceable_pincodes = request.data['pincodes']
-            except Exception, e:
+            except Exception as e:
                 params = ['pincodes', 'associate_dgs']
                 return response_incomplete_parameters(params)
             

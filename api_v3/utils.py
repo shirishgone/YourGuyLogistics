@@ -14,7 +14,7 @@ from rest_framework.authtoken.models import Token
 
 from api_v3 import constants
 from server import settings
-from yourguy.models import Order, OrderDeliveryStatus, VendorAgent, Consumer, Employee, NotificationType, DeliveryAction, ServiceablePincode
+from yourguy.models import Order, OrderDeliveryStatus, VendorAgent, Consumer, Employee, NotificationType, DeliveryAction, ServiceablePincode, CODAction
 from django.db.models import Q
 from rest_framework.response import Response
 from rest_framework import status
@@ -379,6 +379,9 @@ def inform_dgs_about_orders_assigned():
 def delivery_actions(code):
     return DeliveryAction.objects.get(code=code)
 
+
+def cod_actions(code):
+    return CODAction.objects.get(code=code)
 
 # Util method for calculating the month start date and end date
 def check_month(month, year):
