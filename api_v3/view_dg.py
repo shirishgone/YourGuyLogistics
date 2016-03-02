@@ -129,17 +129,21 @@ def attendance_datewise_dict():
 
 # Util for calculating worked hours
 def working_hours_calculation(dg_attendance):
-    worked_hours = 0
+    worked_hours = "0 hrs"
     if dg_attendance.login_time is not None and dg_attendance.logout_time is not None:
         worked_hours = (dg_attendance.logout_time - dg_attendance.login_time)
         total_seconds_worked = int(worked_hours.total_seconds())
         hours, remainder = divmod(total_seconds_worked, 60 * 60)
         worked_hours = "%d hrs" % hours
     elif dg_attendance.login_time is not None and dg_attendance.logout_time is None:
-        worked_hours = (datetime.now(pytz.utc) - dg_attendance.login_time)
-        total_seconds_worked = int(worked_hours.total_seconds())
-        hours, remainder = divmod(total_seconds_worked, 60 * 60)
-        worked_hours = "%d hrs" % hours
+        logout_time = dg_attendance.dg.shift_end_datetime
+        if logout_time is not None:
+            worked_hours = (logout_time - dg_attendance.login_time)
+            total_seconds_worked = int(worked_hours.total_seconds())
+            hours, remainder = divmod(total_seconds_worked, 60 * 60)
+            worked_hours = "%d hrs" % hours
+        else:
+            worked_hours = "9 hrs"
     else:
         pass
     return worked_hours
@@ -480,7 +484,7 @@ class DGViewSet(viewsets.ModelViewSet):
             params = ['deactivate_reason']
             return response_incomplete_parameters(params)
         
-        if role == constants.OPERATIONS:
+        if role == constants.HR:
             delivery_guy = get_object_or_404(DeliveryGuy, id=pk)
             if delivery_guy.is_active is True:
                 delivery_guy.is_active = False
@@ -593,7 +597,6 @@ class DGViewSet(viewsets.ModelViewSet):
 
         dg = get_object_or_404(DeliveryGuy, pk=pk)
         dg_full_month_attendance = DGAttendance.objects.filter(dg=dg, date__year=year, date__month=month)
-        dg_monthly_attendance = []
         dg_attendance_dict = dg_attendance_list_dict(dg)
 
         # ================================
@@ -630,40 +633,48 @@ class DGViewSet(viewsets.ModelViewSet):
                     till_deactivated_date = list(rule_daily_deactivated)
                     for date in till_deactivated_date:
                         dg_attendance = dg_full_month_attendance.filter(dg=dg, date=date)
-                        for single in dg_attendance:
-                            if single is None:
-                                worked_hours = 0
-                                date = date
-                                datewise_dict = attendance_list_datewise(date, worked_hours)
-                                dg_attendance_list_dict['attendance'].append(datewise_dict)
-                            else:
+                        if len(dg_attendance) > 0:
+                            for single in dg_attendance:
                                 worked_hours = working_hours_calculation(single)
                                 datewise_dict = attendance_list_datewise(date, worked_hours)
                                 datewise_dict['login_time'] = single.login_time
                                 datewise_dict['logout_time'] = single.logout_time
                                 datewise_dict['shift_start_datetime'] = single.dg.shift_start_datetime
                                 datewise_dict['shift_end_datetime'] = single.dg.shift_end_datetime
+                                dg_attendance_dict['attendance'].append(datewise_dict)
+                        else:
+                            worked_hours = "0 hrs"
+                            date = date
+                            datewise_dict = attendance_list_datewise(date, worked_hours)
+                            datewise_dict['login_time'] = None
+                            datewise_dict['logout_time'] = None
+                            datewise_dict['shift_start_datetime'] = None
+                            datewise_dict['shift_end_datetime'] = None
                             dg_attendance_dict['attendance'].append(datewise_dict)
-                    dg_monthly_attendance.append(dg_attendance_dict)
 
         if dg.is_active or (dg.is_active is False and
                             start_date < dg.deactivated_date.replace(tzinfo=None) and
                             start_month < dg.deactivated_date.month):
             for date in alldates:
                 dg_attendance = dg_full_month_attendance.filter(dg=dg, date=date)
-                for single in dg_attendance:
-                    worked_hours = working_hours_calculation(single)
+                if len(dg_attendance) > 0:
+                    for single in dg_attendance:
+                        worked_hours = working_hours_calculation(single)
+                        datewise_dict = attendance_list_datewise(date, worked_hours)
+                        datewise_dict['login_time'] = single.login_time
+                        datewise_dict['logout_time'] = single.logout_time
+                        datewise_dict['shift_start_datetime'] = single.dg.shift_start_datetime
+                        datewise_dict['shift_end_datetime'] = single.dg.shift_end_datetime
+                        dg_attendance_dict['attendance'].append(datewise_dict)
+                else:
+                    worked_hours = "0 hrs"
                     datewise_dict = attendance_list_datewise(date, worked_hours)
-                    datewise_dict['login_time'] = single.login_time
-                    datewise_dict['logout_time'] = single.logout_time
-                    datewise_dict['shift_start_datetime'] = single.dg.shift_start_datetime
-                    datewise_dict['shift_end_datetime'] = single.dg.shift_end_datetime
+                    datewise_dict['login_time'] = None
+                    datewise_dict['logout_time'] = None
+                    datewise_dict['shift_start_datetime'] = None
+                    datewise_dict['shift_end_datetime'] = None
                     dg_attendance_dict['attendance'].append(datewise_dict)
-            dg_monthly_attendance.append(dg_attendance_dict)
-        content = {
-            'dg_monthly_attendance': dg_monthly_attendance
-        }
-        return response_with_payload(content, None)
+        return response_with_payload(dg_attendance_dict, None)
 
 
     @list_route()
@@ -816,7 +827,7 @@ class DGViewSet(viewsets.ModelViewSet):
     def tl_associated_dgs(self, request, pk):
         all_associated_dgs = []
         role = user_role(request.user)
-        if role == constants.DELIVERY_GUY:
+        if role == constants.DELIVERY_GUY or role == constants.OPERATIONS or role == constants.OPERATIONS_MANAGER or role == constants.HR:
             delivery_guy = get_object_or_404(DeliveryGuy, pk=pk)
             if delivery_guy.is_teamlead is True and delivery_guy.is_active is True:
                 try:
@@ -867,8 +878,13 @@ class DGViewSet(viewsets.ModelViewSet):
         role = user_role(request.user)
         if role == constants.HR:
             delivery_guy = DeliveryGuy.objects.get(id = pk)
-            associated_dgs = request.data['associate_dgs']
-            serviceable_pincodes = request.data['pincodes']
+            try:
+                associated_dgs = request.data['associate_dgs']
+                serviceable_pincodes = request.data['pincodes']
+            except Exception, e:
+                params = ['pincodes', 'associate_dgs']
+                return response_incomplete_parameters(params)
+            
             if delivery_guy.is_teamlead is False:
                 dg_team_lead = DeliveryTeamLead.objects.create(delivery_guy=delivery_guy)
                 delivery_guy.is_teamlead = True
