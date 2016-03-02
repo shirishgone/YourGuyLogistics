@@ -1,0 +1,228 @@
+<md-toolbar class="yg-toolbar md-primary md-whiteframe-z2" ng-class="{'selected':opsOrder.handleOrdeSelection.selectActive}">
+	<div class="md-toolbar-tools" ng-if="!(opsOrder.handleOrdeSelection.selectActive)">
+		<md-button ng-click="home.toggleSideNav()" class="md-icon-button" aria-label="Menu Icon">
+			<md-icon>menu</md-icon>
+		</md-button>
+		<p>ORDERS</p>
+		<span flex></span>
+		<md-button ng-click="opsOrder.toggleFilter()" class="md-icon-button" aria-label="Filter Button">
+			<md-icon>filter_list</md-icon>
+		</md-button>
+	</div>
+	<div class="md-toolbar-tools" ng-if="opsOrder.handleOrdeSelection.selectActive">
+		<md-button ng-click="opsOrder.handleOrdeSelection.clear()" class="md-icon-button" aria-label="Menu Icon">
+			<md-icon>clear</md-icon>
+		</md-button>
+		<span flex="5"></span>
+		<div>
+			{{opsOrder.handleOrdeSelection.numberOfSelectedOrder}} orders selected
+		</div>
+		<span flex></span>
+		<md-menu md-position-mode="target-right target">
+			<md-button class="md-icon-button"  ng-click="$mdOpenMenu($event)" aria-label="Open selected menu">
+				<md-icon>more_vert</md-icon>
+			</md-button>
+			<md-menu-content width="3">
+				<md-menu-item>
+					<md-button ng-click="ctrl.redial($event)">
+						<md-icon>update</md-icon>
+						Update Status
+					</md-button>
+				</md-menu-item>
+				<md-menu-item>
+					<md-button ng-click="ctrl.redial($event)">
+						<md-icon>assignment</md-icon>
+						Assign Delivery Guy
+					</md-button>
+				</md-menu-item>
+			</md-menu-content>
+		</md-menu>
+	</div>
+</md-toolbar>
+<md-content flex layout-padding layout="row" class="opsOrder">
+	<div flex layout="column" class="order-list">
+		<section flex="80" class="list">
+			<div ng-repeat="order in opsOrder.orders">
+				<md-card>
+		        	<md-card-content layout="row" class="card-content" layout-align="start start">
+		        		<div flex="10">
+		        			<md-checkbox class="md-accent" ng-checked="opsOrder.handleOrdeSelection.exists(order)" ng-click="opsOrder.handleOrdeSelection.toggle(order)" aria-label="Checkbox">
+		        			</md-checkbox>
+		        		</div>
+		        		<div flex="30" class="customer" layout="row" layout-align="start start">
+			        		<div class="icon">
+			        			<md-icon md-font-library="material-icons" ng-style="{color: '#757575','font-size':'36px', height: '36px', width: '36px'}">people</md-icon>
+			        		</div>
+		        			<div flex>
+		        				<p>{{order.customer_name}}</p>
+		        				<span>{{order.delivery_address}}</span>
+		        			</div>
+		        		</div>
+		        		<div flex="30" class="vendor" layout="row" layout-align="start start">
+		        			<div class="icon">
+			        			<md-icon md-font-library="material-icons" ng-style="{color: '#757575','font-size':'36px', height: '36px', width: '36px'}">home</md-icon>
+			        		</div>
+			        		<div flex>
+			        			<p>{{order.vendor_name}}</p>
+		        				<span>{{order.pickup_address}}</span>
+			        		</div>
+		        		</div>
+		        		<div flex="30" class="dg" layout="row" layout-align="start start">
+		        			<div class="icon">
+			        			<md-icon md-font-library="material-icons" 
+			        			ng-style="order.pickupguy_name && order.deliveryguy_name && {color: '#757575','font-size':'36px', height: '36px', width: '36px'} || {color: '#FF8A65','font-size':'36px', height: '36px', width: '36px' }">assignment</md-icon>
+			        		</div>
+			        		<div flex>
+			        			<span>Pickup: {{order.pickupguy_name || 'Not Assigned'}}</span>
+			        			<br>
+		        				<span>Delivery: {{order.deliveryguy_name || 'Not Assigned'}}</span>
+			        		</div>
+		        		</div>
+        			</md-card-content>
+        			<md-card-actions layout="row" class="card-action" layout-align="start end">
+        				<div flex="10" layout="row" layout-align="start center">
+        					<md-icon md-font-library="material-icons" ng-style="{color: '#757575','font-size':'24px', height: '24px', width: '24px'}">bookmark_border</md-icon>
+        					<span flex class="order-id">{{order.id}}</span>
+        				</div>
+        				<div flex="30" class="order-time" layout="row" layout-align="start center">
+        					<div class="icon">
+			        			<md-icon md-font-library="material-icons" ng-style="{color: '#757575','font-size':'24px', height: '24px', width: '24px'}">alarm</md-icon>
+			        		</div>
+		        			<div flex>
+		        				<p>{{order.pickup_datetime | date:'dd MMM yyyy - h:mm a'}}</p>
+		        			</div>
+        				</div>
+        				<div flex="30" class="payment" layout="row" layout-align="start center">
+        					<div class="icon">
+			        			<md-icon md-font-library="material-icons" ng-style="{color: '#757575','font-size':'24px', height: '24px', width: '24px'}">payment</md-icon>
+			        		</div>
+		        			<div flex>
+		        				<p><span>{{order.cod_collected}} Collected</span> / <span>{{order.cod_amount}} Amount</span></p>
+		        			</div>
+        				</div>
+        				<span flex></span>
+        				<md-button class="md-icon-button" aria-label="Favorite" ng-if="order.is_reverse_pickup">
+							<md-icon ng-style="{color: '#CE93D8','font-size':'24px', height: '24px', width: '24px'}">directions</md-icon>
+						</md-button>
+						<md-button class="md-icon-button" aria-label="Favorite" ng-if="order.is_recurring">
+							<md-icon ng-style="{color: '#81D4FA','font-size':'24px', height: '24px', width: '24px'}">repeat</md-icon>
+						</md-button>
+						<md-button class="md-icon-button" aria-label="Favorite">
+							<md-icon ng-style="{color: '#757575','font-size':'24px', height: '24px', width: '24px'}">more_vert</md-icon>
+						</md-button>
+					</md-card-actions>
+				</md-card>
+				<!-- <md-divider ></md-divider> -->
+			</div>
+		</section>
+		<section flex="10" class="footer" layout="row" layout-align="start center">
+			<div class="stats" layout="row">
+				<p>Pending: {{opsOrder.pending_orders_count}} </p>
+				<p>Unassigned: {{opsOrder.unassigned_orders_count}} </p>
+				<p>Total: {{opsOrder.total_orders}} </p>
+			</div>
+			<span flex></span>
+			<div class="pagination" layout="row" layout-align="start center">
+				<p>Page:</p>
+				<md-input-container class="md-accent">
+					<label class="hide-gt-xs">Page</label>
+					<md-select class="md-accent" ng-model="opsOrder.params.page" ng-change="opsOrder.getOrders()">
+						<md-option class="md-accent" ng-repeat="page in opsOrder.pageRange(opsOrder.total_pages) track by $index" value="{{$index + 1}}">
+							{{$index + 1}}
+						</md-option>
+					</md-select>
+				</md-input-container>
+			</div>
+			<div class="pagination" layout="row" layout-align="start center">
+				<p>{{opsOrder.orderFrom}} -- {{opsOrder.orderTo}} of {{opsOrder.total_orders}}</p>
+			</div>
+			<div class="page-navigation">
+				<md-button ng-disabled="opsOrder.params.page == 1" ng-click="opsOrder.paginate.previouspage();" class="md-icon-button md-accent" aria-label="Menu Icon">
+						<md-icon>arrow_backward</md-icon>
+				</md-button>
+				<md-button ng-disabled="opsOrder.params.page == opsOrder.total_pages" ng-click="opsOrder.paginate.nextpage();" class="md-icon-button md-accent" aria-label="Menu Icon">
+						<md-icon>arrow_forward</md-icon>
+				</md-button>
+			</div>
+		</section>
+	</div>
+	<md-sidenav class="filter-sidenav md-sidenav-right md-whiteframe-z3" layout="column" md-component-id="order-filter">
+		<md-toolbar class="md-warn md-whiteframe-z1">
+        	<h1 class="md-subhead md-toolbar-tools">FILTERS</h1>
+     	</md-toolbar>
+     	<md-content flex layout="column">
+     		<md-list>
+     			<md-subheader>DATE</md-subheader>
+     			<md-list-item class="md-1-line">
+					<md-datepicker ng-model="opsOrder.params.date" md-placeholder="Enter date"></md-datepicker>
+				</md-list-item>
+				<md-subheader>VENDOR</md-subheader>
+				<div class="vendor-list">
+					<md-autocomplete
+						md-no-cache="true"
+						md-selected-item="opsOrder.selectedItem"
+						md-search-text="opsOrder.searchVendor"
+						md-selected-item-change="opsOrder.selectedDgChange(dg)"
+						md-items="dg in opsOrder.dgSearchTextChange(opsOrder.searchText)"
+						md-item-text="dg.name"
+						md-min-length="1"
+						placeholder="Search Vendor">
+						<md-item-template>
+							<span md-highlight-text="opsOrder.searchText" md-highlight-flags="^i">{{dg.name}}</span>
+						</md-item-template>
+						<md-not-found>
+							No states matching "{{opsOrder.searchText}}" were found.
+						</md-not-found>
+					</md-autocomplete>
+				</div>
+				<md-subheader>DG</md-subheader>
+				<div class="dg-list">
+					<md-autocomplete
+						md-no-cache="true"
+						md-selected-item="opsOrder.selectedItem"
+						md-search-text="opsOrder.searchText"
+						md-selected-item-change="opsOrder.selectedDgChange(dg)"
+						md-items="dg in opsOrder.dgSearchTextChange(opsOrder.searchText)"
+						md-item-text="dg.name"
+						md-min-length="1"
+						placeholder="Search Delivery Guy">
+						<md-item-template>
+							<span md-highlight-text="opsOrder.searchText" md-highlight-flags="^i">{{dg.name}}</span>
+						</md-item-template>
+						<md-not-found>
+							No states matching "{{opsOrder.searchText}}" were found.
+						</md-not-found>
+					</md-autocomplete>
+				</div>
+				<md-subheader>CASH ON DELIVERY</md-subheader>
+				<div class="cod">
+					<md-switch ng-model="opsOrder.params.cod" aria-label="COD" ng-true-value="true" ng-false-value="false" class="md-accent">
+   						Cash On Delivery
+  					</md-switch>
+				</div>
+				<md-subheader>STATUS</md-subheader>
+     			<md-list-item class="md-1-line" flex>
+     				<form name="statusselectform" flex>
+     					<div class="status-list" layout="column">
+     						<md-checkbox flex ng-repeat="item in opsOrder.status_list" ng-checked="opsOrder.statusSelection.exists(item, opsOrder.statusArray)" ng-click="opsOrder.statusSelection.toggle(item, opsOrder.statusArray)">
+     							{{ item.status }}
+     						</md-checkbox>
+     					</div>
+     				</form>
+				</md-list-item>
+				<md-subheader>TIME SLOT</md-subheader>
+				<md-list-item class="md-1-line" flex>
+     				<form name="timeSelectForm" flex>
+     					<div class="time-list">
+     						<md-radio-group ng-model="opsOrder.params.time">
+     							<md-radio-button ng-repeat="time in opsOrder.time_list" ng-value="time.time" aria-label="{{time.value}}">
+     								{{time.value}}
+     							</md-radio-button>
+     						</md-radio-group>
+     					</div>
+     				</form>
+				</md-list-item>
+     		</md-list>
+     	</md-content>
+	</md-sidenav>
+</md-content>
