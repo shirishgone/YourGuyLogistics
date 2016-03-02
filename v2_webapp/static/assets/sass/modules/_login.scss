@@ -1,0 +1,9 @@
+.login-page {
+	height:100%;
+	height: 100vh;
+	@include background-image(linear-gradient($orange-color,$black-color));
+	.login-error-message {
+		margin: 15px 10px;
+		color: $red-color;
+	}
+}

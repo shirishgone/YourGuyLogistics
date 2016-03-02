@@ -1,0 +1,55 @@
+.site-sidenav {
+	background-color: $white-color;
+	color: primary-color('500');
+	max-width: 280px;
+	.tab-liks{
+		color: grey-color('700');
+		text-decoration: none;
+	}
+	md-list {
+		padding: 0px;
+		color: primary-color('500');
+		md-list-item {
+			padding: 0 30px;
+			.md-avatar {
+				width: 30px;
+				height: 30px;
+			}
+			.md-subhead {
+				font-size: 12px;
+			}
+			&:hover {
+				background-color: primary-color('100');
+			}
+		}
+		md-list-item.active {
+			background-color: primary-color('200');
+		}
+	}
+	md-content,{
+		background: transparent;
+		padding-bottom: 100px;
+	}
+	.md-subheader{
+		background-color: $white-color;
+		color: primary-color('800');
+	}
+	.md-subheader .md-subheader-inner{
+		padding:10px;
+	}
+}
+
+.nav-header {
+	text-align:center;
+	@include background-image(linear-gradient(primary-color('600'),primary-color('800')));
+	border: primary-color('800');
+	a{
+		padding: 10px;
+		color: $white-color;
+		text-decoration: none;
+	}
+	img {
+		width: auto;
+		height: 100px;
+	}
+}
