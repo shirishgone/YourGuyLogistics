@@ -419,7 +419,7 @@ class CODTransaction(models.Model):
 
 
     def __unicode__(self):
-        return u"%s" % self.transaction
+        return u"%s - %s" % (self.id, self.transaction)
 
 
 class ProofOfBankDeposit(models.Model):

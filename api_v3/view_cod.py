@@ -77,15 +77,55 @@ def associated_dgs_pending_cod_details(delivery_guy):
     return associated_dgs_pending_cod_details_dict
 
 
+def cod_balance_calculation(dg):
+    deliveries = []
+    dg_tl_id = dg.id
+    delivery_statuses = OrderDeliveryStatus.objects.filter(delivery_guy=dg,
+                                                           cod_status=constants.COD_STATUS_COLLECTED)
+    delivery_statuses_total = delivery_statuses.values('delivery_guy__user__username').\
+        annotate(sum_of_cod_collected=Sum('cod_collected_amount'))
+    balance_amount = None
+    if len(delivery_statuses_total) > 0:
+        balance_amount = delivery_statuses_total[0]['sum_of_cod_collected']
+    delivery_guy_tl = DeliveryTeamLead.objects.get(delivery_guy=dg)
+    associated_dgs = delivery_guy_tl.associate_delivery_guys.all()
+    associated_dgs = associated_dgs.filter(is_active=True)
+    for single_dg in associated_dgs:
+        delivery_statuses = OrderDeliveryStatus.objects.filter(delivery_guy=single_dg,
+                                                               cod_status=constants.COD_STATUS_TRANSFERRED_TO_TL,
+                                                               cod_transactions__transaction_status=constants.VERIFIED,
+                                                               cod_transactions__dg_tl_id=dg_tl_id)
+        for single in delivery_statuses:
+            deliveries.append(single.id)
+        delivery_statuses = delivery_statuses.values('delivery_guy__user__username').annotate(sum_of_cod_collected=Sum('cod_collected_amount'))
+        if len(delivery_statuses) > 0:
+            balance_amount = balance_amount + delivery_statuses[0]['sum_of_cod_collected']
+    return balance_amount
+
+
 class CODViewSet(viewsets.ViewSet):
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
+    @list_route(methods=['GET'])
+    def cod_balance(self, request):
+        role = user_role(request.user)
+        if role == constants.DELIVERY_GUY:
+            dg = get_object_or_404(DeliveryGuy, user=request.user)
+            if dg.is_active is True and dg.is_teamlead is True:
+                balance_amount = cod_balance_calculation(dg)
+                return response_with_payload(balance_amount, None)
+            else:
+                error_message = 'This is a deactivated dg'
+                return response_error_with_message(error_message)
+        else:
+            return response_access_denied()
 
-# for dg tl, order object if he is the assigned dg(order id, cod amount collected, customer name, vendor name, delivery date time)
-# dg object of his associated dg who has transferred the cod(dg id, dg name, transaction date time,
-# for dg, filter OrderDeliveryStatus for cod status(this is cumulative cod not yet transferred to tl)
-# for each order(order id, cod amount collected, customer name, vendor name, delivery date time)
+
+    # for dg tl, order object if he is the assigned dg(order id, cod amount collected, customer name, vendor name, delivery date time)
+    # dg object of his associated dg who has transferred the cod(dg id, dg name, transaction date time,
+    # for dg, filter OrderDeliveryStatus for cod status(this is cumulative cod not yet transferred to tl)
+    # for each order(order id, cod amount collected, customer name, vendor name, delivery date time)
     @list_route(methods=['GET'])
     def collections(self, request):
         role = user_role(request.user)
@@ -100,30 +140,25 @@ class CODViewSet(viewsets.ViewSet):
                     dg_tl_collections = dg_tl_collections_dict()
                     delivery_statuses = OrderDeliveryStatus.objects.filter(delivery_guy=dg,
                                                                            cod_status=constants.COD_STATUS_COLLECTED)
-                    delivery_statuses_total = delivery_statuses.values('delivery_guy__user__username').\
-                        annotate(sum_of_cod_collected=Sum('cod_collected_amount'))
-                    # tl_total_cod_amount = tl_total_cod_amount_dict(delivery_statuses)
-                    balance_amount = None
-                    if len(delivery_statuses_total) >0:
-                        # tl_total_cod_amount = tl_total_cod_amount_dict(delivery_statuses_total[0])
-                        balance_amount = delivery_statuses_total[0]['sum_of_cod_collected']
-                        dg_tl_collections['total_cod_amount'] = balance_amount
-                        for single in delivery_statuses:
-                            dg_collections = dg_collections_dict(single)
-                            tl_collections.append(dg_collections)
-                        dg_tl_collections['tls_collections'] = tl_collections
+                    for single in delivery_statuses:
+                        dg_collections = dg_collections_dict(single)
+                        tl_collections.append(dg_collections)
+                    dg_tl_collections['tls_collections'] = tl_collections
+
+                    balance_amount = cod_balance_calculation(dg)
 
                     delivery_guy_tl = DeliveryTeamLead.objects.get(delivery_guy=dg)
                     associated_dgs = delivery_guy_tl.associate_delivery_guys.all()
                     associated_dgs = associated_dgs.filter(is_active=True)
                     for single_dg in associated_dgs:
-                        delivery_statuses = OrderDeliveryStatus.objects.filter(delivery_guy=single_dg, cod_status=constants.COD_STATUS_TRANSFERRED_TO_TL)
+                        delivery_statuses = OrderDeliveryStatus.objects.filter(delivery_guy=single_dg,
+                                                                               cod_status=constants.COD_STATUS_TRANSFERRED_TO_TL,
+                                                                               cod_transactions__transaction_status=constants.VERIFIED,
+                                                                               cod_transactions__dg_tl_id=dg_tl_id)
                         for single in delivery_statuses:
                             deliveries.append(single.id)
                         delivery_statuses = delivery_statuses.values('delivery_guy__user__username').annotate(sum_of_cod_collected=Sum('cod_collected_amount'))
                         if len(delivery_statuses) > 0:
-                            balance_amount = balance_amount + delivery_statuses[0]['sum_of_cod_collected']
-                            dg_tl_collections['total_cod_amount'] = balance_amount
                             associated_dgs_collections = associated_dgs_collections_dict(single_dg)
                             associated_dgs_collections['cod_transferred'] = delivery_statuses[0]['sum_of_cod_collected']
                             cod_action = cod_actions(constants.COD_TRANSFERRED_TO_TL_CODE)
@@ -137,6 +172,7 @@ class CODViewSet(viewsets.ViewSet):
                                 associated_dgs_collections['transferred_time'] = None
 
                             asso_dg_collections.append(associated_dgs_collections)
+                    dg_tl_collections['total_cod_amount'] = balance_amount
                     dg_tl_collections['associated_dg_collections'] = asso_dg_collections
                     return response_with_payload(dg_tl_collections, None)
                 else:
@@ -178,7 +214,7 @@ class CODViewSet(viewsets.ViewSet):
                     params = ['dg_tl_id', 'cod_amount', 'order_ids']
                     return response_incomplete_parameters(params)
                 transaction_uuid = uuid.uuid4()
-                cod_action = cod_actions(constants.COD_COLLECTED_CODE)
+                cod_action = cod_actions(constants.COD_TRANSFERRED_TO_TL_CODE)
                 cod_transaction = create_cod_transaction(cod_action, request.user, dg_id, dg_tl_id, cod_amount, transaction_uuid, delivery_ids)
                 for delivery_id in delivery_ids:
                     delivery_status = get_object_or_404(OrderDeliveryStatus, pk=delivery_id)
@@ -190,7 +226,6 @@ class CODViewSet(viewsets.ViewSet):
                 return response_error_with_message(error_message)
         else:
             return response_access_denied()
-
 
     @list_route(methods=['GET'])
     def associated_dgs_collections(self, request):
