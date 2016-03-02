@@ -383,7 +383,7 @@ class DeliveryTransaction(models.Model):
 
 
 class CODAction(models.Model):
-    code = models.CharField(max_length=10, blank=True)
+    code = models.CharField(max_length=10)
     title = models.CharField(max_length=100)
 
     def __unicode__(self):
@@ -392,8 +392,8 @@ class CODAction(models.Model):
 
 class CODTransaction(models.Model):
     transaction = models.ForeignKey(CODAction, on_delete=models.PROTECT)
-    created_by_user = models.ForeignKey(User, blank=True, null=True, related_name='created_by_user')
-    created_time_stamp = models.DateTimeField(blank=True, null=True)
+    created_by_user = models.ForeignKey(User, related_name='created_by_user')
+    created_time_stamp = models.DateTimeField(auto_now_add=True)
     verified_by_user = models.ForeignKey(User, blank=True, null=True, related_name='verified_by_user')
     verified_time_stamp = models.DateTimeField(blank=True, null=True)
     location = models.ForeignKey(Location, blank=True, null=True)
@@ -415,7 +415,7 @@ class CODTransaction(models.Model):
     dg_id = models.IntegerField(blank=True, null=True, auto_created=False)
     dg_tl_id = models.IntegerField(blank=True, null=True, auto_created=False)
     cod_amount = models.FloatField(default=0.0)
-    deliveries = models.CommaSeparatedIntegerField(max_length=500, blank=True, null=True)
+    deliveries = models.CommaSeparatedIntegerField(max_length=500)
 
 
     def __unicode__(self):
@@ -508,7 +508,7 @@ class OrderDeliveryStatus(models.Model):
         (COD_VERIFIED, 'COD_VERIFIED'),
         (COD_TRANSFERRED_TO_CLIENT, 'COD_TRANSFERRED_TO_CLIENT')
     )
-    cod_status = models.CharField(max_length=100, choices=COD_CHOICES)
+    cod_status = models.CharField(max_length=100, choices=COD_CHOICES, default=COD_NOT_AVAILABLE)
     cod_transactions = models.ManyToManyField(CODTransaction, blank=True)
 
 
