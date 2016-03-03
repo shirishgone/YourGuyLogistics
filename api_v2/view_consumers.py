@@ -26,11 +26,11 @@ def create_address(full_address, pin_code, landmark):
         new_address.save()
     return new_address    
 
-def create_consumer(username, phone_number, address, vendor):
+def create_consumer(name, phone_number, address, vendor):
     try:
-        consumer = Consumer.objects.get(phone_number=consumer_phone_number)    
+        consumer = Consumer.objects.get(phone_number=phone_number)    
     except Exception as e:
-        consumer = Consumer.objects.create(phone_number=consumer_phone_number, full_name = consumer_name)
+        consumer = Consumer.objects.create(phone_number=phone_number, full_name = name)
     consumer.associated_vendor.add(vendor)
     consumer.addresses.add(address)
     consumer.save()
