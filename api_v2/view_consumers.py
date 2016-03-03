@@ -10,7 +10,7 @@ from rest_framework.decorators import detail_route, list_route
 from rest_framework.response import Response
 
 from yourguy.models import Consumer, Vendor, VendorAgent, Address, Area
-from api.views import user_role, is_userexists, is_consumerexists
+from api.views import user_role, is_userexists
 
 from api_v2.views import paginate
 

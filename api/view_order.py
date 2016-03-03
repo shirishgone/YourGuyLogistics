@@ -13,7 +13,7 @@ from yourguy.models import ProofOfDelivery, Picture
 
 from datetime import datetime, timedelta, time
 from api.serializers import OrderSerializer
-from api.views import user_role, is_userexists, is_vendorexists, is_consumerexists, is_dgexists, is_address_exists, days_in_int, send_sms, normalize_offset_awareness
+from api.views import user_role, is_userexists, is_vendorexists, is_dgexists, is_address_exists, days_in_int, send_sms, normalize_offset_awareness
 from api.views import ist_day_start, ist_day_end, ist_datetime
 
 import constants
@@ -532,18 +532,13 @@ class OrderViewSet(viewsets.ModelViewSet):
             delivery_dates.append(pickup_datetime)
 
         try:
-            if is_userexists(consumer_phone_number) is True:
-                user = get_object_or_404(User, username = consumer_phone_number)
-                if is_consumerexists(user) is True:
-                    consumer = get_object_or_404(Consumer, user = user)
-                else:
-                    consumer = Consumer.objects.create(user = user)
-                    consumer.associated_vendor.add(vendor)
-            else:
-                user = User.objects.create(username = consumer_phone_number, first_name = consumer_name, password = '')
-                consumer = Consumer.objects.create(user = user)
-                consumer.associated_vendor.add(vendor)
-
+            try:
+                consumer = Consumer.objects.get(phone_number=phone_number)    
+            except Exception as e:
+                consumer = Consumer.objects.create(phone_number=phone_number, full_name = name)
+            consumer.associated_vendor.add(vendor)
+            consumer.save()
+            
             if is_reverse_pickup is True:
                 consumer.addresses.add(pickup_address)
                 vendor.addresses.add(delivery_address)
@@ -698,19 +693,14 @@ class OrderViewSet(viewsets.ModelViewSet):
             
             # CREATE A NEW ORDER ONLY IF VENDOR_ORDER_ID IS UNIQUE
             try:
-                if is_userexists(consumer_phone_number) is True:
-                    user = get_object_or_404(User, username = consumer_phone_number)
-                    if is_consumerexists(user) is True:
-                        consumer = get_object_or_404(Consumer, user = user)
-                    else:
-                        consumer = Consumer.objects.create(user = user)
-                        consumer.associated_vendor.add(vendor)
-                        consumer.addresses.add(delivery_address)
-                else:
-                    user = User.objects.create(username = consumer_phone_number, first_name = consumer_name, password = '')
-                    consumer = Consumer.objects.create(user = user)
-                    consumer.associated_vendor.add(vendor)
-                    consumer.addresses.add(delivery_address)
+
+                try:
+                    consumer = Consumer.objects.get(phone_number=consumer_phone_number)    
+                except Exception as e:
+                    consumer = Consumer.objects.create(phone_number=consumer_phone_number, full_name = consumer_name)
+                consumer.associated_vendor.add(vendor)
+                consumer.addresses.add(delivery_address)
+                consumer.save()
                 
                 new_order = Order.objects.create(created_by_user = request.user, 
                                                 vendor = vendor, 
@@ -922,8 +912,8 @@ class OrderViewSet(viewsets.ModelViewSet):
             
             # CONFIRMATION MESSAGE TO CUSTOMER --------------------------------------
             if cod_collected_amount is not None and float(cod_collected_amount) > 0:
-                end_consumer_phone_number = order.consumer.user.username
-                message = 'Dear %s, we have received the payment of %srs behalf of %s - Team YourGuy' % (order.consumer.user.first_name, cod_collected_amount, order.vendor.store_name)
+                end_consumer_phone_number = order.consumer.phone_number
+                message = 'Dear %s, we have received the payment of %srs behalf of %s - Team YourGuy' % (order.consumer.full_name, cod_collected_amount, order.vendor.store_name)
                 send_sms(end_consumer_phone_number, message)
             # -----------------------------------------------------------------------
             
@@ -1005,8 +995,8 @@ class OrderViewSet(viewsets.ModelViewSet):
                 message = 'New Order:{},Pickup:{},Client:{},Cust:{},{},{},COD:{}'.format(order.id, 
                     pickup_total_string,
                     order.vendor.store_name, 
-                    order.consumer.user.first_name,
-                    order.consumer.user.username,
+                    order.consumer.full_name,
+                    order.consumer.phone_number,
                     order.delivery_address,
                     order.cod_amount)
                 
@@ -1071,7 +1061,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                     }
                     return Response(content, status = status.HTTP_400_BAD_REQUEST)
         
-        message = constants.ORDER_APPROVED_MESSAGE_CLIENT.format(order.consumer.user.first_name)
+        message = constants.ORDER_APPROVED_MESSAGE_CLIENT.format(order.consumer.full_name)
         send_sms(order.vendor.phone_number, message)
 
         return Response(status = status.HTTP_200_OK)
@@ -1137,7 +1127,7 @@ class OrderViewSet(viewsets.ModelViewSet):
 
         if is_rescheduled:
             readable_date = new_date.strftime("%B %d, %Y")
-            message = constants.ORDER_RESCHEDULED_MESSAGE_CLIENT.format(delivery_status.order.consumer.user.first_name, delivery_status.id, readable_date)
+            message = constants.ORDER_RESCHEDULED_MESSAGE_CLIENT.format(delivery_status.order.consumer.full_name, delivery_status.id, readable_date)
             send_sms(delivery_status.order.vendor.phone_number, message)
 
             content = {
@@ -1172,7 +1162,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             }
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
         
-        message = constants.ORDER_REJECTED_MESSAGE_CLIENT.format(delivery_status.order.consumer.user.first_name, reason_message)
+        message = constants.ORDER_REJECTED_MESSAGE_CLIENT.format(delivery_status.order.consumer.full_name, reason_message)
         send_sms(order.vendor.phone_number, message)
         return Response(status = status.HTTP_200_OK)
 
