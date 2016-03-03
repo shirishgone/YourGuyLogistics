@@ -252,7 +252,7 @@ class Employee(YGUser):
         return u"%s - %s" % (self.user.username, self.user.first_name)
 
 class Consumer(YGUser):
-    # Optional Fields
+    created_date = models.DateTimeField(auto_now_add = True, blank = True, null = True)
     phone_number = models.CharField(max_length = 100, blank = True, null = True)
     full_name = models.CharField(max_length = 100, blank = True, null = True)
     associated_vendor = models.ManyToManyField(Vendor, blank = True)
