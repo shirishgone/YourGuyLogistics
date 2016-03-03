@@ -10,7 +10,7 @@
     		controller: "vendorListCntrl",
     		resolve : {
     			access: ["Access","constants", function (Access,constants) { 
-    						var allowed_user = [constants.userRole.OPS,constants.userRole.OPS_MANAGER,constants.userRole.SALES,constants.userRole.SALES_MANAGER,constants.userRole.ACCOUNTS];
+    						var allowed_user = [constants.userRole.OPS,constants.userRole.OPS_MANAGER,constants.userRole.SALES,constants.userRole.SALES_MANAGER,constants.userRole.ACCOUNTS,constants.userRole.HR];
     						return Access.hasAnyRole(allowed_user); 
     					}],
     			vendors: ['Vendor','$stateParams', function (Vendor,$stateParams){

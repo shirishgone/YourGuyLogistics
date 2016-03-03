@@ -1636,7 +1636,7 @@
 				year  : moment(self.attendance_date).year()
 			};
 			DeliveryGuy.dg.attendance(attendance_params,function(response){
-				self.dg_monthly_attendance = response.payload.data.dg_monthly_attendance[0].attendance;
+				self.dg_monthly_attendance = response.payload.data.attendance;
 			});
 		};
 
@@ -1648,11 +1648,11 @@
 	function EditDgCntrl($mdDialog,dgConstants,DG,OpsManagers,TeamLeads){
 		var dgEdit = this;
 		dgEdit.DG = DG;
-		dgEdit.DG.team_lead_ids   = [];
+		dgEdit.DG.team_lead_dg_ids   = [];
 		dgEdit.DG.ops_manager_ids = [];
 		dgEdit.DG.team_leads.forEach(function(lead){
 			if(lead.dg_id){
-				dgEdit.DG.team_lead_ids.push(lead.dg_id);
+				dgEdit.DG.team_lead_dg_ids.push(lead.dg_id);
 			}
 		});		
 		dgEdit.DG.ops_managers.forEach(function(ops){
@@ -1759,7 +1759,7 @@
     		controller: "vendorListCntrl",
     		resolve : {
     			access: ["Access","constants", function (Access,constants) { 
-    						var allowed_user = [constants.userRole.OPS,constants.userRole.OPS_MANAGER,constants.userRole.SALES,constants.userRole.SALES_MANAGER,constants.userRole.ACCOUNTS];
+    						var allowed_user = [constants.userRole.OPS,constants.userRole.OPS_MANAGER,constants.userRole.SALES,constants.userRole.SALES_MANAGER,constants.userRole.ACCOUNTS,constants.userRole.HR];
     						return Access.hasAnyRole(allowed_user); 
     					}],
     			vendors: ['Vendor','$stateParams', function (Vendor,$stateParams){
