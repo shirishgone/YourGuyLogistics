@@ -8,33 +8,27 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import list_route
 
 from api_v3 import constants
-from api_v3.utils import user_role, paginate, is_userexists, is_consumerexists
+from api_v3.utils import user_role, paginate, is_userexists
 from yourguy.models import Consumer, VendorAgent
 from api_v3.utils import response_access_denied, response_with_payload, response_error_with_message, response_success_with_message, response_invalid_pagenumber, response_incomplete_parameters
 
+
 def create_consumer(username, phone_number, address):
-    # FETCH USER WITH PHONE NUMBER -------------------------------
-    if is_userexists(phone_number) is False:
-        user = User.objects.create(username=phone_number, first_name=username, password='')
-    else:
-        user = get_object_or_404(User, username=phone_number)
-    # -------------------------------------------------------------
-
-    if is_consumerexists(user) is False:
-        consumer = Consumer.objects.create(user=user)
-        consumer.addresses.add(address)
-        consumer.save()
-    else:
-        consumer = get_object_or_404(Consumer, user=user)
-
+    try:
+        consumer = Consumer.objects.get(phone_number=consumer_phone_number)    
+    except Exception as e:
+        consumer = Consumer.objects.create(phone_number=consumer_phone_number, full_name = consumer_name)
+    consumer.associated_vendor.add(vendor)
+    consumer.addresses.add(address)
+    consumer.save()
     return consumer
 
 
 def consumer_list_dict(consumer):
     consumer_dict = {
         'id': consumer.id,
-        'name': consumer.user.first_name,
-        'phone_number': consumer.user.username
+        'name': consumer.full_name,
+        'phone_number': consumer.phone_number
     }
     return consumer_dict
 
@@ -42,8 +36,8 @@ def consumer_list_dict(consumer):
 def consumer_detail_dict(consumer):
     consumer_dict = {
         'id': consumer.id,
-        'name': consumer.user.first_name,
-        'phone_number': consumer.user.username,
+        'name': consumer.full_name,
+        'phone_number': consumer.phone_number,
         "addresses": []
     }
 
@@ -62,8 +56,8 @@ def consumer_detail_dict(consumer):
 
 def excel_download_consumer_detail(consumer):
     consumer_dict = {
-        'name': consumer.user.first_name,
-        'phone_number': consumer.user.username,
+        'name': consumer.full_name,
+        'phone_number': consumer.phone_number,
         "addresses": []
     }
 
@@ -165,7 +159,7 @@ class ConsumerViewSet(viewsets.ModelViewSet):
         role = user_role(request.user)
         if role == constants.VENDOR:
             vendor_agent = get_object_or_404(VendorAgent, user = request.user)
-            all_consumers_of_vendor = Consumer.objects.filter(associated_vendor = vendor_agent.vendor).order_by(Lower('user__first_name'))
+            all_consumers_of_vendor = Consumer.objects.filter(associated_vendor = vendor_agent.vendor).order_by(Lower('full_name'))
 
             result = []
             for consumer in all_consumers_of_vendor:

@@ -15,7 +15,7 @@ from yourguy.models import User, DeliveryGuy, Consumer, Address, Product, OrderI
 from yourguy.models import ProofOfDelivery, Picture
 from yourguy.models import Notification, NotificationType
 
-from api.views import user_role, ist_day_start, ist_day_end, is_userexists, is_consumerexists, send_sms, send_email, days_in_int, time_delta
+from api.views import user_role, ist_day_start, ist_day_end, is_userexists, send_sms, send_email, days_in_int, time_delta
 from api.views import is_today_date, log_exception, ist_datetime
 
 from api_v2.utils import is_pickup_time_acceptable, is_consumer_has_same_address_already, is_correct_pincode, is_vendor_has_same_address_already
@@ -75,7 +75,7 @@ def send_cod_discrepency_email(delivery_status, user):
             body = body + '\n\nThere is some discrepancy in COD collection for following order.'
             body = body + '\n\nOrder no: %s' % (delivery_status.id)
             body = body + '\nVendor: %s' % (delivery_status.order.vendor.store_name)
-            body = body + '\nCustomer name: %s' % (delivery_status.order.consumer.user.first_name)
+            body = body + '\nCustomer name: %s' % (delivery_status.order.consumer.full_name)
             body = body + '\nCOD to be collected: %s' % (delivery_status.order.cod_amount)
             body = body + '\nCOD collected: %s' % (delivery_status.cod_collected_amount)
             body = body + '\nDeliveryGuy: %s'% (user.first_name)
@@ -95,19 +95,12 @@ def retail_order_send_email(vendor, new_order_ids):
     send_email(constants.RETAIL_EMAIL_ID, subject, body)
 
 def fetch_consumer(consumer_phone_number, consumer_name, vendor):
-    # CREATING USER & CONSUMER IF DOESNT EXISTS ------------------------
-    if is_userexists(consumer_phone_number) is True:
-        user = get_object_or_404(User, username = consumer_phone_number)
-        if is_consumerexists(user) is True:
-            consumer = get_object_or_404(Consumer, user = user)
-        else:
-            consumer = Consumer.objects.create(user = user)
-            consumer.associated_vendor.add(vendor)
-    else:
-        user = User.objects.create(username = consumer_phone_number, first_name = consumer_name, password = '')
-        consumer = Consumer.objects.create(user = user)
-        consumer.associated_vendor.add(vendor)
-    # ---------------------------------------------------
+    try:
+        consumer = Consumer.objects.get(phone_number=consumer_phone_number)    
+    except Exception as e:
+        consumer = Consumer.objects.create(phone_number=consumer_phone_number, full_name = consumer_name)
+    consumer.associated_vendor.add(vendor)
+    consumer.save()
     return consumer
 
 def fetch_consumer_address(consumer, full_address, pincode, landmark):
@@ -165,8 +158,8 @@ def send_sms_to_dg_about_order(date, dg, delivery_status):
         message = 'New Order:{},Pickup:{},Client:{},Cust:{},{},{},COD:{}'.format(delivery_status.id, 
             pickup_total_string,
             delivery_status.order.vendor.store_name, 
-            delivery_status.order.consumer.user.first_name,
-            delivery_status.order.consumer.user.username,
+            delivery_status.order.consumer.full_name,
+            delivery_status.order.consumer.phone_number,
             delivery_status.order.delivery_address,
             delivery_status.order.cod_amount)
         send_sms(dg.user.username, message)
@@ -319,8 +312,8 @@ def order_details(delivery_status):
             'is_reported' : delivery_status.is_reported,
             'reported_reason' : delivery_status.reported_reason,
             'cod_amount' : delivery_status.order.cod_amount,
-            'customer_name' : delivery_status.order.consumer.user.first_name,
-            'customer_phonenumber' : delivery_status.order.consumer.user.username,
+            'customer_name' : delivery_status.order.consumer.full_name,
+            'customer_phonenumber' : delivery_status.order.consumer.phone_number,
             'vendor_name' : delivery_status.order.vendor.store_name,
             'delivered_at' : delivery_status.delivered_at,
             
@@ -392,7 +385,7 @@ def update_daily_status(delivery_status):
             'reported_reason' : delivery_status.reported_reason,
             'cod_amount' : delivery_status.order.cod_amount,
             'cod_collected':delivery_status.cod_collected_amount,
-            'customer_name' : delivery_status.order.consumer.user.first_name,
+            'customer_name' : delivery_status.order.consumer.full_name,
             'vendor_name' : delivery_status.order.vendor.store_name,
             'delivered_at' : delivery_status.delivered_at,
             'is_reverse_pickup':delivery_status.order.is_reverse_pickup
@@ -452,7 +445,7 @@ def deliveryguy_list(delivery_status):
         'status' : delivery_status.order_status,
         'is_reported' : delivery_status.is_reported,
         'reported_reason' : delivery_status.reported_reason,
-        'customer_name' : delivery_status.order.consumer.user.first_name,
+        'customer_name' : delivery_status.order.consumer.full_name,
         'vendor_name' : delivery_status.order.vendor.store_name,
         'vendor_order_id':delivery_status.order.vendor_order_id
     }
@@ -479,12 +472,12 @@ def order_dict_dg(delivery_status):
         'pickup_address':address_string(delivery_status.order.pickup_address),
         'delivery_address':address_string(delivery_status.order.delivery_address),
         'status' : delivery_status.order_status,
-        'customer_name' : delivery_status.order.consumer.user.first_name,
+        'customer_name' : delivery_status.order.consumer.full_name,
         'vendor_id':delivery_status.order.vendor.id,
         'vendor_name' : delivery_status.order.vendor.store_name,
         'vendor_order_id':delivery_status.order.vendor_order_id,
         'cod_amount' : delivery_status.order.cod_amount,
-        'customer_phonenumber' : delivery_status.order.consumer.user.username,
+        'customer_phonenumber' : delivery_status.order.consumer.phone_number,
         'notes':delivery_status.order.notes,
         'vendor_order_id':delivery_status.order.vendor_order_id,
         'total_cost':delivery_status.order.total_cost,
@@ -502,19 +495,19 @@ def search_order(user, search_query):
         delivery_status_queryset = OrderDeliveryStatus.objects.filter(order__vendor = vendor)
         if search_query.isdigit():
             delivery_status_queryset = delivery_status_queryset.filter(Q(id=search_query) | 
-                Q(order__consumer__user__username=search_query) |
+                Q(order__consumer__phone_number=search_query) |
                 Q(order__vendor_order_id=search_query))
         else:
-            delivery_status_queryset = delivery_status_queryset.filter(Q(order__consumer__user__first_name__icontains=search_query) |
+            delivery_status_queryset = delivery_status_queryset.filter(Q(order__consumer__full_name__icontains=search_query) |
                 Q(order__vendor_order_id=search_query))
 
     elif role == constants.OPERATIONS or role == constants.SALES:
         if search_query.isdigit():
             delivery_status_queryset = OrderDeliveryStatus.objects.filter(Q(id=search_query) | 
-                Q(order__consumer__user__username=search_query) |
+                Q(order__consumer__phone_number=search_query) |
                 Q(order__vendor_order_id=search_query))
         else:
-            delivery_status_queryset = OrderDeliveryStatus.objects.filter(Q(order__consumer__user__first_name__icontains=search_query) |
+            delivery_status_queryset = OrderDeliveryStatus.objects.filter(Q(order__consumer__full_name__icontains=search_query) |
                 Q(order__vendor_order_id=search_query))    
     else:
         pass
@@ -791,17 +784,7 @@ class OrderViewSet(viewsets.ViewSet):
                 return Response(content, status = status.HTTP_400_BAD_REQUEST)
             
             try:
-                if is_userexists(consumer_phone_number) is True:
-                    user = get_object_or_404(User, username = consumer_phone_number)
-                    if is_consumerexists(user) is True:
-                        consumer = get_object_or_404(Consumer, user = user)
-                    else:
-                        consumer = Consumer.objects.create(user = user)
-                        consumer.associated_vendor.add(vendor)
-                else:
-                    user = User.objects.create(username = consumer_phone_number, first_name = consumer_name, password = '')
-                    consumer = Consumer.objects.create(user = user)
-                    consumer.associated_vendor.add(vendor)
+                fetch_consumer(consumer_phone_number, consumer_name, vendor)
                 
                 # ADDRESS CHECK ----------------------------------
                 try:
@@ -1424,7 +1407,7 @@ class OrderViewSet(viewsets.ViewSet):
                 order_detail = {
                 'order_id':delivery_status.id,
                 'vendor':delivery_status.order.vendor.store_name,
-                'customer_name':delivery_status.order.consumer.user.first_name
+                'customer_name':delivery_status.order.consumer.full_name
                 }
                 email_orders.append(order_detail)
             
@@ -1641,8 +1624,8 @@ class OrderViewSet(viewsets.ViewSet):
             # ---------------------------------------------------------------------
             if is_order_picked_up is True and delivery_status.order.is_reverse_pickup is True:
                 # SEND A CONFIRMATION MESSAGE TO THE CUSTOMER
-                end_consumer_phone_number = delivery_status.order.consumer.user.username
-                message = 'Dear %s, we have picked your order behalf of %s - Team YourGuy' % (delivery_status.order.consumer.user.first_name, delivery_status.order.vendor.store_name)
+                end_consumer_phone_number = delivery_status.order.consumer.phone_number
+                message = 'Dear %s, we have picked your order behalf of %s - Team YourGuy' % (delivery_status.order.consumer.full_name, delivery_status.order.vendor.store_name)
                 send_sms(end_consumer_phone_number, message)
 
             content = {
@@ -1753,8 +1736,8 @@ class OrderViewSet(viewsets.ViewSet):
         if is_order_updated:            
             # CONFIRMATION MESSAGE TO CUSTOMER --------------------------------------
             if cod_collected_amount is not None and float(cod_collected_amount) > 0:
-                end_consumer_phone_number = delivery_status.order.consumer.user.username
-                message = 'Dear %s, we have received the payment of %srs behalf of %s - Team YourGuy' % (delivery_status.order.consumer.user.first_name, cod_collected_amount, delivery_status.order.vendor.store_name)
+                end_consumer_phone_number = delivery_status.order.consumer.phone_number
+                message = 'Dear %s, we have received the payment of %srs behalf of %s - Team YourGuy' % (delivery_status.order.consumer.full_name, cod_collected_amount, delivery_status.order.vendor.store_name)
                 send_sms(end_consumer_phone_number, message)
             # -----------------------------------------------------------------------
             

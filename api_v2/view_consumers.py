@@ -26,30 +26,21 @@ def create_address(full_address, pin_code, landmark):
         new_address.save()
     return new_address    
 
-def create_consumer(username, phone_number, address):
-
-    # FETCH USER WITH PHONE NUMBER -------------------------------
-    if is_userexists(phone_number) is False:
-        user = User.objects.create(username = phone_number, first_name = username, password = '')
-    else:
-        user = get_object_or_404(User, username = phone_number)
-    # -------------------------------------------------------------
-
-    if is_consumerexists(user) is False:
-        consumer = Consumer.objects.create(user = user)
-        consumer.addresses.add(address)
-        consumer.save()
-    else:
-        consumer = get_object_or_404(Consumer, user = user)
-         
+def create_consumer(username, phone_number, address, vendor):
+    try:
+        consumer = Consumer.objects.get(phone_number=consumer_phone_number)    
+    except Exception as e:
+        consumer = Consumer.objects.create(phone_number=consumer_phone_number, full_name = consumer_name)
+    consumer.associated_vendor.add(vendor)
+    consumer.addresses.add(address)
+    consumer.save()
     return consumer
-
 
 def consumer_list_dict(consumer):
     consumer_dict = {
             'id' : consumer.id,
-            'name':consumer.user.first_name,
-            'phone_number':consumer.user.username
+            'name':consumer.full_name,
+            'phone_number':consumer.phone_number
             }
     return consumer_dict
 
@@ -57,8 +48,8 @@ def consumer_list_dict(consumer):
 def consumer_detail_dict(consumer):
     consumer_dict = {
             'id' : consumer.id,
-            'name':consumer.user.first_name,
-            'phone_number':consumer.user.username,
+            'name':consumer.full_name,
+            'phone_number':consumer.phone_number,
             "addresses":[]
             }
     
@@ -76,8 +67,8 @@ def consumer_detail_dict(consumer):
 
 def excel_download_consumer_detail(consumer):
     consumer_dict = {
-            'name':consumer.user.first_name,
-            'phone_number':consumer.user.username,
+            'name':consumer.full_name,
+            'phone_number':consumer.phone_number,
             "addresses":[]
             }
     
@@ -137,11 +128,11 @@ class ConsumerViewSet(viewsets.ModelViewSet):
         role = user_role(request.user)
         if role == constants.VENDOR:
             vendor_agent = get_object_or_404(VendorAgent, user = request.user)
-            total_consumers_of_vendor = Consumer.objects.filter(associated_vendor = vendor_agent.vendor).order_by(Lower('user__first_name'))
+            total_consumers_of_vendor = Consumer.objects.filter(associated_vendor = vendor_agent.vendor).order_by(Lower('full_name'))
         
             # SEARCH KEYWORD FILTERING -------------------------------------------------
             if search_query is not None:
-                total_consumers_of_vendor = total_consumers_of_vendor.filter(Q(user__first_name__icontains=search_query) | Q(user__username=search_query))
+                total_consumers_of_vendor = total_consumers_of_vendor.filter(Q(full_name__icontains=search_query) | Q(phone_number=search_query))
                 addresses_required = True
             # --------------------------------------------------------------------------
 
@@ -179,6 +170,7 @@ class ConsumerViewSet(viewsets.ModelViewSet):
     def create(self, request):
         role = user_role(request.user)
         if (role == constants.VENDOR):
+            vendor_agent = VendorAgent.objects.get(user = request.user)
             # REQUEST PARAM CHECK --------------------------------------------
             try:
                 phone_number = request.data['phone_number']
@@ -195,22 +187,8 @@ class ConsumerViewSet(viewsets.ModelViewSet):
             # -------------------------------------------------------------
             
             new_address = create_address(full_address, pin_code, landmark)
-            new_consumer = create_consumer(name, phone_number, new_address)
-
-            # SETTING USER GROUP -------------------------------------------
-            try:
-                group = get_object_or_404(Group, name=constants.CONSUMER)
-                group.user_set.add(new_consumer.user)        
-            except Exception, e:
-                print 'group not set'
-            # --------------------------------------------------------------
+            new_consumer = create_consumer(name, phone_number, new_address, vendor_agent.vendor)
             
-            # SETTING ASSOCIATED VENDOR ------------------------------------
-            vendor_agent = VendorAgent.objects.get(user = request.user)
-            new_consumer.associated_vendor.add(vendor_agent.vendor)
-            new_consumer.save()
-            # ---------------------------------------------------------------
-
             content = {
             'consumer_id': new_consumer.id,
             'new_address_id':new_address.id
@@ -225,7 +203,7 @@ class ConsumerViewSet(viewsets.ModelViewSet):
         role = user_role(request.user)
         if role == constants.VENDOR:
             vendor_agent = get_object_or_404(VendorAgent, user = request.user)
-            all_consumers_of_vendor = Consumer.objects.filter(associated_vendor = vendor_agent.vendor).order_by(Lower('user__first_name'))
+            all_consumers_of_vendor = Consumer.objects.filter(associated_vendor = vendor_agent.vendor).order_by(Lower('full_name'))
             
             result = []
             for consumer in all_consumers_of_vendor:
