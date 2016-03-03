@@ -1,16 +1,10 @@
 from django.contrib import admin
 
 # Register your models here.
-from yourguy.models import Address, Area
-from yourguy.models import OrderItem, Order, OrderDeliveryStatus
-from yourguy.models import Product, ProductCategory
-from yourguy.models import DeliveryGuy, DeliveryTeamLead, DGAttendance, Employee
-from yourguy.models import Vendor, VendorAgent, Industry, VendorAccount, Consumer
-from yourguy.models import ProofOfDelivery, Picture
-from yourguy.models import TimeSlot
-from yourguy.models import Location, ServiceableCity, ServiceablePincode
-from yourguy.models import NotificationType, Notification
-from yourguy.models import DeliveryAction, DeliveryTransaction
+from yourguy.models import Address, Area,OrderItem, Order, OrderDeliveryStatus,Product, ProductCategory, DeliveryGuy, \
+    DeliveryTeamLead, DGAttendance, Employee, Vendor, VendorAgent, Industry, VendorAccount, Consumer, ProofOfDelivery, \
+    Picture, TimeSlot, Location, ServiceableCity, ServiceablePincode, NotificationType, Notification, DeliveryAction, \
+    DeliveryTransaction, CODAction, CODTransaction, ProofOfBankDeposit
 
 
 admin.site.register(TimeSlot)
@@ -67,3 +61,6 @@ admin.site.register(NotificationType)
 admin.site.register(Notification)
 admin.site.register(DeliveryAction)
 admin.site.register(DeliveryTransaction)
+admin.site.register(CODAction)
+admin.site.register(CODTransaction)
+admin.site.register(ProofOfBankDeposit)

@@ -19,11 +19,11 @@ from api_v3.utils import log_exception, send_sms, ist_datetime, user_role, addre
     is_consumer_has_same_address_already, days_in_int, send_email, is_today_date, is_vendor_has_same_address_already, \
     delivery_actions, ops_manager_for_dg, notification_type_for_code, ops_executive_for_pincode, address_with_location, \
     response_access_denied, response_incomplete_parameters, response_success_with_message, response_with_payload, response_invalid_pagenumber, \
-    response_error_with_message
+    response_error_with_message, cod_actions
 
 
 from yourguy.models import User, Vendor, DeliveryGuy, VendorAgent, Picture, ProofOfDelivery, OrderDeliveryStatus, \
-    Consumer, Address, Order, Product, OrderItem, Notification, Location, DeliveryTransaction
+    Consumer, Address, Order, Product, OrderItem, Notification, Location, DeliveryTransaction, CODTransaction
 
 from api_v3.cron_jobs import create_notif_for_no_ops_exec_for_pincode
 
@@ -37,6 +37,17 @@ def add_action_for_delivery(action, delivery, user, latitude, longitude, timesta
         delivery_transaction.remarks = remarks
     delivery_transaction.save()
     delivery.delivery_transactions.add(delivery_transaction)
+    delivery.save()
+
+def add_cod_action_for_delivery(action, delivery, user, latitude, longitude, timestamp, remarks):
+    cod_transaction = CODTransaction.objects.create(action=action, by_user=user, time_stamp=timestamp)
+    if latitude is not None and longitude is not None:
+        location = Location.objects.create(latitude=latitude, longitude=longitude)
+        cod_transaction.location = location
+    if remarks is not None:
+        cod_transaction.remarks = remarks
+    cod_transaction.save()
+    delivery.cod_transactions.add(cod_transaction)
     delivery.save()
 
 def is_deliveryguy_assigned(delivery):
@@ -1352,7 +1363,6 @@ class OrderViewSet(viewsets.ViewSet):
         else:
             error_message = 'delivered_at can only be DOOR_STEP, SECURITY, RECEPTION, CUSTOMER'
             return response_error_with_message(error_message)
-        
         if can_update_order(delivery_status, constants.ORDER_STATUS_DELIVERED):
             pod_dict = request.data.get('pod')
             new_pod = None
@@ -1362,6 +1372,10 @@ class OrderViewSet(viewsets.ViewSet):
             action = delivery_actions(constants.DELIVERED_CODE)
             add_action_for_delivery(action, delivery_status, request.user, latitude, longitude, delivered_datetime, remarks)
             if cod_collected_amount is not None and float(cod_collected_amount) > 0.0:
+                cod_action = cod_actions(constants.COD_COLLECTED_CODE)
+                add_cod_action_for_delivery(cod_action, delivery_status, request.user, latitude, longitude, delivered_datetime, remarks)
+                delivery_status.cod_status = constants.COD_STATUS_COLLECTED
+                delivery_status.save()
                 end_consumer_phone_number = delivery_status.order.consumer.user.username
                 message = 'Dear %s, we have received the payment of %srs behalf of %s - Team YourGuy' % (delivery_status.order.consumer.user.first_name, cod_collected_amount, delivery_status.order.vendor.store_name)
                 send_sms(end_consumer_phone_number, message)
