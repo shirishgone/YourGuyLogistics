@@ -15,8 +15,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import permissions
 
-from yourguy.models import Vendor, Consumer, DeliveryGuy, VendorAgent, Address
-from api.serializers import UserSerializer, OrderSerializer, ConsumerSerializer
+from yourguy.models import Vendor, DeliveryGuy, VendorAgent, Address
+from api.serializers import UserSerializer, OrderSerializer
 
 from datetime import datetime, timedelta, time
 import random
@@ -64,12 +64,6 @@ def is_userexists(username):
 	else:	
 		return False		
 
-def is_consumerexists(user):
-	if Consumer.objects.filter(user=user).count():
-		return True
-	else:	
-		return False	
-
 def is_vendoragentexists(user):
 	if VendorAgent.objects.filter(user=user).count():
 		return True
@@ -103,8 +97,6 @@ def user_role(user):
 	role = token_string.split(':').pop()
 	if role == constants.VENDOR:
 		return constants.VENDOR
-	elif role == constants.CONSUMER:
-		return constants.CONSUMER	
 	elif role == constants.OPERATIONS:
 		return constants.OPERATIONS	
 	elif role == constants.SALES:

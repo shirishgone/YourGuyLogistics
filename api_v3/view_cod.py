@@ -33,7 +33,7 @@ def dg_collections_dict(delivery_status):
         'delivery_id': delivery_status.id,
         'cod_collected': delivery_status.cod_collected_amount,
         'delivery_date_time': delivery_status.completed_datetime,
-        'customer': delivery_status.order.consumer.user.first_name,
+        'customer': delivery_status.order.consumer.full_name,
         'vendor': delivery_status.order.vendor.store_name
     }
 

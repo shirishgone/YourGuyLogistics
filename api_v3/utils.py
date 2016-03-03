@@ -212,14 +212,6 @@ def is_userexists(username):
     else:
         return False
 
-
-def is_consumerexists(user):
-    if Consumer.objects.filter(user=user).count():
-        return True
-    else:
-        return False
-
-
 def is_groupexists(name):
     if Group.objects.filter(name=name).count():
         return True
