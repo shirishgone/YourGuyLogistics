@@ -442,7 +442,7 @@
 	};
 
 	angular.module('ygVendorApp')
-	.constant('constants', testConstants);
+	.constant('constants', constants);
 })();
 (function(){
 	'use strict';
