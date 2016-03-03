@@ -6,3 +6,6 @@ staticfiles
 *.sqlite3
 *.pid
 celerybeat-schedule.db
+v2_webapp/.sass-cache
+v2_webapp/bower_components
+v2_webapp/node_modules
