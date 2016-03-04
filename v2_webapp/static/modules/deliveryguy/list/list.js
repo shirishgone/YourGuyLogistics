@@ -5,7 +5,7 @@
 		Its resolved after loading all the dgs from the server.
 			
 	*/
-	var dgListCntrl = function($state,$mdSidenav,$stateParams,dgs,constants){
+	var dgListCntrl = function($state,$mdSidenav,$stateParams,dgs,constants,DeliveryGuy){
 		var self = this;
 		this.params = $stateParams;
 		this.params.date = new Date(this.params.date);
@@ -46,13 +46,25 @@
 			self.getDgs();
 			
 		};
+		this.downloadAttendance = function(){
+			var attendance_params = {
+				start_date : moment(self.params.date).format(),
+				end_date   : moment(self.params.date).format()
+			};
+			DeliveryGuy.dgsAttendance.query(attendance_params,function(response){
+				alasql.fn.IsoToDate = function(n){
+					return moment(n).format('DD-MM-YYYY');
+				};
+				var str = 'SELECT name AS Name,IsoToDate(attendance -> 0 -> date) AS Date,attendance -> 0 -> worked_hrs AS Hours';
+				alasql( str+' INTO XLSX("attendance.xlsx",{headers:true}) FROM ?',[response.payload.data]);
+			});
+		};
 		/*
 			@getOrders rleoads the order controller according too the filter to get the new filtered data.
 		*/
 		this.getDgs = function(){
 			$state.transitionTo($state.current, self.params, { reload: true, inherit: false, notify: true });
 		};
-
 	};
 
 	angular.module('deliveryguy')
@@ -62,6 +74,7 @@
 		'$stateParams',
 		'dgs',
 		'constants',
+		'DeliveryGuy',
 		dgListCntrl 
 	]);
 })();

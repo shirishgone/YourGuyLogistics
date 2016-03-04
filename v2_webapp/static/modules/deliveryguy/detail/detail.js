@@ -4,7 +4,7 @@
 	var dgDetailCntrl = function($state,$stateParams,$mdDialog,$mdMedia,DeliveryGuy,dgConstants,leadUserList,DG,PreviousState){
 		var self = this;
 		self.params = $stateParams;
-		self.DG = DG.payload.data.data;
+		self.DG = DG.payload.data;
 		self.attendance_date = moment().date(1).toDate();
 		self.attendanceMinDate = moment('2015-01-01').toDate();
 		self.attendanceMaxDate = moment().toDate();

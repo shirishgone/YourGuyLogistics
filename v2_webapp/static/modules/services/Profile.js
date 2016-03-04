@@ -6,8 +6,13 @@
 				method: 'GET',
 				transformResponse: function(data,headers){
 					var response = angular.fromJson(data);
-					response.payload.data.is_authenticated = response.success;
-					return response.payload.data;
+					if(response.payload){
+						response.payload.data.is_authenticated = response.success;
+						return response.payload.data;
+					}
+					else{
+						return response;
+					}
 				}
 			}
 		});
