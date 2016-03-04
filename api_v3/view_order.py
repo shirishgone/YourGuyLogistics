@@ -2,7 +2,7 @@ import json
 import time
 from datetime import datetime
 from itertools import chain
-
+import uuid
 import pytz
 from dateutil.rrule import rrule, WEEKLY
 from django.db.models import Q
@@ -39,16 +39,21 @@ def add_action_for_delivery(action, delivery, user, latitude, longitude, timesta
     delivery.delivery_transactions.add(delivery_transaction)
     delivery.save()
 
-def add_cod_action_for_delivery(action, delivery, user, latitude, longitude, timestamp, remarks):
-    cod_transaction = CODTransaction.objects.create(action=action, by_user=user, time_stamp=timestamp)
+def add_cod_action_for_delivery(transaction, user, timestamp, latitude, longitude, transaction_uuid, delivery, remarks):
+    cod_transaction = CODTransaction.objects.create(transaction=transaction,
+                                                    created_by_user=user,
+                                                    created_time_stamp=timestamp,
+                                                    transaction_uuid=transaction_uuid,
+                                                    deliveries=delivery)
     if latitude is not None and longitude is not None:
         location = Location.objects.create(latitude=latitude, longitude=longitude)
         cod_transaction.location = location
     if remarks is not None:
         cod_transaction.remarks = remarks
     cod_transaction.save()
-    delivery.cod_transactions.add(cod_transaction)
-    delivery.save()
+    delivery_status = get_object_or_404(OrderDeliveryStatus, pk=delivery)
+    delivery_status.cod_transactions.add(cod_transaction)
+    delivery_status.save()
 
 def is_deliveryguy_assigned(delivery):
     if delivery.delivery_guy is not None:
@@ -1355,7 +1360,8 @@ class OrderViewSet(viewsets.ViewSet):
             add_action_for_delivery(action, delivery_status, request.user, latitude, longitude, delivered_datetime, remarks)
             if cod_collected_amount is not None and float(cod_collected_amount) > 0.0:
                 cod_action = cod_actions(constants.COD_COLLECTED_CODE)
-                add_cod_action_for_delivery(cod_action, delivery_status, request.user, latitude, longitude, delivered_datetime, remarks)
+                transaction_uuid = uuid.uuid4()
+                add_cod_action_for_delivery(cod_action, request.user, delivered_datetime, latitude, longitude, transaction_uuid, delivery_status.id, remarks)
                 delivery_status.cod_status = constants.COD_STATUS_COLLECTED
                 delivery_status.save()
                 end_consumer_phone_number = delivery_status.order.consumer.phone_number

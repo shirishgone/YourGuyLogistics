@@ -1,6 +1,7 @@
 from datetime import datetime
 from django.db.models import Sum
-from api_v3.utils import cod_actions, response_access_denied, get_object_or_404, response_error_with_message, response_with_payload, response_incomplete_parameters
+from api_v3.utils import cod_actions, response_access_denied, get_object_or_404, \
+    response_error_with_message, response_with_payload, response_incomplete_parameters, response_success_with_message
 from api_v3 import constants
 from yourguy.models import CODTransaction, DeliveryGuy, OrderDeliveryStatus, DeliveryTeamLead
 from rest_framework import authentication, viewsets
@@ -8,6 +9,7 @@ from rest_framework.decorators import detail_route, list_route
 from rest_framework.permissions import IsAuthenticated
 from api_v3.utils import user_role
 import uuid
+import pytz
 
 
 def create_cod_transaction(transaction, user, dg_id, dg_tl_id, cod_amount, transaction_uuid, delivery_ids):
@@ -112,8 +114,12 @@ class CODViewSet(viewsets.ViewSet):
         role = user_role(request.user)
         if role == constants.DELIVERY_GUY:
             dg = get_object_or_404(DeliveryGuy, user=request.user)
-            if dg.is_active is True and dg.is_teamlead is True:
+            if dg.is_active is True:
                 balance_amount = cod_balance_calculation(dg)
+                if balance_amount is None:
+                    balance_amount = 0
+                else:
+                    pass
                 return response_with_payload(balance_amount, None)
             else:
                 error_message = 'This is a deactivated dg'
