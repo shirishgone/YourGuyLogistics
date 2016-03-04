@@ -91,8 +91,7 @@ class ProductViewSet(viewsets.ModelViewSet):
                                                  cost=cost)
 
             product_dict = product_list_dict(new_product)
-            content = {'product': product_dict}
-            return response_with_payload(content, None)
+            return response_with_payload(product_dict, None)
         else:
             return response_access_denied()
 

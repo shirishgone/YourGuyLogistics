@@ -24,11 +24,15 @@ class VendorAdmin(admin.ModelAdmin):
     raw_id_fields = ('addresses',)
 admin.site.register(Vendor, VendorAdmin)
 
-admin.site.register(VendorAgent)
+
+class VendorAgentAdmin(admin.ModelAdmin):
+    raw_id_fields = ['user','notifications','profile_picture']
+admin.site.register(VendorAgent, VendorAgentAdmin)
+
 admin.site.register(VendorAccount)
 
 class ConsumerAdmin(admin.ModelAdmin):
-    raw_id_fields = ['user','addresses']
+    raw_id_fields = ['user','addresses','notifications','profile_picture']
 admin.site.register(Consumer, ConsumerAdmin)
 
 class OrderAdmin(admin.ModelAdmin):

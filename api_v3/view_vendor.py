@@ -81,8 +81,7 @@ class VendorViewSet(viewsets.ModelViewSet):
 
         if can_respond:
             vendor_detail = vendor_detail_dict(vendor)
-            content = {'data': vendor_detail}
-            return response_with_payload(content, None)
+            return response_with_payload(vendor_detail, None)
         else:
             return response_access_denied()
 
@@ -127,8 +126,7 @@ class VendorViewSet(viewsets.ModelViewSet):
         elif role == constants.VENDOR:
             vendor_agent = get_object_or_404(VendorAgent, user=request.user)
             vendor_detail = vendor_detail_dict(vendor_agent.vendor)
-            content = {'data': vendor_detail}
-            return response_with_payload(content, None)
+            return response_with_payload(vendor_detail, None)
         else:
             return response_access_denied()
 

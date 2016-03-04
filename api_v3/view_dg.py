@@ -205,8 +205,7 @@ class DGViewSet(viewsets.ModelViewSet):
                 }
                 detail_dict['ops_managers'].append(ops_manager_dict)
 
-            content = {'data': detail_dict}
-            return response_with_payload(content, None)
+            return response_with_payload(detail_dict, None)
 
     def list(self, request):
         page = self.request.QUERY_PARAMS.get('page', None)
@@ -393,8 +392,7 @@ class DGViewSet(viewsets.ModelViewSet):
                 team_lead.associate_delivery_guys.add(delivery_guy)
                 team_lead.save()
         delivery_guy.save()
-        content = {'auth_token': token.key}
-        return response_with_payload(content, None)
+        return response_with_payload(token.key, None)
 
     # Workflows handled are edit dg, edit dg tl
     # req param being sent is is_teamlead flag, check this flag and do a get object or 404 with this data,
@@ -693,8 +691,7 @@ class DGViewSet(viewsets.ModelViewSet):
             dg_attendance_dict = dg_attendance_list_dict(attendance)
             all_dg_attendance.append(dg_attendance_dict)
 
-        content = {'all_dg_attendance': all_dg_attendance}
-        return response_with_payload(content, None)
+        return response_with_payload(all_dg_attendance, None)
 
     @detail_route(methods=['put'])
     def update_pushtoken(self, request, pk=None):
@@ -821,8 +818,7 @@ class DGViewSet(viewsets.ModelViewSet):
                     download_attendance_dict['attendance'].append(datewise_dict)
                 all_dg_attendance.append(download_attendance_dict)
 
-        content = {'all_dg_attendance': all_dg_attendance}
-        return response_with_payload(content, None)
+        return response_with_payload(all_dg_attendance, None)
 
     @detail_route(methods=['get'])
     def tl_associated_dgs(self, request, pk):
@@ -925,8 +921,7 @@ class DGViewSet(viewsets.ModelViewSet):
 
 @api_view(['GET'])
 def dg_app_version(request):
-    content = {'app_version': constants.LATEST_DG_APP_VERSION}
-    return response_with_payload(content, None)
+    return response_with_payload(constants.LATEST_DG_APP_VERSION, None)
 
 @api_view(['GET'])
 @authentication_classes((TokenAuthentication,))
@@ -936,7 +931,6 @@ def profile(request):
     if role == constants.DELIVERY_GUY:
         delivery_guy = get_object_or_404(DeliveryGuy, user=request.user)
         detail_dict = dg_details_dict(delivery_guy)
-        response_content = {"data": detail_dict}
-        return response_with_payload(response_content, None)
+        return response_with_payload(detail_dict, None)
     else:
         return response_access_denied()

@@ -260,7 +260,7 @@ class Consumer(YGUser):
     addresses  = models.ManyToManyField(Address, blank = True)
 
     def __unicode__(self):
-        return unicode(self.user.first_name)
+        return unicode(self.full_name)
 
 class DGAttendance(models.Model):
 
