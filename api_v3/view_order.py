@@ -127,9 +127,9 @@ def is_reschedule_allowed(delivery_status):
     else:
         return False
 
-def fetch_consumer(consumer_phone_number, consumer_name, vendor):
+def fetch_consumer(phone_number, name, vendor):
     try:
-        consumer = Consumer.objects.get(phone_number=consumer_phone_number)    
+        consumer = Consumer.objects.get(phone_number=phone_number)    
     except Exception as e:
         user = User.objects.create(username = phone_number)
         consumer = Consumer.objects.create(user = user, phone_number=phone_number, full_name = name)
