@@ -108,8 +108,7 @@ class ConsumerViewSet(viewsets.ModelViewSet):
                     break
             if is_consumer_associated_to_vendor:
                 detail_dict = consumer_detail_dict(consumer)
-                content = {'data': detail_dict}
-                return response_with_payload(content, None)
+                return response_with_payload(detail_dict, None)
             else:
                 return response_access_denied()
         else:
@@ -155,7 +154,7 @@ class ConsumerViewSet(viewsets.ModelViewSet):
                     consumer_dict = consumer_list_dict(consumer)
                 result.append(consumer_dict)
 
-            content = {"data": result, "total_pages": total_pages}
+            content = {"consumers": result, "total_pages": total_pages}
             return response_with_payload(content, None)
         else:
             return response_access_denied()
@@ -196,8 +195,6 @@ class ConsumerViewSet(viewsets.ModelViewSet):
             for consumer in all_consumers_of_vendor:
                 consumer_dict = excel_download_consumer_detail(consumer)
                 result.append(consumer_dict)
-
-            response_content = {'data': result}
-            return response_with_payload(response_content, None)
+            return response_with_payload(result, None)
         else:
             return response_access_denied()

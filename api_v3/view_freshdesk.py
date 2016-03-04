@@ -36,8 +36,7 @@ def get_open_ticket_count(request):
         count_request = requests.get(count_url, headers=auth_headers())
         count_response = count_request.json()
         count = count_response['view_count']
-        response = {'count':count}
-        return response_with_payload(response, None)
+        return response_with_payload(count, None)
     except Exception as e:
         error_message = 'Something went wrong'
         return response_error_with_message(error_message)

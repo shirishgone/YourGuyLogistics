@@ -87,8 +87,7 @@ def excel_download(request):
             excel_order_details.append(excel_order)
         except Exception as e:
             pass
-    content = {'orders': excel_order_details}
-    return response_with_payload(content, None)
+    return response_with_payload(excel_order_details, None)
 
 @api_view(['POST'])
 @permission_classes((IsAuthenticated,))
