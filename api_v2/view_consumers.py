@@ -26,11 +26,12 @@ def create_address(full_address, pin_code, landmark):
         new_address.save()
     return new_address    
 
-def create_consumer(name, phone_number, address, vendor):
+def create_consumer(name, phone_number, address, vendor):    
     try:
         consumer = Consumer.objects.get(phone_number=phone_number)    
     except Exception as e:
-        consumer = Consumer.objects.create(phone_number=phone_number, full_name = name)
+        user = User.objects.create(username = phone_number)
+        consumer = Consumer.objects.create(user = user, phone_number=phone_number, full_name = name)
     consumer.associated_vendor.add(vendor)
     consumer.addresses.add(address)
     consumer.save()
@@ -167,7 +168,7 @@ class ConsumerViewSet(viewsets.ModelViewSet):
             content = {'error':'You dont have permissions to view all Consumers'}
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
     
-    def create(self, request):
+    def create(self, request):        
         role = user_role(request.user)
         if (role == constants.VENDOR):
             vendor_agent = VendorAgent.objects.get(user = request.user)
