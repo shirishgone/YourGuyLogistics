@@ -136,9 +136,11 @@ def working_hours_calculation(dg_attendance):
         hours, remainder = divmod(total_seconds_worked, 60 * 60)
         worked_hours = "%d hrs" % hours
     elif dg_attendance.login_time is not None and dg_attendance.logout_time is None:
-        logout_time = dg_attendance.dg.shift_end_datetime
-        if logout_time is not None:
-            worked_hours = (logout_time - dg_attendance.login_time)
+        shift_end_time = dg_attendance.dg.shift_end_datetime
+        if shift_end_time is not None:
+            login_time = dg_attendance.login_time
+            shift_end_datetime = login_time.replace(hour=shift_end_time.hour, minute=shift_end_time.minute, second=shift_end_time.second)
+            worked_hours = (shift_end_datetime - dg_attendance.login_time)
             total_seconds_worked = int(worked_hours.total_seconds())
             hours, remainder = divmod(total_seconds_worked, 60 * 60)
             worked_hours = "%d hrs" % hours
