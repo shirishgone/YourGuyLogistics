@@ -92,8 +92,9 @@ def consumers_refill(request):
         }
         return Response(content, status=status.HTTP_400_BAD_REQUEST)
     else:
-        all_consumers = Consumer.objects.filter(Q(phone_number=None) & Q(full_name=None))
+        all_consumers = Consumer.objects.filter(Q(phone_number=None) | Q(full_name=None) | Q(user__date_joined=None))
         for consumer in all_consumers:
+            consumer.created_date = consumer.user.date_joined
             consumer.phone_number = consumer.user.username
             consumer.full_name = consumer.user.first_name
             consumer.save()

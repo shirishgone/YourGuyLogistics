@@ -6,7 +6,7 @@ from rest_framework.decorators import list_route, detail_route
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from yourguy.models import User, Token, Vendor, VendorAgent, Consumer, DeliveryGuy, Employee
+from yourguy.models import User, Token, Vendor, VendorAgent, DeliveryGuy, Employee
 from api.views import is_userexists, create_token 
 import constants
 
@@ -73,9 +73,6 @@ def register(request):
             vendor = get_object_or_404(Vendor, id = vendor_id)
             token = create_token(user, constants.VENDOR)
             vendor_agent = VendorAgent.objects.create(user = user, vendor = vendor)
-        elif role == constants.CONSUMER:
-            token = create_token(user, constants.CONSUMER)
-            consumer = Consumer.objects.create(user = user)
         elif role == constants.DELIVERY_GUY:
             token = create_token(user, constants.DELIVERY_GUY)
             delivery_guy = DeliveryGuy.objects.create(user = user)

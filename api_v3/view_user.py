@@ -10,7 +10,7 @@ from rest_framework.permissions import IsAuthenticated
 
 from api_v3 import constants
 from api_v3.utils import is_userexists, create_token, assign_usergroup_with_name, assign_usergroup, user_role
-from yourguy.models import User, Vendor, VendorAgent, Consumer, DeliveryGuy, Employee
+from yourguy.models import User, Vendor, VendorAgent, DeliveryGuy, Employee
 
 from api_v3.utils import response_access_denied, response_with_payload, response_error_with_message, response_success_with_message, response_invalid_pagenumber, response_incomplete_parameters
 
@@ -162,9 +162,6 @@ def register(request):
         token = create_token(user, constants.DELIVERY_GUY)
         delivery_guy = DeliveryGuy.objects.create(user=user)
         assign_usergroup(user)
-    elif role == constants.CONSUMER:
-        consumer = Consumer.objects.create(user=user)
-        assign_usergroup_with_name(user, constants.CONSUMER)
     elif role == constants.OPERATIONS:
         token = create_token(user, constants.OPERATIONS)
         employee = Employee.objects.create(user=user)

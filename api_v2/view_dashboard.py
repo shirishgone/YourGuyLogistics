@@ -12,7 +12,7 @@ from rest_framework.decorators import api_view
 
 from yourguy.models import Order, OrderDeliveryStatus, Consumer, Vendor, DeliveryGuy, Area, VendorAgent, Address, Product, OrderItem, User
 from datetime import datetime, timedelta, time
-from api.views import user_role, is_userexists, is_vendorexists, is_consumerexists, is_dgexists, is_address_exists, days_in_int, send_sms, normalize_offset_awareness, ist_day_start, ist_day_end, ist_datetime
+from api.views import user_role, is_userexists, is_vendorexists, is_dgexists, is_address_exists, days_in_int, send_sms, normalize_offset_awareness, ist_day_start, ist_day_end, ist_datetime
 
 import constants
 import json
@@ -80,8 +80,8 @@ def excel_download(request):
 			excel_order = {
 			'date':date.strftime('%d-%m-%Y'),
 			'order_id':delivery_status.id,
-			'customer_name':order.consumer.user.first_name,
-			'customer_phone_number':order.consumer.user.username,
+			'customer_name':order.consumer.full_name,
+			'customer_phone_number':order.consumer.phone_number,
 			'cod_amount':order.cod_amount,
 			'cod_collected':delivery_status.cod_collected_amount,
 			'cod_reason':delivery_status.cod_remarks,

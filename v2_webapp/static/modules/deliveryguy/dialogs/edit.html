@@ -47,7 +47,7 @@
                     <div flex="50" flex-xs="50" class="profile-data" ng-if="!dgEdit.DG.is_teamlead">
                         <md-input-container class="md-block">
                             <label>Team Lead</label>
-                            <md-select name="teamlead" multiple ng-model="dgEdit.DG.team_lead_ids" ng-required="true">
+                            <md-select name="teamlead" multiple ng-model="dgEdit.DG.team_lead_dg_ids" ng-required="true">
                                 <md-option ng-repeat="lead in dgEdit.TeamLeads" value="{{lead.dg_tl_id}}">
                                     {{lead.dg_tl_name}}
                                 </md-option>
