@@ -112,10 +112,10 @@
 												{{attendance.date | date :'MMM d'}}
 											</td>
 											<td>
-												{{attendance.login_time | date :'h mm a'}}
+												{{attendance.login_time || 'Not Checked In' | date :'h mm a' }}
 											</td>
 											<td>
-												{{attendance.logout_time | date :'h mm a'}}
+												{{attendance.logout_time || 'Not Checked Out' | date :'h mm a' }}
 											</td>
 											<td>
 												{{attendance.worked_hrs}}

@@ -5,8 +5,23 @@
 		var fetchUserProfile = function() {
 			var deferred = $q.defer();
 			Profile.profile(function (response) {
+				if (userProfile.hasOwnProperty('role')) {
+					delete userProfile.role;
+				}
+				if (userProfile.hasOwnProperty('name')) {
+					delete userProfile.name;
+				}
+				if (userProfile.hasOwnProperty('is_authenticated')) {
+					delete userProfile.is_authenticated;
+				}
 				deferred.resolve(angular.extend(userProfile, response, {
 					$refresh: fetchUserProfile,
+					$getUsername: function(){
+						return userProfile.name;
+					},
+					$getUserRole: function(){
+						return userProfile.role;
+					},
 					$clearUserRole: function(){
 						return role.$resetUserRole();
 					},

@@ -47,6 +47,12 @@
 					method : 'GET',
 					isArray : false
 				}
+			}),
+			dgsAttendance : $resource(constants.v3baseUrl+'deliveryguy/download_attendance/', {}, {
+				query : {
+					method : 'GET',
+					isArray : false
+				}
 			})
 		};
 	};

@@ -73,37 +73,60 @@
 })();
 (function(){
 	'use strict';
-	var homeCntrl = function($state,$mdSidenav,$mdDialog,constants,UserProfile){
+	var homeCntrl = function($rootScope,$state,$mdSidenav,$mdDialog,$mdToast,constants,UserProfile){
 		// Show tabs page accorfing to the credentials.
-		this.tabs =  constants.permissible_tabs[UserProfile.role];
-		// Controller logic for common items between vendor and admin.
 		var self = this;
-		this.user_name = UserProfile.name;
+		this.tabs =  constants.permissible_tabs[UserProfile.$getUserRole()];
+		this.user_name = UserProfile.$getUsername();
+		/*
+			confirm: an object to specify all the parameters for logout confirmation dialog box.
+		*/
 		var confirm = $mdDialog.confirm()
-		.parent(angular.element(document.querySelector('#body')))
-		.clickOutsideToClose(false)
-		.title('Are you sure you want to Sign Out?')
-		.textContent('After this you will be redirected to login page.')
-		.ariaLabel('Sign Out')
-		.targetEvent()
-		.ok('Sign Out!')
-		.cancel('Not Now')
-		.openFrom('#logout-button')
-		.closeTo('#logout-button');
+			.parent(angular.element(document.querySelector('#body')))
+			.clickOutsideToClose(false)
+			.title('Are you sure you want to Sign Out?')
+			.textContent('After this you will be redirected to login page.')
+			.ariaLabel('Sign Out')
+			.targetEvent()
+			.ok('Sign Out!')
+			.cancel('Not Now')
+			.openFrom('#logout-button')
+			.closeTo('#logout-button');
+		/*
+			toggle the side navigation bar which shows different tabs available.
+			this funvtion is used be every child page to toggl to sidebar.
+		*/
 		this.toggleSideNav = function(){
 			$mdSidenav('left').toggle();
 		};
+		/*
+			@logout: function to logut the user and redirect to login page.
+		*/
 		this.logout = function(){
 			UserProfile.$clearUserRole();
 			UserProfile.$refresh().then(function (vendor){
 				$state.go('login');
 			});
 		};
+		/*
+			@showLogoutDialog: function to show the confirmation dialog box when logout button is clicked.
+		*/
 		this.showLogoutDialog = function(){
 			$mdDialog.show(confirm).then(function(){
 				self.logout();
 			});
 		};
+		$rootScope.$on('errorOccured', function(){
+			if($rootScope.errorMessage){
+				$mdToast.show({
+					controller: 'ErrorToastCntrl',
+					controllerAs : 'errorToast',
+					templateUrl: '/static/modules/home/error-toast-template.html',
+					hideDelay: 6000,
+					position: 'top right'
+				});
+			}
+		});
 	};
 
 	angular.module('home', [])
@@ -112,24 +135,36 @@
 		.state('home',{
 			url: "/home",
 			templateUrl: "/static/modules/home/home.html",
-			abstract: true,
 			controllerAs : 'home',
     		controller: "homeCntrl",
     		resolve: {
-    			UserProfile : 'UserProfile',
     			access: ["Access",function (Access){ 
     				return Access.isAuthenticated(); 
-    			}]
+    			}],
+    			UserProfile : 'UserProfile',
     		}
 		});
 	}])
 	.controller('homeCntrl', [
+		'$rootScope',
 		'$state',
 		'$mdSidenav',
 		'$mdDialog',
+		'$mdToast',
 		'constants',
 		'UserProfile',
 		homeCntrl
+	])
+	.controller('ErrorToastCntrl', [
+		'$mdToast',
+		'$rootScope', 
+		function($mdToast,$rootScope){
+			this.msg = $rootScope.errorMessage;
+
+			this.closeToast = function() {
+				$mdToast.hide();
+			};
+		}
 	]);
 })();
 (function(){
@@ -564,6 +599,12 @@
 					method : 'GET',
 					isArray : false
 				}
+			}),
+			dgsAttendance : $resource(constants.v3baseUrl+'deliveryguy/download_attendance/', {}, {
+				query : {
+					method : 'GET',
+					isArray : false
+				}
 			})
 		};
 	};
@@ -603,8 +644,13 @@
 				method: 'GET',
 				transformResponse: function(data,headers){
 					var response = angular.fromJson(data);
-					response.payload.data.is_authenticated = response.success;
-					return response.payload.data;
+					if(response.payload){
+						response.payload.data.is_authenticated = response.success;
+						return response.payload.data;
+					}
+					else{
+						return response;
+					}
 				}
 			}
 		});
@@ -669,14 +715,21 @@
 // })();
 (function(){
 	'use strict';
-	var errorHandler = function ($q,$localStorage,$location){
+	var errorHandler = function ($q,$localStorage,$location,$rootScope){
 		var errorHandler = {
 			responseError : function(response){
+				if(response.data.error){
+					$rootScope.errorMessage = response.data.error.message;
+				}
 				var defer = $q.defer();
 				if (response.status === 401 || response.status === 403) {
 					$localStorage.$reset();
 					$location.path('/login');
 				}
+				else if(response.status === 500){
+					$rootScope.errorMessage = 'Something Went Wrong';
+				}
+				$rootScope.$broadcast('errorOccured');
 				defer.reject(response);
 				return defer.promise;
 
@@ -710,7 +763,8 @@
 	.factory('errorHandler', [
 		'$q',
 		'$localStorage',
-		'$location', 
+		'$location',
+		'$rootScope', 
 		errorHandler
 	])
 	.config(['$httpProvider',function ($httpProvider) {
@@ -787,8 +841,23 @@
 		var fetchUserProfile = function() {
 			var deferred = $q.defer();
 			Profile.profile(function (response) {
+				if (userProfile.hasOwnProperty('role')) {
+					delete userProfile.role;
+				}
+				if (userProfile.hasOwnProperty('name')) {
+					delete userProfile.name;
+				}
+				if (userProfile.hasOwnProperty('is_authenticated')) {
+					delete userProfile.is_authenticated;
+				}
 				deferred.resolve(angular.extend(userProfile, response, {
 					$refresh: fetchUserProfile,
+					$getUsername: function(){
+						return userProfile.name;
+					},
+					$getUserRole: function(){
+						return userProfile.role;
+					},
 					$clearUserRole: function(){
 						return role.$resetUserRole();
 					},
@@ -1274,6 +1343,7 @@
 			controllerAs : 'dgList',
     		controller: "dgListCntrl",
     		resolve : {
+    			DeliveryGuy : 'DeliveryGuy',
     			access: ["Access","constants", function (Access,constants) { 
     						var allowed_user = [constants.userRole.OPS,constants.userRole.OPS_MANAGER,constants.userRole.SALES,constants.userRole.SALES_MANAGER,constants.userRole.HR];
     						return Access.hasAnyRole(allowed_user); 
@@ -1422,7 +1492,7 @@
 		Its resolved after loading all the dgs from the server.
 			
 	*/
-	var dgListCntrl = function($state,$mdSidenav,$stateParams,dgs,constants){
+	var dgListCntrl = function($state,$mdSidenav,$stateParams,dgs,constants,DeliveryGuy){
 		var self = this;
 		this.params = $stateParams;
 		this.params.date = new Date(this.params.date);
@@ -1463,13 +1533,25 @@
 			self.getDgs();
 			
 		};
+		this.downloadAttendance = function(){
+			var attendance_params = {
+				start_date : moment(self.params.date).format(),
+				end_date   : moment(self.params.date).format()
+			};
+			DeliveryGuy.dgsAttendance.query(attendance_params,function(response){
+				alasql.fn.IsoToDate = function(n){
+					return moment(n).format('DD-MM-YYYY');
+				};
+				var str = 'SELECT name AS Name,IsoToDate(attendance -> 0 -> date) AS Date,attendance -> 0 -> worked_hrs AS Hours';
+				alasql( str+' INTO XLSX("attendance.xlsx",{headers:true}) FROM ?',[response.payload.data]);
+			});
+		};
 		/*
 			@getOrders rleoads the order controller according too the filter to get the new filtered data.
 		*/
 		this.getDgs = function(){
 			$state.transitionTo($state.current, self.params, { reload: true, inherit: false, notify: true });
 		};
-
 	};
 
 	angular.module('deliveryguy')
@@ -1479,6 +1561,7 @@
 		'$stateParams',
 		'dgs',
 		'constants',
+		'DeliveryGuy',
 		dgListCntrl 
 	]);
 })();
@@ -1548,7 +1631,7 @@
 	var dgDetailCntrl = function($state,$stateParams,$mdDialog,$mdMedia,DeliveryGuy,dgConstants,leadUserList,DG,PreviousState){
 		var self = this;
 		self.params = $stateParams;
-		self.DG = DG.payload.data.data;
+		self.DG = DG.payload.data;
 		self.attendance_date = moment().date(1).toDate();
 		self.attendanceMinDate = moment('2015-01-01').toDate();
 		self.attendanceMaxDate = moment().toDate();

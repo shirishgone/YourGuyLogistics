@@ -1,13 +1,20 @@
 (function(){
 	'use strict';
-	var errorHandler = function ($q,$localStorage,$location){
+	var errorHandler = function ($q,$localStorage,$location,$rootScope){
 		var errorHandler = {
 			responseError : function(response){
+				if(response.data.error){
+					$rootScope.errorMessage = response.data.error.message;
+				}
 				var defer = $q.defer();
 				if (response.status === 401 || response.status === 403) {
 					$localStorage.$reset();
 					$location.path('/login');
 				}
+				else if(response.status === 500){
+					$rootScope.errorMessage = 'Something Went Wrong';
+				}
+				$rootScope.$broadcast('errorOccured');
 				defer.reject(response);
 				return defer.promise;
 
@@ -41,7 +48,8 @@
 	.factory('errorHandler', [
 		'$q',
 		'$localStorage',
-		'$location', 
+		'$location',
+		'$rootScope', 
 		errorHandler
 	])
 	.config(['$httpProvider',function ($httpProvider) {
