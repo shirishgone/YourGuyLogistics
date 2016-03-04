@@ -335,7 +335,7 @@ def cod_report():
             else:
                 dg_full_name = 'Unassigned'
 
-            cod_with_dg = "\n%s - COD: %s/%s" % \
+            cod_with_dg = "%s - COD: %s/%s" % \
                           (dg_full_name, sum_of_cod_collected, sum_of_cod_amount)
             email_body = email_body + "\n\n" + cod_with_dg
             # ===============================================================
@@ -361,7 +361,7 @@ def cod_report():
                     sum_of_cod_amount = 0
 
                 cod_with_vendor = ''
-                cod_with_vendor = "\n  %s- COD: %s/%s" % (vendor_name, sum_of_cod_collected, sum_of_cod_amount)
+                cod_with_vendor = "  %s- COD: %s/%s" % (vendor_name, sum_of_cod_collected, sum_of_cod_amount)
                 email_body = email_body + "\n" + cod_with_vendor
 
         # ---------------------------------------------------------------------------
