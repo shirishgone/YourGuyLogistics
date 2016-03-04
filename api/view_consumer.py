@@ -87,7 +87,8 @@ class ConsumerViewSet(viewsets.ModelViewSet):
             try:
                 consumer = Consumer.objects.get(phone_number=phone_number)    
             except Exception as e:
-                consumer = Consumer.objects.create(phone_number=phone_number, full_name = name)
+                user = User.objects.create(username = phone_number)
+                consumer = Consumer.objects.create(user = user, phone_number=phone_number, full_name = name)
 
             address = Address.objects.create(flat_number = flat_number, building = building, street = street, area = area)                
             consumer.associated_vendor.add(vendor_agent.vendor)

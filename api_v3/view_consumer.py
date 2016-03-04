@@ -12,6 +12,23 @@ from api_v3.utils import user_role, paginate, is_userexists
 from yourguy.models import Consumer, VendorAgent
 from api_v3.utils import response_access_denied, response_with_payload, response_error_with_message, response_success_with_message, response_invalid_pagenumber, response_incomplete_parameters
 
+def create_address(full_address, pin_code, landmark):
+    new_address = Address.objects.create(full_address = full_address, pin_code = pin_code)
+    if landmark is not None:
+        new_address.landmark = landmark
+        new_address.save()
+    return new_address    
+
+def create_consumer(name, phone_number, address, vendor):    
+    try:
+        consumer = Consumer.objects.get(phone_number=phone_number)    
+    except Exception as e:
+        user = User.objects.create(username = phone_number)
+        consumer = Consumer.objects.create(user = user, phone_number=phone_number, full_name = name)
+    consumer.associated_vendor.add(vendor)
+    consumer.addresses.add(address)
+    consumer.save()
+    return consumer
 
 def consumer_list_dict(consumer):
     consumer_dict = {
@@ -139,6 +156,31 @@ class ConsumerViewSet(viewsets.ModelViewSet):
                 result.append(consumer_dict)
 
             content = {"data": result, "total_pages": total_pages}
+            return response_with_payload(content, None)
+        else:
+            return response_access_denied()
+
+    def create(self, request):        
+        role = user_role(request.user)
+        if (role == constants.VENDOR):
+            vendor_agent = VendorAgent.objects.get(user = request.user)
+            try:
+                phone_number = request.data['phone_number']
+                name = request.data['name']
+                full_address = request.data['full_address']
+                pin_code = request.data['pin_code']
+                landmark = request.data.get('landmark')
+            except Exception as e:
+                params = ['phone_number', 'name', 'full_address', 'pin_code', 'landmark']
+                return response_incomplete_parameters(params)
+            
+            new_address = create_address(full_address, pin_code, landmark)
+            new_consumer = create_consumer(name, phone_number, new_address, vendor_agent.vendor)
+            
+            content = {
+            'consumer_id': new_consumer.id,
+            'new_address_id':new_address.id
+            }
             return response_with_payload(content, None)
         else:
             return response_access_denied()

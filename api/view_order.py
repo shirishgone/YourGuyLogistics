@@ -535,7 +535,8 @@ class OrderViewSet(viewsets.ModelViewSet):
             try:
                 consumer = Consumer.objects.get(phone_number=phone_number)    
             except Exception as e:
-                consumer = Consumer.objects.create(phone_number=phone_number, full_name = name)
+                user = User.objects.create(username = phone_number)
+                consumer = Consumer.objects.create(user = user, phone_number=consumer_phone_number, full_name = consumer_name)
             consumer.associated_vendor.add(vendor)
             consumer.save()
             
@@ -697,7 +698,8 @@ class OrderViewSet(viewsets.ModelViewSet):
                 try:
                     consumer = Consumer.objects.get(phone_number=consumer_phone_number)    
                 except Exception as e:
-                    consumer = Consumer.objects.create(phone_number=consumer_phone_number, full_name = consumer_name)
+                    user = User.objects.create(username = phone_number)
+                    consumer = Consumer.objects.create(user = user, phone_number=consumer_phone_number, full_name = consumer_name)
                 consumer.associated_vendor.add(vendor)
                 consumer.addresses.add(delivery_address)
                 consumer.save()
