@@ -2,7 +2,7 @@
 	'use strict';
 	var Order = function ($resource,constants){
 		return {
-			getOrders : $resource(constants.v2baseUrl+'order/:id/',{id:"@id"},{
+			getOrders : $resource(constants.v3baseUrl+'order/:id/',{id:"@id"},{
 				query :{
 					method: 'GET',
 					isArray: false
