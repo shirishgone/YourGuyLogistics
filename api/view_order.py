@@ -533,10 +533,13 @@ class OrderViewSet(viewsets.ModelViewSet):
 
         try:
             try:
-                consumer = Consumer.objects.get(phone_number=phone_number)    
+                consumer = Consumer.objects.get(phone_number=phone_number, vendor = vendor)    
             except Exception as e:
-                user = User.objects.create(username = phone_number)
-                consumer = Consumer.objects.create(user = user, phone_number=consumer_phone_number, full_name = consumer_name)
+                try:
+                    user = User.objects.get(username = phone_number)
+                except Exception, e:
+                    user = User.objects.create(username = phone_number)
+                consumer = Consumer.objects.create(user = user, phone_number=consumer_phone_number, full_name = consumer_name, vendor = vendor)
             consumer.associated_vendor.add(vendor)
             consumer.save()
             
@@ -696,10 +699,13 @@ class OrderViewSet(viewsets.ModelViewSet):
             try:
 
                 try:
-                    consumer = Consumer.objects.get(phone_number=consumer_phone_number)    
+                    consumer = Consumer.objects.get(phone_number=consumer_phone_number, vendor = vendor)    
                 except Exception as e:
-                    user = User.objects.create(username = phone_number)
-                    consumer = Consumer.objects.create(user = user, phone_number=consumer_phone_number, full_name = consumer_name)
+                    try:
+                        user = User.objects.get(username = phone_number)
+                    except Exception, e:
+                        user = User.objects.create(username = phone_number)
+                    consumer = Consumer.objects.create(user = user, phone_number=consumer_phone_number, full_name = consumer_name, vendor = vendor)
                 consumer.associated_vendor.add(vendor)
                 consumer.addresses.add(delivery_address)
                 consumer.save()

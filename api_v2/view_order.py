@@ -96,10 +96,13 @@ def retail_order_send_email(vendor, new_order_ids):
 
 def fetch_consumer(phone_number, name, vendor):
     try:
-        consumer = Consumer.objects.get(phone_number=phone_number)    
+        consumer = Consumer.objects.get(phone_number=phone_number, vendor = vendor)
     except Exception as e:
-        user = User.objects.create(username = phone_number)
-        consumer = Consumer.objects.create(user = user, phone_number=phone_number, full_name = name)
+        try:
+            user = User.objects.get(username = phone_number)    
+        except Exception, e:
+            user = User.objects.create(username = phone_number)                
+        consumer = Consumer.objects.create(user = user, phone_number=phone_number, full_name = name, vendor = vendor)
     consumer.associated_vendor.add(vendor)
     consumer.save()
     return consumer

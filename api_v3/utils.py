@@ -291,8 +291,6 @@ def user_role(user):
     role = token_string.split(':').pop()
     if role == constants.VENDOR:
         return constants.VENDOR
-    elif role == constants.CONSUMER:
-        return constants.CONSUMER
     elif role == constants.OPERATIONS:
         return constants.OPERATIONS
     elif role == constants.OPERATIONS_MANAGER:
