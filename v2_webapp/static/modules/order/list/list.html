@@ -148,7 +148,13 @@
 	</div>
 	<md-sidenav class="filter-sidenav md-sidenav-right md-whiteframe-z3" layout="column" md-component-id="order-filter">
 		<md-toolbar class="md-warn md-whiteframe-z1">
-        	<h1 class="md-subhead md-toolbar-tools">FILTERS</h1>
+			<div class="md-toolbar-tools">
+				<h1 class="md-subhead md-toolbar-tools">FILTERS</h1>
+        		<span flex></span>
+				<md-button class="md-icon-button" aria-label="Filter Button" ng-click="opsOrder.getOrders()">
+					<md-icon>done</md-icon>
+				</md-button>
+			</div>
      	</md-toolbar>
      	<md-content flex layout="column">
      		<md-list>
@@ -179,18 +185,18 @@
 				<div class="dg-list">
 					<md-autocomplete
 						md-no-cache="true"
-						md-selected-item="opsOrder.selectedItem"
-						md-search-text="opsOrder.searchText"
+						md-selected-item="opsOrder.selectedDg"
+						md-search-text="opsOrder.searchedDg"
 						md-selected-item-change="opsOrder.selectedDgChange(dg)"
-						md-items="dg in opsOrder.dgSearchTextChange(opsOrder.searchText)"
+						md-items="dg in opsOrder.dgSearchTextChange(opsOrder.searchedDg)"
 						md-item-text="dg.name"
 						md-min-length="1"
 						placeholder="Search Delivery Guy">
 						<md-item-template>
-							<span md-highlight-text="opsOrder.searchText" md-highlight-flags="^i">{{dg.name}}</span>
+							<span md-highlight-text="opsOrder.searchedDg" md-highlight-flags="^i">{{dg.name}}</span>
 						</md-item-template>
 						<md-not-found>
-							No states matching "{{opsOrder.searchText}}" were found.
+							No states matching "{{opsOrder.searchedDg}}" were found.
 						</md-not-found>
 					</md-autocomplete>
 				</div>
@@ -198,6 +204,12 @@
 				<div class="cod">
 					<md-switch ng-model="opsOrder.params.cod" aria-label="COD" ng-true-value="true" ng-false-value="false" class="md-accent">
    						Cash On Delivery
+  					</md-switch>
+				</div>
+				<md-subheader>RETAIL</md-subheader>
+				<div class="retail">
+					<md-switch ng-model="opsOrder.params.is_retail" aria-label="RETAIL" ng-true-value="true" ng-false-value="false" class="md-accent">
+   						Is Retail
   					</md-switch>
 				</div>
 				<md-subheader>STATUS</md-subheader>
@@ -219,6 +231,19 @@
      								{{time.value}}
      							</md-radio-button>
      						</md-radio-group>
+     					</div>
+     				</form>
+				</md-list-item>
+				<md-subheader>PINCODES</md-subheader>
+				<md-input-container md-no-float class="md-block searchedPincode">
+					<input ng-model="opsOrder.searchedPincode" type="text" placeholder="Search Pincode">
+				</md-input-container>
+     			<md-list-item class="md-1-line" flex>
+     				<form name="picodeselectform" flex>
+     					<div class="pincode-list" layout="column">
+     						<md-checkbox flex ng-repeat="item in opsOrder.pincodes | filter: opsOrder.searchedPincode" ng-checked="opsOrder.pincodesSelection.exists(item, opsOrder.pincodesArray)" ng-click="opsOrder.pincodesSelection.toggle(item, opsOrder.pincodesArray)">
+     							{{ item.pincode }}
+     						</md-checkbox>
      					</div>
      				</form>
 				</md-list-item>

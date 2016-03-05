@@ -8,15 +8,24 @@
 	.vendor-list ,.dg-list {
 		padding: 10px 10px;
 	}
-	.status-list,.time-list {
+	.status-list,.time-list,.pincode-list {
+		max-height: 300px;
+		overflow-y: auto;
 		padding-top:10px;
 		font-size: 12px;
 	}
-	.cod {
+	.cod,.retail {
 		font-size: 12px;
 		md-switch {
 			margin: 10px 10px;
 		}
+	}
+	.pincode-list {
+		margin-bottom: 15px;
+	}
+	.searchedPincode {
+		margin: 10px 10px 10px 10px;
+		height: 24px;
 	}
 }
 
