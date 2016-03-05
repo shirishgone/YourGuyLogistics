@@ -115,3 +115,22 @@ def consumers_with_more_than_one_vendor(request):
             'count': count
         }        
         return Response(content, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+def refill_consumers_with_one_vendor(request):
+    if request.user.is_staff is False:
+        content = {
+            'error': 'insufficient permissions',
+            'description': 'Only admin can access this method'
+        }
+        return Response(content, status=status.HTTP_400_BAD_REQUEST)
+    else:
+        consumers = Consumer.objects.filter(vendor__isnull=True)
+        for consumer in consumers:
+            vendors = consumer.associated_vendor.all()
+            count = len(vendors)
+            if count == 1:
+                single_vendor = vendors[0]
+                consumer.vendor = single_vendor
+                consumer.save()
+        return Response(status=status.HTTP_200_OK)
