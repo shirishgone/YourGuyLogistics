@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import get_object_or_404
 from yourguy.models import Address, Notification, Consumer
-from django.db.models import Q
+from django.db.models import Q, Count
 
 @api_view(['GET'])
 def fill_full_address(request):
@@ -99,3 +99,19 @@ def consumers_refill(request):
             consumer.full_name = consumer.user.first_name
             consumer.save()
         return Response(status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+def consumers_with_more_than_one_vendor(request):
+    if request.user.is_staff is False:
+        content = {
+            'error': 'insufficient permissions',
+            'description': 'Only admin can access this method'
+        }
+        return Response(content, status=status.HTTP_400_BAD_REQUEST)
+    else:
+        consumers = Consumer.objects.annotate(vendor_count=Count('associated_vendor')).filter(vendor_count__gt=1)
+        count = consumers.count()
+        content = {
+            'count': count
+        }        
+        return Response(content, status=status.HTTP_200_OK)

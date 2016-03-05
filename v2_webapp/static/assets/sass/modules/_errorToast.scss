@@ -1,0 +1,11 @@
+md-toast.md-ygBlueTheme-theme .md-toast-content {
+	min-width : 250px;
+	padding: 8px 24px;
+	border: 5px solid $red-color;
+	text-transform: uppercase;
+	color: $red-color;
+	font-weight: 600;
+	.md-button {
+		color: $red-color;
+	}
+}

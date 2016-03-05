@@ -9,6 +9,7 @@
 			controllerAs : 'dgList',
     		controller: "dgListCntrl",
     		resolve : {
+    			DeliveryGuy : 'DeliveryGuy',
     			access: ["Access","constants", function (Access,constants) { 
     						var allowed_user = [constants.userRole.OPS,constants.userRole.OPS_MANAGER,constants.userRole.SALES,constants.userRole.SALES_MANAGER,constants.userRole.HR];
     						return Access.hasAnyRole(allowed_user); 
