@@ -2446,7 +2446,7 @@ ygVendors.controller('customerDetailsCntrl',function ($scope,$stateParams,$timeo
         alert(status.error)
       }
       else{
-        $scope.user_detail = status.data.data
+        $scope.user_detail = status.data
         $scope.user_detail.address_id = $scope.user_detail.addresses[0].id
         StoreSession.updateCustomer($scope.user_detail)
       }
