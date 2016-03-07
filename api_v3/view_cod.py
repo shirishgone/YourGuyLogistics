@@ -5,9 +5,10 @@ from api_v3.utils import cod_actions, response_access_denied, get_object_or_404,
 from api_v3 import constants
 from yourguy.models import CODTransaction, DeliveryGuy, OrderDeliveryStatus, DeliveryTeamLead
 from rest_framework import authentication, viewsets
-from rest_framework.decorators import detail_route, list_route
+from rest_framework.decorators import list_route
 from rest_framework.permissions import IsAuthenticated
-from api_v3.utils import user_role
+from api_v3.utils import user_role, log_exception
+from api_v3.push import send_push
 import uuid
 import pytz
 
@@ -81,7 +82,6 @@ def associated_dgs_pending_cod_details(delivery_guy):
 
 def cod_balance_calculation(dg):
     deliveries = []
-    dg_tl_id = dg.id
     delivery_statuses = OrderDeliveryStatus.objects.filter(delivery_guy=dg,
                                                            cod_status=constants.COD_STATUS_COLLECTED)
     delivery_statuses_total = delivery_statuses.values('delivery_guy__user__username').\
@@ -89,19 +89,21 @@ def cod_balance_calculation(dg):
     balance_amount = None
     if len(delivery_statuses_total) > 0:
         balance_amount = delivery_statuses_total[0]['sum_of_cod_collected']
-    delivery_guy_tl = DeliveryTeamLead.objects.get(delivery_guy=dg)
-    associated_dgs = delivery_guy_tl.associate_delivery_guys.all()
-    associated_dgs = associated_dgs.filter(is_active=True)
-    for single_dg in associated_dgs:
-        delivery_statuses = OrderDeliveryStatus.objects.filter(delivery_guy=single_dg,
-                                                               cod_status=constants.COD_STATUS_TRANSFERRED_TO_TL,
-                                                               cod_transactions__transaction_status=constants.VERIFIED,
-                                                               cod_transactions__dg_tl_id=dg_tl_id)
-        for single in delivery_statuses:
-            deliveries.append(single.id)
-        delivery_statuses = delivery_statuses.values('delivery_guy__user__username').annotate(sum_of_cod_collected=Sum('cod_collected_amount'))
-        if len(delivery_statuses) > 0:
-            balance_amount = balance_amount + delivery_statuses[0]['sum_of_cod_collected']
+        if dg.is_teamlead is True:
+            dg_tl_id = dg.id
+            delivery_guy_tl = DeliveryTeamLead.objects.get(delivery_guy=dg)
+            associated_dgs = delivery_guy_tl.associate_delivery_guys.all()
+            associated_dgs = associated_dgs.filter(is_active=True)
+            for single_dg in associated_dgs:
+                delivery_statuses = OrderDeliveryStatus.objects.filter(delivery_guy=single_dg,
+                                                                       cod_status=constants.COD_STATUS_TRANSFERRED_TO_TL,
+                                                                       cod_transactions__transaction_status=constants.VERIFIED,
+                                                                       cod_transactions__dg_tl_id=dg_tl_id)
+                for single in delivery_statuses:
+                    deliveries.append(single.id)
+                delivery_statuses = delivery_statuses.values('delivery_guy__user__username').annotate(sum_of_cod_collected=Sum('cod_collected_amount'))
+                if len(delivery_statuses) > 0:
+                    balance_amount = balance_amount + delivery_statuses[0]['sum_of_cod_collected']
     return balance_amount
 
 
@@ -264,3 +266,4 @@ class CODViewSet(viewsets.ViewSet):
                 return response_error_with_message(error_message)
         else:
             return response_access_denied()
+
