@@ -32,7 +32,7 @@ class ConsumerViewSet(viewsets.ModelViewSet):
         role = user_role(request.user)
         if role == constants.VENDOR:
             vendor_agent = get_object_or_404(VendorAgent, user = request.user)
-            consumers_of_vendor = Consumer.objects.filter(associated_vendor = vendor_agent.vendor).order_by(Lower('full_name'))
+            consumers_of_vendor = Consumer.objects.filter(vendor = vendor_agent.vendor).order_by(Lower('full_name'))
             
             serializer = ConsumerSerializer(consumers_of_vendor, many=True)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -85,11 +85,13 @@ class ConsumerViewSet(viewsets.ModelViewSet):
 
             
             try:
-                consumer = Consumer.objects.get(phone_number=phone_number)    
+                consumer = Consumer.objects.get(phone_number=phone_number, vendor = vendor)    
             except Exception as e:
-                user = User.objects.create(username = phone_number)
-                consumer = Consumer.objects.create(user = user, phone_number=phone_number, full_name = name)
-
+                try:
+                    user = User.objects.get(username = phone_number)
+                except Exception, e:
+                    user = User.objects.create(username = phone_number)    
+                consumer = Consumer.objects.create(user = user, phone_number=phone_number, full_name = name, vendor = vendor)
             address = Address.objects.create(flat_number = flat_number, building = building, street = street, area = area)                
             consumer.associated_vendor.add(vendor_agent.vendor)
             consumer.addresses.add(address)

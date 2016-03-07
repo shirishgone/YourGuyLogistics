@@ -28,10 +28,13 @@ def create_address(full_address, pin_code, landmark):
 
 def create_consumer(name, phone_number, address, vendor):    
     try:
-        consumer = Consumer.objects.get(phone_number=phone_number)    
+        consumer = Consumer.objects.get(phone_number=phone_number, vendor = vendor)
     except Exception as e:
-        user = User.objects.create(username = phone_number)
-        consumer = Consumer.objects.create(user = user, phone_number=phone_number, full_name = name)
+        try:
+            user = User.objects.get(username = phone_number)
+        except Exception, e:
+            user = User.objects.create(username = phone_number)
+        consumer = Consumer.objects.create(user = user, phone_number=phone_number, full_name = name, vendor = vendor)
     consumer.associated_vendor.add(vendor)
     consumer.addresses.add(address)
     consumer.save()
@@ -99,16 +102,9 @@ class ConsumerViewSet(viewsets.ModelViewSet):
         role = user_role(request.user)
         if role == constants.VENDOR:
             vendor_agent = get_object_or_404(VendorAgent, user = request.user)
-            all_associated_vendors = consumer.associated_vendor.all()
-            is_consumer_associated_to_vendor = False
-            for vendor in all_associated_vendors:
-                if vendor.id == vendor_agent.vendor.id:
-                    is_consumer_associated_to_vendor = True
-                    break
-            if is_consumer_associated_to_vendor:
+            if consumer.vendor.id == vendor_agent.vendor.id:
                 detail_dict = consumer_detail_dict(consumer)
-                response_content = { "data": detail_dict}
-                return Response(response_content, status = status.HTTP_200_OK)
+                return Response(detail_dict, status = status.HTTP_200_OK)
             else:
                 content = {'error':'You dont have permissions to view this consumer.'}
                 return Response(content, status = status.HTTP_400_BAD_REQUEST)  
@@ -129,7 +125,7 @@ class ConsumerViewSet(viewsets.ModelViewSet):
         role = user_role(request.user)
         if role == constants.VENDOR:
             vendor_agent = get_object_or_404(VendorAgent, user = request.user)
-            total_consumers_of_vendor = Consumer.objects.filter(associated_vendor = vendor_agent.vendor).order_by(Lower('full_name'))
+            total_consumers_of_vendor = Consumer.objects.filter(vendor = vendor_agent.vendor).order_by(Lower('full_name'))
         
             # SEARCH KEYWORD FILTERING -------------------------------------------------
             if search_query is not None:
@@ -204,7 +200,7 @@ class ConsumerViewSet(viewsets.ModelViewSet):
         role = user_role(request.user)
         if role == constants.VENDOR:
             vendor_agent = get_object_or_404(VendorAgent, user = request.user)
-            all_consumers_of_vendor = Consumer.objects.filter(associated_vendor = vendor_agent.vendor).order_by(Lower('full_name'))
+            all_consumers_of_vendor = Consumer.objects.filter(vendor = vendor_agent.vendor).order_by(Lower('full_name'))
             
             result = []
             for consumer in all_consumers_of_vendor:
