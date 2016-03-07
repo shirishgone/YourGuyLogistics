@@ -1461,18 +1461,23 @@ class OrderViewSet(viewsets.ViewSet):
                 todays_delivery_ids.append(delivery_status.id)
         
         # INFORM DG THROUGH SMS AND NOTIF IF ITS ONLY TODAYS DELIVERY -----
-        try:
-            if len(todays_delivery_ids) == 1:
-                delivery_status = get_object_or_404(OrderDeliveryStatus, id=todays_delivery_ids[0])
-                today = datetime.now()
-                send_sms_to_dg_about_order(today, dg, delivery_status)
-            else:
-                send_sms_to_dg_about_mass_orders(dg, todays_delivery_ids)
-        except Exception as e:
-            log_exception(e, 'SMS to DG about delivery assignment')
+        if is_orders_assigned is True:
+            try:
+                send_dg_notification(dg, delivery_ids)
+                if len(todays_delivery_ids) == 1:
+                    delivery_status = get_object_or_404(OrderDeliveryStatus, id=todays_delivery_ids[0])
+                    today = datetime.now()
+                    send_sms_to_dg_about_order(today, dg, delivery_status)
+                else:
+                    send_sms_to_dg_about_mass_orders(dg, todays_delivery_ids)
+            except Exception as e:
+                log_exception(e, 'SMS to DG about delivery assignment')
         
-        success_message = 'Orders assigned successfully'
-        return response_success_with_message(success_message)
+            success_message = 'Orders assigned successfully'
+            return response_success_with_message(success_message)
+        else:
+            error_message = 'Few orders arent updated'
+            return response_error_with_message(error_message)
 
     @list_route(methods=['put'])
     def add_deliveries(self, request, pk=None):
