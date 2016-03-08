@@ -251,6 +251,7 @@ class CODViewSet(viewsets.ViewSet):
     @list_route(methods=['POST'])
     def qr_code(self, request):
         role = user_role(request.user)
+        balance_amount = 0
         if role == constants.DELIVERY_GUY:
             dg = get_object_or_404(DeliveryGuy, user=request.user)
             dg_id = dg.id
@@ -262,14 +263,25 @@ class CODViewSet(viewsets.ViewSet):
                 except Exception as e:
                     params = ['dg_tl_id', 'cod_amount', 'order_ids']
                     return response_incomplete_parameters(params)
-                transaction_uuid = uuid.uuid4()
-                cod_action = cod_actions(constants.COD_TRANSFERRED_TO_TL_CODE)
-                cod_transaction = create_cod_transaction(cod_action, request.user, dg_id, dg_tl_id, cod_amount, transaction_uuid, delivery_ids)
-                for delivery_id in delivery_ids:
-                    delivery_status = get_object_or_404(OrderDeliveryStatus, pk=delivery_id)
-                    add_cod_transaction_to_delivery(cod_transaction, delivery_status)
-                content = {'transaction_id': transaction_uuid}
-                return response_with_payload(content, None)
+                try:
+                    for delivery_id in delivery_ids:
+                        delivery_status = get_object_or_404(OrderDeliveryStatus, pk=delivery_id)
+                        balance_amount = balance_amount + delivery_status.cod_collected_amount
+                    if balance_amount == cod_amount:
+                        transaction_uuid = uuid.uuid4()
+                        cod_action = cod_actions(constants.COD_TRANSFERRED_TO_TL_CODE)
+                        cod_transaction = create_cod_transaction(cod_action, request.user, dg_id, dg_tl_id, cod_amount, transaction_uuid, delivery_ids)
+                        for delivery_id in delivery_ids:
+                            delivery_status = get_object_or_404(OrderDeliveryStatus, pk=delivery_id)
+                            add_cod_transaction_to_delivery(cod_transaction, delivery_status)
+                        content = {'transaction_id': transaction_uuid}
+                        return response_with_payload(content, None)
+                    else:
+                        error_message = 'cod amount does not match with the total cod collection from all the deliveries selected'
+                        return response_error_with_message(error_message)
+                except Exception as e:
+                    error_message = 'Order not found'
+                    return response_error_with_message(error_message)
             else:
                 error_message = 'This is a deactivated dg OR a DG TL'
                 return response_error_with_message(error_message)
