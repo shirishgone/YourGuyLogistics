@@ -14,7 +14,6 @@ import pytz
 
 
 def send_cod_status_notification(dg, dg_tl, cod_amount, is_cod_status):
-    device_token = 'eYLlE5bPZhs:APA91bFepu5BLaCPmRBXtoerDBXHHwFof-ALZfBaRck0plM5ay0RSVp7BNSINuGTuynneMJpO7__1OexlmWh8ayxXIDt9zm38z17J4vHBj--VZ_pXCvn83F1DRQWUPnco-B75NXaG0_A'
     try:
         if is_cod_status is True:
             data = {
@@ -24,7 +23,7 @@ def send_cod_status_notification(dg, dg_tl, cod_amount, is_cod_status):
                     'is_cod_successful': is_cod_status
                 }
             }
-            send_push(device_token, data)
+            send_push(dg.device_token, data)
         else:
             data = {
                 'message': 'Transfer of amount %d to %s was declined ' % (cod_amount, dg_tl.user.first_name),
@@ -33,13 +32,12 @@ def send_cod_status_notification(dg, dg_tl, cod_amount, is_cod_status):
                     'is_cod_successful': is_cod_status
                 }
             }
-            send_push(device_token, data)
+            send_push(dg.device_token, data)
     except Exception as e:
         log_exception(e, 'Push notification not sent in send_cod_status_notification ')
 
 
 def send_timeout_notification(dg, cod_amount, is_time_out):
-    device_token = 'eYLlE5bPZhs:APA91bFepu5BLaCPmRBXtoerDBXHHwFof-ALZfBaRck0plM5ay0RSVp7BNSINuGTuynneMJpO7__1OexlmWh8ayxXIDt9zm38z17J4vHBj--VZ_pXCvn83F1DRQWUPnco-B75NXaG0_A'
     try:
         data = {
             'message': 'Transfer to %s of amount %d timed out' % (dg.user.first_name, cod_amount),
@@ -48,10 +46,9 @@ def send_timeout_notification(dg, cod_amount, is_time_out):
                 'is_time_out': is_time_out
             }
         }
-        send_push(device_token, data)
+        send_push(dg.device_token, data)
     except Exception as e:
         log_exception(e, 'Push notification not sent in send_cod_status_notification ')
-
 
 
 def create_cod_transaction(transaction, user, dg_id, dg_tl_id, cod_amount, transaction_uuid, delivery_ids):
