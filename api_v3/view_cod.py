@@ -11,6 +11,14 @@ from api_v3.utils import user_role, log_exception
 from api_v3.push import send_push
 import uuid
 import pytz
+from django.contrib.auth.decorators import user_passes_test
+
+active_required = user_passes_test(lambda u: u.is_active)
+
+
+def active_check(view_func):
+    decorated_view_func = (active_required(view_func))
+    return decorated_view_func
 
 
 def send_cod_status_notification(dg, dg_tl, cod_amount, is_cod_status):
@@ -49,6 +57,7 @@ def send_timeout_notification(dg, cod_amount, is_time_out):
         send_push(dg.device_token, data)
     except Exception as e:
         log_exception(e, 'Push notification not sent in send_cod_status_notification ')
+
 
 
 def create_cod_transaction(transaction, user, dg_id, dg_tl_id, cod_amount, transaction_uuid, delivery_ids):
@@ -246,6 +255,7 @@ class CODViewSet(viewsets.ViewSet):
             return response_access_denied()
 
     @list_route(methods=['POST'])
+    @active_check
     def qr_code(self, request):
         role = user_role(request.user)
         balance_amount = 0
