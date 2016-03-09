@@ -12,6 +12,16 @@
 				assign : {
 					method: 'PUT',
 				}
+			}),
+			updatePickup : $resource(constants.v3baseUrl+'order/:id/picked_up/',{id:"@id"},{
+				update : {
+					method: 'PUT'
+				}
+			}),
+			updateDelivered : $resource(constants.v3baseUrl+'order/:id/delivered/',{id:"@id"},{
+				update : {
+					method: 'PUT'
+				}
 			})
 		};
 	};

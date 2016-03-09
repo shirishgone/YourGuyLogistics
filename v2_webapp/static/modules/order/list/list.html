@@ -1,17 +1,36 @@
-<md-toolbar class="yg-toolbar md-primary md-whiteframe-z2" ng-class="{'selected':opsOrder.handleOrdeSelection.selectActive}">
+<md-toolbar class="yg-toolbar md-primary md-whiteframe-z2" ng-class="{'selected':opsOrder.handleOrdeSelection.selectActive || opsOrder.searchOrderActive}">
 	<!-- _______________________________________________________________________________________________________
 
 													Default Toolbar 
 		_________________________________________________________________________________________________________
 	-->
-	<div class="md-toolbar-tools" ng-if="!(opsOrder.handleOrdeSelection.selectActive)">
+	<div class="md-toolbar-tools" ng-if="!(opsOrder.handleOrdeSelection.selectActive || opsOrder.searchOrderActive)">
 		<md-button ng-click="home.toggleSideNav()" class="md-icon-button" aria-label="Menu Icon">
 			<md-icon>menu</md-icon>
 		</md-button>
 		<p>ORDERS</p>
 		<span flex></span>
+		<md-button class="md-icon-button" aria-label="search Button" ng-click="opsOrder.searchOrderActive = true">
+			<md-icon>search</md-icon>
+		</md-button>
 		<md-button ng-click="opsOrder.toggleFilter()" class="md-icon-button" aria-label="Filter Button">
 			<md-icon>filter_list</md-icon>
+		</md-button>
+	</div>
+	<!-- _______________________________________________________________________________________________________
+
+													Search Toolbar 
+		_________________________________________________________________________________________________________
+	-->
+	<div class="md-toolbar-tools search-toolbar" ng-if="opsOrder.searchOrderActive && !opsOrder.handleOrdeSelection.selectActive">
+		<md-button ng-click="opsOrder.backFromSearch()" class="md-icon-button" aria-label="Clear Icon">
+			<md-icon>arrow_back</md-icon>
+		</md-button>
+		<md-input-container flex  md-no-float>
+        	<input ng-model="opsOrder.params.search" type="text" placeholder="Search Orders" ng-keyup="$event.which === 13 && opsOrder.getOrders()" md-autofocus="opsOrder.searchOrderActive == true">
+        </md-input-container>
+        <md-button class="md-icon-button" aria-label="Search dg Button" ng-click="opsOrder.getOrders()">
+			<md-icon>search</md-icon>
 		</md-button>
 	</div>
 	<!-- _______________________________________________________________________________________________________
@@ -23,7 +42,7 @@
 		<md-button ng-click="opsOrder.handleOrdeSelection.clear()" class="md-icon-button" aria-label="Menu Icon">
 			<md-icon>clear</md-icon>
 		</md-button>
-		<span flex="5"></span>
+		<span flex="2"></span>
 		<div>
 			{{opsOrder.handleOrdeSelection.numberOfSelectedOrder}} orders selected
 		</div>
@@ -34,7 +53,7 @@
 			</md-button>
 			<md-menu-content width="3">
 				<md-menu-item>
-					<md-button ng-click="ctrl.redial($event)">
+					<md-button ng-click="opsOrder.statusUpdateDialog($event)">
 						<md-icon>update</md-icon>
 						Update Status
 					</md-button>
@@ -142,7 +161,7 @@
 		        			</div>
         				</div>
         				<div flex class="status" layout="row" layout-align="start center">
-        					<span class="badge">{{order.status}}</span>
+        					<span class="badge" ng-class="order.status">{{order.status}}</span>
         				</div>
 						<md-button class="md-icon-button" aria-label="Favorite" ng-if="order.is_reported">
 							<md-icon ng-style="{color: '#F44336'}">error</md-icon>
@@ -155,12 +174,12 @@
 								<md-icon ng-style="{color: '#757575','font-size':'24px', height: '24px', width: '24px'}">more_vert</md-icon>
 							</md-button>
 							<md-menu-content width="2">
-								<!-- <md-menu-item>
-									<md-button ng-click="opsOrder.assignDg($event)">
+								<md-menu-item>
+									<md-button ng-click="opsOrder.statusUpdateForSingleDialog(order)">
 										<md-icon>update</md-icon>
 										Update Status
 									</md-button>
-								</md-menu-item> -->
+								</md-menu-item>
 								<md-menu-item>
 									<md-button ng-click="opsOrder.assignDgForSingleOrder(order)">
 										<md-icon>assignment</md-icon>
@@ -183,6 +202,9 @@
 							    	>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Mobile Card Content<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 						_________________________________________________________________________________________________________
 					-->
+					<div ng-if="order.is_reverse_pickup" class="reverse">
+						<img src="/static/assets/images/Orders/reverse.png">
+					</div>
 					<md-card-content flex="100" layout="row" class="card-content" layout-wrap layout-align="start start">
 						<div flex="10" flex-xs="10" class="order-checkbox">
 		        			<md-checkbox class="md-accent" ng-checked="opsOrder.handleOrdeSelection.exists(order)" ng-click="opsOrder.handleOrdeSelection.toggle(order)" aria-label="Checkbox">
@@ -227,7 +249,9 @@
 						_________________________________________________________________________________________________________
 					-->
 					<md-card-actions layout="row" class="card-action" layout-wrap layout-align="start end">
-						<dir flex-xs="10"></dir>
+						<dir flex-xs="10" style="padding-left: 5px" >
+							<md-icon  ng-if="order.is_reported" ng-style="{color: '#F44336','font-size':'18px', height: '18px', width: '18px'}">error</md-icon>
+						</dir>
 						<div flex-xs="50"  class="dg" layout="row" layout-align="start start">
 		        			<div class="icon">
 			        			<md-icon md-font-library="material-icons" 
@@ -252,12 +276,25 @@
 			        			<span class="badge">{{order.status}}</span>
 			        		</div>
 		        		</div>
-		        		<md-button class="md-icon-button" aria-label="Favorite" ng-if="order.is_reported">
-							<md-icon ng-style="{color: '#F44336','font-size':'16px', height: '16px', width: '16px'}">error</md-icon>
-						</md-button>
-						<md-button class="md-icon-button" aria-label="Favorite">
-							<md-icon ng-style="{color: '#757575','font-size':'16px', height: '16px', width: '16px'}">more_vert</md-icon>
-						</md-button>
+						<md-menu md-position-mode="target-right target">
+							<md-button class="md-icon-button" id="options" ng-click="$mdOpenMenu($event)" aria-label="Open selected menu">
+								<md-icon ng-style="{color: '#757575','font-size':'24px', height: '24px', width: '24px'}">more_vert</md-icon>
+							</md-button>
+							<md-menu-content width="2">
+								<md-menu-item>
+									<md-button ng-click="opsOrder.statusUpdateForSingleDialog(order)">
+										<md-icon>update</md-icon>
+										Update Status
+									</md-button>
+								</md-menu-item>
+								<md-menu-item>
+									<md-button ng-click="opsOrder.assignDgForSingleOrder(order)">
+										<md-icon>assignment</md-icon>
+										Assign Delivery Guy
+									</md-button>
+								</md-menu-item>
+							</md-menu-content>
+						</md-menu>
 					</md-card-actions>
 				</md-card>
 			</div>

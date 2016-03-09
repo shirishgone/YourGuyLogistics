@@ -630,6 +630,16 @@
 				assign : {
 					method: 'PUT',
 				}
+			}),
+			updatePickup : $resource(constants.v3baseUrl+'order/:id/picked_up/',{id:"@id"},{
+				update : {
+					method: 'PUT'
+				}
+			}),
+			updateDelivered : $resource(constants.v3baseUrl+'order/:id/delivered/',{id:"@id"},{
+				update : {
+					method: 'PUT'
+				}
 			})
 		};
 	};
@@ -1308,7 +1318,77 @@
 })();
 (function(){
 	'use strict';
-	var opsOrderCntrl = function ($state,$mdSidenav,$mdDialog,$mdMedia,$stateParams,DeliveryGuy,Order,Vendor,orders,constants,orderSelection,Pincodes,$q,orderDgAssign){
+	var orderDgAssign = function($mdMedia,$mdDialog){
+		return {
+			openStatusDialog : function(){
+				var useFullScreen = ($mdMedia('sm') || $mdMedia('xs'));
+				return $mdDialog.show({
+					controller         : ('OrderStatusUpdateCntrl',['$mdDialog',OrderStatusUpdateCntrl]),
+					controllerAs       : 'statusUpdate',
+					templateUrl        : '/static/modules/order/dialogs/status-update.html?nd=' + Date.now(),
+					parent             : angular.element(document.body),
+					clickOutsideToClose: false,
+					fullscreen         : useFullScreen,
+					openFrom           : '#options',
+					closeTo            : '#options',
+				});
+			}
+
+		};
+	};
+	/*
+		@OrderStatusUpdateCntrl controller function for the update status for orders dialog
+	*/
+	function OrderStatusUpdateCntrl($mdDialog){
+		var self = this;
+		this.pickup = {
+			isPickup: true,
+			data : {
+				pickup_attempted : false,
+				delivery_remarks : null
+			}
+		};
+		this.delivery = {
+			isPickup: false ,
+			data : {
+				delivered_at : null,
+				delivery_attempted : false,
+				delivery_remarks: null,
+				cod_collected_amount: null
+			}
+		};
+
+		this.cancel = function() {
+			$mdDialog.cancel();
+		};
+		this.updatePickupAttempted = function(answer){
+			answer.data.pickup_attempted = true;
+			$mdDialog.hide(answer);
+		};
+		this.updatePickup = function(answer){
+			answer.data.pickup_attempted = false;
+			$mdDialog.hide(answer);
+		};
+		this.updateDeliveryAttempted = function(answer){
+			answer.data.delivery_attempted = true;
+			$mdDialog.hide(answer);
+		};
+		this.updateDelivery = function(answer){
+			answer.data.delivery_attempted = false;
+			$mdDialog.hide(answer);
+		};
+	}
+
+	angular.module('order')
+	.factory('OrderStatusUpdate', [
+		'$mdMedia',
+		'$mdDialog',
+		orderDgAssign
+	]);
+})();
+(function(){
+	'use strict';
+	var opsOrderCntrl = function ($state,$mdSidenav,$mdDialog,$mdMedia,$stateParams,DeliveryGuy,Order,Vendor,orders,constants,orderSelection,Pincodes,$q,orderDgAssign,OrderStatusUpdate){
 		/*
 			 Variable definations for the route(Url)
 		*/
@@ -1319,6 +1399,7 @@
 		this.params.date         = new Date(this.params.date);
 		this.searchedDg          = this.params.dg_username;
 		this.searchVendor        = this.params.vendor_id;
+		this.searchOrderActive = (this.params.search !== undefined) ? true : false;
 		/*
 			 scope Orders variable assignments are done from this section for the controller
 		*/
@@ -1336,6 +1417,15 @@
 		*/
 		this.status_list = constants.status;
 		this.time_list = constants.time;
+		/*
+			@backFromSearch is a function to revert back from a searched dorder view to complete list view of orders
+		*/ 
+		this.backFromSearch = function(){
+			self.params.search = undefined;
+			self.searchOrderActive = false;
+			self.getOrders();
+			
+		};
 		/*
 			@ All method defination for the controller starts from here on.
 		*/
@@ -1464,8 +1554,6 @@
 				assign_data.pickup.delivery_ids = orderSelection.getAllItemsIds();
 				assign_data.delivery.delivery_ids = orderSelection.getAllItemsIds();
 				self.assignOrders(assign_data);
-			}, function() {
-				self.status = 'You cancelled the dialog.';
 			});
 		};
 		self.assignDgForSingleOrder = function(order){
@@ -1474,8 +1562,6 @@
 				assign_data.pickup.delivery_ids = [order.id];
 				assign_data.delivery.delivery_ids = [order.id];
 				self.assignOrders(assign_data);
-			}, function() {
-				self.status = 'You cancelled the dialog.';
 			});
 		};
 		/*
@@ -1488,6 +1574,54 @@
 			}
 			if(assign_data.delivery.dg_id){
 				array.push(Order.assignOrders.assign(assign_data.delivery).$promise);
+			}
+			$q.all(array).then(function(data){
+				orderSelection.clearAll();
+				self.getOrders();
+			});
+		};
+
+		this.statusUpdateForSingleDialog = function(order){
+			OrderStatusUpdate.openStatusDialog()
+			.then(function(status_data) {
+				status_data.delivery_ids = [order.id];
+				if(status_data.isPickup){
+					self.updatePickupStatus(status_data);
+				}
+				else{
+					self.updateDeliveryStatus(status_data);
+				}
+			});
+		};
+
+		this.statusUpdateDialog = function(){
+			OrderStatusUpdate.openStatusDialog()
+			.then(function(status_data) {
+				status_data.delivery_ids = orderSelection.getAllItemsIds();
+				if(status_data.isPickup){
+					self.updatePickupStatus(status_data);
+				}
+				else{
+					self.updateDeliveryStatus(status_data);
+				}
+			});
+		};
+		self.updatePickupStatus = function(status_data){
+			var array = [];
+			for(var i=0; i< status_data.delivery_ids.length;i++){
+				status_data.data.id = status_data.delivery_ids[i];
+				array.push(Order.updatePickup.update(status_data.data).$promise);
+			}
+			$q.all(array).then(function(data){
+				orderSelection.clearAll();
+				self.getOrders();
+			});
+		};
+		self.updateDeliveryStatus = function(status_data){
+			var array = [];
+			for(var i=0; i< status_data.delivery_ids.length;i++){
+				status_data.data.id = status_data.delivery_ids[i];
+				array.push(Order.updateDelivered.update(status_data.data).$promise);
 			}
 			$q.all(array).then(function(data){
 				orderSelection.clearAll();
@@ -1518,6 +1652,7 @@
 		'Pincodes',
 		'$q',
 		'orderDgAssign',
+		'OrderStatusUpdate',
 		opsOrderCntrl
 	]);
 })();

@@ -54,81 +54,116 @@ body {
 }
 
 /* line 41, ../sass/modules/_components.scss */
+.badge.QUEUED {
+  background-color: #F44336;
+}
+
+/* line 44, ../sass/modules/_components.scss */
+.badge.INTRANSIT {
+  background-color: #FCC06A;
+}
+
+/* line 47, ../sass/modules/_components.scss */
+.badge.DELIVERED {
+  background-color: #39B54A;
+}
+
+/* line 50, ../sass/modules/_components.scss */
+.badge.PICKUPATTEMPTED {
+  background-color: #2196F3;
+}
+
+/* line 53, ../sass/modules/_components.scss */
+.badge.DELIVERYATTEMPTED {
+  background-color: #2196F3;
+}
+
+/* line 56, ../sass/modules/_components.scss */
+.badge.OUTFORDELIVERY {
+  background-color: #FCC06A;
+}
+
+/* line 59, ../sass/modules/_components.scss */
+.badge.CANCELLED {
+  background-color: #F44336;
+}
+
+/* line 63, ../sass/modules/_components.scss */
 .badge-warn {
   background-color: #FFCC80;
 }
 
-/* line 46, ../sass/modules/_components.scss */
+/* line 68, ../sass/modules/_components.scss */
 .yg-toolbar.selected {
   background-color: #6DD2ED !important;
   color: #ffffff !important;
 }
 
-/* line 52, ../sass/modules/_components.scss */
+/* line 74, ../sass/modules/_components.scss */
 .table-list {
   overflow: hidden;
 }
-/* line 54, ../sass/modules/_components.scss */
+/* line 76, ../sass/modules/_components.scss */
 .table-list .table-header {
   width: 100%;
   background-color: #FDCD88;
 }
-/* line 57, ../sass/modules/_components.scss */
+/* line 79, ../sass/modules/_components.scss */
 .table-list .table-header tr {
   margin-right: 20px;
 }
-/* line 59, ../sass/modules/_components.scss */
+/* line 81, ../sass/modules/_components.scss */
 .table-list .table-header tr th {
   text-align: left;
   padding: 15px;
   color: #757575;
   font-size: 14px;
 }
-/* line 67, ../sass/modules/_components.scss */
+/* line 89, ../sass/modules/_components.scss */
 .table-list .table-body {
   overflow-y: auto;
   width: 100%;
 }
-/* line 70, ../sass/modules/_components.scss */
+/* line 92, ../sass/modules/_components.scss */
 .table-list .table-body tr {
   border-bottom: 1px solid #E0E0E0;
   cursor: pointer;
 }
-/* line 73, ../sass/modules/_components.scss */
+/* line 95, ../sass/modules/_components.scss */
 .table-list .table-body tr td {
   text-align: left;
   padding: 15px;
   color: #757575;
   font-size: 12px;
 }
-/* line 79, ../sass/modules/_components.scss */
+/* line 101, ../sass/modules/_components.scss */
 .table-list .table-body tr:hover {
   background-color: #FFEFDA;
 }
 @media (max-width: 599px) {
-  /* line 86, ../sass/modules/_components.scss */
+  /* line 108, ../sass/modules/_components.scss */
   .table-list .table-header tr {
     margin-right: 0;
   }
-  /* line 88, ../sass/modules/_components.scss */
+  /* line 110, ../sass/modules/_components.scss */
   .table-list .table-header tr th {
     font-size: 12px;
     padding: 10px;
   }
-  /* line 96, ../sass/modules/_components.scss */
+  /* line 118, ../sass/modules/_components.scss */
   .table-list .table-body tr td {
     padding: 10px;
     font-size: 11px;
   }
 }
 
-/* line 105, ../sass/modules/_components.scss */
+/* line 127, ../sass/modules/_components.scss */
 .md-button.md-accent.md-lg-btn {
   padding: 8px 20px;
   font-weight: 600;
   max-width: 130px;
 }
-/* line 109, ../sass/modules/_components.scss */
+/* line 131, ../sass/modules/_components.scss */
 .md-button.md-accent.md-lg-btn span {
   color: #ffffff;
 }
@@ -419,7 +454,11 @@ body {
 }
 /* line 161, ../sass/modules/_opsOrder.scss */
 .opsOrder .order-list .list .card-action .status .badge {
-  width: 80px;
+  min-width: 80px;
+}
+/* line 165, ../sass/modules/_opsOrder.scss */
+.opsOrder .order-list .list .card-action .md-menu {
+  padding: 0px;
 }
 @media (max-width: 599px) {
   /* line 140, ../sass/modules/_opsOrder.scss */
@@ -427,12 +466,12 @@ body {
     margin: 5px;
     margin-top: 0px;
   }
-  /* line 169, ../sass/modules/_opsOrder.scss */
+  /* line 172, ../sass/modules/_opsOrder.scss */
   .opsOrder .order-list .list .card-action .dg span {
     font-size: 10px;
     color: #757575;
   }
-  /* line 175, ../sass/modules/_opsOrder.scss */
+  /* line 178, ../sass/modules/_opsOrder.scss */
   .opsOrder .order-list .list .card-action .payment p {
     margin: 0px;
     font-size: 10px;
@@ -440,11 +479,11 @@ body {
     line-height: 3;
   }
 }
-/* line 184, ../sass/modules/_opsOrder.scss */
+/* line 187, ../sass/modules/_opsOrder.scss */
 .opsOrder .order-list .list .content-divider {
   padding: 0 3%;
 }
-/* line 186, ../sass/modules/_opsOrder.scss */
+/* line 189, ../sass/modules/_opsOrder.scss */
 .opsOrder .order-list .list .content-divider .orderid {
   margin-bottom: -12px;
   width: 69px;
@@ -457,28 +496,28 @@ body {
   -webkit-border-radius: 10px;
   border-radius: 10px;
 }
-/* line 196, ../sass/modules/_opsOrder.scss */
+/* line 199, ../sass/modules/_opsOrder.scss */
 .opsOrder .order-list .list .content-divider md-divider[md-inset] {
   border-top-color: #BDBDBD;
 }
 @media (max-width: 599px) {
-  /* line 184, ../sass/modules/_opsOrder.scss */
+  /* line 187, ../sass/modules/_opsOrder.scss */
   .opsOrder .order-list .list .content-divider {
     padding: 0 2%;
   }
-  /* line 201, ../sass/modules/_opsOrder.scss */
+  /* line 204, ../sass/modules/_opsOrder.scss */
   .opsOrder .order-list .list .content-divider .orderid {
     width: 65px;
     padding: 2px 2px;
     font-size: 10px;
     margin-bottom: -10px;
   }
-  /* line 207, ../sass/modules/_opsOrder.scss */
+  /* line 210, ../sass/modules/_opsOrder.scss */
   .opsOrder .order-list .list .content-divider md-divider[md-inset] {
     margin-left: 70px;
   }
 }
-/* line 212, ../sass/modules/_opsOrder.scss */
+/* line 215, ../sass/modules/_opsOrder.scss */
 .opsOrder .order-list .list .reverse {
   position: absolute;
   top: 0;
@@ -486,10 +525,16 @@ body {
   height: 30px;
   width: 30px;
 }
-/* line 218, ../sass/modules/_opsOrder.scss */
+/* line 221, ../sass/modules/_opsOrder.scss */
 .opsOrder .order-list .list .reverse img {
   height: 100%;
   width: 100%;
+}
+
+/* line 231, ../sass/modules/_opsOrder.scss */
+.statusUpdate .status-tab {
+  padding: 25px;
+  text-align: center;
 }
 
 /* line 1, ../sass/modules/_pagination.scss */
