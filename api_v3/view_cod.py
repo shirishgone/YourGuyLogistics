@@ -271,8 +271,7 @@ class CODViewSet(viewsets.ViewSet):
                         for delivery_id in delivery_ids:
                             delivery_status = get_object_or_404(OrderDeliveryStatus, pk=delivery_id)
                             add_cod_transaction_to_delivery(cod_transaction, delivery_status)
-                        content = {'transaction_id': transaction_uuid}
-                        return response_with_payload(content, None)
+                        return response_with_payload(transaction_uuid, None)
                     else:
                         error_message = 'cod amount does not match with the total cod collection from all the deliveries selected'
                         return response_error_with_message(error_message)
