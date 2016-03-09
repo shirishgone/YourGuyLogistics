@@ -5,11 +5,50 @@ from api_v3.utils import cod_actions, response_access_denied, get_object_or_404,
 from api_v3 import constants
 from yourguy.models import CODTransaction, DeliveryGuy, OrderDeliveryStatus, DeliveryTeamLead
 from rest_framework import authentication, viewsets
-from rest_framework.decorators import detail_route, list_route
+from rest_framework.decorators import list_route
 from rest_framework.permissions import IsAuthenticated
-from api_v3.utils import user_role
+from api_v3.utils import user_role, log_exception
+from api_v3.push import send_push
 import uuid
 import pytz
+
+
+def send_cod_status_notification(dg, dg_tl, cod_amount, is_cod_status):
+    try:
+        if is_cod_status is True:
+            data = {
+                'message': 'Amount %d was transferred to %s successfully ' % (cod_amount, dg_tl.user.first_name),
+                'type': 'cod_transfer_to_tl',
+                'data': {
+                    'is_cod_successful': is_cod_status
+                }
+            }
+            send_push(dg.device_token, data)
+        else:
+            data = {
+                'message': 'Transfer of amount %d to %s was declined ' % (cod_amount, dg_tl.user.first_name),
+                'type': 'cod_transfer_to_tl',
+                'data': {
+                    'is_cod_successful': is_cod_status
+                }
+            }
+            send_push(dg.device_token, data)
+    except Exception as e:
+        log_exception(e, 'Push notification not sent in send_cod_status_notification ')
+
+
+def send_timeout_notification(dg, cod_amount, is_time_out):
+    try:
+        data = {
+            'message': 'Transfer to %s of amount %d timed out' % (dg.user.first_name, cod_amount),
+            'type': 'cod_transfer_to_tl',
+            'data': {
+                'is_time_out': is_time_out
+            }
+        }
+        send_push(dg.device_token, data)
+    except Exception as e:
+        log_exception(e, 'Push notification not sent in send_cod_status_notification ')
 
 
 def create_cod_transaction(transaction, user, dg_id, dg_tl_id, cod_amount, transaction_uuid, delivery_ids):
@@ -81,7 +120,6 @@ def associated_dgs_pending_cod_details(delivery_guy):
 
 def cod_balance_calculation(dg):
     deliveries = []
-    dg_tl_id = dg.id
     delivery_statuses = OrderDeliveryStatus.objects.filter(delivery_guy=dg,
                                                            cod_status=constants.COD_STATUS_COLLECTED)
     delivery_statuses_total = delivery_statuses.values('delivery_guy__user__username').\
@@ -89,19 +127,21 @@ def cod_balance_calculation(dg):
     balance_amount = None
     if len(delivery_statuses_total) > 0:
         balance_amount = delivery_statuses_total[0]['sum_of_cod_collected']
-    delivery_guy_tl = DeliveryTeamLead.objects.get(delivery_guy=dg)
-    associated_dgs = delivery_guy_tl.associate_delivery_guys.all()
-    associated_dgs = associated_dgs.filter(is_active=True)
-    for single_dg in associated_dgs:
-        delivery_statuses = OrderDeliveryStatus.objects.filter(delivery_guy=single_dg,
-                                                               cod_status=constants.COD_STATUS_TRANSFERRED_TO_TL,
-                                                               cod_transactions__transaction_status=constants.VERIFIED,
-                                                               cod_transactions__dg_tl_id=dg_tl_id)
-        for single in delivery_statuses:
-            deliveries.append(single.id)
-        delivery_statuses = delivery_statuses.values('delivery_guy__user__username').annotate(sum_of_cod_collected=Sum('cod_collected_amount'))
-        if len(delivery_statuses) > 0:
-            balance_amount = balance_amount + delivery_statuses[0]['sum_of_cod_collected']
+        if dg.is_teamlead is True:
+            dg_tl_id = dg.id
+            delivery_guy_tl = DeliveryTeamLead.objects.get(delivery_guy=dg)
+            associated_dgs = delivery_guy_tl.associate_delivery_guys.all()
+            associated_dgs = associated_dgs.filter(is_active=True)
+            for single_dg in associated_dgs:
+                delivery_statuses = OrderDeliveryStatus.objects.filter(delivery_guy=single_dg,
+                                                                       cod_status=constants.COD_STATUS_TRANSFERRED_TO_TL,
+                                                                       cod_transactions__transaction_status=constants.VERIFIED,
+                                                                       cod_transactions__dg_tl_id=dg_tl_id)
+                for single in delivery_statuses:
+                    deliveries.append(single.id)
+                delivery_statuses = delivery_statuses.values('delivery_guy__user__username').annotate(sum_of_cod_collected=Sum('cod_collected_amount'))
+                if len(delivery_statuses) > 0:
+                    balance_amount = balance_amount + delivery_statuses[0]['sum_of_cod_collected']
     return balance_amount
 
 
@@ -208,6 +248,7 @@ class CODViewSet(viewsets.ViewSet):
     @list_route(methods=['POST'])
     def qr_code(self, request):
         role = user_role(request.user)
+        balance_amount = 0
         if role == constants.DELIVERY_GUY:
             dg = get_object_or_404(DeliveryGuy, user=request.user)
             dg_id = dg.id
@@ -219,14 +260,25 @@ class CODViewSet(viewsets.ViewSet):
                 except Exception as e:
                     params = ['dg_tl_id', 'cod_amount', 'order_ids']
                     return response_incomplete_parameters(params)
-                transaction_uuid = uuid.uuid4()
-                cod_action = cod_actions(constants.COD_TRANSFERRED_TO_TL_CODE)
-                cod_transaction = create_cod_transaction(cod_action, request.user, dg_id, dg_tl_id, cod_amount, transaction_uuid, delivery_ids)
-                for delivery_id in delivery_ids:
-                    delivery_status = get_object_or_404(OrderDeliveryStatus, pk=delivery_id)
-                    add_cod_transaction_to_delivery(cod_transaction, delivery_status)
-                content = {'transaction_id': transaction_uuid}
-                return response_with_payload(content, None)
+                try:
+                    for delivery_id in delivery_ids:
+                        delivery_status = get_object_or_404(OrderDeliveryStatus, pk=delivery_id)
+                        balance_amount = balance_amount + delivery_status.cod_collected_amount
+                    if balance_amount == cod_amount:
+                        transaction_uuid = uuid.uuid4()
+                        cod_action = cod_actions(constants.COD_TRANSFERRED_TO_TL_CODE)
+                        cod_transaction = create_cod_transaction(cod_action, request.user, dg_id, dg_tl_id, cod_amount, transaction_uuid, delivery_ids)
+                        for delivery_id in delivery_ids:
+                            delivery_status = get_object_or_404(OrderDeliveryStatus, pk=delivery_id)
+                            add_cod_transaction_to_delivery(cod_transaction, delivery_status)
+                        content = {'transaction_id': transaction_uuid}
+                        return response_with_payload(content, None)
+                    else:
+                        error_message = 'cod amount does not match with the total cod collection from all the deliveries selected'
+                        return response_error_with_message(error_message)
+                except Exception as e:
+                    error_message = 'Order not found'
+                    return response_error_with_message(error_message)
             else:
                 error_message = 'This is a deactivated dg OR a DG TL'
                 return response_error_with_message(error_message)
@@ -258,6 +310,79 @@ class CODViewSet(viewsets.ViewSet):
                     return response_with_payload(all_associated_dgs, None)
                 except Exception as e:
                     error_message = 'No such Delivery Team Lead exists'
+                    return response_error_with_message(error_message)
+            else:
+                error_message = 'This is not a DG team lead or this is a deactivated DG team lead'
+                return response_error_with_message(error_message)
+        else:
+            return response_access_denied()
+
+    @list_route(methods=['PUT'])
+    def verify_transfer_to_tl(self, request):
+        deliveries_list = []
+        role = user_role(request.user)
+        if role == constants.DELIVERY_GUY:
+            delivery_guy = get_object_or_404(DeliveryGuy, user=request.user)
+            if delivery_guy.is_teamlead is True and delivery_guy.is_active is True:
+                try:
+                    transaction_uuid = request.data['transaction_id']
+                    is_accepted = request.data['is_accepted']
+                except Exception as e:
+                    params = ['transaction_id', 'is_accepted']
+                    return response_incomplete_parameters(params)
+                try:
+                    cod_transaction = CODTransaction.objects.get(transaction_uuid=transaction_uuid)
+                except Exception as e:
+                    error_message = 'No such transaction id found'
+                    return response_error_with_message(error_message)
+
+                dg_tl_id = cod_transaction.dg_tl_id
+                if delivery_guy.id == dg_tl_id:
+                    current_time = datetime.now(pytz.utc)
+                    if cod_transaction.created_time_stamp is not None and cod_transaction.created_time_stamp < current_time:
+                        time_diff = (current_time - cod_transaction.created_time_stamp)
+                        total_seconds_worked = int(time_diff.total_seconds())
+                        minutes = total_seconds_worked/60
+                        dg = DeliveryGuy.objects.get(id=cod_transaction.dg_id)
+                        if minutes < 5:
+                            if is_accepted is True:
+                                cod_transaction.verified_by_user = request.user
+                                cod_transaction.verified_time_stamp = current_time
+                                cod_transaction.transaction_status = constants.VERIFIED
+                                cod_transaction.save()
+
+                                deliveries = cod_transaction.deliveries
+                                deliveries = eval(deliveries)
+                                for single in deliveries:
+                                    delivery = OrderDeliveryStatus.objects.get(id=single)
+                                    delivery.cod_status = constants.COD_STATUS_TRANSFERRED_TO_TL
+                                    delivery.save()
+                                    cod_collected_transaction = delivery.cod_transactions.filter(transaction__title='CODCollected')
+                                    if len(cod_collected_transaction) > 0:
+                                        cod_transaction.transaction_status = constants.VERIFIED
+                                        cod_transaction.save()
+                                send_cod_status_notification(dg, delivery_guy, cod_transaction.cod_amount, is_accepted)
+                                success_message = 'Transfer to TL verified'
+                                return response_success_with_message(success_message)
+                            else:
+                                cod_transaction.verified_by_user = request.user
+                                cod_transaction.verified_time_stamp = current_time
+                                cod_transaction.transaction_status = constants.DECLINED
+                                cod_transaction.save()
+                                send_cod_status_notification(dg, delivery_guy, cod_transaction.cod_amount, is_accepted)
+                                success_message = 'Transfer to TL declined'
+                                return response_success_with_message(success_message)
+                        else:
+                            is_time_out = True
+                            send_timeout_notification(dg, cod_transaction.cod_amount, is_time_out)
+                            send_timeout_notification(delivery_guy, cod_transaction.cod_amount, is_time_out)
+                            error_message = 'Transfer to TL transaction timed out'
+                            return response_error_with_message(error_message)
+                    else:
+                        error_message = 'Transaction does not have an initiated time'
+                        return response_error_with_message(error_message)
+                else:
+                    error_message = 'Transaction does not belong to this dg tl'
                     return response_error_with_message(error_message)
             else:
                 error_message = 'This is not a DG team lead or this is a deactivated DG team lead'
