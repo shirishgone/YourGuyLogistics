@@ -7,6 +7,11 @@
 					method: 'GET',
 					isArray: false
 				}
+			}),
+			assignOrders : $resource(constants.v3baseUrl+'order/assign_orders/', {}, {
+				assign : {
+					method: 'PUT',
+				}
 			})
 		};
 	};

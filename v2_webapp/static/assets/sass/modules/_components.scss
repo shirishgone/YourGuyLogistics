@@ -28,7 +28,7 @@ body {
 	margin: 5px 5px;
 }
 
-.bagde {
+.badge {
 	min-width: 50px;
 	text-align: center;
 	color: $white-color;
@@ -38,7 +38,7 @@ body {
 	background-color: primary-color('500');
 }
 
-.bagde-warn {
+.badge-warn {
 	background-color: $warn-color;
 }
 

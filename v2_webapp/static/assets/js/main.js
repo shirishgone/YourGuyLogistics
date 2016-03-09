@@ -625,6 +625,11 @@
 					method: 'GET',
 					isArray: false
 				}
+			}),
+			assignOrders : $resource(constants.v3baseUrl+'order/assign_orders/', {}, {
+				assign : {
+					method: 'PUT',
+				}
 			})
 		};
 	};
@@ -666,7 +671,7 @@
 (function(){
 	'use strict';
 	var Vendor = function ($resource,constants){
-		return $resource(constants.v3baseUrl+'vendor/:id',{id:"@id"},{
+		return $resource(constants.v3baseUrl+'vendor/:id/',{id:"@id"},{
 			profile: {
 				method: 'GET'
 			},
@@ -1040,8 +1045,8 @@
 			template : [
 				'<div class="ydPagination" layout="row" layout-align="start center">',
 					'<div class="stats" layout="row">',
-						'<p ng-if="pending">Pending: {{pending}} </p>',
-						'<p ng-if="unassigned">Unassigned: {{unassigned}} </p>',
+						'<p ng-if="pending"> <span class="pending-text">Pending: </span><span class="pending">{{pending}}</span> </p>',
+						'<p ng-if="unassigned"><span class="unassigned-text">Unassigned: </span><span class="unassigned">{{unassigned}}</span> </p>',
 						'<p>Total: {{total}} </p>',
 					'</div>',
 					'<span flex></span>',
@@ -1080,7 +1085,7 @@
 	.config(['$stateProvider',function ($stateProvider) {
 		$stateProvider
 		.state('home.opsorder', {
-			url: "^/all-orders?date&vendor&dg&status&page",
+			url: "^/all-orders?date&vendor_id&dg_username&order_status&page&start_time&end_time&is_cod&search&delivery_ids&pincodes&is_retail",
 			templateUrl: "/static/modules/order/list/list.html",
 			controllerAs : 'opsOrder',
     		controller: "opsOrderCntrl",
@@ -1093,6 +1098,16 @@
     			orders: ['Order','$stateParams', function (Order,$stateParams){
     						$stateParams.date = ($stateParams.date !== undefined) ? new Date($stateParams.date).toISOString() : new Date().toISOString();
     						$stateParams.page = (!isNaN($stateParams.page))? parseInt($stateParams.page): 1;
+						    $stateParams.is_cod = ($stateParams.is_cod == 'true')? Boolean($stateParams.is_cod): null;
+						    $stateParams.is_retail = ($stateParams.is_retail == 'true')? Boolean($stateParams.is_retail): null;
+
+						    if(Array.isArray($stateParams.order_status)){
+    							$stateParams.order_status = ($stateParams.order_status.length > 0) ? $stateParams.order_status.toString(): null;
+    						}
+    						
+    						if(Array.isArray($stateParams.pincodes)){
+    							$stateParams.pincodes = ($stateParams.pincodes.length > 0) ? $stateParams.pincodes.toString(): null;
+    						}
     						return Order.getOrders.query($stateParams).$promise;
     					}],
     			Pincodes: ['DeliveryGuy',function(DeliveryGuy){
@@ -1115,6 +1130,82 @@
 	.controller('vendorOrderCntrl', [
 		'$state',
 		vendorOrderCntrl
+	]);
+})();
+(function(){
+	'use strict';
+	var orderDgAssign = function($mdMedia,$mdDialog,DeliveryGuy){
+		return {
+			openDgDialog : function(){
+				var useFullScreen = ($mdMedia('sm') || $mdMedia('xs'));
+				return $mdDialog.show({
+					controller         : ('AssignDgCntrl',['$mdDialog','DeliveryGuy',AssignDgCntrl]),
+					controllerAs       : 'assignDG',
+					templateUrl        : '/static/modules/order/dialogs/assign-dg.html?nd=' + Date.now(),
+					parent             : angular.element(document.body),
+					clickOutsideToClose: false,
+					fullscreen         : useFullScreen,
+					openFrom           : '#options',
+					closeTo            : '#options',
+				});
+			}
+
+		};
+	};
+	/*
+		@AssignDgCntrl controller function for the assign delivery guy dialog
+	*/
+	function AssignDgCntrl($mdDialog,DeliveryGuy){
+		var self = this;
+		this.assignment_data = {
+			pickup: {
+				dg_id: null,
+				assignment_type: 'pickup'
+			},
+			delivery: {
+				dg_id: null,
+				assignment_type: 'delivery'
+			}
+		};
+
+		this.cancel = function() {
+			$mdDialog.cancel();
+		};
+		this.answer = function(answer) {
+			$mdDialog.hide(answer);
+		};
+		this.dgSearchTextChange = function(text){
+			var search = {
+				search : text
+			};
+			return DeliveryGuy.dgPageQuery.query(search).$promise.then(function (response){
+				return response.payload.data.data;
+			});
+		};
+		this.pickupDgChange = function(dg){
+			if(dg){
+				self.assignment_data.pickup.dg_id = dg.id;
+			}
+			else{
+				self.assignment_data.pickup.dg_id = undefined;
+			}
+		};
+		this.deliveryDgChange = function(dg){
+			if(dg){
+				self.assignment_data.delivery.dg_id = dg.id;
+			}
+			else{
+				self.assignment_data.delivery.dg_id = undefined;
+			}
+		};
+	}
+
+	angular.module('order')
+	.factory('orderDgAssign', [
+		'$mdMedia',
+		'$mdDialog',
+		'DeliveryGuy',
+		orderDgAssign
 	]);
 })();
 (function(){
@@ -1197,6 +1288,13 @@
 			},
 			slectedItemLength : function (){
 				return orderselection.selectedItemArray.length;
+			},
+			getAllItemsIds : function(){
+				var array = [];
+				orderselection.selectedItemArray.forEach(function(order){
+					array.push(order.id);
+				});
+				return array;
 			}
 		};
 		return orderselection;
@@ -1210,16 +1308,17 @@
 })();
 (function(){
 	'use strict';
-	var opsOrderCntrl = function ($state,$mdSidenav,$stateParams,DeliveryGuy,orders,constants,orderSelection,Pincodes){
+	var opsOrderCntrl = function ($state,$mdSidenav,$mdDialog,$mdMedia,$stateParams,DeliveryGuy,Order,Vendor,orders,constants,orderSelection,Pincodes,$q,orderDgAssign){
 		/*
-			 Variable definations
+			 Variable definations for the route(Url)
 		*/
 		var self = this;
 		this.params = $stateParams;
-		this.statusArray = ($stateParams.dg === undefined) ? [] : $stateParams.dg.split(',');
-		this.pincodesArray = ($stateParams.pincodes === undefined) ? [] : $stateParams.dg.split(',');
-		this.params.date = new Date(this.params.date);
-		this.searchedDg = this.params.dg;
+		this.params.order_status = ($stateParams.order_status)? $stateParams.order_status.split(','): [];
+		this.params.pincodes     = ($stateParams.pincodes)    ? $stateParams.pincodes.split(','): [];
+		this.params.date         = new Date(this.params.date);
+		this.searchedDg          = this.params.dg_username;
+		this.searchVendor        = this.params.vendor_id;
 		/*
 			 scope Orders variable assignments are done from this section for the controller
 		*/
@@ -1255,6 +1354,7 @@
 		/*
 			@paginate is a function to paginate to the next and previous page of the order list
 			@statusSelection is a fucntion to select or unselect the status data in order filter
+			@pincodesSelection is a function select unselect multiple pincode in order filter
 		*/
 		this.paginate = {
 			nextpage : function(){
@@ -1304,12 +1404,33 @@
 		};
 		this.selectedDgChange = function(dg){
 			if(dg){
-				self.params.dg = dg.phone_number;
+				self.params.dg_username = dg.phone_number;
 			}
 			else{
-				self.params.dg = undefined;
+				self.params.dg_username = undefined;
 			}
-			// self.getOrders();
+		};
+		/*
+			@dgSearchTextChange is a function for Delivery guy search for filter. When ever the filtered dg change, 
+			this function is called.
+
+			@selectedDgChange is a callback function after delivery guy selection in the filter.
+		*/
+		this.vendorSearchTextChange = function(text){
+			var search = {
+				search : text
+			};
+			return Vendor.query(search).$promise.then(function (response){
+				return response.payload.data.data;
+			});
+		};
+		this.selectedVendorChange = function(vendor){
+			if(vendor){
+				self.params.vendor_id = vendor.id;
+			}
+			else{
+				self.params.vendor_id = undefined;
+			}
 		};
 		/*
 			@getOrders rleoads the order controller according too the filter to get the new filtered data.
@@ -1334,6 +1455,46 @@
 			}
 		};
 		/*
+			@assignDg is a function to open dg assignment dialog box and assign delivery guy and pickup guy for the 
+			selected orders once user confirms things.
+		*/
+		self.assignDg = function(){
+			orderDgAssign.openDgDialog()
+			.then(function(assign_data) {
+				assign_data.pickup.delivery_ids = orderSelection.getAllItemsIds();
+				assign_data.delivery.delivery_ids = orderSelection.getAllItemsIds();
+				self.assignOrders(assign_data);
+			}, function() {
+				self.status = 'You cancelled the dialog.';
+			});
+		};
+		self.assignDgForSingleOrder = function(order){
+			orderDgAssign.openDgDialog()
+			.then(function(assign_data) {
+				assign_data.pickup.delivery_ids = [order.id];
+				assign_data.delivery.delivery_ids = [order.id];
+				self.assignOrders(assign_data);
+			}, function() {
+				self.status = 'You cancelled the dialog.';
+			});
+		};
+		/*
+			@assignOrders is a function to call the order assign api from Order service and handle the response.
+		*/
+		self.assignOrders = function(assign_data){
+			var array = [];
+			if(assign_data.pickup.dg_id){
+				array.push(Order.assignOrders.assign(assign_data.pickup).$promise);
+			}
+			if(assign_data.delivery.dg_id){
+				array.push(Order.assignOrders.assign(assign_data.delivery).$promise);
+			}
+			$q.all(array).then(function(data){
+				orderSelection.clearAll();
+				self.getOrders();
+			});
+		};
+		/*
 			@getOrders rleoads the order controller according too the filter to get the new filtered data.
 		*/
 		this.getOrders = function(){
@@ -1345,12 +1506,18 @@
 	.controller('opsOrderCntrl', [
 		'$state',
 		'$mdSidenav',
+		'$mdDialog',
+		'$mdMedia',
 		'$stateParams',
 		'DeliveryGuy',
+		'Order',
+		'Vendor',
 		'orders',
 		'constants',
 		'orderSelection',
 		'Pincodes',
+		'$q',
+		'orderDgAssign',
 		opsOrderCntrl
 	]);
 })();
