@@ -2,15 +2,18 @@
 @import 'variable';
 @import 'mixin';
 @import 'fonts';
-@import 'modules/components';
+
 @import 'modules/login';
 @import 'modules/home';
-@import 'modules/opsOrder';
+@import 'modules/order/list';
+@import 'modules/order/detail';
+@import 'modules/dg/create';
+@import 'modules/dg/list';
+@import 'modules/dg/detail';
+@import 'modules/dg/edit';
+@import 'modules/dg/addTeamMembers';
+@import 'modules/vendor/list';
+
+@import 'modules/components';
 @import 'modules/pagination';
-@import 'modules/dgList';
-@import 'modules/dgCreate';
-@import 'modules/dgDetail';
-@import 'modules/dgEdit';
-@import 'modules/addTeamMembers';
-@import 'modules/vendorList';
 @import 'modules/errorToast';

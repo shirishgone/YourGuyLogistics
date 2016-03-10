@@ -38,6 +38,21 @@
     					}]
     		}
 		})
+        .state('home.orderDetail', {
+            url: "^/order/detail/:id",
+            templateUrl: "/static/modules/order/detail/detail.html",
+            controllerAs : 'orderDetail',
+            controller: "orderDetailCntrl",
+            resolve: {
+                access: ["Access","constants", function (Access,constants) { 
+                            var allowed_user = [constants.userRole.OPS,constants.userRole.OPS_MANAGER,constants.userRole.SALES,constants.userRole.SALES_MANAGER,constants.userRole.VENDOR];
+                            return Access.hasAnyRole(allowed_user); 
+                        }],
+                order: ['Order','$stateParams', function (Order,$stateParams){
+                            return Order.getOrders.query($stateParams).$promise;
+                        }],
+            }
+        })
 		.state('home.order', {
 			url: "^/orders",
 			templateUrl: "/static/modules/order/vendorOrders.html",

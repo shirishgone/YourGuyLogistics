@@ -83,7 +83,7 @@
 					for desktop screen. This section automatically hides if the width of the screen is less than 600px;
 					_________________________________________________________________________________________________________
 				-->
-				<md-card hide-xs>
+				<md-card hide-xs ng-click="opsOrder.revertOrSelect(order)" ng-class="{'selected': opsOrder.handleOrdeSelection.exists(order)}">
 					<div ng-if="order.is_reverse_pickup" class="reverse">
 						<img src="/static/assets/images/Orders/reverse.png">
 					</div>
@@ -93,7 +93,7 @@
 						_________________________________________________________________________________________________________
 					-->
 		        	<md-card-content flex="100" layout="row" class="card-content" layout-wrap layout-align="start start">
-		        		<div flex="10" flex-xs="10" class="order-checkbox">
+		        		<div flex="10" flex-xs="10" class="order-checkbox" ng-click="$event.stopPropagation()">
 		        			<md-checkbox class="md-accent" ng-checked="opsOrder.handleOrdeSelection.exists(order)" ng-click="opsOrder.handleOrdeSelection.toggle(order)" aria-label="Checkbox">
 		        			</md-checkbox>
 		        		</div>
@@ -166,10 +166,7 @@
 						<md-button class="md-icon-button" aria-label="Favorite" ng-if="order.is_reported">
 							<md-icon ng-style="{color: '#F44336'}">error</md-icon>
 						</md-button>
-						<!-- <md-button class="md-icon-button" aria-label="Favorite">
-							<md-icon ng-style="{color: '#757575','font-size':'24px', height: '24px', width: '24px'}">more_vert</md-icon>
-						</md-button> -->
-						<md-menu md-position-mode="target-right target">
+						<md-menu md-position-mode="target-right target" ng-click="$event.stopPropagation()">
 							<md-button class="md-icon-button" id="options" ng-click="$mdOpenMenu($event)" aria-label="Open selected menu">
 								<md-icon ng-style="{color: '#757575','font-size':'24px', height: '24px', width: '24px'}">more_vert</md-icon>
 							</md-button>
@@ -196,7 +193,7 @@
 					for mobile screen. This section automatically hides if the width of the screen is more than 600px;
 					_________________________________________________________________________________________________________
 				-->
-				<md-card hide-gt-xs>
+				<md-card hide-gt-xs ng-click="opsOrder.revertOrSelect(order)">
 					<!-- _______________________________________________________________________________________________________
 
 							    	>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Mobile Card Content<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -206,7 +203,7 @@
 						<img src="/static/assets/images/Orders/reverse.png">
 					</div>
 					<md-card-content flex="100" layout="row" class="card-content" layout-wrap layout-align="start start">
-						<div flex="10" flex-xs="10" class="order-checkbox">
+						<div flex="10" flex-xs="10" class="order-checkbox" ng-click="$event.stopPropagation()">
 		        			<md-checkbox class="md-accent" ng-checked="opsOrder.handleOrdeSelection.exists(order)" ng-click="opsOrder.handleOrdeSelection.toggle(order)" aria-label="Checkbox">
 		        			</md-checkbox>
 		        		</div>
@@ -276,7 +273,7 @@
 			        			<span class="badge">{{order.status}}</span>
 			        		</div>
 		        		</div>
-						<md-menu md-position-mode="target-right target">
+						<md-menu md-position-mode="target-right target" ng-click="$event.stopPropagation()">
 							<md-button class="md-icon-button" id="options" ng-click="$mdOpenMenu($event)" aria-label="Open selected menu">
 								<md-icon ng-style="{color: '#757575','font-size':'24px', height: '24px', width: '24px'}">more_vert</md-icon>
 							</md-button>

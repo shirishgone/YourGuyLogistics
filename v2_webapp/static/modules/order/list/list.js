@@ -240,6 +240,14 @@
 				self.getOrders();
 			});
 		};
+		this.revertOrSelect = function(order){
+			if(orderSelection.isSelected()){
+				self.handleOrdeSelection.toggle(order);
+			}
+			else{
+				$state.go('home.orderDetail',{id:order.id});
+			}
+		};
 		/*
 			@getOrders rleoads the order controller according too the filter to get the new filtered data.
 		*/

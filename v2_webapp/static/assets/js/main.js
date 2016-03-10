@@ -477,7 +477,7 @@
 	};
 
 	angular.module('ygVendorApp')
-	.constant('constants', testConstants);
+	.constant('constants', constants);
 })();
 (function(){
 	'use strict';
@@ -1125,6 +1125,21 @@
     					}]
     		}
 		})
+        .state('home.orderDetail', {
+            url: "^/order/detail/:id",
+            templateUrl: "/static/modules/order/detail/detail.html",
+            controllerAs : 'orderDetail',
+            controller: "orderDetailCntrl",
+            resolve: {
+                access: ["Access","constants", function (Access,constants) { 
+                            var allowed_user = [constants.userRole.OPS,constants.userRole.OPS_MANAGER,constants.userRole.SALES,constants.userRole.SALES_MANAGER,constants.userRole.VENDOR];
+                            return Access.hasAnyRole(allowed_user); 
+                        }],
+                order: ['Order','$stateParams', function (Order,$stateParams){
+                            return Order.getOrders.query($stateParams).$promise;
+                        }],
+            }
+        })
 		.state('home.order', {
 			url: "^/orders",
 			templateUrl: "/static/modules/order/vendorOrders.html",
@@ -1628,6 +1643,14 @@
 				self.getOrders();
 			});
 		};
+		this.revertOrSelect = function(order){
+			if(orderSelection.isSelected()){
+				self.handleOrdeSelection.toggle(order);
+			}
+			else{
+				$state.go('home.orderDetail',{id:order.id});
+			}
+		};
 		/*
 			@getOrders rleoads the order controller according too the filter to get the new filtered data.
 		*/
@@ -1655,6 +1678,37 @@
 		'OrderStatusUpdate',
 		opsOrderCntrl
 	]);
+})();
+(function(){
+	'use strict';
+	var orderDetailCntrl = function($state,$stateParams,order,DeliveryGuy,orderDgAssign,OrderStatusUpdate,PreviousState){
+		var self = this;
+		self.order = order.payload.data;
+		/*
+			function to redirect back to the previous page or parent page.
+		*/
+		self.goBack = function(){
+			if(PreviousState.isAvailable()){
+				PreviousState.redirectToPrevious();
+			}
+			else{
+				$state.go('home.opsorder');
+			}
+		};
+	};
+
+	angular.module('order')
+	.controller('orderDetailCntrl', [
+		'$state',
+		'$stateParams',
+		'order',
+		'DeliveryGuy',
+		'orderDgAssign',
+		'OrderStatusUpdate',
+		'PreviousState',
+		orderDetailCntrl
+	]);
+
 })();
 (function(){
 	'use strict';
