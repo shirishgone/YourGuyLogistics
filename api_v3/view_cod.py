@@ -15,8 +15,11 @@ import uuid
 import pytz
 from django.contrib.auth.decorators import user_passes_test
 
-error_message = 'This is a deactivated dg'
-response_error_with_message(error_message)
+error_message_1 = 'This is a deactivated dg'
+response_error_with_message(error_message_1)
+
+error_message_2 = 'Not a delivery guy'
+response_error_with_message(error_message_2)
 
 
 def active_check(self):
@@ -26,7 +29,9 @@ def active_check(self):
         if dg.is_active is True:
             return True
         else:
-            return response_error_with_message(error_message)
+            return response_error_with_message(error_message_1)
+    else:
+        return response_error_with_message(error_message_2)
 
 
 def send_cod_status_notification(dg, dg_tl, cod_amount, is_cod_status):
