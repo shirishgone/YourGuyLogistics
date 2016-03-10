@@ -20,6 +20,7 @@ def dg_details_dict(delivery_guy):
         'auth_token': None,
         'id': delivery_guy.id,
         'username': delivery_guy.user.username,
+        'dg_name': delivery_guy.user.first_name,
         'shift_start_datetime': delivery_guy.shift_start_datetime,
         'shift_end_datetime': delivery_guy.shift_end_datetime,
         'is_teamlead': delivery_guy.is_teamlead,
