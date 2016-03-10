@@ -67,6 +67,8 @@ module.exports = function(grunt){
 					'static/modules/directives/*.js',
 					'static/modules/order/orders.js',
 					'static/modules/order/*.js',
+					'static/modules/order/list/*.js',
+					'static/modules/order/detail/*.js',
 					'static/modules/deliveryguy/deliveryguy.js',
 					'static/modules/deliveryguy/dgConstants.js',
 					'static/modules/deliveryguy/dgFilter.js',

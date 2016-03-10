@@ -2,10 +2,25 @@
 	'use strict';
 	var Order = function ($resource,constants){
 		return {
-			getOrders : $resource(constants.v2baseUrl+'order/:id/',{id:"@id"},{
+			getOrders : $resource(constants.v3baseUrl+'order/:id/',{id:"@id"},{
 				query :{
 					method: 'GET',
 					isArray: false
+				}
+			}),
+			assignOrders : $resource(constants.v3baseUrl+'order/assign_orders/', {}, {
+				assign : {
+					method: 'PUT',
+				}
+			}),
+			updatePickup : $resource(constants.v3baseUrl+'order/:id/picked_up/',{id:"@id"},{
+				update : {
+					method: 'PUT'
+				}
+			}),
+			updateDelivered : $resource(constants.v3baseUrl+'order/:id/delivered/',{id:"@id"},{
+				update : {
+					method: 'PUT'
 				}
 			})
 		};

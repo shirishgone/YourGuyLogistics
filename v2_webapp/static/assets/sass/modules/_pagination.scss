@@ -13,6 +13,14 @@
 			margin: 10px 10px;
 		}
 	}
+	.stats {
+		.pending {
+			color: orange-accent-color('900');
+		}
+		.unassigned {
+			color: $red-color;
+		}
+	}
 	@include mobile {
 		.stats , .pagination {
 			margin: 0;
@@ -20,5 +28,6 @@
 		p {
 			margin: 5px !important;
 		}
+
 	}
 }

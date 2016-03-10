@@ -28,7 +28,7 @@ body {
 	margin: 5px 5px;
 }
 
-.bagde {
+.badge {
 	min-width: 50px;
 	text-align: center;
 	color: $white-color;
@@ -38,7 +38,29 @@ body {
 	background-color: primary-color('500');
 }
 
-.bagde-warn {
+.badge.QUEUED {
+	background-color: $red-color;
+}
+.badge.INTRANSIT {
+	background-color: orange-accent-color('500');
+}
+.badge.DELIVERED {
+	background-color: $success-color;
+}
+.badge.PICKUPATTEMPTED {
+	background-color: $accent-color;
+}
+.badge.DELIVERYATTEMPTED {
+	background-color: $accent-color;
+}
+.badge.OUTFORDELIVERY {
+	background-color: orange-accent-color('500');
+}
+.badge.CANCELLED {
+	background-color: $red-color;
+}
+
+.badge-warn {
 	background-color: $warn-color;
 }
 
@@ -52,9 +74,8 @@ body {
 .table-list {
 	overflow: hidden;
 	.table-header {
-		min-width: 600px;
 		width: 100%;
-		background-color: orange-accent-color('400');;
+		background-color: orange-accent-color('400');
 		tr {
 			margin-right: 20px;
 			th {
@@ -66,7 +87,6 @@ body {
 		}
 	}
 	.table-body {
-		min-width: 600px;
 		overflow-y: auto;
 		width: 100%;
 		tr {
@@ -84,7 +104,6 @@ body {
 		}
 	}
 	@include mobile {
-		overflow-x: auto;
 		.table-header {
 			tr {
 				margin-right: 0;
