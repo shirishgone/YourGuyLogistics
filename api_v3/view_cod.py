@@ -15,16 +15,18 @@ import uuid
 import pytz
 from django.contrib.auth.decorators import user_passes_test
 
-active_required = user_passes_test(lambda u: u.is_active, redirect_field_name=response_error_with_message)
 error_message = 'This is a deactivated dg'
 response_error_with_message(error_message)
 
 
-def active_check():
-    if active_required is True:
-        return True
-    else:
-        return response_error_with_message(error_message)
+def active_check(self):
+    role = user_role(self)
+    if role == constants.DELIVERY_GUY:
+        dg = get_object_or_404(DeliveryGuy, user=self)
+        if dg.is_active is True:
+            return True
+        else:
+            return response_error_with_message(error_message)
 
 
 def send_cod_status_notification(dg, dg_tl, cod_amount, is_cod_status):
@@ -164,7 +166,7 @@ class CODViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
 
     @list_route(methods=['GET'])
-    @method_decorator(user_passes_test(active_check()))
+    @method_decorator(user_passes_test(active_check))
     def cod_balance(self, request):
         role = user_role(request.user)
         if role == constants.DELIVERY_GUY:
@@ -188,7 +190,7 @@ class CODViewSet(viewsets.ViewSet):
     # for dg, filter OrderDeliveryStatus for cod status(this is cumulative cod not yet transferred to tl)
     # for each order(order id, cod amount collected, customer name, vendor name, delivery date time)
     @list_route(methods=['GET'])
-    @method_decorator(user_passes_test(active_check()))
+    @method_decorator(user_passes_test(active_check))
     def collections(self, request):
         role = user_role(request.user)
         if role == constants.DELIVERY_GUY:
@@ -262,7 +264,7 @@ class CODViewSet(viewsets.ViewSet):
             return response_access_denied()
 
     @list_route(methods=['POST'])
-    @method_decorator(user_passes_test(active_check()))
+    @method_decorator(user_passes_test(active_check))
     def qr_code(self, request):
         role = user_role(request.user)
         balance_amount = 0
@@ -303,7 +305,7 @@ class CODViewSet(viewsets.ViewSet):
             return response_access_denied()
 
     @list_route(methods=['GET'])
-    @method_decorator(user_passes_test(active_check()))
+    @method_decorator(user_passes_test(active_check))
     def associated_dgs_collections(self, request):
         all_associated_dgs = []
         role = user_role(request.user)
@@ -337,7 +339,7 @@ class CODViewSet(viewsets.ViewSet):
             return response_access_denied()
 
     @list_route(methods=['PUT'])
-    @method_decorator(user_passes_test(active_check()))
+    @method_decorator(user_passes_test(active_check))
     def verify_transfer_to_tl(self, request):
         deliveries_list = []
         role = user_role(request.user)
