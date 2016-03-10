@@ -8,15 +8,24 @@
 	.vendor-list ,.dg-list {
 		padding: 10px 10px;
 	}
-	.status-list,.time-list {
+	.status-list,.time-list,.pincode-list {
+		max-height: 300px;
+		overflow-y: auto;
 		padding-top:10px;
 		font-size: 12px;
 	}
-	.cod {
+	.cod,.retail {
 		font-size: 12px;
 		md-switch {
 			margin: 10px 10px;
 		}
+	}
+	.pincode-list {
+		margin-bottom: 15px;
+	}
+	.searchedPincode {
+		margin: 10px 10px 10px 10px;
+		height: 24px;
 	}
 }
 
@@ -38,14 +47,13 @@
 			border-top: 1px solid grey-color('300');
 			min-height: 50px;
 			max-height: 50px;
-			padding: 5px;
 			z-index: 10;
-			.stats , .pagination {
-				margin: 0 10px;
-				p {
-					font-size: 12px;
-					color: grey-color('700');
-					margin: 10px 10px;
+			@include mobile { 
+				.ydPagination .stats .unassigned-text {
+					display: none;
+				}
+				.ydPagination .stats .pending-text {
+					display: none;
 				}
 			}
 		}
@@ -55,6 +63,7 @@
 			overflow-y: scroll;
 			padding: 5px 10px;
 			md-card {
+				position: relative;
 				@include border-radius(0px);
 				margin: 10px 0px;
 				cursor: pointer;
@@ -69,17 +78,69 @@
 					p {
 						margin: 0;
 						font-size: 14px;
+						font-weight: 500;
 						text-transform: uppercase;
-						color: grey-color('700');
+						color: $black-color;
+						line-height: 2;
 					}
 					span {
 						font-size: 12px;
 						color: grey-color('600');
 					}
+					span.dg_status {
+						color: $black-color;
+					}
+				}
+				@include mobile {
+					.customer,.order-checkbox {
+						margin-bottom: 5px;
+					}
+					.customer {
+						p {
+							line-height: 2;
+							font-size: 14px;
+						}
+						span {
+							font-size: 10px;
+						}
+					}
+					.order-time {
+						p {
+							font-size: 10px;
+							color: grey-color('600');
+							line-height: 1;
+						}
+					}
+					.vendor {
+						p {
+							font-size: 12px;
+							line-height: 2;
+						}
+					}
+					.dg {
+						span.dg_status {
+							font-size: 10px;
+							color: grey-color('600');
+						}
+					}
+					.payment {
+						p {
+							font-size: 12px;
+							color: grey-color('600');
+							margin: 0;
+							line-height: 2;
+
+						}
+					}
+					.address-divider {
+						padding: 0 2%;
+					}
 				}
 			}
 			.card-action {
 				margin: 5px;
+				margin-top: 8px;
+				margin-bottom: 8px;
 				.order-time,.payment{
 					.icon {
 						margin-right: 10px;
@@ -95,7 +156,80 @@
 						color: grey-color('600');
 					}
 				}
+				.status {
+					padding-left: 34px;
+					.badge {
+						min-width: 80px;
+					}
+				}
+				.md-menu {
+					padding: 0px;
+				}
+				@include mobile { 
+					margin: 5px;
+					margin-top: 0px;
+					.dg {
+						span {
+							font-size: 10px;
+							color: grey-color('600');
+						}
+					}
+					.payment {
+						p {
+							margin: 0px;
+							font-size: 10px;
+							color: grey-color('600');
+							line-height: 3;
+						}
+					}
+				}
+			}
+			.content-divider {
+				padding: 0 3%;
+				.orderid {
+					margin-bottom: -12px;
+					width: 69px;
+					text-align: center;
+					padding: 2px 5px;
+					font-size: 12px;
+					color: grey-color('600');
+					border: 1px solid grey-color('400');
+					@include border-radius(10px);
+				}
+				md-divider[md-inset] {
+					border-top-color: grey-color('400');
+				}
+				@include mobile { 
+					padding: 0 2%;
+					.orderid {
+						width: 65px;
+						padding: 2px 2px;
+						font-size: 10px;
+						margin-bottom: -10px;
+					}
+					md-divider[md-inset] {
+						margin-left: 70px;
+					}
+				}
+			}
+			.reverse {
+				position: absolute;
+				top: 0;
+				right: 0;
+				height: 30px;
+				width: 30px;
+				img {
+					height: 100%;
+					width: 100%;
+				}
 			}
 		}
+	}
+}
+
+.statusUpdate {
+	.status-tab {
+		padding: 25px;
+		text-align: center;
 	}
 }

@@ -1,0 +1,64 @@
+<md-dialog aria-label="ADD TEAM LEAD" ng-cloak class="assignDG" flex="50">
+	<md-toolbar>
+        <div class="md-toolbar-tools">
+            <h2>Assign Delivery Guy</h2>
+            <span flex></span>
+            <md-button ng-click="assignDG.cancel()" class="md-icon-button" aria-label="close dg edit">
+            	<md-icon>clear</md-icon>
+            </md-button>
+        </div>
+    </md-toolbar>
+    <md-dialog-content layout="row" layout-wrap layout-align="center center">
+    	<div flex="80">
+    		<h3 class="md-title">Pickup Guy</h3>
+    		<div>
+				<md-autocomplete
+					md-no-cache="true"
+					md-selected-item="assignDG.PickupGuy"
+					md-search-text="assignDG.searchedPickupDg"
+					md-selected-item-change="assignDG.pickupDgChange(dg)"
+					md-items="dg in assignDG.dgSearchTextChange(assignDG.searchedPickupDg)"
+					md-item-text="dg.name"
+					md-min-length="1"
+					placeholder="Type Pickup Guy Name">
+					<md-item-template>
+						<span md-highlight-text="assignDG.searchedPickupDg" md-highlight-flags="^i">{{dg.name}}</span>
+					</md-item-template>
+					<md-not-found>
+						No states matching "{{assignDG.searchedPickupDg}}" were found.
+					</md-not-found>
+				</md-autocomplete>
+			</div>
+    	</div>
+    	<div flex="80" style="margin-bottom: 10px;">
+    		<h3 class="md-title">Delivery Guy</h3>
+    		<div>
+				<md-autocomplete
+					md-no-cache="true"
+					md-selected-item="assignDG.DeliveryGuy"
+					md-search-text="assignDG.searchedDeliveryDg"
+					md-selected-item-change="assignDG.deliveryDgChange(dg)"
+					md-items="dg in assignDG.dgSearchTextChange(assignDG.searchedDeliveryDg)"
+					md-item-text="dg.name"
+					md-min-length="1"
+					placeholder="Type Delivery Guy Name">
+					<md-item-template>
+						<span md-highlight-text="assignDG.searchedDeliveryDg" md-highlight-flags="^i">{{dg.name}}</span>
+					</md-item-template>
+					<md-not-found>
+						No states matching "{{assignDG.searchedDeliveryDg}}" were found.
+					</md-not-found>
+				</md-autocomplete>
+			</div>
+    	</div>
+    </md-dialog-content>
+    <md-dialog-actions layout="row">
+        <span flex></span>
+        <md-button ng-click="assignDG.cancel()" class="md-warn">
+            Cancel
+        </md-button>
+        <md-button ng-click="assignDG.answer(assignDG.assignment_data)" class="md-primary" style="margin-right:20px;">
+            Done
+        </md-button>
+    </md-dialog-actions>
+</md-dialog>

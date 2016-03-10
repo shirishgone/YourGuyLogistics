@@ -41,6 +41,13 @@
 			},
 			slectedItemLength : function (){
 				return orderselection.selectedItemArray.length;
+			},
+			getAllItemsIds : function(){
+				var array = [];
+				orderselection.selectedItemArray.forEach(function(order){
+					array.push(order.id);
+				});
+				return array;
 			}
 		};
 		return orderselection;
