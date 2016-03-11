@@ -178,7 +178,7 @@
   z-index: 9;
   overflow-y: scroll;
   padding: 5px 10px;
-  background-color: #ffffff;
+  background-color: #F5F5F5;
 }
 /* line 66, ../sass/modules/order/_list.scss */
 .opsOrder .order-list .list md-card {

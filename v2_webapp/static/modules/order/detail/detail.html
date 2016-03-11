@@ -5,28 +5,50 @@
 		</md-button>
 		<p>Order {{orderDetail.order.id}}</p>
 		<span flex></span>
-		<md-button ng-click="" id="dgEditDialog" class="md-icon-button" aria-label="Menu Icon">
-			<md-icon>file_download</md-icon>
+		<md-button ng-click="orderDetail.statusUpdateDialog(orderDetail.order)" class="md-icon-button" aria-label="Menu Icon">
+			<md-icon>update</md-icon>
+		</md-button>
+		<md-button ng-click="orderDetail.assignDgForSingleOrder(orderDetail.order)" class="md-icon-button" aria-label="Menu Icon">
+			<md-icon>assignment_ind</md-icon>
 		</md-button>
 		<md-menu md-position-mode="target-right target">
+			<md-button class="md-icon-button" id="options" ng-click="$mdOpenMenu($event)" aria-label="Open selected menu">
+				<md-icon>file_download</md-icon>
+			</md-button>
+			<md-menu-content width="2">
+				<md-menu-item>
+					<md-button ng-click="orderDetail.downloadPop()">
+						<md-icon>picture_in_picture</md-icon>
+						Pickup Proof
+					</md-button>
+				</md-menu-item>
+				<md-menu-item>
+					<md-button ng-click="orderDetail.downloadPod()">
+						<md-icon>picture_in_picture_alt</md-icon>
+						Delivery Proof
+					</md-button>
+				</md-menu-item>
+			</md-menu-content>
+		</md-menu>
+		<!-- <md-menu md-position-mode="target-right target">
 			<md-button class="md-icon-button" id="options" ng-click="$mdOpenMenu($event)" aria-label="Open selected menu">
 				<md-icon>more_vert</md-icon>
 			</md-button>
 			<md-menu-content width="3">
 				<md-menu-item>
-					<md-button ng-click="opsOrder.statusUpdateDialog($event)">
+					<md-button ng-click="orderDetail.statusUpdateDialog(orderDetail.order)">
 						<md-icon>update</md-icon>
 						Update Status
 					</md-button>
 				</md-menu-item>
 				<md-menu-item>
-					<md-button ng-click="opsOrder.assignDg($event)">
+					<md-button ng-click="orderDetail.assignDgForSingleOrder(orderDetail.order)">
 						<md-icon>assignment_ind</md-icon>
 						Assign Delivery Guy
 					</md-button>
 				</md-menu-item>
 			</md-menu-content>
-		</md-menu>
+		</md-menu> -->
 	</div>
 </md-toolbar>
 <md-content flex class="orderDetail" layout="column">

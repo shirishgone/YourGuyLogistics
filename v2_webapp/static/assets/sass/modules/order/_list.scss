@@ -62,7 +62,7 @@
 			z-index: 9;
 			overflow-y: scroll;
 			padding: 5px 10px;
-			background-color: $white-color;
+			background-color: grey-color('100');
 			md-card {
 				position: relative;
 				@include border-radius(0px);

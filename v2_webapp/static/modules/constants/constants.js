@@ -149,7 +149,10 @@
 		status    : STATUS_OBJECT,
 		time      :time_data,
 		dg_status : dg_checkin_status,
-		permissible_tabs: permissible_tabs
+		permissible_tabs: permissible_tabs,
+		ACCESS_KEY : 'AKIAJTRSKA2PKKWFL5PA',
+	    SECRET_KEY : 'grJpBB1CcH8ShN6g88acAkDjvklYdgX7OENAx4g/',
+	    S3_BUCKET : 'yourguy-pod'
 	};
 	var prodConstants = {
 		v1baseUrl : 'http://yourguy.herokuapp.com/api/v1/',
@@ -167,7 +170,10 @@
 		status    : STATUS_OBJECT,
 		time      : time_data,
 		dg_status : dg_checkin_status,
-		permissible_tabs : permissible_tabs
+		permissible_tabs : permissible_tabs,
+		ACCESS_KEY : 'AKIAJTRSKA2PKKWFL5PA',
+	    SECRET_KEY : 'grJpBB1CcH8ShN6g88acAkDjvklYdgX7OENAx4g/',
+	    S3_BUCKET : 'yourguy-pod'
 	};
 	var testConstants = {
 		v1baseUrl : 'https://yourguytestserver.herokuapp.com/api/v1/',
@@ -185,7 +191,10 @@
 		status    : STATUS_OBJECT,
 		time      : time_data,
 		dg_status : dg_checkin_status,
-		permissible_tabs: permissible_tabs
+		permissible_tabs: permissible_tabs,
+		ACCESS_KEY : 'AKIAJTRSKA2PKKWFL5PA',
+	    SECRET_KEY : 'grJpBB1CcH8ShN6g88acAkDjvklYdgX7OENAx4g/',
+	    S3_BUCKET  : 'yourguy-pod-test'
 	};
 
 	angular.module('ygVendorApp')
