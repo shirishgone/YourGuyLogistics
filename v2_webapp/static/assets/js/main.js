@@ -73,7 +73,7 @@
 })();
 (function(){
 	'use strict';
-	var homeCntrl = function($rootScope,$state,$mdSidenav,$mdDialog,$mdToast,constants,UserProfile){
+	var homeCntrl = function($rootScope,$state,$mdSidenav,$mdDialog,$mdToast,constants,UserProfile,Notification){
 		// Show tabs page accorfing to the credentials.
 		AWS.config.update({accessKeyId: constants.ACCESS_KEY, secretAccessKey: constants.SECRET_KEY});
 		var self = this;
@@ -117,13 +117,34 @@
 				self.logout();
 			});
 		};
+		/*
+			event for handleing error cases, whenever the error event is fired this, function is called
+			and it shows a toast with a error messgae for small duration and then it disappeares.
+		*/
 		$rootScope.$on('errorOccured', function(){
+			Notification.loaderComplete();
 			if($rootScope.errorMessage){
 				$mdToast.show({
 					controller: 'ErrorToastCntrl',
 					controllerAs : 'errorToast',
 					templateUrl: '/static/modules/home/error-toast-template.html',
 					hideDelay: 6000,
+					position: 'top right'
+				});
+			}
+		});
+		/*
+			event for handleing success cases, whenever the succes event is fired this, function is called
+			and it shows a toast with a success messgae for small duration and then it disappeares.
+		*/
+		$rootScope.$on('eventSuccess', function(){
+			Notification.loaderComplete();
+			if($rootScope.successMessage){
+				$mdToast.show({
+					controller: 'SuccessToastCntrl',
+					controllerAs : 'successToast',
+					templateUrl: '/static/modules/home/success-toast-template.html',
+					hideDelay: 600000,
 					position: 'top right'
 				});
 			}
@@ -154,6 +175,7 @@
 		'$mdToast',
 		'constants',
 		'UserProfile',
+		'Notification',
 		homeCntrl
 	])
 	.controller('ErrorToastCntrl', [
@@ -161,6 +183,17 @@
 		'$rootScope', 
 		function($mdToast,$rootScope){
 			this.msg = $rootScope.errorMessage;
+
+			this.closeToast = function() {
+				$mdToast.hide();
+			};
+		}
+	])
+	.controller('SuccessToastCntrl', [
+		'$mdToast',
+		'$rootScope', 
+		function($mdToast,$rootScope){
+			this.msg = $rootScope.successMessage;
 
 			this.closeToast = function() {
 				$mdToast.hide();
@@ -487,7 +520,7 @@
 	};
 
 	angular.module('ygVendorApp')
-	.constant('constants', testConstants);
+	.constant('constants', constants);
 })();
 (function(){
 	'use strict';
@@ -625,6 +658,35 @@
 		'constants', 
 		DeliverGuy
 	]);
+})();
+(function(){
+	'use strict';
+	var Notification = function($rootScope,$state,$document){
+		return {
+			loaderStart : function(){
+				angular.element($document[0].getElementsByClassName('request-loader')).removeClass('request-loader-hidden');
+			},
+			loaderComplete : function(){
+				angular.element($document[0].getElementsByClassName('request-loader')).addClass('request-loader-hidden');
+			},
+			showError : function(msg){
+				$rootScope.errorMessage = msg;
+				$rootScope.$broadcast('errorOccured');
+			},
+			showSuccess : function(msg){
+				$rootScope.successMessage = msg;
+				$rootScope.$broadcast('eventSuccess');
+			}
+		};
+	};
+	angular.module('ygVendorApp')
+	.factory('Notification', [
+		'$rootScope',
+		'$state',
+		'$document',
+		Notification
+	]);
+
 })();
 (function(){
 	'use strict';
@@ -1662,12 +1724,11 @@
 })();
 (function(){
 	'use strict';	
-	var orderDetailCntrl = function($state,$stateParams,$rootScope,order,DeliveryGuy,Order,orderDgAssign,OrderStatusUpdate,PreviousState,constants,$q){
+	var orderDetailCntrl = function($state,$stateParams,$rootScope,order,DeliveryGuy,Order,orderDgAssign,OrderStatusUpdate,PreviousState,constants,$q,Notification){
 		var s3 = new AWS.S3();
 		var self = this;
 		self.params = $stateParams;
 		self.order = order.payload.data;
-		console.log(self.param );
 
 		function drawConvertedImage(bufferStr , name) {
 			var image_proof = new Image();
@@ -1756,7 +1817,7 @@
 		self.downloadPop = function(){ 
 			var param = {
 				Bucket : constants.S3_BUCKET,
-				Prefix : self.param.id+'/'+self.order.pickedup_datetime.slice(0,10)+'/pop'
+				Prefix : self.params.id+'/'+self.order.pickedup_datetime.slice(0,10)+'/pop'
 			};
 			self.download_image(param);
 		};
@@ -1764,36 +1825,39 @@
 		self.downloadPod = function(){ 
 			var param = {
 				Bucket : constants.S3_BUCKET,
-				Prefix : self.param.id+'/'+self.order.pickedup_datetime.slice(0,10)+'/pod'
+				Prefix : self.params.id+'/'+self.order.pickedup_datetime.slice(0,10)+'/pod'
 			};
 			self.download_image(param);
 		};
 
 		self.download_image = function(param){
+			Notification.loaderStart();
 			s3.listObjects(param, function (err, data){
 				if(err){
-					$rootScope.errorMessage = '';
-					$rootScope.$broadcast('errorOccured');
+					Notification.loaderComplete();
+					Notification.showError(err);
 				}
 				else{
 					if (data.Contents.length === 0) {
-						$rootScope.errorMessage = 'No Proof Found';
-						$rootScope.$broadcast('errorOccured');
+						Notification.loaderComplete();
+						Notification.showError('No Proof Found');
 						return;
 					}
 					if( _safari() ) {
-						$rootScope.errorMessage = 'To view the proofs! \nOption 1: Go to Safari —> Preferences —> Security —>  Block popup windows (Disable)\nOption 2: Use Chrome browser to download the images';
-						$rootScope.$broadcast('errorOccured');
+						var msg = 'To view the proofs! \nOption 1: Go to Safari —> Preferences —> Security —>  Block popup windows (Disable)\nOption 2: Use Chrome browser to download the images';
+						Notification.loaderComplete();
+						Notification.showError(msg);
 						return;
 					}
 					else{
 						async.map( data.Contents , getS3Images , function(err, result) {
 							if(err){
-								$rootScope.errorMessage = err;
-								$rootScope.$broadcast('errorOccured');
+								Notification.loaderComplete();
+								Notification.showError(err);
 							}
 							else {
-								console.log(result);
+								Notification.loaderComplete();
+								Notification.showSuccess('Proof Download Successful');
 							}
 						});
         			}// end of else
@@ -1823,6 +1887,7 @@
 			if(assign_data.delivery.dg_id){
 				array.push(Order.assignOrders.assign(assign_data.delivery).$promise);
 			}
+			Notification.loaderStart();
 			$q.all(array).then(function(data){
 				self.getOrder();
 			});
@@ -1834,6 +1899,7 @@
 				status_data.data.id = status_data.delivery_ids[i];
 				array.push(Order.updatePickup.update(status_data.data).$promise);
 			}
+			Notification.loaderStart();
 			$q.all(array).then(function(data){
 				self.getOrder();
 			});
@@ -1844,6 +1910,7 @@
 				status_data.data.id = status_data.delivery_ids[i];
 				array.push(Order.updateDelivered.update(status_data.data).$promise);
 			}
+			Notification.loaderStart();
 			$q.all(array).then(function(data){
 				self.getOrder();
 			});
@@ -1881,6 +1948,7 @@
 		'PreviousState',
 		'constants',
 		'$q',
+		'Notification',
 		orderDetailCntrl
 	]);
 
