@@ -115,7 +115,8 @@ def associated_dgs_collections_dict(dg):
         'dg_id': dg.id,
         'dg_name': dg.user.first_name,
         'cod_transferred': None,
-        'transferred_time': None
+        'transferred_time': None,
+        'transaction_ids': []
     }
     return associated_dgs_collections
 
@@ -220,6 +221,7 @@ class CODViewSet(viewsets.ViewSet):
                 associated_dgs = delivery_guy_tl.associate_delivery_guys.all()
                 associated_dgs = associated_dgs.filter(is_active=True)
                 for single_dg in associated_dgs:
+                    transaction_ids = []
                     delivery_statuses = OrderDeliveryStatus.objects.filter(delivery_guy=single_dg,
                                                                            cod_status=constants.COD_STATUS_TRANSFERRED_TO_TL,
                                                                            cod_transactions__transaction_status=constants.VERIFIED,
@@ -235,12 +237,17 @@ class CODViewSet(viewsets.ViewSet):
                                                                         transaction_status=constants.VERIFIED,
                                                                         cod_amount=delivery_statuses[0]['sum_of_cod_collected'],
                                                                         deliveries__in=deliveries)
+                        for single_tx in cod_transaction:
+                            transaction_ids.append(single_tx.transaction_uuid)
+                        if len(transaction_ids) > 0:
+                            associated_dgs_collections['transaction_ids'] = transaction_ids
                         if len(cod_transaction) > 0 and cod_transaction[0].verified_time_stamp is not None:
                             associated_dgs_collections['transferred_time'] = cod_transaction[0].verified_time_stamp
                         else:
                             associated_dgs_collections['transferred_time'] = None
 
                         asso_dg_collections.append(associated_dgs_collections)
+
                 dg_tl_collections['total_cod_amount'] = balance_amount
                 dg_tl_collections['associated_dg_collections'] = asso_dg_collections
                 return response_with_payload(dg_tl_collections, None)
