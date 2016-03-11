@@ -2,6 +2,7 @@
 	'use strict';
 	var homeCntrl = function($rootScope,$state,$mdSidenav,$mdDialog,$mdToast,constants,UserProfile){
 		// Show tabs page accorfing to the credentials.
+		AWS.config.update({accessKeyId: constants.ACCESS_KEY, secretAccessKey: constants.SECRET_KEY});
 		var self = this;
 		this.tabs =  constants.permissible_tabs[UserProfile.$getUserRole()];
 		this.user_name = UserProfile.$getUsername();

@@ -43,7 +43,7 @@ module.exports = function(grunt){
 					beautify : true,
 					mangle: true,
 					compress: true,
-					preserveComments: true,
+					preserveComments: false,
 					sourceMap: true,
 					banner:  '/*! <%= pkg.name %> - v<%= pkg.version %> - ' +
     					'<%= grunt.template.today("yyyy-mm-dd") %> */',
