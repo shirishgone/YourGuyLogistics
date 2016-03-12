@@ -436,7 +436,8 @@ def delivery_guy_app(delivery_status):
             'vendor_phonenumber': delivery_status.order.vendor.phone_number,
             'total_cost': delivery_status.order.total_cost,
             'cod_remarks': delivery_status.cod_remarks,
-            'delivery_charges': delivery_status.order.delivery_charges
+            'delivery_charges': delivery_status.order.delivery_charges,
+            'order_placed_datetime': delivery_status.order.created_date_time
         }
         res_order.update(common_params(delivery_status))
         return res_order

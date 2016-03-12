@@ -1,0 +1,24 @@
+md-toast.md-ygBlueTheme-theme.error-toast .md-toast-content {
+	min-width : 250px;
+	padding: 8px 24px;
+	border: 5px solid $red-color;
+	text-transform: uppercase;
+	color: $red-color;
+	font-weight: 600;
+	.md-button {
+		color: $red-color;
+	}
+}
+
+
+md-toast.md-ygBlueTheme-theme.success-toast .md-toast-content {
+	min-width : 250px;
+	padding: 8px 24px;
+	border: 5px solid $success-color;
+	text-transform: uppercase;
+	color: $success-color;
+	font-weight: 600;
+	.md-button {
+		color: $success-color;
+	}
+}

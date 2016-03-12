@@ -1,7 +1,8 @@
 (function(){
 	'use strict';
-	var homeCntrl = function($rootScope,$state,$mdSidenav,$mdDialog,$mdToast,constants,UserProfile){
+	var homeCntrl = function($rootScope,$state,$mdSidenav,$mdDialog,$mdToast,constants,UserProfile,Notification){
 		// Show tabs page accorfing to the credentials.
+		AWS.config.update({accessKeyId: constants.ACCESS_KEY, secretAccessKey: constants.SECRET_KEY});
 		var self = this;
 		this.tabs =  constants.permissible_tabs[UserProfile.$getUserRole()];
 		this.user_name = UserProfile.$getUsername();
@@ -43,13 +44,34 @@
 				self.logout();
 			});
 		};
+		/*
+			event for handleing error cases, whenever the error event is fired this, function is called
+			and it shows a toast with a error messgae for small duration and then it disappeares.
+		*/
 		$rootScope.$on('errorOccured', function(){
+			Notification.loaderComplete();
 			if($rootScope.errorMessage){
 				$mdToast.show({
 					controller: 'ErrorToastCntrl',
 					controllerAs : 'errorToast',
 					templateUrl: '/static/modules/home/error-toast-template.html',
 					hideDelay: 6000,
+					position: 'top right'
+				});
+			}
+		});
+		/*
+			event for handleing success cases, whenever the succes event is fired this, function is called
+			and it shows a toast with a success messgae for small duration and then it disappeares.
+		*/
+		$rootScope.$on('eventSuccess', function(){
+			Notification.loaderComplete();
+			if($rootScope.successMessage){
+				$mdToast.show({
+					controller: 'SuccessToastCntrl',
+					controllerAs : 'successToast',
+					templateUrl: '/static/modules/home/success-toast-template.html',
+					hideDelay: 600000,
 					position: 'top right'
 				});
 			}
@@ -80,6 +102,7 @@
 		'$mdToast',
 		'constants',
 		'UserProfile',
+		'Notification',
 		homeCntrl
 	])
 	.controller('ErrorToastCntrl', [
@@ -87,6 +110,17 @@
 		'$rootScope', 
 		function($mdToast,$rootScope){
 			this.msg = $rootScope.errorMessage;
+
+			this.closeToast = function() {
+				$mdToast.hide();
+			};
+		}
+	])
+	.controller('SuccessToastCntrl', [
+		'$mdToast',
+		'$rootScope', 
+		function($mdToast,$rootScope){
+			this.msg = $rootScope.successMessage;
 
 			this.closeToast = function() {
 				$mdToast.hide();
