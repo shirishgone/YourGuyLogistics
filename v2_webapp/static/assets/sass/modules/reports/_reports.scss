@@ -1,0 +1,47 @@
+.reports {
+	padding: 40px;
+	.action-section {
+		max-height: 150px;
+		min-height: 60px;
+		md-input-container .md-errors-spacer {
+			min-width: 0px;
+		}
+		.date-picker-section {
+			margin-right: 40px;
+		}
+	}
+	.stats-section {
+		min-height: 80px;
+		max-height: 200px;
+		margin-bottom: 40px;
+		.stat-box {
+			padding: 24px;
+			min-height: 40px;
+			background-color: primary-color('500');
+			color: $white-color;
+			text-align: center;
+			text-transform: capitalize;
+			p {
+				margin-top: 0px;
+				margin-bottom: 10px;
+			}
+			&.accent {
+				background-color:  orange-accent-color('500');
+			}
+			&.warn {
+				background-color:  $red-color;
+			}
+			&.success {
+				background-color:  $success-color;
+			}
+		}
+	}
+	.chart-section {
+		padding: 20px;
+		width: 100%;
+		min-height: 500px;
+		max-height: 900px;
+		border: 1px solid $warn-color;
+		position: relative;
+	}
+}
