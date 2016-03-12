@@ -35,14 +35,14 @@ def active_check(self):
         return response_error_with_message(error_message_2)
 
 
-def send_cod_status_notification(dg, dg_tl, cod_amount, is_cod_status):
+def send_cod_status_notification(dg, dg_tl, cod_amount, is_transaction_successful):
     try:
-        if is_cod_status is True:
+        if is_transaction_successful is True:
             data = {
                 'message': 'Amount %d was transferred to %s successfully ' % (cod_amount, dg_tl.user.first_name),
                 'type': 'cod_transfer_to_tl',
                 'data': {
-                    'is_cod_successful': is_cod_status
+                    'is_transaction_successful': is_transaction_successful
                 }
             }
             send_push(dg.device_token, data)
@@ -51,7 +51,7 @@ def send_cod_status_notification(dg, dg_tl, cod_amount, is_cod_status):
                 'message': 'Transfer of amount %d to %s was declined ' % (cod_amount, dg_tl.user.first_name),
                 'type': 'cod_transfer_to_tl',
                 'data': {
-                    'is_cod_successful': is_cod_status
+                    'is_transaction_successful': is_transaction_successful
                 }
             }
             send_push(dg.device_token, data)
@@ -59,14 +59,14 @@ def send_cod_status_notification(dg, dg_tl, cod_amount, is_cod_status):
         log_exception(e, 'Push notification not sent in send_cod_status_notification ')
 
 
-def send_timeout_notification(dg, cod_amount, is_time_out, is_cod_status):
+def send_timeout_notification(dg, cod_amount, is_time_out, is_transaction_successful):
     try:
         data = {
             'message': 'Transfer to %s of amount %d timed out.' % (dg.user.first_name, cod_amount),
             'type': 'cod_transfer_to_tl',
             'data': {
                 'is_time_out': is_time_out,
-                'is_cod_successful': is_cod_status
+                'is_transaction_successful': is_transaction_successful
             }
         }
         send_push(dg.device_token, data)
@@ -172,11 +172,13 @@ def cod_balance_calculation(dg):
 def create_proof(bank_deposit_proof, user, cod_amount):
     receipt = bank_deposit_proof
     total_cod = cod_amount
-
-    proof = ProofOfBankDeposit.objects.create(created_by_user=user, total_cod=total_cod)
-    for single in receipt:
-        proof.receipt.add(Picture.objects.create(name=single))
+    try:
+        proof = ProofOfBankDeposit.objects.create(created_by_user=user, total_cod=total_cod)
+        proof.receipt.add(Picture.objects.create(name=receipt))
         proof.save()
+    except Exception as e:
+        error_message = 'Failed to create the bank deposit proof'
+        return response_error_with_message(error_message)
     return proof
 
 
@@ -464,17 +466,21 @@ class CODViewSet(viewsets.ViewSet):
                 for single in transaction_uuid:
                     try:
                         cod_transaction = CODTransaction.objects.get(transaction_uuid=single)
-                        cod_amount_calc = cod_amount_calc + cod_transaction.cod_amount
-                        deliveries = eval(cod_transaction.deliveries)
-                        deliveries_list.append(deliveries)
+                        if cod_transaction.dg_tl_id == dg_tl_id:
+                            cod_amount_calc = cod_amount_calc + cod_transaction.cod_amount
+                            deliveries = eval(cod_transaction.deliveries)
+                            deliveries_list.append(deliveries)
+                        else:
+                            error_message = 'There is a mismatch between the DG TL initiating the bank deposit'
+                            return response_error_with_message(error_message)
                     except Exception as e:
                         error_message = 'No such transaction id found'
                         return response_error_with_message(error_message)
                 if cod_amount == cod_amount_calc:
                     transaction_uuid = uuid.uuid4()
                     cod_action = cod_actions(constants.COD_BANK_DEPOSITED_CODE)
-                    cod_transaction = create_cod_transaction(cod_action, request.user, None, dg_tl_id, cod_amount, transaction_uuid, deliveries_list)
                     proof = create_proof(bank_deposit_proof, request.user, cod_amount)
+                    cod_transaction = create_cod_transaction(cod_action, request.user, None, dg_tl_id, cod_amount, transaction_uuid, deliveries_list)
                     cod_transaction.bank_deposit_proof = proof
                     cod_transaction.save()
                     for delivery_id in deliveries_list:
@@ -516,8 +522,8 @@ class CODViewSet(viewsets.ViewSet):
                     if cod_amount == cod_amount_calc:
                         transaction_uuid = uuid.uuid4()
                         cod_action = cod_actions(constants.COD_BANK_DEPOSITED_CODE)
-                        cod_transaction = create_cod_transaction(cod_action, request.user, dg_id, None, cod_amount, transaction_uuid, deliveries_list)
                         proof = create_proof(bank_deposit_proof, request.user, cod_amount)
+                        cod_transaction = create_cod_transaction(cod_action, request.user, dg_id, None, cod_amount, transaction_uuid, deliveries_list)
                         cod_transaction.bank_deposit_proof = proof
                         cod_transaction.save()
                         for delivery_id in deliveries_list:
@@ -535,3 +541,5 @@ class CODViewSet(viewsets.ViewSet):
                     return response_error_with_message(error_message)
         else:
             return response_access_denied()
+
+
