@@ -928,8 +928,8 @@ body {
   }
 }
 
-/* line 1, ../sass/modules/_errorToast.scss */
-md-toast.md-ygBlueTheme-theme .md-toast-content {
+/* line 1, ../sass/modules/_Toast.scss */
+md-toast.md-ygBlueTheme-theme.error-toast .md-toast-content {
   min-width: 250px;
   padding: 8px 24px;
   border: 5px solid #F44336;
@@ -937,7 +937,21 @@ md-toast.md-ygBlueTheme-theme .md-toast-content {
   color: #F44336;
   font-weight: 600;
 }
-/* line 8, ../sass/modules/_errorToast.scss */
-md-toast.md-ygBlueTheme-theme .md-toast-content .md-button {
+/* line 8, ../sass/modules/_Toast.scss */
+md-toast.md-ygBlueTheme-theme.error-toast .md-toast-content .md-button {
   color: #F44336;
+}
+
+/* line 14, ../sass/modules/_Toast.scss */
+md-toast.md-ygBlueTheme-theme.success-toast .md-toast-content {
+  min-width: 250px;
+  padding: 8px 24px;
+  border: 5px solid #39B54A;
+  text-transform: uppercase;
+  color: #39B54A;
+  font-weight: 600;
+}
+/* line 21, ../sass/modules/_Toast.scss */
+md-toast.md-ygBlueTheme-theme.success-toast .md-toast-content .md-button {
+  color: #39B54A;
 }

@@ -1,11 +1,10 @@
 (function(){
 	'use strict';	
-	var orderDetailCntrl = function($state,$stateParams,$rootScope,order,DeliveryGuy,Order,orderDgAssign,OrderStatusUpdate,PreviousState,constants,$q){
+	var orderDetailCntrl = function($state,$stateParams,$rootScope,order,DeliveryGuy,Order,orderDgAssign,OrderStatusUpdate,PreviousState,constants,$q,Notification){
 		var s3 = new AWS.S3();
 		var self = this;
 		self.params = $stateParams;
 		self.order = order.payload.data;
-		console.log(self.param );
 
 		function drawConvertedImage(bufferStr , name) {
 			var image_proof = new Image();
@@ -94,7 +93,7 @@
 		self.downloadPop = function(){ 
 			var param = {
 				Bucket : constants.S3_BUCKET,
-				Prefix : self.param.id+'/'+self.order.pickedup_datetime.slice(0,10)+'/pop'
+				Prefix : self.params.id+'/'+self.order.pickedup_datetime.slice(0,10)+'/pop'
 			};
 			self.download_image(param);
 		};
@@ -102,36 +101,39 @@
 		self.downloadPod = function(){ 
 			var param = {
 				Bucket : constants.S3_BUCKET,
-				Prefix : self.param.id+'/'+self.order.pickedup_datetime.slice(0,10)+'/pod'
+				Prefix : self.params.id+'/'+self.order.pickedup_datetime.slice(0,10)+'/pod'
 			};
 			self.download_image(param);
 		};
 
 		self.download_image = function(param){
+			Notification.loaderStart();
 			s3.listObjects(param, function (err, data){
 				if(err){
-					$rootScope.errorMessage = '';
-					$rootScope.$broadcast('errorOccured');
+					Notification.loaderComplete();
+					Notification.showError(err);
 				}
 				else{
 					if (data.Contents.length === 0) {
-						$rootScope.errorMessage = 'No Proof Found';
-						$rootScope.$broadcast('errorOccured');
+						Notification.loaderComplete();
+						Notification.showError('No Proof Found');
 						return;
 					}
 					if( _safari() ) {
-						$rootScope.errorMessage = 'To view the proofs! \nOption 1: Go to Safari —> Preferences —> Security —>  Block popup windows (Disable)\nOption 2: Use Chrome browser to download the images';
-						$rootScope.$broadcast('errorOccured');
+						var msg = 'To view the proofs! \nOption 1: Go to Safari —> Preferences —> Security —>  Block popup windows (Disable)\nOption 2: Use Chrome browser to download the images';
+						Notification.loaderComplete();
+						Notification.showError(msg);
 						return;
 					}
 					else{
 						async.map( data.Contents , getS3Images , function(err, result) {
 							if(err){
-								$rootScope.errorMessage = err;
-								$rootScope.$broadcast('errorOccured');
+								Notification.loaderComplete();
+								Notification.showError(err);
 							}
 							else {
-								console.log(result);
+								Notification.loaderComplete();
+								Notification.showSuccess('Proof Download Successful');
 							}
 						});
         			}// end of else
@@ -161,6 +163,7 @@
 			if(assign_data.delivery.dg_id){
 				array.push(Order.assignOrders.assign(assign_data.delivery).$promise);
 			}
+			Notification.loaderStart();
 			$q.all(array).then(function(data){
 				self.getOrder();
 			});
@@ -172,6 +175,7 @@
 				status_data.data.id = status_data.delivery_ids[i];
 				array.push(Order.updatePickup.update(status_data.data).$promise);
 			}
+			Notification.loaderStart();
 			$q.all(array).then(function(data){
 				self.getOrder();
 			});
@@ -182,6 +186,7 @@
 				status_data.data.id = status_data.delivery_ids[i];
 				array.push(Order.updateDelivered.update(status_data.data).$promise);
 			}
+			Notification.loaderStart();
 			$q.all(array).then(function(data){
 				self.getOrder();
 			});
@@ -219,6 +224,7 @@
 		'PreviousState',
 		'constants',
 		'$q',
+		'Notification',
 		orderDetailCntrl
 	]);
 
