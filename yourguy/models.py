@@ -387,13 +387,23 @@ class DeliveryTransaction(models.Model):
 class ProofOfBankDeposit(models.Model):
     created_by_user = models.ForeignKey(User, related_name='pobd_created_by_user', on_delete=models.PROTECT)
     created_time_stamp = models.DateTimeField(auto_now_add=True)
-    verified_by_user = models.ForeignKey(User, blank=True, null=True, related_name='pobd_verified_by_user', on_delete=models.PROTECT)
-    verified_time_stamp = models.DateTimeField(blank=True, null=True)
-    declined_by_user = models.ForeignKey(User, blank=True, null=True, related_name='pobd_declined_by_user')
-    declined_time_stamp = models.DateTimeField(blank=True, null=True)
-    receipt = models.ManyToManyField(Picture, blank=True)
+    updated_by_user = models.ForeignKey(User, blank=True, null=True, related_name='updated_by_user', on_delete=models.PROTECT)
+    updated_time_stamp = models.DateTimeField(blank=True, null=True)
+    receipt_number = models.CharField(max_length=100, blank=True)
+    receipt = models.ForeignKey(Picture, blank=True, null=True)
     total_cod = models.FloatField(default=0.0)
 
+    NONE = 'NONE'
+    VERIFIED = 'VERIFIED'
+    DECLINED = 'DECLINED'
+
+    PROOF_STATUS_CHOICES = (
+            (NONE, 'NONE'),
+            (VERIFIED, 'VERIFIED'),
+            (DECLINED, 'DECLINED')
+            )
+
+    proof_status = models.CharField(max_length=30, choices=PROOF_STATUS_CHOICES, default=NONE)
 
     def __unicode__(self):
         return u"%s" % self.id
