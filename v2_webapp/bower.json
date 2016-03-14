@@ -30,6 +30,7 @@
     "alasql": "~0.2.3",
     "aws-sdk": "aws-sdk-js#^2.2.43",
     "async": "^1.5.2",
-    "js-xlsx": "^0.8.0"
+    "js-xlsx": "^0.8.0",
+    "fusioncharts": "^3.10.1"
   }
 }

@@ -8,8 +8,12 @@ module.exports = function(grunt){
 					'angular-material-sass-files'
 				],
 				dependencies: {
-					'alasql': ['jszip','js-xlsx','js-xls','es6-promise']
+					'alasql': ['jszip','js-xlsx','js-xls','es6-promise'],
+					'fusioncharts' : ['ngstorage']
 				},
+				mainFiles : {
+					fusioncharts : ['fusioncharts.js','fusioncharts.charts.js','angular-fusioncharts.min.js']
+				}
 			}
 		},
 		shell: {
@@ -77,6 +81,7 @@ module.exports = function(grunt){
 					'static/modules/deliveryguy/detail/*.js',
 					'static/modules/vendor/vendor.js',
 					'static/modules/vendor/list/*.js',
+					'static/modules/reports/*.js',
 				],
 				dest : 'static/assets/js/main.js'
 			}

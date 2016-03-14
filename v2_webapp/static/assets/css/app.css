@@ -724,6 +724,65 @@
   z-index: 10;
 }
 
+/* line 1, ../sass/modules/reports/_reports.scss */
+.reports {
+  padding: 40px;
+}
+/* line 3, ../sass/modules/reports/_reports.scss */
+.reports .action-section {
+  max-height: 150px;
+  min-height: 60px;
+}
+/* line 6, ../sass/modules/reports/_reports.scss */
+.reports .action-section md-input-container .md-errors-spacer {
+  min-width: 0px;
+}
+/* line 9, ../sass/modules/reports/_reports.scss */
+.reports .action-section .date-picker-section {
+  margin-right: 40px;
+}
+/* line 13, ../sass/modules/reports/_reports.scss */
+.reports .stats-section {
+  min-height: 80px;
+  max-height: 200px;
+  margin-bottom: 40px;
+}
+/* line 17, ../sass/modules/reports/_reports.scss */
+.reports .stats-section .stat-box {
+  padding: 24px;
+  min-height: 40px;
+  background-color: #52C9EA;
+  color: #ffffff;
+  text-align: center;
+  text-transform: capitalize;
+}
+/* line 24, ../sass/modules/reports/_reports.scss */
+.reports .stats-section .stat-box p {
+  margin-top: 0px;
+  margin-bottom: 10px;
+}
+/* line 28, ../sass/modules/reports/_reports.scss */
+.reports .stats-section .stat-box.accent {
+  background-color: #FCC06A;
+}
+/* line 31, ../sass/modules/reports/_reports.scss */
+.reports .stats-section .stat-box.warn {
+  background-color: #F44336;
+}
+/* line 34, ../sass/modules/reports/_reports.scss */
+.reports .stats-section .stat-box.success {
+  background-color: #39B54A;
+}
+/* line 39, ../sass/modules/reports/_reports.scss */
+.reports .chart-section {
+  padding: 20px;
+  width: 100%;
+  min-height: 500px;
+  max-height: 900px;
+  border: 1px solid #FFCC80;
+  position: relative;
+}
+
 /* line 1, ../sass/modules/_components.scss */
 html {
   height: 100%;
