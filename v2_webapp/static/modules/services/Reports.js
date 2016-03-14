@@ -6,7 +6,9 @@
 				stats : {
 					method: 'GET'
 				}
-			})
+			}),
+			reportsExcel : $resource(constants.v3baseUrl+"excel_download/")
+
 		};
 	};
 	angular.module('ygVendorApp')

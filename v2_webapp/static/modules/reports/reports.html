@@ -1,18 +1,21 @@
 <md-toolbar class="yg-toolbar md-primary md-whiteframe-z2" >
 	<div class="md-toolbar-tools">
-		<md-button ng-click="home.toggleSideNav()" class="md-icon-button" aria-label="Menu Icon">
+		<md-button ng-click="home.toggleSideNav()" class="md-icon-button" aria-label="Menu Icon" ng-if="!reports.searchVendorActive">
 			<md-icon>menu</md-icon>
+		</md-button>
+		<md-button ng-click="reports.backFromSearch()" class="md-icon-button" aria-label="Menu Icon" ng-if="reports.searchVendorActive">
+			<md-icon>arrow_back</md-icon>
 		</md-button>
 		<p>Reports</p>
 		<span flex></span>
-		<md-button class="md-icon-button" aria-label="search Button" ng-click="reports.searchVendorActive = true">
+		<md-button class="md-icon-button" aria-label="search Button" ng-click="reports.downloadReportExcel()">
 			<md-icon>file_download</md-icon>
 		</md-button>
 	</div>
 </md-toolbar>
 <md-content flex class="reports" layout="row" layout-wrap>
-	<div flex="100" layout="row" layout-wrap class="action-section">
-		<div class="vendor" flex="20" layout-align="start start">
+	<div flex="100" flex-xs="100" layout="row" layout-wrap class="action-section">
+		<div class="vendor" flex="20" flex-xs="100" layout-align="start start">
 			<md-autocomplete
 				md-no-cache="true"
 				md-selected-item="reports.selectedVendor"
@@ -30,17 +33,17 @@
 				</md-not-found>
 			</md-autocomplete>
 		</div>
-		<span flex></span>
-		<div flex="50" layout="row" layout-align="end center">
-			<div class="date-picker-section">
-				<md-datepicker ng-model="myDate" md-placeholder="Start date" md-min-date="minDate" md-max-date="maxDate" ng-change="reports.getReports()"></md-datepicker>
+		<span flex hide-xs></span>
+		<div flex="50" flex-xs="100" layout="row" layout-align="end center" layout-wrap  layout-align-xs="space-between start" class="datepicker-section">
+			<div class="date-picker-section" flex-xs="100">
+				<md-datepicker ng-model="reports.params.start_date" md-placeholder="Start date" md-max-date="reports.maxStartDate" ng-change="reports.date_change()"></md-datepicker>
 			</div>
-			<div>
-				<md-datepicker ng-model="myDate" md-placeholder="End date" md-min-date="minDate" md-max-date="maxDate" ng-change="reports.getReports()"></md-datepicker>
+			<div flex-xs="100">
+				<md-datepicker ng-model="reports.params.end_date" md-placeholder="End date" md-min-date="reports.params.start_date" md-max-date="reports.maxEndDate" ng-change="reports.date_change()"></md-datepicker>
 			</div>
 		</div>
 	</div>
-	<div flex="100" layout="row" layout-wrap layout-align="space-between center" class="stats-section">
+	<div flex="100" layout="row" layout-wrap layout-align="space-between start" layout-align-xs="space-around start" class="stats-section">
 		<div flex="20" flex-xs="40" class="stat-box">
 			<p>{{reports.report_stats.total_orders}}</p>
 			<span>total orders</span>

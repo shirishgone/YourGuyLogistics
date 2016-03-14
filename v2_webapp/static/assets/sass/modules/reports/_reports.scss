@@ -1,7 +1,7 @@
 .reports {
 	padding: 40px;
 	.action-section {
-		max-height: 150px;
+		max-height: 300px;
 		min-height: 60px;
 		md-input-container .md-errors-spacer {
 			min-width: 0px;
@@ -37,11 +37,46 @@
 		}
 	}
 	.chart-section {
-		padding: 20px;
+		padding: 30px;
 		width: 100%;
 		min-height: 500px;
 		max-height: 900px;
-		border: 1px solid $warn-color;
+		border: 1px solid grey-color('200');
+		background-color: grey-color('200');
 		position: relative;
+	}
+
+	@include mobile {
+		padding: 20px;
+		.action-section {
+			md-input-container {
+				margin-bottom: 10px;
+				margin-top: 10px;
+				padding-bottom: 10px;
+			}
+			md-autocomplete md-autocomplete-wrap md-progress-linear.md-inline {
+				bottom:18px;
+			}
+			.datepicker-section {
+				margin-bottom: 20px;
+				.date-picker-section {
+					margin-right: 0px;
+					margin-bottom: 20px;
+				}
+			}
+			
+		}
+		.stats-section {
+			.stat-box {
+				font-size: 12px;
+				margin-bottom: 10px;
+				padding: 10px;
+				min-height: 20px;
+				p {
+					margin-top: 0px;
+					margin-bottom: 0px;
+				}
+			}
+		}
 	}
 }

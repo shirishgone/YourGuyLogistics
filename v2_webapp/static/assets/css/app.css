@@ -730,7 +730,7 @@
 }
 /* line 3, ../sass/modules/reports/_reports.scss */
 .reports .action-section {
-  max-height: 150px;
+  max-height: 300px;
   min-height: 60px;
 }
 /* line 6, ../sass/modules/reports/_reports.scss */
@@ -775,12 +775,50 @@
 }
 /* line 39, ../sass/modules/reports/_reports.scss */
 .reports .chart-section {
-  padding: 20px;
+  padding: 30px;
   width: 100%;
   min-height: 500px;
   max-height: 900px;
-  border: 1px solid #FFCC80;
+  border: 1px solid #EEEEEE;
+  background-color: #EEEEEE;
   position: relative;
+}
+@media (max-width: 599px) {
+  /* line 1, ../sass/modules/reports/_reports.scss */
+  .reports {
+    padding: 20px;
+  }
+  /* line 52, ../sass/modules/reports/_reports.scss */
+  .reports .action-section md-input-container {
+    margin-bottom: 10px;
+    margin-top: 10px;
+    padding-bottom: 10px;
+  }
+  /* line 57, ../sass/modules/reports/_reports.scss */
+  .reports .action-section md-autocomplete md-autocomplete-wrap md-progress-linear.md-inline {
+    bottom: 18px;
+  }
+  /* line 60, ../sass/modules/reports/_reports.scss */
+  .reports .action-section .datepicker-section {
+    margin-bottom: 20px;
+  }
+  /* line 62, ../sass/modules/reports/_reports.scss */
+  .reports .action-section .datepicker-section .date-picker-section {
+    margin-right: 0px;
+    margin-bottom: 20px;
+  }
+  /* line 70, ../sass/modules/reports/_reports.scss */
+  .reports .stats-section .stat-box {
+    font-size: 12px;
+    margin-bottom: 10px;
+    padding: 10px;
+    min-height: 20px;
+  }
+  /* line 75, ../sass/modules/reports/_reports.scss */
+  .reports .stats-section .stat-box p {
+    margin-top: 0px;
+    margin-bottom: 0px;
+  }
 }
 
 /* line 1, ../sass/modules/_components.scss */
