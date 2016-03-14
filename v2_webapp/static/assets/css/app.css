@@ -440,42 +440,46 @@
   font-size: 16px;
   color: #424242;
 }
+/* line 47, ../sass/modules/order/_detail.scss */
+.orderDetail .reported-header {
+  color: #F44336;
+}
 @media (max-width: 599px) {
   /* line 1, ../sass/modules/order/_detail.scss */
   .orderDetail {
     padding: 10px;
   }
-  /* line 49, ../sass/modules/order/_detail.scss */
+  /* line 52, ../sass/modules/order/_detail.scss */
   .orderDetail .status-section {
     padding-bottom: 20px;
   }
-  /* line 51, ../sass/modules/order/_detail.scss */
+  /* line 54, ../sass/modules/order/_detail.scss */
   .orderDetail .status-section .status-image {
     text-align: center;
   }
-  /* line 53, ../sass/modules/order/_detail.scss */
+  /* line 56, ../sass/modules/order/_detail.scss */
   .orderDetail .status-section .status-image img {
     width: 50px;
     height: 50px;
   }
-  /* line 57, ../sass/modules/order/_detail.scss */
+  /* line 60, ../sass/modules/order/_detail.scss */
   .orderDetail .status-section .status-image p {
     margin: 0;
     color: #9E9E9E;
     font-size: 12px;
     text-transform: capitalize;
   }
-  /* line 64, ../sass/modules/order/_detail.scss */
+  /* line 67, ../sass/modules/order/_detail.scss */
   .orderDetail .status-section .status-divider {
     width: 40px;
     border-bottom: 5px solid #FBA72E;
   }
-  /* line 69, ../sass/modules/order/_detail.scss */
+  /* line 72, ../sass/modules/order/_detail.scss */
   .orderDetail .status-timings {
     font-size: 10px;
     color: #9E9E9E;
   }
-  /* line 72, ../sass/modules/order/_detail.scss */
+  /* line 75, ../sass/modules/order/_detail.scss */
   .orderDetail .status-timings .timings {
     font-size: 12px;
     color: #424242;

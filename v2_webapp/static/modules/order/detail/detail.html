@@ -15,16 +15,14 @@
 			<md-button class="md-icon-button" id="options" ng-click="$mdOpenMenu($event)" aria-label="Open selected menu">
 				<md-icon>file_download</md-icon>
 			</md-button>
-			<md-menu-content width="2">
+			<md-menu-content width="3">
 				<md-menu-item>
 					<md-button ng-click="orderDetail.downloadPop()">
-						<md-icon>picture_in_picture</md-icon>
 						Pickup Proof
 					</md-button>
 				</md-menu-item>
 				<md-menu-item>
 					<md-button ng-click="orderDetail.downloadPod()">
-						<md-icon>picture_in_picture_alt</md-icon>
 						Delivery Proof
 					</md-button>
 				</md-menu-item>
@@ -110,9 +108,9 @@
 				</span>
 			</div>
         </md-list-item>
-		<md-divider></md-divider>
-		<md-list-item class="md-3-line"layout="row" layout-wrap >
-			<h3 flex="100" class="md-title">Reported</h3>
+		<md-divider ng-if="orderDetail.order.is_reported"></md-divider>
+		<md-list-item class="md-3-line"layout="row" layout-wrap ng-if="orderDetail.order.is_reported" >
+			<h3 flex="100" class="md-title reported-header">Reported</h3>
 			<div flex="20" flex-xs="100">
 				<span class="md-caption">Pickup Boy</span>
 				<p class="md-body-1">{{orderDetail.order.deliveryguy_name}}</p>
@@ -146,6 +144,7 @@
 			<div flex="20" flex-xs="50">
 				<span class="md-caption">Delivery Guy</span>
 				<p class="md-body-1">{{orderDetail.order.deliveryguy_name}}</p>
+				<p class="md-body-1">{{orderDetail.order.deliveryguy_phonenumber}}</p>
 			</div>
 			<div flex="20" flex-xs="50">
 				<span class="md-caption">Customer Name</span>
