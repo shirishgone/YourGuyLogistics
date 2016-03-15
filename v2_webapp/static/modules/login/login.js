@@ -21,6 +21,9 @@
 					else if(user.role === constants.userRole.HR){
 						$state.go('home.dgList');
 					}
+					else if(user.role === constants.userRole.ACCOUNTS){
+						$state.go('home.opsorder');
+					}
 				});
 			},function (error){
 				self.loader = false;

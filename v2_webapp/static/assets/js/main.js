@@ -21,6 +21,9 @@
 					else if(user.role === constants.userRole.HR){
 						$state.go('home.dgList');
 					}
+					else if(user.role === constants.userRole.ACCOUNTS){
+						$state.go('home.opsorder');
+					}
 				});
 			},function (error){
 				self.loader = false;
@@ -245,6 +248,7 @@
 		'deliveryguy',
     'vendor',
     'reports',
+    'Cod',
 		'forbidden'
 	])
 	.config([
@@ -335,7 +339,7 @@
 			dg:true,
 			vendor: true,
 			reports: true,
-			COD: false,
+			COD: true,
 			customer: false,
 			products: false,
 			feedback: true,
@@ -371,7 +375,7 @@
 			dg:true,
 			vendor: true,
 			reports: true,
-			COD: false,
+			COD: true,
 			customer: false,
 			products: false,
 			feedback: true,
@@ -599,6 +603,21 @@
 		'UserProfile',
 		Access
 	]);
+})();
+(function(){
+	'use strict';
+	var COD = function($resource,constants){
+		return {
+			getDeposits : $resource(constants.v3baseUrl+'cod/bank_deposits_list/')
+		};
+	};
+	angular.module('ygVendorApp')
+	.factory('COD', [
+		'$resource',
+		'constants', 
+		COD
+	]);
+
 })();
 (function(){
 	'use strict';
@@ -2729,5 +2748,135 @@
 		'report',
 		'Notification',
 		reportsCntrl 
+	]);
+})();
+(function(){
+	'use strict';
+	var codCntrl = function($state,$stateParams){
+		if($state.current.name == 'home.cod.deposit'){
+			this.selectedIndex = 0;
+		}
+		else if($state.current.name == 'home.cod.transfer'){
+			this.selectedIndex = 1;
+		}
+		else if($state.current.name == 'home.cod.history'){
+			this.selectedIndex = 2;
+		}
+		else {
+			this.selectedIndex = 0;
+		}
+	};
+
+	angular.module('Cod', [])
+	.config(['$stateProvider',function($stateProvider) {
+		$stateProvider
+		.state('home.cod',{
+			url: "^/cod",
+			templateUrl: "/static/modules/cod/cod.html",
+			controllerAs : 'cod',
+    		controller: "codCntrl",
+   			redirectTo: 'home.cod.deposit',
+    		resolve : {
+    			access: ["Access","constants", function (Access,constants) { 
+    						var allowed_user = [constants.userRole.OPS,constants.userRole.OPS_MANAGER,constants.userRole.ACCOUNTS];
+    						return Access.hasAnyRole(allowed_user); 
+    					}],
+    		}
+		});
+	}])
+	.controller('codCntrl', [
+		'$state',
+		'$stateParams',
+		codCntrl
+	]);
+})();
+(function(){
+	'use strict';
+	var codDepositCntrl = function($state,$stateParams,deposits){
+		console.log(deposits);
+		var self = this;
+		self.deposits = deposits.payload.data;
+	};
+
+	angular.module('Cod')
+	.config(['$stateProvider',function($stateProvider) {
+		$stateProvider
+		.state('home.cod.deposit',{
+			url: "^/cod/deposits",
+			templateUrl: "/static/modules/cod/deposit/deposit.html",
+			controllerAs : 'deposit',
+    		controller: "codDepositCntrl",
+    		resolve : {
+    			access: ["Access","constants", function (Access,constants) { 
+					var allowed_user = [constants.userRole.OPS,constants.userRole.OPS_MANAGER,constants.userRole.ACCOUNTS];
+					return Access.hasAnyRole(allowed_user); 
+    			}],
+    			deposits : ['COD',function(COD){
+    				return COD.getDeposits.get().$promise;
+    			}],
+    		}
+		});
+	}])
+	.controller('codDepositCntrl', [
+		'$state',
+		'$stateParams',
+		'deposits',
+		codDepositCntrl
+	]);
+})();
+(function(){
+	'use strict';
+	var codTransferCntrl = function($state,$stateParams){
+		console.log('transfer');
+	};
+
+	angular.module('Cod')
+	.config(['$stateProvider',function($stateProvider) {
+		$stateProvider
+		.state('home.cod.transfer',{
+			url: "^/cod/transfer",
+			templateUrl: "/static/modules/cod/transfer/transfer.html",
+			controllerAs : 'transfer',
+    		controller: "codTransferCntrl",
+    		resolve : {
+    			access: ["Access","constants", function (Access,constants) { 
+    						var allowed_user = [constants.userRole.OPS,constants.userRole.OPS_MANAGER,constants.userRole.ACCOUNTS];
+    						return Access.hasAnyRole(allowed_user); 
+    					}],
+    		}
+		});
+	}])
+	.controller('codTransferCntrl', [
+		'$state',
+		'$stateParams',
+		codTransferCntrl
+	]);
+})();
+(function(){
+	'use strict';
+	var codHistoryCntrl = function($state,$stateParams){
+		console.log('history');
+	};
+
+	angular.module('Cod')
+	.config(['$stateProvider',function($stateProvider) {
+		$stateProvider
+		.state('home.cod.history',{
+			url: "^/cod/history",
+			templateUrl: "/static/modules/cod/history/history.html",
+			controllerAs : 'history',
+    		controller: "codHistoryCntrl",
+    		resolve : {
+    			access: ["Access","constants", function (Access,constants) { 
+    						var allowed_user = [constants.userRole.OPS,constants.userRole.OPS_MANAGER,constants.userRole.ACCOUNTS];
+    						return Access.hasAnyRole(allowed_user); 
+    					}],
+    		}
+		});
+	}])
+	.controller('codHistoryCntrl', [
+		'$state',
+		'$stateParams',
+		codHistoryCntrl
 	]);
 })();

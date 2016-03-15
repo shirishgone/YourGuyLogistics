@@ -1,0 +1,32 @@
+<md-toolbar class="yg-toolbar md-primary md-whiteframe-z2" ng-class="{'selected':dgList.searchVendorActive}">
+	<div class="md-toolbar-tools" ng-if="!vendorList.searchVendorActive">
+		<md-button ng-click="home.toggleSideNav()" class="md-icon-button" aria-label="Menu Icon">
+			<md-icon>menu</md-icon>
+		</md-button>
+		<p>COD</p>
+		<span flex></span>
+		<md-button class="md-icon-button" aria-label="Filter Button">
+			<md-icon>filter_list</md-icon>
+		</md-button>
+	</div>
+</md-toolbar>
+<md-content flex layout-padding class="cod">
+	<md-tabs md-selected="cod.selectedIndex" class="md-primary" md-swipe-content="true">
+		<md-tab>
+			<md-tab-label>
+				<span ui-sref="home.cod.deposit">Deposits</span>
+			</md-tab-label>
+		</md-tab>
+		<md-tab>
+			<md-tab-label ui-sref="home.cod.transfer">
+				<span ui-sref="home.cod.transfer">Transfers</span>
+			</md-tab-label>
+		</md-tab>
+		<md-tab>
+			<md-tab-label>
+				<span ui-sref="home.cod.history">Transfer History</span>
+			</md-tab-label>
+		</md-tab>
+	</md-tabs>
+	<div ui-view></div>
+</md-content>

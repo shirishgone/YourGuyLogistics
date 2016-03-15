@@ -1,0 +1,31 @@
+<md-content flex layout-fill layout="column">
+	<section flex="90" class="list" layout-align="center stretch">
+		<table class="table-list" layout="column">
+			<thead class="table-header">
+				<tr layout="row" layout-align="start start">
+					<th flex-xs="10" flex="10">Date</th>
+					<th flex-xs="20" flex="20">DG name</th>
+					<th flex-xs="10" flex="10">Amount</th>
+					<th flex-xs="20" flex="20">Reciept No</th>
+					<th flex-xs="10" flex="10">Reciept</th>
+					<th flex-xs="30" flex="30">Verify</th>
+				</tr>
+			</thead>
+			<tbody  class="table-body">
+				<tr ng-repeat="dp in deposit.deposits" layout="row" layout-align="start start">
+					<td flex-xs="10" flex="10">{{dp.created_time_stamp}}</td>
+					<td flex-xs="20" flex="20">{{dp.created_by_user}}</td>
+					<td flex-xs="10" flex="10">{{dp.cod_amount}}</td>
+					<td flex-xs="20" flex="20">{{dp.receipt_number}}</td>
+					<td flex-xs="10" flex="10">{{dp.receipt}}</td>
+					<td flex-xs="30" flex="30">
+						button
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	</section>
+	<section flex="10" class="footer">
+		
+	</section>
+</md-content>
