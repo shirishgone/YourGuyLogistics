@@ -7,6 +7,12 @@
 		this.tabs =  constants.permissible_tabs[UserProfile.$getUserRole()];
 		this.user_name = UserProfile.$getUsername();
 		/*
+			create a function for alasql library for converting iso date string into a human readable date string.
+		*/
+		alasql.fn.IsoToDate = function(n){
+			return moment(n).format('DD-MM-YYYY');
+		};
+		/*
 			confirm: an object to specify all the parameters for logout confirmation dialog box.
 		*/
 		var confirm = $mdDialog.confirm()

@@ -1,17 +1,28 @@
 (function(){
 	'use strict';
-	var reportsCntrl = function($state,$stateParams,Vendor,report,Notification){
+	var reportsCntrl = function($state,$stateParams,Reports,Vendor,report,Notification){
 		var self = this;
 		self.params = $stateParams;
 		self.searchVendor  = self.params.vendor_id;
+		this.searchVendorActive = (this.params.vendor_id !== undefined) ? true : false;
 		self.report_stats = report.payload.data;
-		console.log(self.report_stats);
 
+		self.params.start_date = moment(self.params.start_date).toDate();
+		self.params.end_date   = moment(self.params.end_date).toDate();
+		self.maxStartDate = moment().toDate();
+		self.maxEndDate = moment(self.params.start_date).add(3 , 'months').toDate();
+
+		/*
+			@backFromSearch is a function to revert back from a searched vendor view to default view of reports
+		*/ 
+		this.backFromSearch = function(){
+			self.params.vendor_id = undefined;
+			self.searchVendorActive = false;
+			self.getReports();
+			
+		};
+		
 		self.vendorSearchTextChange = function(text){
-			console.log(text);
-			if(!text){
-				console.log("none");
-			}
 			var search = {
 				search : text
 			};
@@ -35,7 +46,6 @@
 					plotSpacePercent : "60",
 					caption: "Order Details",
 					xaxisname: "Dates",
-					yaxisname: "Orders",
 					showalternatehgridcolor: "0",
 					placevaluesinside: "1",
 					toolTipSepChar : '=',
@@ -102,13 +112,30 @@
 					toolText : "Total Cancelled:"+self.report_stats.orders[i].cancelled_count+"{br} Total Placed:"+self.report_stats.orders[i].total_orders_count+"{br}"+new Date(self.report_stats.orders[i].date).toDateString()
 				};
 			}
-			console.log(self.graphData);
 		};
 
 		if(self.report_stats.total_orders !== 0){
 			self.manipulateGraph();
 		}
 
+		self.date_change = function(){
+			if( moment(self.params.end_date).diff(self.params.start_date,'months') > 3 ){
+				self.params.end_date = moment(self.params.start_date).add(3, 'months');
+			}
+			if( moment(self.params.end_date).diff(self.params.start_date,'days') < 0 ){
+				self.params.end_date = self.params.start_date;
+			}
+			self.getReports();
+		};
+
+
+		self.downloadReportExcel = function(){
+			Notification.loaderStart();
+			Reports.reportsExcel.get(self.params,function(response){
+				alasql('SELECT * INTO XLSX("YG_REPORT.xlsx",{headers:true}) FROM ?',[response.payload.data]);
+				Notification.loaderComplete();
+			});
+		};
 		/*
 			@getReports rleoads the order controller according too the filter to get the new filtered data.
 		*/
@@ -134,8 +161,8 @@
     						return Access.hasAnyRole(allowed_user); 
     					}],
     			report: ['Reports','$stateParams', function (Reports,$stateParams){
-    						$stateParams.start_date = ($stateParams.start_date !== undefined) ? moment($stateParams.start_date).toISOString() : moment().set('date', 1).toISOString();
-    						$stateParams.end_date   = ($stateParams.end_date !== undefined) ? moment($stateParams.end_date).toISOString() : moment().toISOString();
+    						$stateParams.start_date = ($stateParams.start_date !== undefined) ? moment(new Date($stateParams.start_date)).toISOString() : moment().set('date', 1).toISOString();
+    						$stateParams.end_date   = ($stateParams.end_date !== undefined) ? moment(new Date($stateParams.end_date)).toISOString() : moment().toISOString();
     						return Reports.getReport.stats($stateParams).$promise;
     					}]
     		}
@@ -144,6 +171,7 @@
 	.controller('reportsCntrl', [
 		'$state',
 		'$stateParams',
+		'Reports',
 		'Vendor',
 		'report',
 		'Notification',

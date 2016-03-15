@@ -52,9 +52,6 @@
 				end_date   : moment(self.params.date).format()
 			};
 			DeliveryGuy.dgsAttendance.query(attendance_params,function(response){
-				alasql.fn.IsoToDate = function(n){
-					return moment(n).format('DD-MM-YYYY');
-				};
 				var str = 'SELECT name AS Name,IsoToDate(attendance -> 0 -> date) AS Date,attendance -> 0 -> worked_hrs AS Hours';
 				alasql( str+' INTO XLSX("attendance.xlsx",{headers:true}) FROM ?',[response.payload.data]);
 			});

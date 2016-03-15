@@ -44,6 +44,9 @@
 			color: grey-color('800');
 		}
 	}
+	.reported-header {
+		color: $red-color;
+	}
 	@include mobile {
 		padding: 10px;
 		.status-section {
