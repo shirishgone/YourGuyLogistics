@@ -195,10 +195,11 @@ def all_bank_deposit_cod_transactions_list(cod_transaction):
     return all_bank_deposit_cod_transactions_dict
 
 
-def pagination_count():
+def pagination_count_bank_deposit():
     pagination_count_dict = {
         'total_pages': None,
-        'total_bank_deposit_count': None
+        'total_bank_deposit_count': None,
+        'all_transactions': []
     }
     return pagination_count_dict
 
@@ -543,11 +544,12 @@ class CODViewSet(viewsets.ViewSet):
                         else:
                             all_bank_deposit_cod_transactions_dict['receipt'] = None
                     bank_deposit_list.append(all_bank_deposit_cod_transactions_dict)
-                pagination_count_dict = pagination_count()
+                pagination_count_dict = pagination_count_bank_deposit()
                 pagination_count_dict['total_pages'] = total_pages
                 pagination_count_dict['total_bank_deposit_count'] = total_bank_deposit_count
-                bank_deposit_list.append(pagination_count_dict)
-                return response_with_payload(bank_deposit_list, None)
+                pagination_count_dict['all_transactions'] = bank_deposit_list
+                # bank_deposit_list.append(pagination_count_dict)
+                return response_with_payload(pagination_count_dict, None)
             else:
                 error_message = 'No Bank Deposit COD transaction found.'
                 return response_error_with_message(error_message)
