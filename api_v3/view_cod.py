@@ -3,14 +3,14 @@ from django.db.models import Sum
 from django.utils.decorators import method_decorator
 
 from api_v3.utils import cod_actions, response_access_denied, get_object_or_404, \
-    response_error_with_message, response_with_payload, response_incomplete_parameters, response_success_with_message
+    response_error_with_message, response_with_payload, response_incomplete_parameters, response_success_with_message, response_invalid_pagenumber
 from api_v3 import constants
 from yourguy.models import CODTransaction, DeliveryGuy, OrderDeliveryStatus, DeliveryTeamLead, ProofOfBankDeposit, \
     Picture, Employee
 from rest_framework import authentication, viewsets
 from rest_framework.decorators import list_route
 from rest_framework.permissions import IsAuthenticated
-from api_v3.utils import user_role, log_exception
+from api_v3.utils import user_role, log_exception, paginate
 from api_v3.push import send_push
 import uuid
 import pytz
@@ -193,6 +193,14 @@ def all_bank_deposit_cod_transactions_list(cod_transaction):
         'transaction_id': cod_transaction.transaction_uuid
     }
     return all_bank_deposit_cod_transactions_dict
+
+
+def pagination_count():
+    pagination_count_dict = {
+        'total_pages': None,
+        'total_bank_deposit_count': None
+    }
+    return pagination_count_dict
 
 
 class CODViewSet(viewsets.ViewSet):
@@ -504,8 +512,11 @@ class CODViewSet(viewsets.ViewSet):
 
     # This api is to pull out all the bank deposit transactions(initiated/verified/declined)
     # dict of created by user, created date, receipt, current transaction status,
+    # Implement pagination, give count of pages
+    # give count of total bank deposit transactions
     @list_route(methods=['GET'])
     def bank_deposits_list(self, request):
+        page = request.QUERY_PARAMS.get('page', '1')
         role = user_role(request.user)
         if role == constants.ACCOUNTS:
             bank_deposit_list = []
@@ -513,6 +524,15 @@ class CODViewSet(viewsets.ViewSet):
             cod_action = cod_actions(constants.COD_BANK_DEPOSITED_CODE)
             all_bank_deposit_cod_transactions = CODTransaction.objects.filter(transaction__title=cod_action)
             if len(all_bank_deposit_cod_transactions) > 0:
+                # PAGINATION  ----------------------------------------------------------------
+                total_bank_deposit_count = len(all_bank_deposit_cod_transactions)
+                page = int(page)
+                total_pages = int(total_bank_deposit_count / constants.PAGINATION_PAGE_SIZE) + 1
+                if page > total_pages or page <= 0:
+                    return response_invalid_pagenumber()
+                else:
+                    all_bank_deposit_cod_transactions = paginate(all_bank_deposit_cod_transactions, page)
+                # ----------------------------------------------------------------------------
                 for single in all_bank_deposit_cod_transactions:
                     all_bank_deposit_cod_transactions_dict = all_bank_deposit_cod_transactions_list(single)
                     all_bank_deposit_cod_transactions_dict['receipt_number'] = single.bank_deposit_proof.receipt_number
@@ -523,11 +543,13 @@ class CODViewSet(viewsets.ViewSet):
                         else:
                             all_bank_deposit_cod_transactions_dict['receipt'] = None
                     bank_deposit_list.append(all_bank_deposit_cod_transactions_dict)
+                pagination_count_dict = pagination_count()
+                pagination_count_dict['total_pages'] = total_pages
+                pagination_count_dict['total_bank_deposit_count'] = total_bank_deposit_count
+                bank_deposit_list.append(pagination_count_dict)
                 return response_with_payload(bank_deposit_list, None)
             else:
                 error_message = 'No Bank Deposit COD transaction found.'
                 return response_error_with_message(error_message)
         else:
             return response_access_denied()
-
-
