@@ -10,7 +10,7 @@ from yourguy.models import CODTransaction, DeliveryGuy, OrderDeliveryStatus, Del
 from rest_framework import authentication, viewsets
 from rest_framework.decorators import list_route
 from rest_framework.permissions import IsAuthenticated
-from api_v3.utils import user_role, log_exception, paginate
+from api_v3.utils import user_role, log_exception, paginate, send_sms, send_email
 from api_v3.push import send_push
 import uuid
 import pytz
@@ -203,6 +203,19 @@ def pagination_count_bank_deposit():
     }
     return pagination_count_dict
 
+
+def send_salary_deduction_email(first_name, delivery_id, amount):
+    subject = '%s Salary Deduction' % first_name
+    body = 'Hello,\n\nThere has been a salary deduction for %s  \n\nOrder id: %d\n Salary Deduction amount: %d'%(first_name, delivery_id, amount)
+    body = body + '\n\nThanks \n-YourGuy BOT'
+    send_email(constants.EMAIL_DG_SALARY_DEDUCTIONS, subject, body)
+
+
+def general_salary_deduction_email(delivery_id, amount):
+    subject = 'Salary Deduction for Order: %d'%delivery_id
+    body = 'Hello,\n\nThere has been a salary deduction for \n\nOrder id: %d\n Salary Deduction amount: %d'%(delivery_id, amount)
+    body = body + '\n\nThanks \n-YourGuy BOT'
+    send_email(constants.EMAIL_DG_SALARY_DEDUCTIONS, subject, body)
 
 class CODViewSet(viewsets.ViewSet):
     authentication_classes = [authentication.TokenAuthentication]
@@ -548,10 +561,93 @@ class CODViewSet(viewsets.ViewSet):
                 pagination_count_dict['total_pages'] = total_pages
                 pagination_count_dict['total_bank_deposit_count'] = total_bank_deposit_count
                 pagination_count_dict['all_transactions'] = bank_deposit_list
-                # bank_deposit_list.append(pagination_count_dict)
                 return response_with_payload(pagination_count_dict, None)
             else:
                 error_message = 'No Bank Deposit COD transaction found.'
+                return response_error_with_message(error_message)
+        else:
+            return response_access_denied()
+
+    # Api for particular bank deposit transaction to be approved/declined by accounts
+    # Accounts should be mentioning some money under pending salary deduction, for this DG(in case of declined)
+    # also send sms to dg with this salary deduction, send email notify to accounts and operations regarding this
+    # update all the associated orders and proof for this transaction as well
+    @list_route(methods=['PUT'])
+    def verify_bank_deposit(self, request):
+        role = user_role(request.user)
+        current_time = datetime.now(pytz.utc)
+        if role == constants.ACCOUNTS:
+            accounts = get_object_or_404(Employee, user=request.user)
+            try:
+                transaction_id = request.data['transaction_id']
+                is_accepted = request.data['is_accepted']
+                receipt_number = request.data.get('receipt_number')
+                pending_salary_deduction = request.data.get('pending_salary_deduction')
+            except Exception as e:
+                params = ['transaction_id', 'is_accepted', 'receipt_number(optional)', 'pending_salary_deduction(optional)']
+                return response_incomplete_parameters(params)
+            try:
+                bank_deposit = CODTransaction.objects.get(transaction_uuid=transaction_id)
+            except Exception as e:
+                error_message = 'No such Bank Deposit COD transaction found.'
+                return response_error_with_message(error_message)
+            if bank_deposit.transaction_status == constants.INITIATED:
+                if is_accepted is True:
+                    receipt_number = bank_deposit.bank_deposit_proof.receipt_number
+                    if receipt_number is not None:
+                        proof = ProofOfBankDeposit.objects.get(receipt_number=receipt_number)
+                        proof.proof_status = constants.VERIFIED
+                        proof.updated_by_user = request.user
+                        proof.updated_time_stamp = current_time
+                        proof.save()
+                    else:
+                        error_message = 'No Receipt found.'
+                        return response_error_with_message(error_message)
+
+                    bank_deposit.verified_by_user = request.user
+                    bank_deposit.verified_time_stamp = current_time
+                    bank_deposit.transaction_status = constants.VERIFIED
+                    bank_deposit.save()
+                    success_message = 'Bank Deposit transaction verified successfully'
+                    return response_success_with_message(success_message)
+                else:
+                    receipt_number = bank_deposit.bank_deposit_proof.receipt_number
+                    if receipt_number is not None:
+                        proof = ProofOfBankDeposit.objects.get(receipt_number=receipt_number)
+                        proof.proof_status = constants.DECLINED
+                        proof.updated_by_user = request.user
+                        proof.updated_time_stamp = current_time
+                        proof.save()
+                    else:
+                        error_message = 'No Receipt found.'
+                        return response_error_with_message(error_message)
+
+                    bank_deposit.verified_by_user = request.user
+                    bank_deposit.verified_time_stamp = current_time
+                    bank_deposit.transaction_status = constants.DECLINED
+                    bank_deposit.save()
+                    # For the associated dgs in this transaction, pull out dg and mark his pending salary deduction
+                    deliveries = bank_deposit.deliveries
+                    deliveries = eval(deliveries)
+                    for single in deliveries:
+                        delivery = OrderDeliveryStatus.objects.get(id=single)
+                        dg = delivery.delivery_guy
+                        if dg is not None:
+                            current_deduction = dg.pending_salary_deduction
+                            if pending_salary_deduction is not None:
+                                dg.pending_salary_deduction = current_deduction + pending_salary_deduction
+                                dg.save()
+                                dg_phone_number = dg.user.username,
+                                message = 'Dear %s, Accounts has declined the bank deposit for Order: %d and amount of Rs %d is considered under your salary deduction' % \
+                                          (dg.user.first_name, delivery.id, pending_salary_deduction)
+                                send_sms(dg_phone_number, message)
+                                send_salary_deduction_email(dg.user.first_name, delivery.id, pending_salary_deduction)
+                        else:
+                            general_salary_deduction_email(delivery.id, pending_salary_deduction)
+                    success_message = 'Bank Deposit transaction declined successfully'
+                    return response_success_with_message(success_message)
+            else:
+                error_message = 'This bank deposit transaction is already updated'
                 return response_error_with_message(error_message)
         else:
             return response_access_denied()
