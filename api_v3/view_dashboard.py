@@ -13,23 +13,22 @@ from yourguy.models import OrderDeliveryStatus, Vendor, VendorAgent
 
 from api_v3.utils import response_access_denied, response_with_payload, response_error_with_message, response_success_with_message, response_invalid_pagenumber, response_incomplete_parameters
 
-@api_view(['PUT'])
+@api_view(['GET'])
 @permission_classes((IsAuthenticated,))
 def excel_download(request):
     try:
-        start_date_string = request.data['start_date']
-        end_date_string = request.data['end_date']
+        start_date_string = request.QUERY_PARAMS.get('start_date', None)
+        end_date_string = request.QUERY_PARAMS.get('end_date', None)
 
         start_date = parse_datetime(start_date_string)
         start_date = ist_day_start(start_date)
 
         end_date = parse_datetime(end_date_string)
-        end_date = ist_day_end(end_date)
-
-    except APIException as e:
+        end_date = ist_day_end(end_date)        
+    except Exception, e:
         params = ['start_date', 'end_date']
         return response_incomplete_parameters(params)
-
+        
     # VENDOR FILTERING -----------------------------------------------------------
     vendor = None
     role = user_role(request.user)
@@ -37,7 +36,7 @@ def excel_download(request):
         vendor_agent = get_object_or_404(VendorAgent, user=request.user)
         vendor = vendor_agent.vendor
     else:
-        vendor_id = request.data.get('vendor_id')
+        vendor_id = request.QUERY_PARAMS.get('vendor_id', None)
         if vendor_id is not None:
             vendor = get_object_or_404(Vendor, pk=vendor_id)
         else:
@@ -89,20 +88,19 @@ def excel_download(request):
             pass
     return response_with_payload(excel_order_details, None)
 
-@api_view(['POST'])
+@api_view(['GET'])
 @permission_classes((IsAuthenticated,))
 def dashboard_stats(request):
     try:
-        start_date_string = request.data['start_date']
-        end_date_string = request.data['end_date']
-
+        start_date_string = request.QUERY_PARAMS.get('start_date', None)
+        end_date_string = request.QUERY_PARAMS.get('end_date', None)
+        
         start_date = parse_datetime(start_date_string)
         start_date = ist_datetime(start_date)
 
         end_date = parse_datetime(end_date_string)
-        end_date = ist_datetime(end_date)
-
-    except APIException as e:
+        end_date = ist_datetime(end_date)        
+    except Exception, e:
         params = ['start_date', 'end_date']
         return response_incomplete_parameters(params)
 
@@ -117,7 +115,7 @@ def dashboard_stats(request):
         vendor_agent = get_object_or_404(VendorAgent, user=request.user)
         vendor = vendor_agent.vendor
     else:
-        vendor_id = request.data.get('vendor_id')
+        vendor_id = request.QUERY_PARAMS.get('vendor_id', None)        
         if vendor_id is not None:
             vendor = get_object_or_404(Vendor, pk=vendor_id)
         else:

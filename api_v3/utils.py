@@ -301,6 +301,8 @@ def user_role(user):
         return constants.DELIVERY_GUY
     elif role == constants.HR:
         return constants.HR
+    elif role == constants.ACCOUNTS:
+        return constants.ACCOUNTS
     else:
         return None
 

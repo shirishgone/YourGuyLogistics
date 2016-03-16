@@ -5,7 +5,8 @@ from django.utils.decorators import method_decorator
 from api_v3.utils import cod_actions, response_access_denied, get_object_or_404, \
     response_error_with_message, response_with_payload, response_incomplete_parameters, response_success_with_message
 from api_v3 import constants
-from yourguy.models import CODTransaction, DeliveryGuy, OrderDeliveryStatus, DeliveryTeamLead
+from yourguy.models import CODTransaction, DeliveryGuy, OrderDeliveryStatus, DeliveryTeamLead, ProofOfBankDeposit, \
+    Picture, Employee
 from rest_framework import authentication, viewsets
 from rest_framework.decorators import list_route
 from rest_framework.permissions import IsAuthenticated
@@ -34,14 +35,14 @@ def active_check(self):
         return response_error_with_message(error_message_2)
 
 
-def send_cod_status_notification(dg, dg_tl, cod_amount, is_cod_status):
+def send_cod_status_notification(dg, dg_tl, cod_amount, is_transaction_successful):
     try:
-        if is_cod_status is True:
+        if is_transaction_successful is True:
             data = {
                 'message': 'Amount %d was transferred to %s successfully ' % (cod_amount, dg_tl.user.first_name),
                 'type': 'cod_transfer_to_tl',
                 'data': {
-                    'is_cod_successful': is_cod_status
+                    'is_transaction_successful': is_transaction_successful
                 }
             }
             send_push(dg.device_token, data)
@@ -50,7 +51,7 @@ def send_cod_status_notification(dg, dg_tl, cod_amount, is_cod_status):
                 'message': 'Transfer of amount %d to %s was declined ' % (cod_amount, dg_tl.user.first_name),
                 'type': 'cod_transfer_to_tl',
                 'data': {
-                    'is_cod_successful': is_cod_status
+                    'is_transaction_successful': is_transaction_successful
                 }
             }
             send_push(dg.device_token, data)
@@ -58,13 +59,14 @@ def send_cod_status_notification(dg, dg_tl, cod_amount, is_cod_status):
         log_exception(e, 'Push notification not sent in send_cod_status_notification ')
 
 
-def send_timeout_notification(dg, cod_amount, is_time_out):
+def send_timeout_notification(dg, cod_amount, is_time_out, is_transaction_successful):
     try:
         data = {
-            'message': 'Transfer to %s of amount %d timed out' % (dg.user.first_name, cod_amount),
+            'message': 'Transfer to %s of amount %d timed out.' % (dg.user.first_name, cod_amount),
             'type': 'cod_transfer_to_tl',
             'data': {
-                'is_time_out': is_time_out
+                'is_time_out': is_time_out,
+                'is_transaction_successful': is_transaction_successful
             }
         }
         send_push(dg.device_token, data)
@@ -116,7 +118,7 @@ def associated_dgs_collections_dict(dg):
         'dg_name': dg.user.first_name,
         'cod_transferred': None,
         'transferred_time': None,
-        'transaction_ids': []
+        'delivery_ids': []
     }
     return associated_dgs_collections
 
@@ -167,6 +169,32 @@ def cod_balance_calculation(dg):
     return balance_amount
 
 
+def create_proof(bank_deposit_proof, user, cod_amount, bank_receipt_number):
+    receipt = bank_deposit_proof
+    total_cod = cod_amount
+    try:
+        proof = ProofOfBankDeposit.objects.create(created_by_user=user, total_cod=total_cod)
+        proof.receipt = (Picture.objects.create(name=receipt))
+        proof.receipt_number = bank_receipt_number
+
+        proof.save()
+    except Exception as e:
+        error_message = 'Failed to create the bank deposit proof'
+        return response_error_with_message(error_message)
+    return proof
+
+
+def all_bank_deposit_cod_transactions_list(cod_transaction):
+    all_bank_deposit_cod_transactions_dict = {
+        'created_by_user': cod_transaction.created_by_user.first_name,
+        'created_time_stamp': cod_transaction.created_time_stamp.date(),
+        'cod_amount': cod_transaction.cod_amount,
+        'transaction_status': cod_transaction.transaction_status,
+        'transaction_id': cod_transaction.transaction_uuid
+    }
+    return all_bank_deposit_cod_transactions_dict
+
+
 class CODViewSet(viewsets.ViewSet):
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [IsAuthenticated]
@@ -204,7 +232,6 @@ class CODViewSet(viewsets.ViewSet):
             # if dg.is_active is True:
             if dg.is_teamlead is True:
                 dg_tl_id = dg.id
-                deliveries = []
                 tl_collections = []
                 asso_dg_collections = []
                 dg_tl_collections = dg_tl_collections_dict()
@@ -221,7 +248,7 @@ class CODViewSet(viewsets.ViewSet):
                 associated_dgs = delivery_guy_tl.associate_delivery_guys.all()
                 associated_dgs = associated_dgs.filter(is_active=True)
                 for single_dg in associated_dgs:
-                    transaction_ids = []
+                    deliveries = []
                     delivery_statuses = OrderDeliveryStatus.objects.filter(delivery_guy=single_dg,
                                                                            cod_status=constants.COD_STATUS_TRANSFERRED_TO_TL,
                                                                            cod_transactions__transaction_status=constants.VERIFIED,
@@ -231,16 +258,13 @@ class CODViewSet(viewsets.ViewSet):
                     delivery_statuses = delivery_statuses.values('delivery_guy__user__username').annotate(sum_of_cod_collected=Sum('cod_collected_amount'))
                     if len(delivery_statuses) > 0:
                         associated_dgs_collections = associated_dgs_collections_dict(single_dg)
+                        associated_dgs_collections['delivery_ids'] = deliveries
                         associated_dgs_collections['cod_transferred'] = delivery_statuses[0]['sum_of_cod_collected']
                         cod_action = cod_actions(constants.COD_TRANSFERRED_TO_TL_CODE)
                         cod_transaction = CODTransaction.objects.filter(transaction__title=cod_action,
                                                                         transaction_status=constants.VERIFIED,
                                                                         cod_amount=delivery_statuses[0]['sum_of_cod_collected'],
                                                                         deliveries__in=deliveries)
-                        for single_tx in cod_transaction:
-                            transaction_ids.append(single_tx.transaction_uuid)
-                        if len(transaction_ids) > 0:
-                            associated_dgs_collections['transaction_ids'] = transaction_ids
                         if len(cod_transaction) > 0 and cod_transaction[0].verified_time_stamp is not None:
                             associated_dgs_collections['transferred_time'] = cod_transaction[0].verified_time_stamp
                         else:
@@ -408,8 +432,9 @@ class CODViewSet(viewsets.ViewSet):
                                 return response_success_with_message(success_message)
                         else:
                             is_time_out = True
-                            send_timeout_notification(dg, cod_transaction.cod_amount, is_time_out)
-                            send_timeout_notification(delivery_guy, cod_transaction.cod_amount, is_time_out)
+                            is_accepted = False
+                            send_timeout_notification(dg, cod_transaction.cod_amount, is_time_out, is_accepted)
+                            send_timeout_notification(delivery_guy, cod_transaction.cod_amount, is_time_out, is_accepted)
                             error_message = 'Transfer to TL transaction timed out'
                             return response_error_with_message(error_message)
                     else:
@@ -423,3 +448,86 @@ class CODViewSet(viewsets.ViewSet):
                 return response_error_with_message(error_message)
         else:
             return response_access_denied()
+
+    # For DG or DG TL, Client sends delivery ids
+    #  use this to cross check cod_amount accuracy
+    @list_route(methods=['POST'])
+    @method_decorator(user_passes_test(active_check))
+    def bank_deposit_proof(self, request):
+        role = user_role(request.user)
+        if role == constants.DELIVERY_GUY:
+            delivery_guy = get_object_or_404(DeliveryGuy, user=request.user)
+            if delivery_guy.is_teamlead is True:
+                dg_tl_id = delivery_guy.id
+                dg_id = None
+            else:
+                dg_id = delivery_guy.id
+                dg_tl_id = None
+            cod_amount_calc = 0
+            try:
+                delivery_ids = request.data['delivery_ids']
+                cod_amount = request.data['cod_amount']
+                bank_deposit_proof = request.data['bank_deposit_proof']
+                bank_receipt_number = request.data['bank_receipt_number']
+            except Exception as e:
+                params = ['delivery_ids', 'cod_amount', 'bank_deposit_proof', 'bank_receipt_number']
+                return response_incomplete_parameters(params)
+
+            try:
+                for delivery_id in delivery_ids:
+                    delivery = get_object_or_404(OrderDeliveryStatus, pk=delivery_id)
+                    cod_amount_calc = cod_amount_calc + delivery.cod_collected_amount
+
+                if cod_amount == cod_amount_calc:
+                    transaction_uuid = uuid.uuid4()
+                    cod_action = cod_actions(constants.COD_BANK_DEPOSITED_CODE)
+                    proof = create_proof(bank_deposit_proof, request.user, cod_amount, bank_receipt_number)
+                    cod_transaction = create_cod_transaction(cod_action, request.user, dg_id, dg_tl_id, cod_amount, transaction_uuid, delivery_ids)
+                    cod_transaction.bank_deposit_proof = proof
+                    cod_transaction.save()
+                    for delivery_id in delivery_ids:
+                        delivery_status = get_object_or_404(OrderDeliveryStatus, pk=delivery_id)
+                        delivery_status.cod_status = constants.COD_STATUS_BANK_DEPOSITED
+                        delivery_status.save()
+                        add_cod_transaction_to_delivery(cod_transaction, delivery_status)
+                    success_message = 'Bank Deposit transaction initiated successfully'
+                    return response_success_with_message(success_message)
+                else:
+                    error_message = 'cod amount does not match with the total cod collection from all the deliveries selected'
+                    return response_error_with_message(error_message)
+            except Exception as e:
+                error_message = 'Order not found'
+                return response_error_with_message(error_message)
+        else:
+            return response_access_denied()
+
+
+    # This api is to pull out all the bank deposit transactions(initiated/verified/declined)
+    # dict of created by user, created date, receipt, current transaction status,
+    @list_route(methods=['GET'])
+    def bank_deposits_list(self, request):
+        role = user_role(request.user)
+        if role == constants.ACCOUNTS:
+            bank_deposit_list = []
+            accounts = get_object_or_404(Employee, user=request.user)
+            cod_action = cod_actions(constants.COD_BANK_DEPOSITED_CODE)
+            all_bank_deposit_cod_transactions = CODTransaction.objects.filter(transaction__title=cod_action)
+            if len(all_bank_deposit_cod_transactions) > 0:
+                for single in all_bank_deposit_cod_transactions:
+                    all_bank_deposit_cod_transactions_dict = all_bank_deposit_cod_transactions_list(single)
+                    all_bank_deposit_cod_transactions_dict['receipt_number'] = single.bank_deposit_proof.receipt_number
+                    if single.bank_deposit_proof is not None:
+                        pic = ProofOfBankDeposit.objects.get(id=single.bank_deposit_proof.id)
+                        if pic.receipt is not None:
+                            all_bank_deposit_cod_transactions_dict['receipt'] = pic.receipt.name
+                        else:
+                            all_bank_deposit_cod_transactions_dict['receipt'] = None
+                    bank_deposit_list.append(all_bank_deposit_cod_transactions_dict)
+                return response_with_payload(bank_deposit_list, None)
+            else:
+                error_message = 'No Bank Deposit COD transaction found.'
+                return response_error_with_message(error_message)
+        else:
+            return response_access_denied()
+
+

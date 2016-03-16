@@ -171,7 +171,8 @@ def daily_report():
         send_email(constants.EMAIL_DAILY_REPORT, email_subject, email_body)
         # ------------------------------------------------------------------------------------------------
 
-def cod_report():
+@api_view(['GET'])
+def cod_report(request):
     date = datetime.today()
     day_start = ist_day_start(date)
     day_end = ist_day_end(date)
@@ -191,6 +192,7 @@ def cod_report():
         email_body = email_body + "\n\n- YourGuy BOT"
 
         send_email(constants.EMAIL_COD_REPORT, email_subject, email_body)
+        return Response(status=status.HTTP_200_OK)
     else:
         # COD as per ORDER_STATUS --------------------------------------------------------
         orders_pending_queryset = delivery_statuses_today.filter(Q(order_status=constants.ORDER_STATUS_QUEUED) |
@@ -230,20 +232,20 @@ def cod_report():
         pending_cod_amount = pending_cod_amount + pending_cod
         if pending_cod_amount is None:
             pending_cod_amount = 0
-
-        orders_executed_queryset = delivery_statuses_today.filter(order_status=constants.ORDER_STATUS_DELIVERED)
-        orders_executed = orders_executed_queryset.aggregate(sum_of_cod_collected=Sum('cod_collected_amount'),
-                                                             sum_of_cod_amount=Sum('order__cod_amount'))
-        delivered_cod_collected = orders_executed['sum_of_cod_collected']
-        if delivered_cod_collected is None:
-            delivered_cod_collected = 0
-
-        delivered_cod_amount = orders_executed['sum_of_cod_amount']
-        if delivered_cod_amount is None:
-            delivered_cod_amount = 0
-
-        pending_cod = delivered_cod_amount - delivered_cod_collected
-        pending_cod_amount = pending_cod_amount + pending_cod
+        #
+        # orders_executed_queryset = delivery_statuses_today.filter(order_status=constants.ORDER_STATUS_DELIVERED)
+        # orders_executed = orders_executed_queryset.aggregate(sum_of_cod_collected=Sum('cod_collected_amount'),
+        #                                                      sum_of_cod_amount=Sum('order__cod_amount'))
+        # delivered_cod_collected = orders_executed['sum_of_cod_collected']
+        # if delivered_cod_collected is None:
+        #     delivered_cod_collected = 0
+        #
+        # delivered_cod_amount = orders_executed['sum_of_cod_amount']
+        # if delivered_cod_amount is None:
+        #     delivered_cod_amount = 0
+        #
+        # pending_cod = delivered_cod_amount - delivered_cod_collected
+        # pending_cod_amount = pending_cod_amount + pending_cod
 
         delivery_statuses_tracked_queryset = delivery_statuses_today.filter(
             Q(order_status=constants.ORDER_STATUS_QUEUED) |
@@ -369,6 +371,7 @@ def cod_report():
         email_body = email_body + "\n\n- YourGuy BOT"
 
         send_email(constants.EMAIL_COD_REPORT, email_subject, email_body)
+    return Response(status=status.HTTP_200_OK)
         # ------------------------------------------------------------------------------------------------
 
 @api_view(['GET'])
