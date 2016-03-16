@@ -24,7 +24,7 @@ module.exports = function(grunt){
 			},
 			bowerupdate: {
 				command: function(libname){
-					return 'bower update ' + libname;
+					return 'bower update ' + libname + ' -S';
 				}
 			}
 		},

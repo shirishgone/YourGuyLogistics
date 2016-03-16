@@ -10,8 +10,8 @@
 		</md-button>
 	</div>
 </md-toolbar>
-<md-content flex layout-padding class="cod">
-	<md-tabs md-selected="cod.selectedIndex" class="md-primary" md-swipe-content="true">
+<md-content flex layout-fill class="cod" layout="column">
+	<md-tabs md-selected="cod.selectedIndex" class="md-primary cod-tabs" md-swipe-content="true">
 		<md-tab>
 			<md-tab-label>
 				<span ui-sref="home.cod.deposit">Deposits</span>
@@ -28,5 +28,6 @@
 			</md-tab-label>
 		</md-tab>
 	</md-tabs>
-	<div ui-view></div>
+	<div flex ui-view layout="column" class="tabs-view"></div>
 </md-content>
+
