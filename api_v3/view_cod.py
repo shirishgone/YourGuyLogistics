@@ -6,7 +6,7 @@ from api_v3.utils import cod_actions, response_access_denied, get_object_or_404,
     response_error_with_message, response_with_payload, response_incomplete_parameters, response_success_with_message, response_invalid_pagenumber
 from api_v3 import constants
 from yourguy.models import CODTransaction, DeliveryGuy, OrderDeliveryStatus, DeliveryTeamLead, ProofOfBankDeposit, \
-    Picture, Employee
+    Picture, Employee, Vendor
 from rest_framework import authentication, viewsets
 from rest_framework.decorators import list_route
 from rest_framework.permissions import IsAuthenticated
@@ -204,16 +204,16 @@ def pagination_count_bank_deposit():
     return pagination_count_dict
 
 
-def send_salary_deduction_email(first_name, delivery_id, amount):
+def send_salary_deduction_email(first_name, delivery_id, amount, pending_amount):
     subject = '%s Salary Deduction' % first_name
-    body = 'Hello,\n\nThere has been a salary deduction for %s  \n\nOrder id: %d\n Salary Deduction amount: %d'%(first_name, delivery_id, amount)
+    body = 'Hello,\n\nThere has been a salary deduction for %s  \n\nOrder id: %d\nCOD Amount deposited: %d\nSalary Deduction amount: %d'%(first_name, delivery_id, amount, pending_amount)
     body = body + '\n\nThanks \n-YourGuy BOT'
     send_email(constants.EMAIL_DG_SALARY_DEDUCTIONS, subject, body)
 
 
-def general_salary_deduction_email(delivery_id, amount):
+def general_salary_deduction_email(delivery_id, amount, pending_amount):
     subject = 'Salary Deduction for Order: %d'%delivery_id
-    body = 'Hello,\n\nThere has been a salary deduction for \n\nOrder id: %d\n Salary Deduction amount: %d'%(delivery_id, amount)
+    body = 'Hello,\n\nThere has been a salary deduction for \n\nOrder id: %d\nCOD Amount deposited: %d\nSalary Deduction amount: %d'%(delivery_id, amount, pending_amount)
     body = body + '\n\nThanks \n-YourGuy BOT'
     send_email(constants.EMAIL_DG_SALARY_DEDUCTIONS, subject, body)
 
@@ -638,12 +638,15 @@ class CODViewSet(viewsets.ViewSet):
                                 dg.pending_salary_deduction = current_deduction + pending_salary_deduction
                                 dg.save()
                                 dg_phone_number = dg.user.username,
-                                message = 'Dear %s, Accounts has declined the bank deposit for Order: %d and amount of Rs %d is considered under your salary deduction' % \
-                                          (dg.user.first_name, delivery.id, pending_salary_deduction)
+                                message = 'Dear %s, Accounts has declined the bank deposit transaction for date %s ' \
+                                          'of Order: %d. You deposited amount Rs %d, out of which Rs %d is deposited less ' \
+                                          'and it will be deducted from your next salary' % \
+                                          (dg.user.first_name, bank_deposit.created_time_stamp, delivery.id,
+                                           bank_deposit.cod_amount, pending_salary_deduction)
                                 send_sms(dg_phone_number, message)
-                                send_salary_deduction_email(dg.user.first_name, delivery.id, pending_salary_deduction)
+                                send_salary_deduction_email(dg.user.first_name, delivery.id, bank_deposit.cod_amount, pending_salary_deduction)
                         else:
-                            general_salary_deduction_email(delivery.id, pending_salary_deduction)
+                            general_salary_deduction_email(delivery.id, bank_deposit.cod_amount, pending_salary_deduction)
                     success_message = 'Bank Deposit transaction declined successfully'
                     return response_success_with_message(success_message)
             else:
