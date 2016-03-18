@@ -249,6 +249,7 @@
     'vendor',
     'reports',
     'Cod',
+    'feedback',
 		'forbidden'
 	])
 	.config([
@@ -339,7 +340,7 @@
 			dg:true,
 			vendor: true,
 			reports: true,
-			COD: true,
+			COD: false,
 			customer: false,
 			products: false,
 			feedback: true,
@@ -375,7 +376,7 @@
 			dg:true,
 			vendor: true,
 			reports: true,
-			COD: true,
+			COD: false,
 			customer: false,
 			products: false,
 			feedback: true,
@@ -671,7 +672,8 @@
 			dgServicablePincodes : $resource(constants.v3baseUrl+'servicible_pincodes/', {}, {
 				query : {
 					method : 'GET',
-					isArray : false
+					isArray : false,
+					cache: true
 				}
 			}),
 			dgsAttendance : $resource(constants.v3baseUrl+'deliveryguy/download_attendance/', {}, {
@@ -689,6 +691,42 @@
 		'constants', 
 		DeliverGuy
 	]);
+})();
+(function(){
+	'use strict';
+	var Feedback = function($resource,constants){
+		return {
+			getGroups : $resource(constants.v3baseUrl+'freshdesk/groups/',{}, {
+				query : {
+					method : 'GET',
+					cache : true
+				}
+			}),
+			getTicketsById : $resource(constants.v3baseUrl+'freshdesk/get_ticket/'),
+			getTickets : $resource(constants.v3baseUrl+'freshdesk/all_tickets/',{},{
+				query :{
+					method: 'GET',
+				}
+			}),
+			addNotes : $resource(constants.v3baseUrl+'freshdesk/add_note/',{},{
+				update :{
+					method: 'PUT',
+				}
+			}),
+			resolve : $resource(constants.v3baseUrl+'freshdesk/resolve/',{},{
+				update :{
+					method: 'PUT',
+				}
+			}),
+		};
+	};
+	angular.module('ygVendorApp')
+	.factory('Feedback', [
+		'$resource',
+		'constants',
+		Feedback
+	]);
+
 })();
 (function(){
 	'use strict';
@@ -849,6 +887,7 @@
 
 	var stateChangeHandler = function ($rootScope, Access, $state,$document){
 		$rootScope.$on("$stateChangeError",function (event, toState, toParams, fromState, fromParams, error){
+			console.log(error);
 			angular.element($document[0].getElementsByClassName('request-loader')).addClass('request-loader-hidden');
 			if (error == Access.UNAUTHORIZED) {
 				$state.go("login");
@@ -2783,7 +2822,7 @@
    			redirectTo: 'home.cod.deposit',
     		resolve : {
     			access: ["Access","constants", function (Access,constants) { 
-    						var allowed_user = [constants.userRole.OPS,constants.userRole.OPS_MANAGER,constants.userRole.ACCOUNTS];
+    						var allowed_user = [constants.userRole.ACCOUNTS];
     						return Access.hasAnyRole(allowed_user); 
     					}],
     		}
@@ -2903,7 +2942,7 @@
     		controller: "codDepositCntrl",
     		resolve : {
     			access: ["Access","constants", function (Access,constants) { 
-					var allowed_user = [constants.userRole.OPS,constants.userRole.OPS_MANAGER,constants.userRole.ACCOUNTS];
+					var allowed_user = [constants.userRole.ACCOUNTS];
 					return Access.hasAnyRole(allowed_user); 
     			}],
     			deposits : ['COD','$stateParams',function(COD,$stateParams){
@@ -2939,7 +2978,7 @@
     		controller: "codTransferCntrl",
     		resolve : {
     			access: ["Access","constants", function (Access,constants) { 
-    						var allowed_user = [constants.userRole.OPS,constants.userRole.OPS_MANAGER,constants.userRole.ACCOUNTS];
+    						var allowed_user = [constants.userRole.ACCOUNTS];
     						return Access.hasAnyRole(allowed_user); 
     					}],
     		}
@@ -2967,7 +3006,7 @@
     		controller: "codHistoryCntrl",
     		resolve : {
     			access: ["Access","constants", function (Access,constants) { 
-    						var allowed_user = [constants.userRole.OPS,constants.userRole.OPS_MANAGER,constants.userRole.ACCOUNTS];
+    						var allowed_user = [constants.userRole.ACCOUNTS];
     						return Access.hasAnyRole(allowed_user); 
     					}],
     		}
@@ -2977,5 +3016,157 @@
 		'$state',
 		'$stateParams',
 		codHistoryCntrl
+	]);
+})();
+(function(){
+	'use strict';
+
+	angular.module('feedback', [])
+	.config(['$stateProvider',function($stateProvider) {
+		$stateProvider
+		.state('home.feedbackList',{
+			url: "^/feedback/list?page",
+			templateUrl: "/static/modules/feedback/list/list.html",
+			controllerAs : 'feedbackList',
+    		controller: "feedbackListCntrl",
+    		resolve : {
+    			access: ["Access","constants", function (Access,constants) { 
+    						var allowed_user = [constants.userRole.OPS,constants.userRole.OPS_MANAGER,constants.userRole.SALES,constants.userRole.SALES_MANAGER,constants.userRole.VENDOR];
+    						return Access.hasAnyRole(allowed_user); 
+    					}],
+    			tickets: ['Feedback','$stateParams', function (Feedback,$stateParams){
+    						$stateParams.page = (!isNaN($stateParams.page))? parseInt($stateParams.page): 1;
+    						return Feedback.getTickets.query($stateParams).$promise;
+    					}],
+    			groups: ['Feedback', function (Feedback){
+    						return Feedback.getGroups.query().$promise;
+    					}]
+    		}
+		})
+		.state('home.feedbackDetail',{
+			url: "^/feedback/detail/:ticket_id",
+			templateUrl: "/static/modules/feedback/detail/detail.html",
+			controllerAs : 'feedbackDetail',
+    		controller: "feedbackDetailCntrl",
+    		resolve : {
+    			access: ["Access","constants", function (Access,constants) { 
+    						var allowed_user = [constants.userRole.OPS,constants.userRole.OPS_MANAGER,constants.userRole.SALES,constants.userRole.SALES_MANAGER,constants.userRole.VENDOR];
+    						return Access.hasAnyRole(allowed_user); 
+    					}],
+                ticket: ['Feedback','$stateParams', function (Feedback,$stateParams){
+                            return Feedback.getTicketsById.get($stateParams).$promise;
+                        }],
+                groups: ['Feedback', function (Feedback){
+                            return Feedback.getGroups.query().$promise;
+                        }]
+    		}
+		});
+	}]);
+})();
+(function(){
+	'use strict';
+	var feedbackListCntrl = function($state,$stateParams,Feedback,tickets,groups){
+		var self =  this;
+		this.params = $stateParams;
+		this.tickets = tickets.payload.data.data;
+		this.total_pages = tickets.payload.data.total_pages;
+		this.total_tickets = tickets.payload.data.total_tickets;
+		this.groups = groups.payload.data;
+		/*
+			@paginate object to handle pagination.
+		*/
+		this.paginate = {
+			nextpage : function(){
+				self.params.page = self.params.page + 1;
+				self.getTickets();
+			},
+			previouspage : function(){
+				self.params.page = self.params.page - 1;
+				self.getTickets();
+			}
+		};
+		/*
+			@getGroupName function that returns the feedback type based on the group id of the ticket
+		*/
+		this.getGroupName = function(id){
+			if(self.groups){
+				for(var i=0 ; i< self.groups.length;i++){
+					if(id == self.groups[i].group.id){
+						return self.groups[i].group.name;
+					}
+				}
+			}
+		};
+
+		/*
+			@getTickets rleoads the tickets controller according too the filter to get the new filtered data.
+		*/
+		this.getTickets = function(){
+			$state.transitionTo($state.current, self.params, { reload: true, inherit: false, notify: true });
+		};
+
+	};
+
+	angular.module('feedback')
+	.controller('feedbackListCntrl', [
+		'$state',
+		'$stateParams',
+		'Feedback',
+		'tickets',
+		'groups',
+		feedbackListCntrl
+	]);
+})();
+(function(){
+	'use strict';
+	var feedbackDetailCntrl = function($state,$stateParams,Feedback,ticket,groups,Notification,PreviousState){
+		console.log(ticket);
+		var self =  this;
+		this.params = $stateParams;
+		this.ticket = ticket.payload.data.helpdesk_ticket;
+		this.groups = groups.payload.data;
+		/*
+			function to redirect back to the previous page or parent page.
+		*/
+		self.goBack = function(){
+			if(PreviousState.isAvailable()){
+				PreviousState.redirectToPrevious();
+			}
+			else{
+				$state.go('home.feedbackList');
+			}
+		};
+		/*
+			@getGroupName function that returns the feedback type based on the group id of the ticket
+		*/
+		this.getGroupName = function(id){
+			if(self.groups){
+				for(var i=0 ; i< self.groups.length;i++){
+					if(id == self.groups[i].group.id){
+						return self.groups[i].group.name;
+					}
+				}
+			}
+		};
+
+		/*
+			@getTickets rleoads the tickets controller according too the filter to get the new filtered data.
+		*/
+		this.getTicket = function(){
+			$state.transitionTo($state.current, self.params, { reload: true, inherit: false, notify: true });
+		};
+
+	};
+
+	angular.module('feedback')
+	.controller('feedbackDetailCntrl', [
+		'$state',
+		'$stateParams',
+		'Feedback',
+		'ticket',
+		'groups',
+		'Notification',
+		'PreviousState',
+		feedbackDetailCntrl
 	]);
 })();

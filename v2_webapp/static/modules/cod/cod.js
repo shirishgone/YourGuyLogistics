@@ -26,7 +26,7 @@
    			redirectTo: 'home.cod.deposit',
     		resolve : {
     			access: ["Access","constants", function (Access,constants) { 
-    						var allowed_user = [constants.userRole.OPS,constants.userRole.OPS_MANAGER,constants.userRole.ACCOUNTS];
+    						var allowed_user = [constants.userRole.ACCOUNTS];
     						return Access.hasAnyRole(allowed_user); 
     					}],
     		}

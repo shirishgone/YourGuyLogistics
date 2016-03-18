@@ -45,7 +45,8 @@
 			dgServicablePincodes : $resource(constants.v3baseUrl+'servicible_pincodes/', {}, {
 				query : {
 					method : 'GET',
-					isArray : false
+					isArray : false,
+					cache: true
 				}
 			}),
 			dgsAttendance : $resource(constants.v3baseUrl+'deliveryguy/download_attendance/', {}, {

@@ -86,6 +86,9 @@ module.exports = function(grunt){
 					'static/modules/cod/deposit/*.js',
 					'static/modules/cod/transfer/*.js',
 					'static/modules/cod/history/*.js',
+					'static/modules/feedback/feedback.js',
+					'static/modules/feedback/list/*.js',
+					'static/modules/feedback/detail/*.js',
 				],
 				dest : 'static/assets/js/main.js'
 			}
