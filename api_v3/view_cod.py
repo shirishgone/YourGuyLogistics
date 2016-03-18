@@ -1,7 +1,7 @@
 from datetime import datetime
 from django.db.models import Sum
 from django.utils.decorators import method_decorator
-
+from django.db.models import Q
 from api_v3.utils import cod_actions, response_access_denied, get_object_or_404, \
     response_error_with_message, response_with_payload, response_incomplete_parameters, response_success_with_message, response_invalid_pagenumber
 from api_v3 import constants
@@ -195,6 +195,25 @@ def all_bank_deposit_cod_transactions_list(cod_transaction):
     return all_bank_deposit_cod_transactions_dict
 
 
+def verified_bank_deposit_list(cod_transaction):
+    verified_bank_deposit_dict = {
+        'verified_time_stamp': cod_transaction.verified_time_stamp.date(),
+        'transaction_status': cod_transaction.transaction_status,
+        'transaction_id': cod_transaction.transaction_uuid,
+        'deliveries': []
+    }
+    return verified_bank_deposit_dict
+
+
+def per_order_list(delivery):
+    per_order_dict = {
+        'cod_amount': delivery.cod_collected_amount,
+        'vendor_name': delivery.order.vendor.store_name,
+        'delivery_id': delivery.id
+    }
+    return per_order_dict
+
+
 def pagination_count_bank_deposit():
     pagination_count_dict = {
         'total_pages': None,
@@ -216,6 +235,7 @@ def general_salary_deduction_email(delivery_id, amount, pending_amount):
     body = 'Hello,\n\nThere has been a salary deduction for \n\nOrder id: %d\nCOD Amount deposited: %d\nSalary Deduction amount: %d'%(delivery_id, amount, pending_amount)
     body = body + '\n\nThanks \n-YourGuy BOT'
     send_email(constants.EMAIL_DG_SALARY_DEDUCTIONS, subject, body)
+
 
 class CODViewSet(viewsets.ViewSet):
     authentication_classes = [authentication.TokenAuthentication]
@@ -654,3 +674,67 @@ class CODViewSet(viewsets.ViewSet):
                 return response_error_with_message(error_message)
         else:
             return response_access_denied()
+
+    # api to retrieve all verified bank deposit transactions
+    # also send vendor id in the response
+    # implement filter by dates(start date and end date)
+    # implement filter by vendor_id
+    # implement pagination and return count of such transactions
+    # when accounts transfers to client, change the transaction
+    @list_route(methods=['GET'])
+    def verified_bank_deposits_list(self, request):
+        role = user_role(request.user)
+        page = request.QUERY_PARAMS.get('page', 1)
+        filter_vendor_id = request.QUERY_PARAMS.get('vendor_id', None)
+        filter_start_date = request.QUERY_PARAMS.get('start_date', None)
+        filter_end_date = request.QUERY_PARAMS.get('end_date', None)
+        if role == constants.ACCOUNTS:
+            all_transactions = []
+            accounts = get_object_or_404(Employee, user=request.user)
+            cod_action = cod_actions(constants.COD_BANK_DEPOSITED_CODE)
+            verified_bank_deposits = CODTransaction.objects.filter(transaction__title=cod_action, transaction_status=constants.VERIFIED)
+            if len(verified_bank_deposits) > 0:
+                # DATE FILTERING (optional)
+                if filter_start_date is not None and filter_end_date is not None:
+                    verified_bank_deposits = verified_bank_deposits.filter(verified_time_stamp__gte=filter_start_date,
+                                                                           verified_time_stamp__lte=filter_end_date)
+                # VENDOR FILTERING (optional)
+                if filter_vendor_id is not None:
+                    vendor = get_object_or_404(Vendor, pk=filter_vendor_id)
+                    if vendor is not None:
+                        verified_bank_deposits = verified_bank_deposits.filter(orderdeliverystatus__order__vendor=vendor).distinct()
+
+                total_verified_bank_deposits_count = len(verified_bank_deposits)
+                page = int(page)
+                total_pages = int(total_verified_bank_deposits_count / constants.PAGINATION_PAGE_SIZE) + 1
+                if page > total_pages or page <= 0:
+                    return response_invalid_pagenumber()
+                else:
+                    verified_bank_deposits = paginate(verified_bank_deposits, page)
+
+                # For filtered queryset as well as non filtered queryset
+                # populate dictionary data with date, transaction id, transaction status
+                for single_bd in verified_bank_deposits:
+                    deliveries_list = []
+                    verified_bank_deposit_dict = verified_bank_deposit_list(single_bd)
+                    # deliveries present in this transaction
+                    # for each delivery, return delivery id, cod_amount, vendor name
+                    deliveries = single_bd.deliveries
+                    deliveries = eval(deliveries)
+                    for single_delivery in deliveries:
+                        delivery = OrderDeliveryStatus.objects.get(id=single_delivery)
+                        per_order_dict = per_order_list(delivery)
+                        deliveries_list.append(per_order_dict)
+                    verified_bank_deposit_dict['deliveries'] = deliveries_list
+                    all_transactions.append(verified_bank_deposit_dict)
+                pagination_count_dict = pagination_count_bank_deposit()
+                pagination_count_dict['total_pages'] = total_pages
+                pagination_count_dict['total_bank_deposit_count'] = total_verified_bank_deposits_count
+                pagination_count_dict['all_transactions'] = all_transactions
+                return response_with_payload(pagination_count_dict, None)
+            else:
+                error_message = 'No Verified Bank Deposits found.'
+                return response_error_with_message(error_message)
+        else:
+            return response_access_denied()
+
