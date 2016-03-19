@@ -983,14 +983,15 @@
 /* line 1, ../sass/modules/feedback/_detail.scss */
 .feedbackDetail {
   padding: 10px;
+  padding-top: 25px;
 }
-/* line 3, ../sass/modules/feedback/_detail.scss */
+/* line 4, ../sass/modules/feedback/_detail.scss */
 .feedbackDetail .note {
   height: 100%;
   min-height: 100%;
   max-height: 100%;
 }
-/* line 8, ../sass/modules/feedback/_detail.scss */
+/* line 9, ../sass/modules/feedback/_detail.scss */
 .feedbackDetail .note .event .profile {
   height: 50px;
   width: 50px;
@@ -1000,30 +1001,80 @@
   border-radius: 50%;
 }
 /* line 14, ../sass/modules/feedback/_detail.scss */
+.feedbackDetail .note .event .profile.teamYG {
+  background: url('/static/assets/images/feedback/yourguy.png') no-repeat center center;
+  -moz-background-size: contain;
+  -o-background-size: contain;
+  -webkit-background-size: contain;
+  background-size: contain;
+}
+/* line 18, ../sass/modules/feedback/_detail.scss */
+.feedbackDetail .note .event .profile.vendor {
+  background: url('/static/assets/images/feedback/vendor.png') no-repeat center center;
+  -moz-background-size: contain;
+  -o-background-size: contain;
+  -webkit-background-size: contain;
+  background-size: contain;
+}
+/* line 23, ../sass/modules/feedback/_detail.scss */
 .feedbackDetail .note .event .bar {
   min-height: 100%;
   height: 100%;
   width: 5px;
   background: #FCC06A;
 }
-/* line 21, ../sass/modules/feedback/_detail.scss */
+/* line 30, ../sass/modules/feedback/_detail.scss */
 .feedbackDetail .note .content {
   padding: 25px;
   margin-bottom: 40px;
   background: #D3F5FF;
 }
-/* line 25, ../sass/modules/feedback/_detail.scss */
+/* line 34, ../sass/modules/feedback/_detail.scss */
 .feedbackDetail .note .content h3 {
   margin: 0;
   font-size: 14px;
   color: #9E9E9E;
   line-height: 1.8;
 }
-/* line 31, ../sass/modules/feedback/_detail.scss */
+/* line 40, ../sass/modules/feedback/_detail.scss */
 .feedbackDetail .note .content p {
   margin: 0;
   font-size: 15px;
   font-weight: 500;
+}
+/* line 45, ../sass/modules/feedback/_detail.scss */
+.feedbackDetail .note .content.vendor {
+  background: #EEEEEE;
+}
+/* line 50, ../sass/modules/feedback/_detail.scss */
+.feedbackDetail .note-text {
+  padding: 40px;
+  padding-left: 10%;
+  padding-bottom: 20px;
+}
+/* line 54, ../sass/modules/feedback/_detail.scss */
+.feedbackDetail .note-text textarea {
+  border: 2px solid #EEEEEE;
+}
+@media (max-width: 599px) {
+  /* line 50, ../sass/modules/feedback/_detail.scss */
+  .feedbackDetail .note-text {
+    padding: 10px;
+    padding-left: 20%;
+    padding-bottom: 10px;
+  }
+}
+
+/* line 65, ../sass/modules/feedback/_detail.scss */
+.tootbar-button {
+  color: #ffffff;
+  min-height: 18px;
+  line-height: 1;
+}
+/* line 69, ../sass/modules/feedback/_detail.scss */
+.tootbar-button span {
+  font-size: 9px;
+  font-weight: 900;
 }
 
 /* line 1, ../sass/modules/_components.scss */
