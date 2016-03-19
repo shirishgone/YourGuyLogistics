@@ -15,6 +15,8 @@
 		'deliveryguy',
     'vendor',
     'reports',
+    'Cod',
+    'feedback',
 		'forbidden'
 	])
 	.config([

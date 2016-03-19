@@ -1,0 +1,48 @@
+<md-toolbar class="yg-toolbar md-primary md-whiteframe-z2">
+	<div class="md-toolbar-tools">
+		<md-button ng-click="home.toggleSideNav()" class="md-icon-button" aria-label="Menu Icon">
+			<md-icon>menu</md-icon>
+		</md-button>
+		<p>Feedback</p>
+		<span flex></span>
+		<!-- <md-button class="md-icon-button" aria-label="search Button" ng-click="feedbackList.searchVendorActive = true">
+			<md-icon>search</md-icon>
+		</md-button>
+		<md-button class="md-icon-button" aria-label="Notification Button">
+			<md-icon>notifications_none</md-icon>
+		</md-button> -->
+	</div>
+</md-toolbar>
+<md-content flex layout-fill layout="column" class="feedbackList">
+	<section flex="90" class="list" layout="row" layout-align="center stretch">
+		<md-content flex layout="column" layout-align="start stretch">
+			<table class="table-list" layout="column">
+				<thead class="table-header">
+					<tr layout="row" layout-align="center start">
+						<th flex >Order Id</th>
+						<th flex>Type</th>
+						<th flex>Description</th>
+						<th flex>Status</th>
+						<th flex>Created At</th>
+					</tr>
+				</thead>
+				<tbody  class="table-body">
+					<tr ng-repeat="cpl in feedbackList.tickets" layout="row" layout-align="center start" ui-sref="home.feedbackDetail({ticket_id:cpl.id})">
+						<td flex>{{cpl.subject | limitTo :20}}{{cpl.subject.length > 20 ? '...' : ''}}</td>
+						<td flex>{{feedbackList.getGroupName(cpl.group_id)}}</td>
+						<td flex> {{cpl.description | limitTo :20 }}{{cpl.description.length > 20 ? '......' : ''}}</td>
+						<td flex>
+							<span class="badge QUEUED" ng-if="cpl.status == 2">Pending</span>
+							<span class="badge DELIVERED" ng-if="cpl.status == 5">Closed</span>
+							<span class="badge DELIVERED" ng-if="cpl.status == 4">Resolved</span>
+						</td>
+						<td flex>{{cpl.created_at | date:'dd MMM yy'}}</td>
+					</tr>
+				</tbody>
+			</table>
+		</md-content>
+	</section>
+	<section flex="10" class="footer">
+		<div yd-pagination total="{{feedbackList.total_tickets}}" total-page="{{feedbackList.total_pages}}" params="feedbackList.params" list-length="{{feedbackList.tickets.length}}" paginate="feedbackList.paginate" get-data="feedbackList.getTickets()"></div>
+	</section>
+</md-content>

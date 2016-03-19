@@ -1,0 +1,50 @@
+<md-toolbar class="yg-toolbar md-primary md-whiteframe-z2">
+	<div class="md-toolbar-tools">
+		<md-button ng-click="feedbackDetail.goBack()" class="md-icon-button" aria-label="Menu Icon">
+			<md-icon>arrow_back</md-icon>
+		</md-button>
+		<p>Feedback {{feedbackDetail.ticket.subject | limitTo :20}}{{feedbackDetail.ticket.subject.length > 20 ? '...' : ''}}</p>
+		<span flex></span>
+		<!-- <md-button class="md-icon-button" aria-label="search Button" ng-click="feedbackList.searchVendorActive = true">
+			<md-icon>search</md-icon>
+		</md-button>
+		<md-button class="md-icon-button" aria-label="Notification Button">
+			<md-icon>notifications_none</md-icon>
+		</md-button> -->
+	</div>
+</md-toolbar>
+<md-content flex layout-fill layout="column" class="feedbackDetail">
+	<section flex="80" layout-fill layout="column">
+		<div flex="none" class="note" layout="row">
+			<div flex="10" class="event" layout="column" layout-align="center center">
+				<div class="profile"></div>
+				<div  flex class="bar"></div>
+			</div>
+			<div flex="70" class="content">
+				<div>
+					<h3>OrderId -  {{feedbackDetail.ticket.subject}} #{{feedbackDetail.getGroupName(feedbackDetail.ticket.group_id)}}</h3>
+					<h3>Created By - {{feedbackDetail.ticket.requester_name}} </h3>
+					<h3>Created On - {{feedbackDetail.ticket.created_at | date:'dd MMM yy h:mm a'}}</h3>
+					<h3>Due By - {{feedbackDetail.ticket.due_by | date:'dd MMM yy h:mm a'}}</h3>
+					<p>{{feedbackDetail.ticket.description}}</p>
+				</div>
+			</div>
+		</div>
+		<div flex="none" class="note" layout="row" ng-repeat="note in feedbackDetail.ticket.notes" ng-if="!$first">
+			<div flex="10" class="event" layout="column" layout-align="center center">
+				<div class="profile"></div>
+				<div  flex class="bar"></div>
+			</div>
+			<div flex="70" class="content">
+				<div>
+					<h3>{{feedbackDetail.getUsername(note.note.user_id) }} added note</h3>
+					<h3>Created On <b> {{note.note.created_at | date:'dd MMM yy h:mm a'}} </h3>
+					<p>{{note.note.body}}</p>
+				</div>
+			</div>
+		</div>
+	</section>
+	<section flex="20">
+		
+	</section>
+</md-content>

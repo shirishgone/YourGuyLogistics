@@ -1,0 +1,20 @@
+<md-dialog aria-label="VERIFY DEPOSIT LEAD" ng-cloak class="verifyDeposit">
+	<md-dialog-content>
+		<div class="md-dialog-content">
+			<h2>Verify Amount {{verifyDeposit.deposit.cod_amount}}</h2>
+			<md-input-container>
+				<label>Amount</label>
+	        	<input ng-model="verifyDeposit.amount">
+			</md-input-container>
+		</div>
+	</md-dialog-content>
+	<md-dialog-actions layout="row">
+     	<span flex></span>
+		<md-button ng-click="verifyDeposit.cancel()" class="md-warn">
+			cancel
+		</md-button>
+		<md-button ng-click="verifyDeposit.answer({transaction_id:verifyDeposit.deposit.transaction_id})" ng-disabled="verifyDeposit.amount != verifyDeposit.deposit.cod_amount " class="md-primary" style="margin-right:20px;">
+			Verify
+		</md-button>
+    </md-dialog-actions>
+</md-dialog>

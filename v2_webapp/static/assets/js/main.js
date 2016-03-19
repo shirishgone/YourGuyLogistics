@@ -21,6 +21,9 @@
 					else if(user.role === constants.userRole.HR){
 						$state.go('home.dgList');
 					}
+					else if(user.role === constants.userRole.ACCOUNTS){
+						$state.go('home.opsorder');
+					}
 				});
 			},function (error){
 				self.loader = false;
@@ -245,6 +248,8 @@
 		'deliveryguy',
     'vendor',
     'reports',
+    'Cod',
+    'feedback',
 		'forbidden'
 	])
 	.config([
@@ -602,6 +607,26 @@
 })();
 (function(){
 	'use strict';
+	var COD = function($resource,constants){
+		return {
+			getDeposits : $resource(constants.v3baseUrl+'cod/bank_deposits_list/'),
+			verifyDeposits : $resource(constants.v3baseUrl+'cod/verify_bank_deposit/',{},{
+				update :{
+					method: 'PUT'
+				},
+			})
+		};
+	};
+	angular.module('ygVendorApp')
+	.factory('COD', [
+		'$resource',
+		'constants', 
+		COD
+	]);
+
+})();
+(function(){
+	'use strict';
 	var DeliverGuy = function ($resource,constants){
 		return {
 			dg : $resource(constants.v3baseUrl+'deliveryguy/:id/',{id:"@id"},{
@@ -647,7 +672,8 @@
 			dgServicablePincodes : $resource(constants.v3baseUrl+'servicible_pincodes/', {}, {
 				query : {
 					method : 'GET',
-					isArray : false
+					isArray : false,
+					cache: true
 				}
 			}),
 			dgsAttendance : $resource(constants.v3baseUrl+'deliveryguy/download_attendance/', {}, {
@@ -665,6 +691,42 @@
 		'constants', 
 		DeliverGuy
 	]);
+})();
+(function(){
+	'use strict';
+	var Feedback = function($resource,constants){
+		return {
+			getGroups : $resource(constants.v3baseUrl+'freshdesk/groups/',{}, {
+				query : {
+					method : 'GET',
+					cache : true
+				}
+			}),
+			getTicketsById : $resource(constants.v3baseUrl+'freshdesk/get_ticket/'),
+			getTickets : $resource(constants.v3baseUrl+'freshdesk/all_tickets/',{},{
+				query :{
+					method: 'GET',
+				}
+			}),
+			addNotes : $resource(constants.v3baseUrl+'freshdesk/add_note/',{},{
+				update :{
+					method: 'PUT',
+				}
+			}),
+			resolve : $resource(constants.v3baseUrl+'freshdesk/resolve/',{},{
+				update :{
+					method: 'PUT',
+				}
+			}),
+		};
+	};
+	angular.module('ygVendorApp')
+	.factory('Feedback', [
+		'$resource',
+		'constants',
+		Feedback
+	]);
+
 })();
 (function(){
 	'use strict';
@@ -825,6 +887,7 @@
 
 	var stateChangeHandler = function ($rootScope, Access, $state,$document){
 		$rootScope.$on("$stateChangeError",function (event, toState, toParams, fromState, fromParams, error){
+			console.log(error);
 			angular.element($document[0].getElementsByClassName('request-loader')).addClass('request-loader-hidden');
 			if (error == Access.UNAUTHORIZED) {
 				$state.go("login");
@@ -2729,5 +2792,381 @@
 		'report',
 		'Notification',
 		reportsCntrl 
+	]);
+})();
+(function(){
+	'use strict';
+	var codCntrl = function($state,$stateParams){
+		if($state.current.name == 'home.cod.deposit'){
+			this.selectedIndex = 0;
+		}
+		else if($state.current.name == 'home.cod.transfer'){
+			this.selectedIndex = 1;
+		}
+		else if($state.current.name == 'home.cod.history'){
+			this.selectedIndex = 2;
+		}
+		else {
+			this.selectedIndex = 0;
+		}
+	};
+
+	angular.module('Cod', [])
+	.config(['$stateProvider',function($stateProvider) {
+		$stateProvider
+		.state('home.cod',{
+			url: "^/cod",
+			templateUrl: "/static/modules/cod/cod.html",
+			controllerAs : 'cod',
+    		controller: "codCntrl",
+   			redirectTo: 'home.cod.deposit',
+    		resolve : {
+    			access: ["Access","constants", function (Access,constants) { 
+    						var allowed_user = [constants.userRole.ACCOUNTS];
+    						return Access.hasAnyRole(allowed_user); 
+    					}],
+    		}
+		});
+	}])
+	.controller('codCntrl', [
+		'$state',
+		'$stateParams',
+		codCntrl
+	]);
+})();
+(function(){
+	'use strict';
+	function VerifyDepositCntrl($mdDialog,deposit){
+		var self = this;
+		self.deposit = deposit;
+		self.cancel = function() {
+			$mdDialog.cancel();
+		};
+		self.answer = function(answer) {
+			answer.is_accepted = true;
+			$mdDialog.hide(answer);
+		};
+	}
+
+	function DeclineDepositCntrl($mdDialog,deposit){
+		var self = this;
+		self.deposit = deposit;
+		self.cancel = function() {
+			$mdDialog.cancel();
+		};
+		self.answer = function(answer) {
+			answer.is_accepted = false;
+			answer.transaction_id = self.deposit.transaction_id;
+			$mdDialog.hide(answer);
+		};
+	}
+
+	var codDepositCntrl = function($state,$stateParams,$mdDialog,deposits,COD,Notification){
+		// variable definations
+		var self = this;
+		self.params = $stateParams;
+		self.deposits = deposits.payload.data.all_transactions;
+		self.total_pages = deposits.payload.data.total_pages;
+		self.total_deposits = deposits.payload.data.total_bank_deposit_count;
+		/*
+			@showImage is a function to show the image of the deposit reciept which dg submits as a proof 
+			of the cod amount deposited in the bank account.
+		*/
+		self.showImage = function(url){
+			url = url.replace(/:/g,'%3A');
+			var image_url = 'https://s3-ap-southeast-1.amazonaws.com/bank-deposit-test/'+url;
+			self.showImageSection = true;
+			self.depositImage = image_url;
+		};
+		/*
+			@verifyDeposit function to open verify deposit popup and send a verify request to server.
+		*/
+		self.verifyDeposit = function(dp){
+			$mdDialog.show({
+				controller         : ('EditDgCntrl',['$mdDialog','deposit',VerifyDepositCntrl]),
+				controllerAs       : 'verifyDeposit',
+				templateUrl        : '/static/modules/cod/dialog/verify-deposit.html',
+				parent             : angular.element(document.body),
+				clickOutsideToClose: false,
+				locals             : {
+					       deposit : dp,
+				},
+			})
+			.then(function(dp) {
+				Notification.loaderStart();
+				COD.verifyDeposits.update(dp,function(response){
+					Notification.showSuccess('Proof Download Successful');
+					Notification.loaderComplete();
+					self.getDeposits();
+				});
+			});
+		};
+		/*
+			@declineDeposit is a function to open decline deposit dialog and send a decline request to server.
+		*/
+		self.declineDeposit = function(dp){
+			$mdDialog.show({
+				controller         : ('EditDgCntrl',['$mdDialog','deposit',DeclineDepositCntrl]),
+				controllerAs       : 'declineDeposit',
+				templateUrl        : '/static/modules/cod/dialog/decline-deposit.html',
+				parent             : angular.element(document.body),
+				clickOutsideToClose: false,
+				locals             : {
+					       deposit : dp,
+				},
+			})
+			.then(function(data) {
+				Notification.loaderStart();
+				COD.verifyDeposits.update(dp,function(response){
+					Notification.loaderComplete();
+					Notification.showSuccess('Proof Download Successful');
+					self.getDeposits();
+				});
+			});
+		};
+		/*
+			@getDeposits rleoads the cod controller according too the filter to get the new filtered data.
+		*/
+		this.getDeposits = function(){
+			$state.transitionTo($state.current, self.params, { reload: true, inherit: false, notify: true });
+		};
+	};
+
+	angular.module('Cod')
+	.config(['$stateProvider',function($stateProvider) {
+		$stateProvider
+		.state('home.cod.deposit',{
+			url: "^/cod/deposits?page",
+			templateUrl: "/static/modules/cod/deposit/deposit.html",
+			controllerAs : 'deposit',
+    		controller: "codDepositCntrl",
+    		resolve : {
+    			access: ["Access","constants", function (Access,constants) { 
+					var allowed_user = [constants.userRole.ACCOUNTS];
+					return Access.hasAnyRole(allowed_user); 
+    			}],
+    			deposits : ['COD','$stateParams',function(COD,$stateParams){
+    				$stateParams.page = (!isNaN($stateParams.page))? parseInt($stateParams.page): 1;
+    				return COD.getDeposits.get($stateParams).$promise;
+    			}],
+    		}
+		});
+	}])
+	.controller('codDepositCntrl', [
+		'$state',
+		'$stateParams',
+		'$mdDialog',
+		'deposits',
+		'COD',
+		'Notification',
+		codDepositCntrl
+	]);
+})();
+(function(){
+	'use strict';
+	var codTransferCntrl = function($state,$stateParams){
+		console.log('transfer');
+	};
+
+	angular.module('Cod')
+	.config(['$stateProvider',function($stateProvider) {
+		$stateProvider
+		.state('home.cod.transfer',{
+			url: "^/cod/transfer",
+			templateUrl: "/static/modules/cod/transfer/transfer.html",
+			controllerAs : 'transfer',
+    		controller: "codTransferCntrl",
+    		resolve : {
+    			access: ["Access","constants", function (Access,constants) { 
+    						var allowed_user = [constants.userRole.ACCOUNTS];
+    						return Access.hasAnyRole(allowed_user); 
+    					}],
+    		}
+		});
+	}])
+	.controller('codTransferCntrl', [
+		'$state',
+		'$stateParams',
+		codTransferCntrl
+	]);
+})();
+(function(){
+	'use strict';
+	var codHistoryCntrl = function($state,$stateParams){
+		console.log('history');
+	};
+
+	angular.module('Cod')
+	.config(['$stateProvider',function($stateProvider) {
+		$stateProvider
+		.state('home.cod.history',{
+			url: "^/cod/history",
+			templateUrl: "/static/modules/cod/history/history.html",
+			controllerAs : 'history',
+    		controller: "codHistoryCntrl",
+    		resolve : {
+    			access: ["Access","constants", function (Access,constants) { 
+    						var allowed_user = [constants.userRole.ACCOUNTS];
+    						return Access.hasAnyRole(allowed_user); 
+    					}],
+    		}
+		});
+	}])
+	.controller('codHistoryCntrl', [
+		'$state',
+		'$stateParams',
+		codHistoryCntrl
+	]);
+})();
+(function(){
+	'use strict';
+
+	angular.module('feedback', [])
+	.config(['$stateProvider',function($stateProvider) {
+		$stateProvider
+		.state('home.feedbackList',{
+			url: "^/feedback/list?page",
+			templateUrl: "/static/modules/feedback/list/list.html",
+			controllerAs : 'feedbackList',
+    		controller: "feedbackListCntrl",
+    		resolve : {
+    			access: ["Access","constants", function (Access,constants) { 
+    						var allowed_user = [constants.userRole.OPS,constants.userRole.OPS_MANAGER,constants.userRole.SALES,constants.userRole.SALES_MANAGER,constants.userRole.VENDOR];
+    						return Access.hasAnyRole(allowed_user); 
+    					}],
+    			tickets: ['Feedback','$stateParams', function (Feedback,$stateParams){
+    						$stateParams.page = (!isNaN($stateParams.page))? parseInt($stateParams.page): 1;
+    						return Feedback.getTickets.query($stateParams).$promise;
+    					}],
+    			groups: ['Feedback', function (Feedback){
+    						return Feedback.getGroups.query().$promise;
+    					}]
+    		}
+		})
+		.state('home.feedbackDetail',{
+			url: "^/feedback/detail/:ticket_id",
+			templateUrl: "/static/modules/feedback/detail/detail.html",
+			controllerAs : 'feedbackDetail',
+    		controller: "feedbackDetailCntrl",
+    		resolve : {
+    			access: ["Access","constants", function (Access,constants) { 
+    						var allowed_user = [constants.userRole.OPS,constants.userRole.OPS_MANAGER,constants.userRole.SALES,constants.userRole.SALES_MANAGER,constants.userRole.VENDOR];
+    						return Access.hasAnyRole(allowed_user); 
+    					}],
+                ticket: ['Feedback','$stateParams', function (Feedback,$stateParams){
+                            return Feedback.getTicketsById.get($stateParams).$promise;
+                        }],
+                groups: ['Feedback', function (Feedback){
+                            return Feedback.getGroups.query().$promise;
+                        }]
+    		}
+		});
+	}]);
+})();
+(function(){
+	'use strict';
+	var feedbackListCntrl = function($state,$stateParams,Feedback,tickets,groups){
+		var self =  this;
+		this.params = $stateParams;
+		this.tickets = tickets.payload.data.data;
+		this.total_pages = tickets.payload.data.total_pages;
+		this.total_tickets = tickets.payload.data.total_tickets;
+		this.groups = groups.payload.data;
+		/*
+			@paginate object to handle pagination.
+		*/
+		this.paginate = {
+			nextpage : function(){
+				self.params.page = self.params.page + 1;
+				self.getTickets();
+			},
+			previouspage : function(){
+				self.params.page = self.params.page - 1;
+				self.getTickets();
+			}
+		};
+		/*
+			@getGroupName function that returns the feedback type based on the group id of the ticket
+		*/
+		this.getGroupName = function(id){
+			if(self.groups){
+				for(var i=0 ; i< self.groups.length;i++){
+					if(id == self.groups[i].group.id){
+						return self.groups[i].group.name;
+					}
+				}
+			}
+		};
+
+		/*
+			@getTickets rleoads the tickets controller according too the filter to get the new filtered data.
+		*/
+		this.getTickets = function(){
+			$state.transitionTo($state.current, self.params, { reload: true, inherit: false, notify: true });
+		};
+
+	};
+
+	angular.module('feedback')
+	.controller('feedbackListCntrl', [
+		'$state',
+		'$stateParams',
+		'Feedback',
+		'tickets',
+		'groups',
+		feedbackListCntrl
+	]);
+})();
+(function(){
+	'use strict';
+	var feedbackDetailCntrl = function($state,$stateParams,Feedback,ticket,groups,Notification,PreviousState){
+		console.log(ticket);
+		var self =  this;
+		this.params = $stateParams;
+		this.ticket = ticket.payload.data.helpdesk_ticket;
+		this.groups = groups.payload.data;
+		/*
+			function to redirect back to the previous page or parent page.
+		*/
+		self.goBack = function(){
+			if(PreviousState.isAvailable()){
+				PreviousState.redirectToPrevious();
+			}
+			else{
+				$state.go('home.feedbackList');
+			}
+		};
+		/*
+			@getGroupName function that returns the feedback type based on the group id of the ticket
+		*/
+		this.getGroupName = function(id){
+			if(self.groups){
+				for(var i=0 ; i< self.groups.length;i++){
+					if(id == self.groups[i].group.id){
+						return self.groups[i].group.name;
+					}
+				}
+			}
+		};
+
+		/*
+			@getTickets rleoads the tickets controller according too the filter to get the new filtered data.
+		*/
+		this.getTicket = function(){
+			$state.transitionTo($state.current, self.params, { reload: true, inherit: false, notify: true });
+		};
+
+	};
+
+	angular.module('feedback')
+	.controller('feedbackDetailCntrl', [
+		'$state',
+		'$stateParams',
+		'Feedback',
+		'ticket',
+		'groups',
+		'Notification',
+		'PreviousState',
+		feedbackDetailCntrl
 	]);
 })();

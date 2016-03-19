@@ -25,6 +25,7 @@
 
 	var stateChangeHandler = function ($rootScope, Access, $state,$document){
 		$rootScope.$on("$stateChangeError",function (event, toState, toParams, fromState, fromParams, error){
+			console.log(error);
 			angular.element($document[0].getElementsByClassName('request-loader')).addClass('request-loader-hidden');
 			if (error == Access.UNAUTHORIZED) {
 				$state.go("login");

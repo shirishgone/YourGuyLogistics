@@ -1,0 +1,83 @@
+<md-content flex layout-fill layout="column" class="deposit">
+	<section flex="90" layout="column" class="list" layout-align="center stretch">
+		<table flex class="table-list" layout="column">
+			<thead class="table-header">
+				<tr layout="row" layout-align="start start">
+					<th flex flex-xs="20">Date</th>
+					<th flex flex-xs="30">DG name</th>
+					<th flex flex-xs="20">Amount</th>
+					<th flex flex-xs="30">Reciept No</th>
+					<th flex hide-xs>Reciept</th>
+					<th flex hide-xs>Verify</th>
+				</tr>
+			</thead>
+			<tbody class="table-body">
+				<tr ng-repeat="dp in deposit.deposits" layout="row" layout-align="start start">
+					<td flex flex-xs="20">{{dp.created_time_stamp}}</td>
+					<td flex flex-xs="30">
+						<span hide-xs>{{dp.created_by_user }}</span>
+						<span hide-gt-xs>{{dp.created_by_user | limitTo: 12}}{{dp.created_by_user.length > 12 ? '...' : ''}}</span>
+					</td>
+					<td flex flex-xs="20">{{dp.cod_amount}}rs</td>
+					<td flex layout="row" flex-xs="30"> 
+						<span hide-xs>{{dp.receipt_number}}</span>
+						<span hide-gt-xs>{{dp.receipt_number | limitTo: 5}}{{dp.receipt_number.length > 5 ? '...' : ''}}</span>
+						<span flex ></span>
+						<md-menu hide-gt-xs md-position-mode="target-right target">
+							<md-button class="md-icon-button" id="options" ng-click="$mdOpenMenu($event)" aria-label="Open selected menu">
+								<md-icon ng-style="{color: '#757575','font-size':'16px', height: '16px', width: '16px'}">more_vert</md-icon>
+							</md-button>
+							<md-menu-content width="3">
+								<md-menu-item>
+									<md-button ng-click="deposit.showImage(dp.receipt)">
+										<md-icon>image</md-icon>
+										View Reciept
+									</md-button>
+								</md-menu-item>
+								<md-menu-item>
+									<md-button ng-click="deposit.verifyDeposit(dp)">
+										<md-icon>thumb_up</md-icon>
+										Verify Deposit
+									</md-button>
+								</md-menu-item>
+								<md-menu-item>
+									<md-button ng-click="deposit.declineDeposit(dp)">
+										<md-icon>thumb_down</md-icon>
+										Decline Deposit
+									</md-button>
+								</md-menu-item>
+							</md-menu-content>
+						</md-menu>
+					</td>
+					<td flex hide-xs>
+						<button class="reciept-button" ng-click="deposit.showImage(dp.receipt)">
+							View reciept
+						</button>
+					</td>
+					<td flex hide-xs>
+						<button class="action-button success" ng-click="deposit.verifyDeposit(dp)">Approve</button>&nbsp;&nbsp;&nbsp;&nbsp;
+						<button class="action-button danger" ng-click="deposit.declineDeposit(dp)">Decline</button>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	</section>
+	<section flex="10" class="footer">
+		<div yd-pagination total="{{deposit.total_deposits}}" total-page="{{deposit.total_pages}}" params="deposit.params" list-length="{{deposit.deposits.length}}" paginate="deposit.paginate" get-data="deposit.getDgs()"></div>
+	</section>
+</md-content>
+<div class="reciept-viewer" layout="column" ng-if="deposit.showImageSection">
+	<div class="reciept-header" layout="row" layout-align="center center">
+		<span flex></span>
+		<a class="md-icon-button" aria-label="Filter Button" href="{{deposit.depositImage}}" download>
+			<md-icon ng-style="{color: '#C2BDBD'}">file_download</md-icon>
+		</a>
+		<span flex></span>
+		<md-button class="md-icon-button" aria-label="Filter Button" ng-click="deposit.showImageSection = false;">
+			<md-icon ng-style="{color: '#C2BDBD'}">clear</md-icon>
+		</md-button>
+	</div>
+	<div class="reciept-image" layout="row" layout-align="center center">
+		<img ng-src="{{deposit.depositImage}}" alt="Unable to load image">
+	</div>
+</div>

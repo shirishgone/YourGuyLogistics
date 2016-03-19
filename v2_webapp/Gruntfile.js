@@ -24,7 +24,7 @@ module.exports = function(grunt){
 			},
 			bowerupdate: {
 				command: function(libname){
-					return 'bower update ' + libname;
+					return 'bower update ' + libname + ' -S';
 				}
 			}
 		},
@@ -82,6 +82,13 @@ module.exports = function(grunt){
 					'static/modules/vendor/vendor.js',
 					'static/modules/vendor/list/*.js',
 					'static/modules/reports/*.js',
+					'static/modules/cod/cod.js',
+					'static/modules/cod/deposit/*.js',
+					'static/modules/cod/transfer/*.js',
+					'static/modules/cod/history/*.js',
+					'static/modules/feedback/feedback.js',
+					'static/modules/feedback/list/*.js',
+					'static/modules/feedback/detail/*.js',
 				],
 				dest : 'static/assets/js/main.js'
 			}
