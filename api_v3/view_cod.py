@@ -742,3 +742,30 @@ class CODViewSet(viewsets.ViewSet):
         else:
             return response_access_denied()
 
+    # Client sends list of delivery_ids, total_cod_amount transferred to client, vendor id, utr number
+    @list_route(methods=['POST'])
+    def transfer_to_client(self, request):
+        role = user_role(request.user)
+        if role == constants.ACCOUNTS or role == constants.SALES:
+            try:
+                delivery_id_list = request.data['delivery_ids']
+                total_cod_transferred = request.data['total_cod_transferred']
+                vendor_id = request.data['vendor_id']
+                utr_number = request.data['utr_number']
+            except Exception as e:
+                params = ['delivery_ids', 'total_cod_transferred', 'vendor_id', 'utr_number']
+                return response_incomplete_parameters(params)
+
+            transaction_uuid = uuid.uuid4()
+            cod_action = cod_actions(constants.COD_TRANSFERRED_TO_CLIENT_CODE)
+            cod_transferred_to_client = create_cod_transaction(cod_action, request.user, None, None,
+                                                               total_cod_transferred, transaction_uuid, delivery_id_list)
+
+            vendor = get_object_or_404(Vendor, pk=vendor_id)
+            cod_transferred_to_client.vendor = vendor
+            cod_transferred_to_client.utr_number = utr_number
+            cod_transferred_to_client.save()
+            success_message = 'COD Transfer to Client is successful'
+            return response_success_with_message(success_message)
+        else:
+            return response_access_denied()

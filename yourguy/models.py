@@ -444,6 +444,8 @@ class CODTransaction(models.Model):
     cod_amount = models.FloatField(default=0.0)
     deliveries = models.CommaSeparatedIntegerField(max_length=500)
     bank_deposit_proof = models.ForeignKey(ProofOfBankDeposit, blank=True, null=True, on_delete=models.PROTECT)
+    vendor = models.ForeignKey(Vendor, blank=True, null=True, on_delete=models.PROTECT)
+    utr_number = models.CharField(max_length=300, blank=True, null=True)
 
 
     def __unicode__(self):
