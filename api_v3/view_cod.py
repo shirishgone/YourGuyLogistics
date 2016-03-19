@@ -743,9 +743,13 @@ class CODViewSet(viewsets.ViewSet):
             return response_access_denied()
 
     # Client sends list of delivery_ids, total_cod_amount transferred to client, vendor id, utr number
+    # Validations implememted:
+    # 1. If the delivery_ids belong to the Vendor
+    # 2. Checking the cod total is same as the cod transferred
     @list_route(methods=['POST'])
     def transfer_to_client(self, request):
         role = user_role(request.user)
+        cod_amount_calc = 0
         if role == constants.ACCOUNTS or role == constants.SALES:
             try:
                 delivery_id_list = request.data['delivery_ids']
@@ -756,16 +760,35 @@ class CODViewSet(viewsets.ViewSet):
                 params = ['delivery_ids', 'total_cod_transferred', 'vendor_id', 'utr_number']
                 return response_incomplete_parameters(params)
 
-            transaction_uuid = uuid.uuid4()
-            cod_action = cod_actions(constants.COD_TRANSFERRED_TO_CLIENT_CODE)
-            cod_transferred_to_client = create_cod_transaction(cod_action, request.user, None, None,
-                                                               total_cod_transferred, transaction_uuid, delivery_id_list)
-
             vendor = get_object_or_404(Vendor, pk=vendor_id)
-            cod_transferred_to_client.vendor = vendor
-            cod_transferred_to_client.utr_number = utr_number
-            cod_transferred_to_client.save()
-            success_message = 'COD Transfer to Client is successful'
-            return response_success_with_message(success_message)
+
+            for single in delivery_id_list:
+                delivery = OrderDeliveryStatus.objects.get(id=single)
+                if delivery.order.vendor == vendor:
+                    pass
+                else:
+                    error_message = 'This order does not belong to the choosen Vendor'
+                    return response_error_with_message(error_message)
+                cod_amount_calc = cod_amount_calc + delivery.cod_collected_amount
+
+            if cod_amount_calc == total_cod_transferred:
+                transaction_uuid = uuid.uuid4()
+                cod_action = cod_actions(constants.COD_TRANSFERRED_TO_CLIENT_CODE)
+                cod_transferred_to_client = create_cod_transaction(cod_action, request.user, None, None,
+                                                                   total_cod_transferred, transaction_uuid, delivery_id_list)
+                cod_transferred_to_client.vendor = vendor
+                cod_transferred_to_client.utr_number = utr_number
+                cod_transferred_to_client.save()
+
+                for single in delivery_id_list:
+                    delivery = OrderDeliveryStatus.objects.get(id=single)
+                    delivery.cod_status = constants.COD_STATUS_TRANSFERRED_TO_CLIENT
+                    add_cod_transaction_to_delivery(cod_transferred_to_client, delivery)
+                    delivery.save()
+                success_message = 'COD Transfer to Client is successful'
+                return response_success_with_message(success_message)
+            else:
+                error_message = 'Total cod amount from the select orders does not match with the total_cod_transferred'
+                return response_error_with_message(error_message)
         else:
             return response_access_denied()
