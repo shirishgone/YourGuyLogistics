@@ -223,36 +223,24 @@ def pagination_count_bank_deposit():
     return pagination_count_dict
 
 
-def send_salary_deduction_email(first_name, delivery_id, amount, pending_amount):
+def send_salary_deduction_email(first_name, orders, amount, pending_amount):
     subject = '%s Salary Deduction' % first_name
-    body = 'Hello,\n\nThere has been a salary deduction for %s  \n\nOrder id: %d\nCOD Amount deposited: %d\nSalary Deduction amount: %d'%(first_name, delivery_id, amount, pending_amount)
-    body = body + '\n\nThanks \n-YourGuy BOT'
-    send_email(constants.EMAIL_DG_SALARY_DEDUCTIONS, subject, body)
-
-
-def general_salary_deduction_email(delivery_id, amount, pending_amount):
-    subject = 'Salary Deduction for Order: %d'%delivery_id
-    body = 'Hello,\n\nThere has been a salary deduction for \n\nOrder id: %d\nCOD Amount deposited: %d\nSalary Deduction amount: %d'%(delivery_id, amount, pending_amount)
+    body = 'Hello,\n\nThere has been a salary deduction for %s  \n\nOrder id: %s\nCOD Amount deposited: %d\nSalary Deduction amount: %d'%(first_name, orders, amount, pending_amount)
     body = body + '\n\nThanks \n-YourGuy BOT'
     send_email(constants.EMAIL_DG_SALARY_DEDUCTIONS, subject, body)
 
 
 def search_cod_transactions(user, search_query):
-    role = user_role(user)
-    cod_transactions_queryset = []
-    if role == constants.ACCOUNTS:
-        cod_action = cod_actions(constants.COD_BANK_DEPOSITED_CODE)
-        cod_transactions_queryset = CODTransaction.objects.filter(transaction__title=cod_action, transaction_status=constants.VERIFIED)
-        if search_query.isdigit():
-            cod_transactions_queryset = cod_transactions_queryset.filter(
-                Q(id=search_query) |
-                Q(orderdeliverystatus__order__vendor__phone_number=search_query) |
-                Q(orderdeliverystatus__order__vendor_order_id=search_query))
-        else:
-            cod_transactions_queryset = cod_transactions_queryset.filter(
-                Q(orderdeliverystatus__order__vendor__store_name=search_query))
+    cod_action = cod_actions(constants.COD_BANK_DEPOSITED_CODE)
+    cod_transactions_queryset = CODTransaction.objects.filter(transaction__title=cod_action)
+    if search_query.isdigit():
+        cod_transactions_queryset = cod_transactions_queryset.filter(
+            Q(id=search_query) |
+            Q(orderdeliverystatus__order__vendor__phone_number=search_query) |
+            Q(orderdeliverystatus__order__vendor_order_id=search_query))
     else:
-        pass
+        cod_transactions_queryset = cod_transactions_queryset.filter(
+            Q(orderdeliverystatus__order__vendor__store_name=search_query))
     return cod_transactions_queryset
 
 
@@ -620,10 +608,9 @@ class CODViewSet(viewsets.ViewSet):
             try:
                 transaction_id = request.data['transaction_id']
                 is_accepted = request.data['is_accepted']
-                receipt_number = request.data.get('receipt_number')
                 pending_salary_deduction = request.data.get('pending_salary_deduction')
             except Exception as e:
-                params = ['transaction_id', 'is_accepted', 'receipt_number(optional)', 'pending_salary_deduction(optional)']
+                params = ['transaction_id', 'is_accepted', 'pending_salary_deduction(optional)']
                 return response_incomplete_parameters(params)
             try:
                 bank_deposit = CODTransaction.objects.get(transaction_uuid=transaction_id)
@@ -634,11 +621,10 @@ class CODViewSet(viewsets.ViewSet):
                 if is_accepted is True:
                     receipt_number = bank_deposit.bank_deposit_proof.receipt_number
                     if receipt_number is not None:
-                        proof = ProofOfBankDeposit.objects.get(receipt_number=receipt_number)
-                        proof.proof_status = constants.VERIFIED
-                        proof.updated_by_user = request.user
-                        proof.updated_time_stamp = current_time
-                        proof.save()
+                        bank_deposit.bank_deposit_proof.proof_status = constants.VERIFIED
+                        bank_deposit.bank_deposit_proof.updated_by_user = request.user
+                        bank_deposit.bank_deposit_proof.updated_time_stamp = current_time
+                        bank_deposit.bank_deposit_proof.save()
                     else:
                         error_message = 'No Receipt found.'
                         return response_error_with_message(error_message)
@@ -652,11 +638,10 @@ class CODViewSet(viewsets.ViewSet):
                 else:
                     receipt_number = bank_deposit.bank_deposit_proof.receipt_number
                     if receipt_number is not None:
-                        proof = ProofOfBankDeposit.objects.get(receipt_number=receipt_number)
-                        proof.proof_status = constants.DECLINED
-                        proof.updated_by_user = request.user
-                        proof.updated_time_stamp = current_time
-                        proof.save()
+                        bank_deposit.bank_deposit_proof.proof_status = constants.DECLINED
+                        bank_deposit.bank_deposit_proof.updated_by_user = request.user
+                        bank_deposit.bank_deposit_proof.updated_time_stamp = current_time
+                        bank_deposit.bank_deposit_proof.save()
                     else:
                         error_message = 'No Receipt found.'
                         return response_error_with_message(error_message)
@@ -665,27 +650,22 @@ class CODViewSet(viewsets.ViewSet):
                     bank_deposit.verified_time_stamp = current_time
                     bank_deposit.transaction_status = constants.DECLINED
                     bank_deposit.save()
-                    # For the associated dgs in this transaction, pull out dg and mark his pending salary deduction
-                    deliveries = bank_deposit.deliveries
-                    deliveries = eval(deliveries)
-                    for single in deliveries:
-                        delivery = OrderDeliveryStatus.objects.get(id=single)
-                        dg = delivery.delivery_guy
-                        if dg is not None:
-                            current_deduction = dg.pending_salary_deduction
-                            if pending_salary_deduction is not None:
-                                dg.pending_salary_deduction = current_deduction + pending_salary_deduction
-                                dg.save()
-                                dg_phone_number = dg.user.username,
-                                message = 'Dear %s, Accounts has declined the bank deposit transaction for date %s ' \
-                                          'of Order: %d. You deposited amount Rs %d, out of which Rs %d is deposited less ' \
-                                          'and it will be deducted from your next salary' % \
-                                          (dg.user.first_name, bank_deposit.created_time_stamp, delivery.id,
-                                           bank_deposit.cod_amount, pending_salary_deduction)
-                                send_sms(dg_phone_number, message)
-                                send_salary_deduction_email(dg.user.first_name, delivery.id, bank_deposit.cod_amount, pending_salary_deduction)
-                        else:
-                            general_salary_deduction_email(delivery.id, bank_deposit.cod_amount, pending_salary_deduction)
+                    # Salary deduction will be applied to the person initiating the bank deposit cod transaction and not the DG associated the order directly
+                    transaction_initiated_by = bank_deposit.created_by_user
+                    dg = DeliveryGuy.objects.get(user__username=transaction_initiated_by)
+                    current_deduction = dg.pending_salary_deduction
+                    if pending_salary_deduction is not None:
+                        dg.pending_salary_deduction = current_deduction + pending_salary_deduction
+                        dg.save()
+                        dg_phone_number = dg.user.username
+                        deliveries = bank_deposit.deliveries
+                        deliveries = eval(deliveries)
+                        orders = str(deliveries).strip('[]')
+                        message = 'Dear %s, with respect to your bank deposit of orders %s, ' \
+                                  'there is a %dRs deduction in your next month\'s salary, as you hae deposited less' \
+                                  % (dg.user.first_name, orders, pending_salary_deduction)
+                        send_sms(dg_phone_number, message)
+                        send_salary_deduction_email(dg.user.first_name, orders, bank_deposit.cod_amount, pending_salary_deduction)
                     success_message = 'Bank Deposit transaction declined successfully'
                     return response_success_with_message(success_message)
             else:
@@ -708,9 +688,9 @@ class CODViewSet(viewsets.ViewSet):
         filter_vendor_id = request.QUERY_PARAMS.get('vendor_id', None)
         filter_start_date = request.QUERY_PARAMS.get('start_date', None)
         filter_end_date = request.QUERY_PARAMS.get('end_date', None)
-        if role == constants.ACCOUNTS:
+        if role == constants.ACCOUNTS or role == constants.SALES:
             all_transactions = []
-            accounts = get_object_or_404(Employee, user=request.user)
+            emp = get_object_or_404(Employee, user=request.user)
             cod_action = cod_actions(constants.COD_BANK_DEPOSITED_CODE)
             verified_bank_deposits = CODTransaction.objects.filter(transaction__title=cod_action, transaction_status=constants.VERIFIED)
             if len(verified_bank_deposits) > 0:
