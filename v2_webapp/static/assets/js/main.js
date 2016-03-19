@@ -76,7 +76,7 @@
 })();
 (function(){
 	'use strict';
-	var homeCntrl = function($rootScope,$state,$mdSidenav,$mdDialog,$mdToast,constants,UserProfile,Notification){
+	var homeCntrl = function($rootScope,$state,$mdSidenav,$mdDialog,$mdToast,$interval,constants,UserProfile,Notification,Notice){
 		// Show tabs page accorfing to the credentials.
 		AWS.config.update({accessKeyId: constants.ACCESS_KEY, secretAccessKey: constants.SECRET_KEY});
 		var self = this;
@@ -126,6 +126,26 @@
 				self.logout();
 			});
 		};
+		/*
+			@showLogoutDialog: function to show the confirmation dialog box when logout button is clicked.
+		*/
+		this.getNoticeCount = function(){
+			Notice.pendingNotificationCount.get(function(resp){
+				if(self.count!== undefined && self.count != resp.payload.data){
+					$rootScope.$broadcast('notificationUpdated');
+				}
+				self.count = resp.payload.data;
+			});
+		};
+		if(UserProfile.$getUserRole() === constants.userRole.OPS || UserProfile.$getUserRole() === constants.userRole.OPS_MANAGER){
+				self.getNoticeCount();
+		}
+
+		$interval(function(){
+			if(UserProfile.$getUserRole() === constants.userRole.OPS || UserProfile.$getUserRole() === constants.userRole.OPS_MANAGER){
+				self.getNoticeCount();
+			}
+		}, 120000);
 		/*
 			event for handleing error cases, whenever the error event is fired this, function is called
 			and it shows a toast with a error messgae for small duration and then it disappeares.
@@ -182,9 +202,11 @@
 		'$mdSidenav',
 		'$mdDialog',
 		'$mdToast',
+		'$interval',
 		'constants',
 		'UserProfile',
 		'Notification',
+		'Notice',
 		homeCntrl
 	])
 	.controller('ErrorToastCntrl', [
@@ -250,6 +272,7 @@
     'reports',
     'Cod',
     'feedback',
+    'notification',
 		'forbidden'
 	])
 	.config([
@@ -727,6 +750,31 @@
 		Feedback
 	]);
 
+})();
+(function(){
+	'use strict';
+	var Notice = function ($resource,constants){
+		return {
+			getNotifications : $resource(constants.v3baseUrl+'notification/',{},{
+				query :{
+					method: 'GET',
+				}
+			}),
+			pendingNotificationCount :$resource(constants.v3baseUrl+'notification/pending/'),
+			markAsRead : $resource(constants.v3baseUrl+'notification/:id/read/',{id:'@id'},{
+				update :{
+					method: 'POST',
+				}
+			}),
+		};
+	};
+	
+	angular.module('ygVendorApp')
+	.factory('Notice', [
+		'$resource',
+		'constants', 
+		Notice
+	]);
 })();
 (function(){
 	'use strict';
@@ -3225,4 +3273,91 @@
 		'constants',
 		feedbackDetailCntrl
 	]);
+})();
+(function(){
+	'use strict';
+    var notificationCntrl = function($scope,$state,$stateParams,$rootScope,Notice,notices){
+        var self = this;
+        self.params =  $stateParams;
+        self.notices = notices.payload.data.data;
+        self.total_notifications =  notices.payload.data.total_notifications;
+        self.total_pages =  notices.payload.data.total_pages;
+
+        /*
+            @paginate object to handle pagination.
+        */
+        this.paginate = {
+            nextpage : function(){
+                self.params.page = self.params.page + 1;
+                self.getTickets();
+            },
+            previouspage : function(){
+                self.params.page = self.params.page - 1;
+                self.getTickets();
+            }
+        };
+        $rootScope.$on('notificationUpdated',self.getNotification);
+
+        this.makeAsRead = function(notice){
+            Notice.markAsRead.update({id: notice.notification_id},function(response){
+            $scope.home.getNoticeCount();
+            notice.delivery_id = notice.delivery_id.split(',');
+            if(notice.delivery_id.length == 1 && notice.delivery_id.indexOf("") === -1){
+                $state.go('home.orderDetail',{id:notice.delivery_id.join()});
+            }
+            else if(notice.delivery_id.length > 1) {
+              $state.go('home.opsorder',{delivery_ids:notice.delivery_id.join()});
+            }
+            else {
+              self.getNotification();
+            }
+      });
+        };
+        /*
+            @getNotifications rleoads the notification controller according too the filter to get the new filtered data.
+        */
+        this.getNotifications = function(){
+            $state.transitionTo($state.current, self.params, { reload: true, inherit: false, notify: true });
+        };
+    };
+
+	angular.module('notification', [])
+	.config(['$stateProvider',function($stateProvider) {
+		$stateProvider
+		.state('home.notification',{
+			url: "^/notification?page",
+			templateUrl: "/static/modules/notification/notification.html",
+			controllerAs : 'notification',
+    		controller: "notificationCntrl",
+    		resolve : {
+    			access: ["Access","constants", function (Access,constants) { 
+    						var allowed_user = [constants.userRole.OPS,constants.userRole.OPS_MANAGER];
+    						return Access.hasAnyRole(allowed_user); 
+    					}],
+    			notices: ['Notice','$stateParams', function (Notice,$stateParams){
+    						$stateParams.page = (!isNaN($stateParams.page))? parseInt($stateParams.page): 1;
+    						return Notice.getNotifications.query($stateParams).$promise;
+    					}]
+    		}
+		});
+	}])
+    .controller('notificationCntrl', [
+        '$scope',
+        '$state',
+        '$stateParams',
+        '$rootScope',
+        'Notice',
+        'notices',
+        notificationCntrl
+    ]);
+})();
+(function(){
+	'use strict';
+	angular.module('notification')
+	.filter('fromNow', function(){
+		return function (date) {
+			return moment(date).fromNow();
+		};
+	});
+
 })();

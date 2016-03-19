@@ -1,6 +1,6 @@
 (function(){
 	'use strict';
-	var homeCntrl = function($rootScope,$state,$mdSidenav,$mdDialog,$mdToast,constants,UserProfile,Notification){
+	var homeCntrl = function($rootScope,$state,$mdSidenav,$mdDialog,$mdToast,$interval,constants,UserProfile,Notification,Notice){
 		// Show tabs page accorfing to the credentials.
 		AWS.config.update({accessKeyId: constants.ACCESS_KEY, secretAccessKey: constants.SECRET_KEY});
 		var self = this;
@@ -50,6 +50,26 @@
 				self.logout();
 			});
 		};
+		/*
+			@showLogoutDialog: function to show the confirmation dialog box when logout button is clicked.
+		*/
+		this.getNoticeCount = function(){
+			Notice.pendingNotificationCount.get(function(resp){
+				if(self.count!== undefined && self.count != resp.payload.data){
+					$rootScope.$broadcast('notificationUpdated');
+				}
+				self.count = resp.payload.data;
+			});
+		};
+		if(UserProfile.$getUserRole() === constants.userRole.OPS || UserProfile.$getUserRole() === constants.userRole.OPS_MANAGER){
+				self.getNoticeCount();
+		}
+
+		$interval(function(){
+			if(UserProfile.$getUserRole() === constants.userRole.OPS || UserProfile.$getUserRole() === constants.userRole.OPS_MANAGER){
+				self.getNoticeCount();
+			}
+		}, 120000);
 		/*
 			event for handleing error cases, whenever the error event is fired this, function is called
 			and it shows a toast with a error messgae for small duration and then it disappeares.
@@ -106,9 +126,11 @@
 		'$mdSidenav',
 		'$mdDialog',
 		'$mdToast',
+		'$interval',
 		'constants',
 		'UserProfile',
 		'Notification',
+		'Notice',
 		homeCntrl
 	])
 	.controller('ErrorToastCntrl', [
