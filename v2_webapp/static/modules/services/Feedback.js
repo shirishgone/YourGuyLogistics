@@ -16,7 +16,7 @@
 			}),
 			addNotes : $resource(constants.v3baseUrl+'freshdesk/add_note/',{},{
 				update :{
-					method: 'PUT',
+					method: 'POST',
 				}
 			}),
 			resolve : $resource(constants.v3baseUrl+'freshdesk/resolve/',{},{

@@ -1,5 +1,6 @@
 .feedbackDetail {
 	padding : 10px;
+	padding-top: 25px;
 	.note {
 		height: 100%;
 		min-height: 100%;
@@ -10,6 +11,14 @@
 				width: 50px;
 				background: primary-color('500');
 				@include border-radius(50%);
+				&.teamYG {
+					@include background(image-url("/static/assets/images/feedback/yourguy.png") no-repeat center center);
+					@include background-size(contain);
+				}
+				&.vendor {
+					@include background(image-url("/static/assets/images/feedback/vendor.png") no-repeat center center);
+					@include background-size(contain);
+				}
 			}
 			.bar {
 				min-height: 100%;
@@ -33,7 +42,32 @@
 				font-size: 15px;
 				font-weight: 500;
 			}
+			&.vendor {
+				background: grey-color('200');
+			}
 		}
-
 	}
+	.note-text {
+			padding: 40px;
+			padding-left : 10%;
+			padding-bottom: 20px;
+			textarea {
+				border: 2px solid grey-color('200');
+			}
+			@include mobile {
+				padding: 10px;
+				padding-left : 20%;
+				padding-bottom: 10px;
+			}
+		}
 }
+
+.tootbar-button {
+	color: $white-color;
+	min-height: 18px;
+	line-height: 1;
+		span {
+			font-size: 9px;
+			font-weight: 900;
+		}
+	}
