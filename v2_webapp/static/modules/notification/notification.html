@@ -1,0 +1,30 @@
+<md-toolbar class="yg-toolbar md-primary md-whiteframe-z2" ng-class="{'selected':dgList.searchVendorActive}">
+	<div class="md-toolbar-tools">
+		<md-button ng-click="home.toggleSideNav()" class="md-icon-button" aria-label="Menu Icon">
+			<md-icon>menu</md-icon>
+		</md-button>
+		<p>Notification</p>
+		<span flex></span>
+	</div>
+</md-toolbar>
+<md-content flex layout-fill layout="column" class="notification">
+	<section flex="90" class="list" layout-wrap layout="row" layout-align="center start">
+		<div layout="row" class="notice" flex="100" ng-repeat="notice in notification.notices"  ng-class="{'unread' : !notice.read}" ng-click="notification.makeAsRead(notice)">
+			<div class="image">
+				<img ng-src="/static/assets/images/notification/{{notice.notification_type.type_id}}.png"> 
+			</div>
+			<div flex class="notice-text">
+				<div layout="row" class="notice-title">
+					<h4>{{notice.notification_type.title}}</h4> 
+					<span class="notice-time">{{notice.time_stamp | fromNow}}</span>
+				</div>
+				<div class="notice-text">
+					<p>{{notice.message}}</p>
+				</div>
+			</div>
+		</div>
+	</section>
+	<section flex="10" class="footer">
+		<div yd-pagination total="{{notification.total_notifications}}" total-page="{{notification.total_pages}}" params="notification.params" list-length="{{notification.notices.length}}" paginate="notification.paginate" get-data="notification.getNotifications()"></div>
+	</section>
+</md-content>

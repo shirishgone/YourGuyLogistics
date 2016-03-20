@@ -17,6 +17,7 @@
     'reports',
     'Cod',
     'feedback',
+    'notification',
 		'forbidden'
 	])
 	.config([

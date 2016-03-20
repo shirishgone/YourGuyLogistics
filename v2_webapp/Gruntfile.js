@@ -89,6 +89,8 @@ module.exports = function(grunt){
 					'static/modules/feedback/feedback.js',
 					'static/modules/feedback/list/*.js',
 					'static/modules/feedback/detail/*.js',
+					'static/modules/notification/notification.js',
+					'static/modules/notification/noticeFromnowFilter.js',
 				],
 				dest : 'static/assets/js/main.js'
 			}
