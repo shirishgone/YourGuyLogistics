@@ -233,6 +233,16 @@ def transaction_history(cod_transaction):
     return transaction_history_dict
 
 
+def vendor_transaction_history(cod_transaction):
+    vendor_transaction_history_dict = {
+        'date': cod_transaction.created_time_stamp.date(),
+        'cod_amount': cod_transaction.cod_amount,
+        'utr_number': cod_transaction.utr_number,
+        'deliveries': []
+    }
+    return vendor_transaction_history_dict
+
+
 def send_salary_deduction_email(first_name, orders, amount, pending_amount):
     subject = '%s Salary Deduction' % first_name
     body = 'Hello,\n\nThere has been a salary deduction for %s  \n\nOrder id: %s\nCOD Amount deposited: %d\nSalary Deduction amount: %d'%(first_name, orders, amount, pending_amount)
@@ -804,7 +814,7 @@ class CODViewSet(viewsets.ViewSet):
             return response_access_denied()
 
     # Transaction History api
-    # Return the transactions for a particular DG
+    # Return the transactions history for a particular DG
     # Implement Pagination
     @list_route(methods=['GET'])
     @method_decorator(user_passes_test(active_check))
@@ -849,3 +859,41 @@ class CODViewSet(viewsets.ViewSet):
         else:
             return response_access_denied()
 
+    @list_route(methods=['GET'])
+    def vendor_transaction_history(self, request):
+        role = user_role(request.user)
+        page = request.QUERY_PARAMS.get('page', 1)
+        if role == constants.ACCOUNTS or role == constants.SALES:
+            all_transactions = []
+            history = CODTransaction.objects.filter(transaction__code=constants.COD_TRANSFERRED_TO_CLIENT_CODE)
+            if len(history) > 0:
+                total_history_count = len(history)
+                page = int(page)
+                total_pages = int(total_history_count / constants.PAGINATION_PAGE_SIZE) + 1
+                if page > total_pages or page <= 0:
+                    return response_invalid_pagenumber()
+                else:
+                    history = paginate(history, page)
+
+                for single in history:
+                    deliveries_list = []
+                    vendor_transaction_history_dict = vendor_transaction_history(single)
+                    deliveries = single.deliveries
+                    deliveries = eval(deliveries)
+                    for single_delivery in deliveries:
+                        delivery = OrderDeliveryStatus.objects.get(id=single_delivery)
+                        per_order_dict = per_order_list(delivery)
+                        per_order_dict['vendor_id'] = delivery.order.vendor.id
+                        deliveries_list.append(per_order_dict)
+                    vendor_transaction_history_dict['deliveries'] = deliveries_list
+                    all_transactions.append(vendor_transaction_history_dict)
+                pagination_count_dict = pagination_count_bank_deposit()
+                pagination_count_dict['total_pages'] = total_pages
+                pagination_count_dict['total_count'] = total_history_count
+                pagination_count_dict['all_transactions'] = all_transactions
+                return response_with_payload(pagination_count_dict, None)
+            else:
+                error_message = 'No transactions found'
+                return response_error_with_message(error_message)
+        else:
+            return response_access_denied()
