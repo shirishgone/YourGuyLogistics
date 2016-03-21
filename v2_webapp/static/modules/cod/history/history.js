@@ -5,7 +5,7 @@
 		self.params = $stateParams;
 		self.historyDeposits = historyDeposits.payload.data.all_transactions;
 		self.total_pages = historyDeposits.payload.data.total_pages;
-		self.total_deposits = historyDeposits.payload.data.total_bank_deposit_count;
+		self.total_deposits = historyDeposits.payload.data.total_count;
 		this.searchVendor = this.params.vendor_id;
 		console.log(historyDeposits);
 
@@ -26,6 +26,29 @@
 			previouspage : function(){
 				self.params.page = self.params.page - 1;
 				self.getDgs();
+			}
+		};
+		/*
+			@dgSearchTextChange is a function for Delivery guy search for filter. When ever the filtered dg change, 
+			this function is called.
+
+			@selectedVendorChange is a callback function after vendor guy selection in the filter.
+		*/
+		self.vendorSearchTextChange = function(text){
+			var search = {
+				search : text
+			};
+			return Vendor.query(search).$promise.then(function (response){
+				return response.payload.data.data;
+			});
+		};
+
+		self.selectedVendorChange = function(vendor){
+			if(vendor){
+				self.params.vendor_id = vendor.id;
+			}
+			else{
+				self.params.vendor_id = undefined;
 			}
 		};
 		/*
@@ -60,7 +83,7 @@
     				$stateParams.start_date = ($stateParams.start_date !== undefined) ? new Date($stateParams.start_date).toISOString() : undefined;
     				$stateParams.end_date = ($stateParams.end_date !== undefined) ? new Date($stateParams.end_date).toISOString() : undefined;
     				$stateParams.page = (!isNaN($stateParams.page))? parseInt($stateParams.page): 1;
-    				return COD.getVerifiedDeposits.get($stateParams).$promise;
+    				return COD.transactionHistory.get($stateParams).$promise;
     			}],
     		}
 		});

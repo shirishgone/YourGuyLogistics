@@ -44,7 +44,19 @@
 		};
 		this.handleSelection =  {
 			selectedItemArray : [],
+			selectedVendor : undefined,
 			toggle : function (item){
+				console.log(self.handleSelection.selectedItemArray.length);
+				if(self.handleSelection.selectedItemArray.length > 0){
+					if(item.deliveries[0].vendor_id != self.handleSelection.selectedVendor){
+						alert("You cannot select different vendor");
+						return;
+					}
+				}
+				else{
+					console.log("sds");
+					self.handleSelection.selectedVendor = item.deliveries[0].vendor_id;
+				}
 				var idx = self.handleSelection.selectedItemArray.indexOf(item);
         		if (idx > -1) self.handleSelection.selectedItemArray.splice(idx, 1);
         		else self.handleSelection.selectedItemArray.push(item);
@@ -78,6 +90,7 @@
 			},
 			clearAll : function (){
 				self.handleSelection.selectedItemArray = [];
+				self.handleSelection.selectedVendor = undefined;
 				return self.handleSelection.selectedItemArray;
 			},
 			slectedItemLength : function (){
@@ -106,7 +119,9 @@
 				},
 			})
 			.then(function(dp) {
+				dp.total_cod_transferred = parseInt(dp.total_cod_transferred);
 				dp.delivery_ids = self.handleSelection.getAlltransactionIds();
+				dp.vendor_id = self.handleSelection.selectedVendor;
 				Notification.loaderStart();
 				COD.tranferToClient.send(dp,function(response){
 					Notification.showSuccess('Transfered Successfully');

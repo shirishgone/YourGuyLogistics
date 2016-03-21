@@ -998,7 +998,72 @@
   border: 1px solid #EEEEEE;
 }
 
-/* line 2, ../sass/modules/cod/_history.scss */
+/* line 1, ../sass/modules/cod/_history.scss */
+.history {
+  overflow-y: hidden;
+}
+/* line 3, ../sass/modules/cod/_history.scss */
+.history .list {
+  overflow-y: hidden;
+}
+/* line 5, ../sass/modules/cod/_history.scss */
+.history .list .header-list {
+  padding: 15px;
+  width: 100%;
+  background-color: #FDCD88;
+  text-align: left;
+  color: #757575;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+/* line 15, ../sass/modules/cod/_history.scss */
+.history .list .history-list {
+  overflow-y: auto;
+}
+/* line 17, ../sass/modules/cod/_history.scss */
+.history .list .history-list .history-data {
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+/* line 20, ../sass/modules/cod/_history.scss */
+.history .list .history-list .history-data .history-overview {
+  padding: 15px;
+  background-color: #EEEEEE;
+  text-align: left;
+  color: #757575;
+  font-size: 14px;
+  border-bottom: 1px solid #E0E0E0;
+}
+/* line 27, ../sass/modules/cod/_history.scss */
+.history .list .history-list .history-data .history-overview .md-button.md-icon-button {
+  margin: 0;
+  padding: 0;
+  min-height: 20px;
+  height: 20px;
+  width: 20px;
+  margin-right: 20px;
+}
+/* line 37, ../sass/modules/cod/_history.scss */
+.history .list .history-list .history-data .history-detail .deliveries-list {
+  padding: 15px;
+  width: 100%;
+  background-color: #FFEED6;
+  text-align: left;
+  color: #757575;
+  font-size: 14px;
+  font-weight: 600;
+}
+/* line 46, ../sass/modules/cod/_history.scss */
+.history .list .history-list .history-data .history-detail .deliveries-overview {
+  padding: 15px;
+  background-color: #FAFAFA;
+  text-align: left;
+  color: #757575;
+  font-size: 14px;
+  border-bottom: 1px solid #EEEEEE;
+}
+/* line 58, ../sass/modules/cod/_history.scss */
 .history .footer {
   max-height: 50px;
   height: 50px;
