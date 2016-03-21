@@ -1,6 +1,6 @@
 (function(){
 	'use strict';
-	var codCntrl = function($state,$stateParams){
+	var codCntrl = function($state,$stateParams,$mdSidenav){
 		if($state.current.name == 'home.cod.deposit'){
 			this.selectedIndex = 0;
 		}
@@ -13,6 +13,13 @@
 		else {
 			this.selectedIndex = 0;
 		}
+		/*
+			 @ toggleFilter : main sidenav toggle function, this function toggle the sidebar of the filets of the orders page page.
+		*/
+		this.toggleFilter = function(){
+			$mdSidenav('cod-filter').toggle();
+		};
+		
 	};
 
 	angular.module('Cod', [])
@@ -35,6 +42,7 @@
 	.controller('codCntrl', [
 		'$state',
 		'$stateParams',
+		'$mdSidenav',
 		codCntrl
 	]);
 })();

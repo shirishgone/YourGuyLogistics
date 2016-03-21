@@ -960,6 +960,52 @@
   font-size: 13px;
 }
 
+/* line 1, ../sass/modules/cod/_transfer.scss */
+.transfer {
+  height: 100%;
+  overflow-y: hidden;
+}
+/* line 4, ../sass/modules/cod/_transfer.scss */
+.transfer md-checkbox {
+  margin-bottom: 0px;
+}
+/* line 9, ../sass/modules/cod/_transfer.scss */
+.transfer .list .table-list .table-header.selected {
+  background-color: #FDD9A6;
+}
+/* line 11, ../sass/modules/cod/_transfer.scss */
+.transfer .list .table-list .table-header.selected tr {
+  width: 100%;
+}
+/* line 13, ../sass/modules/cod/_transfer.scss */
+.transfer .list .table-list .table-header.selected tr th {
+  padding-top: 0;
+  padding-bottom: 0;
+  padding: 5px;
+}
+/* line 17, ../sass/modules/cod/_transfer.scss */
+.transfer .list .table-list .table-header.selected tr th .md-button {
+  margin-top: 0;
+  margin-bottom: 0;
+  min-height: 18px;
+  font-size: 15px;
+}
+/* line 28, ../sass/modules/cod/_transfer.scss */
+.transfer .footer {
+  max-height: 50px;
+  height: 50px;
+  z-index: 10;
+  border: 1px solid #EEEEEE;
+}
+
+/* line 2, ../sass/modules/cod/_history.scss */
+.history .footer {
+  max-height: 50px;
+  height: 50px;
+  z-index: 10;
+  border: 1px solid #EEEEEE;
+}
+
 /* line 1, ../sass/modules/feedback/_list.scss */
 .feedbackList {
   overflow-y: hidden;
