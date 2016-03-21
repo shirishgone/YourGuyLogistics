@@ -561,7 +561,7 @@ class CODViewSet(viewsets.ViewSet):
             return response_access_denied()
 
 
-    # This api is to pull out all the bank deposit transactions(initiated/verified/declined)
+    # This api is to pull out all the bank deposit transactions(initiated)
     # dict of created by user, created date, receipt, current transaction status,
     # Implement pagination, give count of pages
     # give count of total bank deposit transactions
@@ -573,7 +573,7 @@ class CODViewSet(viewsets.ViewSet):
             bank_deposit_list = []
             accounts = get_object_or_404(Employee, user=request.user)
             cod_action = cod_actions(constants.COD_BANK_DEPOSITED_CODE)
-            all_bank_deposit_cod_transactions = CODTransaction.objects.filter(transaction__title=cod_action)
+            all_bank_deposit_cod_transactions = CODTransaction.objects.filter(transaction__title=cod_action, transaction_status=constants.INITIATED)
             if len(all_bank_deposit_cod_transactions) > 0:
                 # PAGINATION  ----------------------------------------------------------------
                 total_bank_deposit_count = len(all_bank_deposit_cod_transactions)
