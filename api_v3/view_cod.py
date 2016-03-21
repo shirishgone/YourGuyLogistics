@@ -208,6 +208,7 @@ def verified_bank_deposit_list(cod_transaction):
 def per_order_list(delivery):
     per_order_dict = {
         'cod_amount': delivery.cod_collected_amount,
+        'vendor_id': delivery.order.vendor.id,
         'vendor_name': delivery.order.vendor.store_name,
         'delivery_id': delivery.id
     }
@@ -883,7 +884,6 @@ class CODViewSet(viewsets.ViewSet):
                     for single_delivery in deliveries:
                         delivery = OrderDeliveryStatus.objects.get(id=single_delivery)
                         per_order_dict = per_order_list(delivery)
-                        per_order_dict['vendor_id'] = delivery.order.vendor.id
                         deliveries_list.append(per_order_dict)
                     vendor_transaction_history_dict['deliveries'] = deliveries_list
                     all_transactions.append(vendor_transaction_history_dict)
