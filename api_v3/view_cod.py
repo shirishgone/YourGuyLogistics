@@ -148,24 +148,25 @@ def cod_balance_calculation(dg):
                                                            cod_status=constants.COD_STATUS_COLLECTED)
     delivery_statuses_total = delivery_statuses.values('delivery_guy__user__username').\
         annotate(sum_of_cod_collected=Sum('cod_collected_amount'))
-    balance_amount = None
+    balance_amount = 0
     if len(delivery_statuses_total) > 0:
         balance_amount = delivery_statuses_total[0]['sum_of_cod_collected']
-        if dg.is_teamlead is True:
-            dg_tl_id = dg.id
-            delivery_guy_tl = DeliveryTeamLead.objects.get(delivery_guy=dg)
-            associated_dgs = delivery_guy_tl.associate_delivery_guys.all()
-            associated_dgs = associated_dgs.filter(is_active=True)
-            for single_dg in associated_dgs:
-                delivery_statuses = OrderDeliveryStatus.objects.filter(delivery_guy=single_dg,
-                                                                       cod_status=constants.COD_STATUS_TRANSFERRED_TO_TL,
-                                                                       cod_transactions__transaction_status=constants.VERIFIED,
-                                                                       cod_transactions__dg_tl_id=dg_tl_id)
-                for single in delivery_statuses:
-                    deliveries.append(single.id)
-                delivery_statuses = delivery_statuses.values('delivery_guy__user__username').annotate(sum_of_cod_collected=Sum('cod_collected_amount'))
-                if len(delivery_statuses) > 0:
-                    balance_amount = balance_amount + delivery_statuses[0]['sum_of_cod_collected']
+
+    if dg.is_teamlead is True:
+        dg_tl_id = dg.id
+        delivery_guy_tl = DeliveryTeamLead.objects.get(delivery_guy=dg)
+        associated_dgs = delivery_guy_tl.associate_delivery_guys.all()
+        associated_dgs = associated_dgs.filter(is_active=True)
+        for single_dg in associated_dgs:
+            delivery_statuses = OrderDeliveryStatus.objects.filter(delivery_guy=single_dg,
+                                                                    cod_status=constants.COD_STATUS_TRANSFERRED_TO_TL,
+                                                                    cod_transactions__transaction_status=constants.VERIFIED,
+                                                                    cod_transactions__dg_tl_id=dg_tl_id)
+            for single in delivery_statuses:
+                deliveries.append(single.id)
+            delivery_statuses = delivery_statuses.values('delivery_guy__user__username').annotate(sum_of_cod_collected=Sum('cod_collected_amount'))
+            if len(delivery_statuses) > 0:
+                balance_amount = balance_amount + delivery_statuses[0]['sum_of_cod_collected']
     return balance_amount
 
 
