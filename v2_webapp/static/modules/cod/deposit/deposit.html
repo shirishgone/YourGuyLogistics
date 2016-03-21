@@ -66,6 +66,50 @@
 		<div yd-pagination total="{{deposit.total_deposits}}" total-page="{{deposit.total_pages}}" params="deposit.params" list-length="{{deposit.deposits.length}}" paginate="deposit.paginate" get-data="deposit.getDgs()"></div>
 	</section>
 </md-content>
+<md-sidenav class="filter-sidenav md-sidenav-right md-whiteframe-z3" layout="column" md-component-id="cod-filter">
+	<md-toolbar class="md-primary md-whiteframe-z1">
+		<div class="md-toolbar-tools">
+			<md-button class="md-icon-button" aria-label="Filter Button" ng-click="deposit.resetParams()">
+				<md-icon>backspace</md-icon>
+			</md-button>
+			<span flex></span>
+			<md-button class="md-icon-button" aria-label="Filter Button" ng-click="deposit.getDeposits()">
+				<md-icon>done</md-icon>
+			</md-button>
+		</div>
+ 	</md-toolbar>
+ 	<md-content flex layout="column">
+ 		<md-list>
+ 			<md-subheader>START DATE</md-subheader>
+ 			<md-list-item class="md-1-line">
+				<md-datepicker ng-model="deposit.params.start_date" md-placeholder="Enter date"></md-datepicker>
+			</md-list-item>
+			<md-subheader>END DATE</md-subheader>
+ 			<md-list-item class="md-1-line">
+				<md-datepicker ng-model="deposit.params.end_date" md-placeholder="Enter date"></md-datepicker>
+			</md-list-item>
+			<md-subheader>VENDOR</md-subheader>
+			<div class="vendor-list">
+				<md-autocomplete
+					md-no-cache="true"
+					md-selected-item="deposit.selectedVendor"
+					md-search-text="deposit.searchVendor"
+					md-selected-item-change="deposit.selectedVendorChange(vendor)"
+					md-items="vendor in deposit.vendorSearchTextChange(deposit.searchVendor)"
+					md-item-text="vendor.name"
+					md-min-length="1"
+					placeholder="Search Vendor">
+					<md-item-template>
+						<span md-highlight-text="deposit.searchVendor" md-highlight-flags="^i">{{vendor.name}}</span>
+					</md-item-template>
+					<md-not-found>
+						No states matching "{{deposit.searchVendor}}" were found.
+					</md-not-found>
+				</md-autocomplete>
+			</div>
+ 		</md-list>
+ 	</md-content>
+</md-sidenav>
 <div class="reciept-viewer" layout="column" ng-if="deposit.showImageSection">
 	<div class="reciept-header" layout="row" layout-align="center center">
 		<span flex></span>

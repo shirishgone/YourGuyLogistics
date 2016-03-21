@@ -7,7 +7,13 @@
 				update :{
 					method: 'PUT'
 				},
-			})
+			}),
+			getVerifiedDeposits : $resource(constants.v3baseUrl+'cod/verified_bank_deposits_list/'),
+			tranferToClient : $resource(constants.v3baseUrl+'cod/transfer_to_client/',{},{
+				send :{
+					method: 'POST'
+				},
+			}),
 		};
 	};
 	angular.module('ygVendorApp')

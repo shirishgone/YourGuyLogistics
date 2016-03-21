@@ -1,1 +1,94 @@
-transfer
+<md-content flex layout-fill layout="column" class="transfer">
+	<section flex="90" layout="column" class="list" layout-align="center stretch">
+		<table flex class="table-list" layout="column">
+			<thead class="table-header" ng-if="!transfer.handleSelection.isSelected()">
+				<tr layout="row" layout-align="start start" >
+					<th>
+						<md-checkbox class="md-primary" ng-checked="transfer.handleSelection.isSelected()" ng-click="transfer.handleSelection.selectAll()" aria-label="Checkbox">
+		        		</md-checkbox>
+					</th>
+					<th flex flex-xs="20">Date</th>
+					<th flex flex-xs="30">Order Id</th>
+					<th flex flex-xs="20">Vendor</th>
+					<th flex flex-xs="30">Cod</th>
+				</tr>
+			</thead>
+			<thead class="table-header selected" ng-if="transfer.handleSelection.isSelected()">
+				<tr layout="row" layout-align="start start">
+					<th flex flex-xs="20">
+						<md-button class="md-icon-button" id="options" ng-click="transfer.handleSelection.clearAll()" aria-label="Open selected menu">
+							<md-icon ng-style="{color: '#757575','font-size':'24px', height: '24px', width: '24px'}">arrow_back</md-icon>
+						</md-button>
+					</th>
+					<th flex flex-xs="30"></th>
+					<th flex flex-xs="20"></th>
+					<th flex flex-xs="30"></th>
+					<th flex layout="row" layout-align="end start">
+						<md-button class="md-button md-primary" id="options" ng-click="transfer.transferDeposit()" aria-label="Open selected menu">
+						Transfer
+						</md-button>
+					</th>
+				</tr>
+			</thead>
+			<tbody class="table-body">
+				<tr ng-repeat="dp in transfer.varifiedDeposits" layout="row" layout-align="start start">
+					<td>
+						<md-checkbox class="md-primary" ng-checked="transfer.handleSelection.exists(dp)" ng-click="transfer.handleSelection.toggle(dp)" aria-label="Checkbox">
+		        		</md-checkbox>
+					</td>
+					<td flex flex-xs="20">{{dp.verified_time_stamp}}</td>
+					<td flex flex-xs="30">{{dp.deliveries[0].delivery_id}}</td>
+					<td flex flex-xs="20">{{dp.deliveries[0].vendor_name}}</td>
+					<td flex flex-xs="30" flex-xs="30">{{dp.deliveries[0].cod_amount}}rs</td>
+				</tr>
+			</tbody>
+		</table>
+	</section>
+	<section flex="10" class="footer">
+		<div yd-pagination total="{{transfer.total_deposits}}" total-page="{{transfer.total_pages}}" params="transfer.params" list-length="{{transfer.varifiedDeposits.length}}" paginate="transfer.paginate" get-data="deposit.getDeposits()"></div>
+	</section>
+</md-content>
+<md-sidenav class="filter-sidenav md-sidenav-right md-whiteframe-z3" layout="column" md-component-id="cod-filter">
+	<md-toolbar class="md-primary md-whiteframe-z1">
+		<div class="md-toolbar-tools">
+			<md-button class="md-icon-button" aria-label="Filter Button" ng-click="transfer.resetParams()">
+				<md-icon>backspace</md-icon>
+			</md-button>
+			<span flex></span>
+			<md-button class="md-icon-button" aria-label="Filter Button" ng-click="transfer.getDeposits()">
+				<md-icon>done</md-icon>
+			</md-button>
+		</div>
+ 	</md-toolbar>
+ 	<md-content flex layout="column">
+ 		<md-list>
+ 			<md-subheader>START DATE</md-subheader>
+ 			<md-list-item class="md-1-line">
+				<md-datepicker ng-model="transfer.params.start_date" md-placeholder="Enter date"></md-datepicker>
+			</md-list-item>
+			<md-subheader>END DATE</md-subheader>
+ 			<md-list-item class="md-1-line">
+				<md-datepicker ng-model="transfer.params.end_date" md-placeholder="Enter date"></md-datepicker>
+			</md-list-item>
+			<md-subheader>VENDOR</md-subheader>
+			<div class="vendor-list">
+				<md-autocomplete
+					md-no-cache="true"
+					md-selected-item="transfer.selectedVendor"
+					md-search-text="transfer.searchVendor"
+					md-selected-item-change="transfer.selectedVendorChange(vendor)"
+					md-items="vendor in transfer.vendorSearchTextChange(transfer.searchVendor)"
+					md-item-text="vendor.name"
+					md-min-length="1"
+					placeholder="Search Vendor">
+					<md-item-template>
+						<span md-highlight-text="transfer.searchVendor" md-highlight-flags="^i">{{vendor.name}}</span>
+					</md-item-template>
+					<md-not-found>
+						No states matching "{{transfer.searchVendor}}" were found.
+					</md-not-found>
+				</md-autocomplete>
+			</div>
+ 		</md-list>
+ 	</md-content>
+</md-sidenav>
