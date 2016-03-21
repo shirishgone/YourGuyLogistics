@@ -10,7 +10,7 @@ from yourguy.models import CODTransaction, DeliveryGuy, OrderDeliveryStatus, Del
 from rest_framework import authentication, viewsets
 from rest_framework.decorators import list_route
 from rest_framework.permissions import IsAuthenticated
-from api_v3.utils import user_role, log_exception, paginate, send_sms, send_email
+from api_v3.utils import user_role, log_exception, paginate, send_sms, send_email, check_month
 from api_v3.push import send_push
 import uuid
 import pytz
@@ -217,10 +217,20 @@ def per_order_list(delivery):
 def pagination_count_bank_deposit():
     pagination_count_dict = {
         'total_pages': None,
-        'total_bank_deposit_count': None,
+        'total_count': None,
         'all_transactions': []
     }
     return pagination_count_dict
+
+
+def transaction_history(cod_transaction):
+    transaction_history_dict = {
+        'date': cod_transaction.created_time_stamp.date(),
+        'cod_amount': cod_transaction.cod_amount,
+        'transaction_type': None,
+        'transaction_status': cod_transaction.transaction_status
+    }
+    return transaction_history_dict
 
 
 def send_salary_deduction_email(first_name, orders, amount, pending_amount):
@@ -586,7 +596,7 @@ class CODViewSet(viewsets.ViewSet):
                     bank_deposit_list.append(all_bank_deposit_cod_transactions_dict)
                 pagination_count_dict = pagination_count_bank_deposit()
                 pagination_count_dict['total_pages'] = total_pages
-                pagination_count_dict['total_bank_deposit_count'] = total_bank_deposit_count
+                pagination_count_dict['total_count'] = total_bank_deposit_count
                 pagination_count_dict['all_transactions'] = bank_deposit_list
                 return response_with_payload(pagination_count_dict, None)
             else:
@@ -733,7 +743,7 @@ class CODViewSet(viewsets.ViewSet):
                     all_transactions.append(verified_bank_deposit_dict)
                 pagination_count_dict = pagination_count_bank_deposit()
                 pagination_count_dict['total_pages'] = total_pages
-                pagination_count_dict['total_bank_deposit_count'] = total_verified_bank_deposits_count
+                pagination_count_dict['total_count'] = total_verified_bank_deposits_count
                 pagination_count_dict['all_transactions'] = all_transactions
                 return response_with_payload(pagination_count_dict, None)
             else:
@@ -750,7 +760,7 @@ class CODViewSet(viewsets.ViewSet):
     def transfer_to_client(self, request):
         role = user_role(request.user)
         cod_amount_calc = 0
-        if role == constants.ACCOUNTS or role == constants.SALES:
+        if role == constants.ACCOUNTS:
             try:
                 delivery_id_list = request.data['delivery_ids']
                 total_cod_transferred = request.data['total_cod_transferred']
@@ -792,3 +802,50 @@ class CODViewSet(viewsets.ViewSet):
                 return response_error_with_message(error_message)
         else:
             return response_access_denied()
+
+    # Transaction History api
+    # Return the transactions for a particular DG
+    # Implement Pagination
+    @list_route(methods=['GET'])
+    @method_decorator(user_passes_test(active_check))
+    def dg_transaction_history(self, request):
+        role = user_role(request.user)
+        page = request.QUERY_PARAMS.get('page', 1)
+        if role == constants.DELIVERY_GUY:
+            all_transactions = []
+            delivery_guy = get_object_or_404(DeliveryGuy, user=request.user)
+            history = CODTransaction.objects.filter(created_by_user=delivery_guy.user)
+            history = history.filter(Q(transaction__code=constants.COD_TRANSFERRED_TO_TL_CODE) |
+                                     Q(transaction__code=constants.COD_BANK_DEPOSITED_CODE))
+
+            if len(history) > 0:
+                total_history_count = len(history)
+                page = int(page)
+                # total_pages = int(total_history_count / constants.PAGINATION_PAGE_SIZE) + 1
+                # pagination constant hard coded to 10 for Vinit's testing purposes...
+                total_pages = int(total_history_count / 10) + 1
+                if page > total_pages or page <= 0:
+                    return response_invalid_pagenumber()
+                else:
+                    history = paginate(history, page)
+
+                for single in history:
+                    transaction_history_dict = transaction_history(single)
+                    if single.transaction.code == constants.COD_TRANSFERRED_TO_TL_CODE:
+                        transaction_history_dict['transaction_type'] = "Transfer to TL"
+                    elif single.transaction.code == constants.COD_BANK_DEPOSITED_CODE:
+                        transaction_history_dict['transaction_type'] = "Bank Deposit"
+                    else:
+                        pass
+                    all_transactions.append(transaction_history_dict)
+                pagination_count_dict = pagination_count_bank_deposit()
+                pagination_count_dict['total_pages'] = total_pages
+                pagination_count_dict['total_count'] = total_history_count
+                pagination_count_dict['all_transactions'] = all_transactions
+                return response_with_payload(pagination_count_dict, None)
+            else:
+                error_message = 'No transactions found'
+                return response_error_with_message(error_message)
+        else:
+            return response_access_denied()
+
