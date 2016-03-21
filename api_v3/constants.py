@@ -26,6 +26,7 @@ EMAIL_SIGNATURE = "- \n Team YourGuy \nhttp://www.yourguy.in"
 EMAIL_ERRORS = ['tech@yourguy.in', 'vinit@yourguy.in ', 'aquid@yourguy.in', 'prajakta@yourguy.in']
 
 if settings.ENVIRONMENT == 'PRODUCTION':
+    EMAIL_DG_SALARY_DEDUCTIONS = ['ops@yourguy.in','accounts@yourguy.in']
     EMAIL_UNASSIGNED_ORDERS = ['tech@yourguy.in', 'alay@yourguy.in', 'ops@yourguy.in']
     EMAIL_DAILY_REPORT = ['tech@yourguy.in', 'alay@yourguy.in', 'ops@yourguy.in', 'bd@yourguy.in']
     EMAIL_COD_REPORT = ['tech@yourguy.in', 'alay@yourguy.in', 'ops@yourguy.in', 'bd@yourguy.in']
@@ -44,6 +45,7 @@ if settings.ENVIRONMENT == 'PRODUCTION':
     RETAIL_EMAIL_ID = ['retail@yourguy.in']
     LATEST_DG_APP_VERSION = '1.0.22'
 else:
+    EMAIL_DG_SALARY_DEDUCTIONS = TEST_GROUP_EMAILS
     EMAIL_UNASSIGNED_ORDERS = TEST_GROUP_EMAILS
     EMAIL_DAILY_REPORT = TEST_GROUP_EMAILS
     EMAIL_COD_REPORT = TEST_GROUP_EMAILS

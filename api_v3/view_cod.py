@@ -1,16 +1,16 @@
 from datetime import datetime
 from django.db.models import Sum
 from django.utils.decorators import method_decorator
-
+from django.db.models import Q
 from api_v3.utils import cod_actions, response_access_denied, get_object_or_404, \
     response_error_with_message, response_with_payload, response_incomplete_parameters, response_success_with_message, response_invalid_pagenumber
 from api_v3 import constants
 from yourguy.models import CODTransaction, DeliveryGuy, OrderDeliveryStatus, DeliveryTeamLead, ProofOfBankDeposit, \
-    Picture, Employee
+    Picture, Employee, Vendor, VendorAgent
 from rest_framework import authentication, viewsets
 from rest_framework.decorators import list_route
 from rest_framework.permissions import IsAuthenticated
-from api_v3.utils import user_role, log_exception, paginate
+from api_v3.utils import user_role, log_exception, paginate, send_sms, send_email
 from api_v3.push import send_push
 import uuid
 import pytz
@@ -195,6 +195,25 @@ def all_bank_deposit_cod_transactions_list(cod_transaction):
     return all_bank_deposit_cod_transactions_dict
 
 
+def verified_bank_deposit_list(cod_transaction):
+    verified_bank_deposit_dict = {
+        'verified_time_stamp': cod_transaction.verified_time_stamp.date(),
+        'transaction_status': cod_transaction.transaction_status,
+        'transaction_id': cod_transaction.transaction_uuid,
+        'deliveries': []
+    }
+    return verified_bank_deposit_dict
+
+
+def per_order_list(delivery):
+    per_order_dict = {
+        'cod_amount': delivery.cod_collected_amount,
+        'vendor_name': delivery.order.vendor.store_name,
+        'delivery_id': delivery.id
+    }
+    return per_order_dict
+
+
 def pagination_count_bank_deposit():
     pagination_count_dict = {
         'total_pages': None,
@@ -202,6 +221,27 @@ def pagination_count_bank_deposit():
         'all_transactions': []
     }
     return pagination_count_dict
+
+
+def send_salary_deduction_email(first_name, orders, amount, pending_amount):
+    subject = '%s Salary Deduction' % first_name
+    body = 'Hello,\n\nThere has been a salary deduction for %s  \n\nOrder id: %s\nCOD Amount deposited: %d\nSalary Deduction amount: %d'%(first_name, orders, amount, pending_amount)
+    body = body + '\n\nThanks \n-YourGuy BOT'
+    send_email(constants.EMAIL_DG_SALARY_DEDUCTIONS, subject, body)
+
+
+def search_cod_transactions(user, search_query):
+    cod_action = cod_actions(constants.COD_BANK_DEPOSITED_CODE)
+    cod_transactions_queryset = CODTransaction.objects.filter(transaction__title=cod_action)
+    if search_query.isdigit():
+        cod_transactions_queryset = cod_transactions_queryset.filter(
+            Q(id=search_query) |
+            Q(orderdeliverystatus__order__vendor__phone_number=search_query) |
+            Q(orderdeliverystatus__order__vendor_order_id=search_query))
+    else:
+        cod_transactions_queryset = cod_transactions_queryset.filter(
+            Q(orderdeliverystatus__order__vendor__store_name=search_query))
+    return cod_transactions_queryset
 
 
 class CODViewSet(viewsets.ViewSet):
@@ -548,10 +588,207 @@ class CODViewSet(viewsets.ViewSet):
                 pagination_count_dict['total_pages'] = total_pages
                 pagination_count_dict['total_bank_deposit_count'] = total_bank_deposit_count
                 pagination_count_dict['all_transactions'] = bank_deposit_list
-                # bank_deposit_list.append(pagination_count_dict)
                 return response_with_payload(pagination_count_dict, None)
             else:
                 error_message = 'No Bank Deposit COD transaction found.'
+                return response_error_with_message(error_message)
+        else:
+            return response_access_denied()
+
+    # Api for particular bank deposit transaction to be approved/declined by accounts
+    # Accounts should be mentioning some money under pending salary deduction, for this DG(in case of declined)
+    # also send sms to dg with this salary deduction, send email notify to accounts and operations regarding this
+    # update all the associated orders and proof for this transaction as well
+    @list_route(methods=['PUT'])
+    def verify_bank_deposit(self, request):
+        role = user_role(request.user)
+        current_time = datetime.now(pytz.utc)
+        if role == constants.ACCOUNTS:
+            accounts = get_object_or_404(Employee, user=request.user)
+            try:
+                transaction_id = request.data['transaction_id']
+                is_accepted = request.data['is_accepted']
+                pending_salary_deduction = request.data.get('pending_salary_deduction')
+            except Exception as e:
+                params = ['transaction_id', 'is_accepted', 'pending_salary_deduction(optional)']
+                return response_incomplete_parameters(params)
+            try:
+                bank_deposit = CODTransaction.objects.get(transaction_uuid=transaction_id)
+            except Exception as e:
+                error_message = 'No such Bank Deposit COD transaction found.'
+                return response_error_with_message(error_message)
+            if bank_deposit.transaction_status == constants.INITIATED:
+                if is_accepted is True:
+                    receipt_number = bank_deposit.bank_deposit_proof.receipt_number
+                    if receipt_number is not None:
+                        bank_deposit.bank_deposit_proof.proof_status = constants.VERIFIED
+                        bank_deposit.bank_deposit_proof.updated_by_user = request.user
+                        bank_deposit.bank_deposit_proof.updated_time_stamp = current_time
+                        bank_deposit.bank_deposit_proof.save()
+                    else:
+                        error_message = 'No Receipt found.'
+                        return response_error_with_message(error_message)
+
+                    bank_deposit.verified_by_user = request.user
+                    bank_deposit.verified_time_stamp = current_time
+                    bank_deposit.transaction_status = constants.VERIFIED
+                    bank_deposit.save()
+                    success_message = 'Bank Deposit transaction verified successfully'
+                    return response_success_with_message(success_message)
+                else:
+                    receipt_number = bank_deposit.bank_deposit_proof.receipt_number
+                    if receipt_number is not None:
+                        bank_deposit.bank_deposit_proof.proof_status = constants.DECLINED
+                        bank_deposit.bank_deposit_proof.updated_by_user = request.user
+                        bank_deposit.bank_deposit_proof.updated_time_stamp = current_time
+                        bank_deposit.bank_deposit_proof.save()
+                    else:
+                        error_message = 'No Receipt found.'
+                        return response_error_with_message(error_message)
+
+                    bank_deposit.verified_by_user = request.user
+                    bank_deposit.verified_time_stamp = current_time
+                    bank_deposit.transaction_status = constants.DECLINED
+                    bank_deposit.save()
+                    # Salary deduction will be applied to the person initiating the bank deposit cod transaction and not the DG associated the order directly
+                    transaction_initiated_by = bank_deposit.created_by_user
+                    dg = DeliveryGuy.objects.get(user__username=transaction_initiated_by)
+                    current_deduction = dg.pending_salary_deduction
+                    if pending_salary_deduction is not None:
+                        dg.pending_salary_deduction = current_deduction + pending_salary_deduction
+                        dg.save()
+                        dg_phone_number = dg.user.username
+                        deliveries = bank_deposit.deliveries
+                        deliveries = eval(deliveries)
+                        orders = str(deliveries).strip('[]')
+                        message = 'Dear %s, with respect to your bank deposit of orders %s, ' \
+                                  'there is a %dRs deduction in your next month\'s salary, as you hae deposited less' \
+                                  % (dg.user.first_name, orders, pending_salary_deduction)
+                        send_sms(dg_phone_number, message)
+                        send_salary_deduction_email(dg.user.first_name, orders, bank_deposit.cod_amount, pending_salary_deduction)
+                    success_message = 'Bank Deposit transaction declined successfully'
+                    return response_success_with_message(success_message)
+            else:
+                error_message = 'This bank deposit transaction is already updated'
+                return response_error_with_message(error_message)
+        else:
+            return response_access_denied()
+
+    # api to retrieve all verified bank deposit transactions
+    # also send vendor id in the response
+    # implement filter by dates(start date and end date)
+    # implement filter by vendor_id
+    # implement pagination and return count of such transactions
+    # when accounts transfers to client, change the transaction
+    @list_route(methods=['GET'])
+    def verified_bank_deposits_list(self, request):
+        role = user_role(request.user)
+        page = request.QUERY_PARAMS.get('page', 1)
+        search_query = request.QUERY_PARAMS.get('search', None)
+        filter_vendor_id = request.QUERY_PARAMS.get('vendor_id', None)
+        filter_start_date = request.QUERY_PARAMS.get('start_date', None)
+        filter_end_date = request.QUERY_PARAMS.get('end_date', None)
+        if role == constants.ACCOUNTS or role == constants.SALES:
+            all_transactions = []
+            emp = get_object_or_404(Employee, user=request.user)
+            cod_action = cod_actions(constants.COD_BANK_DEPOSITED_CODE)
+            verified_bank_deposits = CODTransaction.objects.filter(transaction__title=cod_action, transaction_status=constants.VERIFIED)
+            if len(verified_bank_deposits) > 0:
+                # DATE FILTERING (optional)
+                if filter_start_date is not None and filter_end_date is not None:
+                    verified_bank_deposits = verified_bank_deposits.filter(verified_time_stamp__gte=filter_start_date,
+                                                                           verified_time_stamp__lte=filter_end_date)
+                # VENDOR FILTERING (optional)
+                if filter_vendor_id is not None:
+                    vendor = get_object_or_404(Vendor, pk=filter_vendor_id)
+                    if vendor is not None:
+                        verified_bank_deposits = verified_bank_deposits.filter(orderdeliverystatus__order__vendor=vendor).distinct()
+
+                # SEARCH KEYWORD FILTERING (optional)
+                if search_query is not None:
+                    verified_bank_deposits = search_cod_transactions(request.user, search_query)
+
+                total_verified_bank_deposits_count = len(verified_bank_deposits)
+                page = int(page)
+                total_pages = int(total_verified_bank_deposits_count / constants.PAGINATION_PAGE_SIZE) + 1
+                if page > total_pages or page <= 0:
+                    return response_invalid_pagenumber()
+                else:
+                    verified_bank_deposits = paginate(verified_bank_deposits, page)
+
+                # For filtered queryset as well as non filtered queryset
+                # populate dictionary data with date, transaction id, transaction status
+                for single_bd in verified_bank_deposits:
+                    deliveries_list = []
+                    verified_bank_deposit_dict = verified_bank_deposit_list(single_bd)
+                    # deliveries present in this transaction
+                    # for each delivery, return delivery id, cod_amount, vendor name
+                    deliveries = single_bd.deliveries
+                    deliveries = eval(deliveries)
+                    for single_delivery in deliveries:
+                        delivery = OrderDeliveryStatus.objects.get(id=single_delivery)
+                        per_order_dict = per_order_list(delivery)
+                        deliveries_list.append(per_order_dict)
+                    verified_bank_deposit_dict['deliveries'] = deliveries_list
+                    all_transactions.append(verified_bank_deposit_dict)
+                pagination_count_dict = pagination_count_bank_deposit()
+                pagination_count_dict['total_pages'] = total_pages
+                pagination_count_dict['total_bank_deposit_count'] = total_verified_bank_deposits_count
+                pagination_count_dict['all_transactions'] = all_transactions
+                return response_with_payload(pagination_count_dict, None)
+            else:
+                error_message = 'No Verified Bank Deposits found.'
+                return response_error_with_message(error_message)
+        else:
+            return response_access_denied()
+
+    # Client sends list of delivery_ids, total_cod_amount transferred to client, vendor id, utr number
+    # Validations implememted:
+    # 1. If the delivery_ids belong to the Vendor
+    # 2. Checking the cod total is same as the cod transferred
+    @list_route(methods=['POST'])
+    def transfer_to_client(self, request):
+        role = user_role(request.user)
+        cod_amount_calc = 0
+        if role == constants.ACCOUNTS or role == constants.SALES:
+            try:
+                delivery_id_list = request.data['delivery_ids']
+                total_cod_transferred = request.data['total_cod_transferred']
+                vendor_id = request.data['vendor_id']
+                utr_number = request.data['utr_number']
+            except Exception as e:
+                params = ['delivery_ids', 'total_cod_transferred', 'vendor_id', 'utr_number']
+                return response_incomplete_parameters(params)
+
+            vendor = get_object_or_404(Vendor, pk=vendor_id)
+
+            for single in delivery_id_list:
+                delivery = OrderDeliveryStatus.objects.get(id=single)
+                if delivery.order.vendor == vendor:
+                    pass
+                else:
+                    error_message = 'This order does not belong to the choosen Vendor'
+                    return response_error_with_message(error_message)
+                cod_amount_calc = cod_amount_calc + delivery.cod_collected_amount
+
+            if cod_amount_calc == total_cod_transferred:
+                transaction_uuid = uuid.uuid4()
+                cod_action = cod_actions(constants.COD_TRANSFERRED_TO_CLIENT_CODE)
+                cod_transferred_to_client = create_cod_transaction(cod_action, request.user, None, None,
+                                                                   total_cod_transferred, transaction_uuid, delivery_id_list)
+                cod_transferred_to_client.vendor = vendor
+                cod_transferred_to_client.utr_number = utr_number
+                cod_transferred_to_client.save()
+
+                for single in delivery_id_list:
+                    delivery = OrderDeliveryStatus.objects.get(id=single)
+                    delivery.cod_status = constants.COD_STATUS_TRANSFERRED_TO_CLIENT
+                    add_cod_transaction_to_delivery(cod_transferred_to_client, delivery)
+                    delivery.save()
+                success_message = 'COD Transfer to Client is successful'
+                return response_success_with_message(success_message)
+            else:
+                error_message = 'Total cod amount from the select orders does not match with the total_cod_transferred'
                 return response_error_with_message(error_message)
         else:
             return response_access_denied()

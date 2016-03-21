@@ -389,7 +389,7 @@ class ProofOfBankDeposit(models.Model):
     created_time_stamp = models.DateTimeField(auto_now_add=True)
     updated_by_user = models.ForeignKey(User, blank=True, null=True, related_name='updated_by_user', on_delete=models.PROTECT)
     updated_time_stamp = models.DateTimeField(blank=True, null=True)
-    receipt_number = models.CharField(max_length=100, blank=True)
+    receipt_number = models.CharField(max_length=100)
     receipt = models.ForeignKey(Picture, blank=True, null=True)
     total_cod = models.FloatField(default=0.0)
 
@@ -444,6 +444,8 @@ class CODTransaction(models.Model):
     cod_amount = models.FloatField(default=0.0)
     deliveries = models.CommaSeparatedIntegerField(max_length=500)
     bank_deposit_proof = models.ForeignKey(ProofOfBankDeposit, blank=True, null=True, on_delete=models.PROTECT)
+    vendor = models.ForeignKey(Vendor, blank=True, null=True, on_delete=models.PROTECT)
+    utr_number = models.CharField(max_length=300, blank=True, null=True)
 
 
     def __unicode__(self):
