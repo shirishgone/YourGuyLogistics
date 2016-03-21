@@ -50,10 +50,10 @@
 			notification : true
 		},
 		accounts: {
-			order:true,
-			dg:true,
-			vendor: true,
-			reports: true,
+			order:false,
+			dg:false,
+			vendor: false,
+			reports: false,
 			COD: true,
 			customer: false,
 			products: false,
@@ -198,5 +198,5 @@
 	};
 
 	angular.module('ygVendorApp')
-	.constant('constants', constants);
+	.constant('constants', testConstants);
 })();

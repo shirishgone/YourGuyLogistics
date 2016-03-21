@@ -14,6 +14,7 @@
 					method: 'POST'
 				},
 			}),
+			transactionHistory: $resource(constants.v3baseUrl+'cod/vendor_transaction_history/')
 		};
 	};
 	angular.module('ygVendorApp')

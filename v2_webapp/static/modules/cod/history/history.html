@@ -1,12 +1,39 @@
 <md-content flex layout-fill layout="column" class="history">
 	<section flex="90" layout="column" class="list" layout-align="start stretch">
 		<div class="header-list" layout="row">
-			<div>Date</div>
-			<div>Vendor</div>
-			<div>Amount</div>
+			<div flex>Date</div>
+			<div flex>Vendor</div>
+			<div flex>Amount</div>
 		</div>
 		<div class="history-list">
-			
+			<div ng-repeat="hs in history.historyDeposits" class="history-data" ng-click="hs.open = !hs.open">
+				<div class="history-overview" layout="row">
+					<div flex>{{hs.date}}</div>
+					<div flex>{{hs.deliveries[0].vendor_name}}</div>
+					<div flex layout="row">
+						<span>{{hs.cod_amount}}</span>
+						<span flex></span>
+						<md-button class="md-icon-button" aria-label="Filter Button" ng-click="hs.open = !hs.open">
+							<md-icon ng-if="!hs.open">keyboard_arrow_down</md-icon>
+							<md-icon ng-if="hs.open">keyboard_arrow_up</md-icon>
+						</md-button>
+					</div>
+				</div>
+				<div class="history-detail" layout="column" ng-show="hs.open">
+					<div class="deliveries-list" layout="row">
+						<div flex>Order Id</div>
+						<div flex>Amount</div>
+						<div flex></div>
+					</div>
+					<div ng-repeat="dl in hs.deliveries">
+						<div class="deliveries-overview" layout="row">
+							<div flex>{{dl.delivery_id}}</div>
+							<div flex>{{dl.cod_amount}}</div>
+							<div flex></div>
+						</div>
+					</div>
+				</div>
+			</div>
 		</div>
 	</section>
 	<section flex="10" class="footer">
