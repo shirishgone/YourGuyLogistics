@@ -1,13 +1,13 @@
 .cod {
 	height: 100%;
 	md-tabs {
-		margin: 5px 0;
+		margin: 0 0 5px 0;
 		md-tabs-wrapper {
-			background-color: grey-color('200') !important;
+			background-color: primary-color('700') !important;
 		}
 		.md-tab {
 			font-weight: 600;
-			color: grey-color('600') !important;
+			color: $white-color !important;
 		}
 		md-ink-bar {
 			height: 4px;

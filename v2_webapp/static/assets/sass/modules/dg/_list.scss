@@ -4,8 +4,10 @@
 		margin: 0;
 		.md-input {
 			color: $white-color !important;
+			border-color: rgba(255,255,255,1);
 			@include input-placeholder {
-				color: grey-color('300') !important;
+				color: $white-color !important;
+
 			}
 		}
 	}

@@ -42,7 +42,7 @@
 					<tbody  class="table-body">
 						<tr ng-repeat="vendor in vendorList.vendors" layout="row" layout-align="center start">
 							<td flex="50">{{vendor.name}}</td>
-							<td flex="50">{{vendor.is_retail}}</td>
+							<td flex="50">{{vendor.is_retail? 'Yes':'No' }}</td>
 						</tr>
 					</tbody>
 				</table>

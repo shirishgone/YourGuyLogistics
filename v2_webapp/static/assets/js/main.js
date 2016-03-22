@@ -555,7 +555,7 @@
 	};
 
 	angular.module('ygVendorApp')
-	.constant('constants', testConstants);
+	.constant('constants', constants);
 })();
 (function(){
 	'use strict';
@@ -1241,7 +1241,7 @@
 				};
 			},
 			template : [
-				'<div class="ydPagination" layout="row" layout-align="start center">',
+				'<div class="ydPagination md-whiteframe-z2" layout="row" layout-align="start center">',
 					'<div class="stats" layout="row">',
 						'<p ng-if="pending"> <span class="pending-text">Pending: </span><span class="pending">{{pending}}</span> </p>',
 						'<p ng-if="unassigned"><span class="unassigned-text">Unassigned: </span><span class="unassigned">{{unassigned}}</span> </p>',
