@@ -1,4 +1,7 @@
 .orderDetail {
+	.lg-line-break {
+		margin-top: 10px;
+	}
 	md-list-item {
 		padding: 0;
 		padding-bottom : 20px;
@@ -15,11 +18,14 @@
 	}
 	.md-body-1 {
 		margin: 5px 0;
+		font-size: 15px;
+		text-transform: capitalize;
 	}
 	.status-section {
 		padding-bottom: 30px;
 		.status-image {
 			text-align: center;
+			min-width: 100px;
 			img {
 				width: 70px;
 				height: 70px;
@@ -49,18 +55,27 @@
 	}
 	@include mobile {
 		padding: 10px;
+		.line-break {
+			margin-top: 10px;
+		}
+		.md-body-1 {
+			margin: 5px 0;
+			font-size: 13px;
+			text-transform: capitalize;
+		}
 		.status-section {
 			padding-bottom: 20px;
 			.status-image {
 				text-align: center;
+				min-width: 50px;
 				img {
-					width: 50px;
-					height: 50px;
+					width: 30px;
+					height: 30px;
 				}
 				p {
 					margin: 0;
 					color: grey-color('500');
-					font-size: 12px;
+					font-size: 10px;
 					text-transform: capitalize;
 				}
 			}

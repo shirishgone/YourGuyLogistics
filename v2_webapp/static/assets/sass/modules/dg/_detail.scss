@@ -19,9 +19,9 @@
 			h5 {
 				margin: 5px 0px;
 				padding:0;
-				font-size: 13px;
-				color: grey-color('600');
-				text-transform: uppercase;
+				font-size: 15px;
+				font-weight: 500;
+				text-transform: capitalize;
 			}
 		}
 		@include mobile {
@@ -45,6 +45,9 @@
 		}
 	}
 	.attendance {
+		.attendance-button {
+			background-color: $success-color !important;
+		}
 		.attendance-action {
 			padding:15px;
 		}
@@ -52,6 +55,15 @@
 			table {
 				width: 100%;
 				border-collapse: collapse;
+				.table-body {
+					tr {
+						cursor: auto;
+						&:hover { 
+							background-color: $white-color;
+						}
+					}
+				}
+				
 			}
 		}
 	}

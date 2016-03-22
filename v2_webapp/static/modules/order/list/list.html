@@ -51,7 +51,13 @@
 			{{opsOrder.handleOrdeSelection.numberOfSelectedOrder}} orders selected
 		</div>
 		<span flex></span>
-		<md-menu md-position-mode="target-right target">
+		<md-button ng-click="opsOrder.statusUpdateDialog($event)"  class="md-icon-button" aria-label="Menu Icon">
+			<md-icon>update</md-icon>
+		</md-button>
+		<md-button ng-click="opsOrder.assignDg($event)"  class="md-icon-button" aria-label="Menu Icon">
+			<md-icon>assignment_ind</md-icon>
+		</md-button>
+		<!-- <md-menu md-position-mode="target-right target">
 			<md-button class="md-icon-button" id="options" ng-click="$mdOpenMenu($event)" aria-label="Open selected menu">
 				<md-icon>more_vert</md-icon>
 			</md-button>
@@ -64,12 +70,12 @@
 				</md-menu-item>
 				<md-menu-item>
 					<md-button ng-click="opsOrder.assignDg($event)">
-						<md-icon>assignment</md-icon>
+						<md-icon>assignment_ind</md-icon>
 						Assign Delivery Guy
 					</md-button>
 				</md-menu-item>
 			</md-menu-content>
-		</md-menu>
+		</md-menu> -->
 	</div>
 </md-toolbar>
 <md-content flex layout-padding layout="row" class="opsOrder">
@@ -145,7 +151,7 @@
 										>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>Card Actions<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 						_________________________________________________________________________________________________________
 					-->
-        			<md-card-actions layout="row" class="card-action" layout-wrap layout-align="start end">
+        			<md-card-actions layout="row" class="card-action" layout-wrap layout-align="start start">
         				<div flex="10" flex-xs="0">
         				</div>
         				<div flex="30" flex-xs="50" class="order-time" layout="row" layout-align="start center">
@@ -168,11 +174,11 @@
         					<span class="badge" ng-class="order.status">{{order.status}}</span>
         				</div>
 						<md-button class="md-icon-button" aria-label="Favorite" ng-if="order.is_reported">
-							<md-icon ng-style="{color: '#F44336'}">error</md-icon>
+							<md-icon ng-style="{color: '#F44336','font-size':'18px', height: '18px', width: '18px'}">error</md-icon>
 						</md-button>
 						<md-menu md-position-mode="target-right target" ng-click="$event.stopPropagation()">
 							<md-button class="md-icon-button" id="options" ng-click="$mdOpenMenu($event)" aria-label="Open selected menu">
-								<md-icon ng-style="{color: '#757575','font-size':'24px', height: '24px', width: '24px'}">more_vert</md-icon>
+								<md-icon ng-style="{color: '#757575','font-size':'18px', height: '18px', width: '18px'}">more_vert</md-icon>
 							</md-button>
 							<md-menu-content width="2">
 								<md-menu-item>
@@ -183,7 +189,7 @@
 								</md-menu-item>
 								<md-menu-item>
 									<md-button ng-click="opsOrder.assignDgForSingleOrder(order)">
-										<md-icon>assignment</md-icon>
+										<md-icon>assignment_ind</md-icon>
 										Assign Delivery Guy
 									</md-button>
 								</md-menu-item>
@@ -290,7 +296,7 @@
 								</md-menu-item>
 								<md-menu-item>
 									<md-button ng-click="opsOrder.assignDgForSingleOrder(order)">
-										<md-icon>assignment</md-icon>
+										<md-icon>assignment_ind</md-icon>
 										Assign Delivery Guy
 									</md-button>
 								</md-menu-item>

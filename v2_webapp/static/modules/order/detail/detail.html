@@ -81,9 +81,30 @@
 					<p ng-switch-when="QUEUED">intransit</p>
 					<p ng-switch-when="INTRANSIT">intransit</p>
 					<p ng-switch-when="DELIVERED">intransit</p>
-					<p ng-switch-when="OUTFORDELIVERY">out for delivery</p>
+					<p ng-switch-when="OUTFORDELIVERY">intransit</p>
 					<p ng-switch-when="DELIVERYATTEMPTED">intransit</p>
 					<p ng-switch-when="PICKUPATTEMPTED">Attempted</p>
+				</span>
+			</div>
+			<div class="status-divider"></div>
+			<div class="status-image">
+				<p>{{orderDetail.order.pickup_datetime | date:'h:mm a'}}</p>
+				<span ng-switch on="orderDetail.order.status">
+					<img ng-switch-when="QUEUED" src="/static/assets/images/Orders/details/out_for_delivery.png">
+					<img ng-switch-when="INTRANSIT" src="/static/assets/images/Orders/details/out_for_delivery.png">
+					<img ng-switch-when="DELIVERED" src="/static/assets/images/Orders/details/out_for_delivered.png">
+					<img ng-switch-when="PICKUPATTEMPTED" src="/static/assets/images/Orders/details/out_for_delivery.png">
+					<img ng-switch-when="DELIVERYATTEMPTED" src="/static/assets/images/Orders/details/out_for_delivered.png">
+					<img ng-switch-when="OUTFORDELIVERY" src="/static/assets/images/Orders/details/out_for_delivered.png">
+					<img ng-switch-default  src="/static/assets/images/Orders/details/out_for_delivery.png">
+				</span>
+				<span ng-switch on="orderDetail.order.status">
+					<p ng-switch-when="QUEUED">out for delivery</p>
+					<p ng-switch-when="INTRANSIT">out for delivery</p>
+					<p ng-switch-when="DELIVERED">out for delivery</p>
+					<p ng-switch-when="OUTFORDELIVERY">out for delivery</p>
+					<p ng-switch-when="DELIVERYATTEMPTED">out for delivery</p>
+					<p ng-switch-when="PICKUPATTEMPTED">out for delivery</p>
 				</span>
 			</div>
 			<div class="status-divider"></div>
@@ -133,7 +154,7 @@
 				<p class="md-body-1">{{orderDetail.order.vendor_name}}</p>
 				<p class="md-body-1">{{orderDetail.order.vendor_phonenumber}}</p>
 			</div>
-			<div flex="60" flex-xs="100">
+			<div flex="60" flex-xs="100" class="line-break">
 				<span class="md-caption">Pickup Address</span>
 				<p class="md-body-1">{{orderDetail.order.pickup_address.full_address}}</p>
 			</div>
@@ -151,15 +172,15 @@
 				<p class="md-body-1">{{orderDetail.order.customer_name}}</p>
 				<p class="md-body-1">{{orderDetail.order.customer_phonenumber}}</p>
 			</div>
-			<div flex="60" flex-xs="100">
+			<div flex="60" flex-xs="100" class="line-break">
 				<span class="md-caption">Delivery Address</span>
 				<p class="md-body-1">{{orderDetail.order.delivery_address.full_address}}</p>
 			</div>
-			<div flex="20" flex-xs="50">
+			<div flex="20" flex-xs="50" class="line-break lg-line-break">
 				<span class="md-caption">Delivered To</span>
 				<p class="md-body-1">{{orderDetail.order.delivered_at}}</p>
 			</div>
-			<div flex="80" flex-xs="50">
+			<div flex="80" flex-xs="50" class="line-break lg-line-break">
 				<span class="md-caption">Cod to be collected</span>
 				<p class="md-body-1">{{orderDetail.order.cod_amount}}</p>
 			</div>
@@ -175,7 +196,7 @@
 				<span class="md-caption">Quantity</span>
 				<p class="md-body-1">{{orderDetail.order.order_items.length}}</p>
 			</div>
-			<div flex="60" flex-xs="100">
+			<div flex="60" flex-xs="100" class="line-break">
 				<span class="md-caption">Remarks by vendor</span>
 				<p class="md-body-1">{{orderDetail.order.notes || 'Nothing'}}</p>
 			</div>
