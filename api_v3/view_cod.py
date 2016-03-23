@@ -10,7 +10,7 @@ from yourguy.models import CODTransaction, DeliveryGuy, OrderDeliveryStatus, Del
 from rest_framework import authentication, viewsets
 from rest_framework.decorators import list_route
 from rest_framework.permissions import IsAuthenticated
-from api_v3.utils import user_role, log_exception, paginate, send_sms, send_email
+from api_v3.utils import user_role, log_exception, paginate, send_sms, send_email, check_month
 from api_v3.push import send_push
 import uuid
 import pytz
@@ -148,24 +148,25 @@ def cod_balance_calculation(dg):
                                                            cod_status=constants.COD_STATUS_COLLECTED)
     delivery_statuses_total = delivery_statuses.values('delivery_guy__user__username').\
         annotate(sum_of_cod_collected=Sum('cod_collected_amount'))
-    balance_amount = None
+    balance_amount = 0
     if len(delivery_statuses_total) > 0:
         balance_amount = delivery_statuses_total[0]['sum_of_cod_collected']
-        if dg.is_teamlead is True:
-            dg_tl_id = dg.id
-            delivery_guy_tl = DeliveryTeamLead.objects.get(delivery_guy=dg)
-            associated_dgs = delivery_guy_tl.associate_delivery_guys.all()
-            associated_dgs = associated_dgs.filter(is_active=True)
-            for single_dg in associated_dgs:
-                delivery_statuses = OrderDeliveryStatus.objects.filter(delivery_guy=single_dg,
-                                                                       cod_status=constants.COD_STATUS_TRANSFERRED_TO_TL,
-                                                                       cod_transactions__transaction_status=constants.VERIFIED,
-                                                                       cod_transactions__dg_tl_id=dg_tl_id)
-                for single in delivery_statuses:
-                    deliveries.append(single.id)
-                delivery_statuses = delivery_statuses.values('delivery_guy__user__username').annotate(sum_of_cod_collected=Sum('cod_collected_amount'))
-                if len(delivery_statuses) > 0:
-                    balance_amount = balance_amount + delivery_statuses[0]['sum_of_cod_collected']
+
+    if dg.is_teamlead is True:
+        dg_tl_id = dg.id
+        delivery_guy_tl = DeliveryTeamLead.objects.get(delivery_guy=dg)
+        associated_dgs = delivery_guy_tl.associate_delivery_guys.all()
+        associated_dgs = associated_dgs.filter(is_active=True)
+        for single_dg in associated_dgs:
+            delivery_statuses = OrderDeliveryStatus.objects.filter(delivery_guy=single_dg,
+                                                                    cod_status=constants.COD_STATUS_TRANSFERRED_TO_TL,
+                                                                    cod_transactions__transaction_status=constants.VERIFIED,
+                                                                    cod_transactions__dg_tl_id=dg_tl_id)
+            for single in delivery_statuses:
+                deliveries.append(single.id)
+            delivery_statuses = delivery_statuses.values('delivery_guy__user__username').annotate(sum_of_cod_collected=Sum('cod_collected_amount'))
+            if len(delivery_statuses) > 0:
+                balance_amount = balance_amount + delivery_statuses[0]['sum_of_cod_collected']
     return balance_amount
 
 
@@ -195,12 +196,16 @@ def all_bank_deposit_cod_transactions_list(cod_transaction):
     return all_bank_deposit_cod_transactions_dict
 
 
-def verified_bank_deposit_list(cod_transaction):
+def verified_bank_deposit_list(cod_transaction, delivery):
     verified_bank_deposit_dict = {
         'verified_time_stamp': cod_transaction.verified_time_stamp.date(),
         'transaction_status': cod_transaction.transaction_status,
         'transaction_id': cod_transaction.transaction_uuid,
-        'deliveries': []
+        'cod_amount': delivery.cod_collected_amount,
+        'vendor_id': delivery.order.vendor.id,
+        'vendor_name': delivery.order.vendor.store_name,
+        'delivery_id': delivery.id
+
     }
     return verified_bank_deposit_dict
 
@@ -208,6 +213,7 @@ def verified_bank_deposit_list(cod_transaction):
 def per_order_list(delivery):
     per_order_dict = {
         'cod_amount': delivery.cod_collected_amount,
+        'vendor_id': delivery.order.vendor.id,
         'vendor_name': delivery.order.vendor.store_name,
         'delivery_id': delivery.id
     }
@@ -217,10 +223,30 @@ def per_order_list(delivery):
 def pagination_count_bank_deposit():
     pagination_count_dict = {
         'total_pages': None,
-        'total_bank_deposit_count': None,
+        'total_count': None,
         'all_transactions': []
     }
     return pagination_count_dict
+
+
+def transaction_history(cod_transaction):
+    transaction_history_dict = {
+        'date': cod_transaction.created_time_stamp.date(),
+        'cod_amount': cod_transaction.cod_amount,
+        'transaction_type': None,
+        'transaction_status': cod_transaction.transaction_status
+    }
+    return transaction_history_dict
+
+
+def vendor_transaction_history(cod_transaction):
+    vendor_transaction_history_dict = {
+        'date': cod_transaction.created_time_stamp.date(),
+        'cod_amount': cod_transaction.cod_amount,
+        'utr_number': cod_transaction.utr_number,
+        'deliveries': []
+    }
+    return vendor_transaction_history_dict
 
 
 def send_salary_deduction_email(first_name, orders, amount, pending_amount):
@@ -551,7 +577,7 @@ class CODViewSet(viewsets.ViewSet):
             return response_access_denied()
 
 
-    # This api is to pull out all the bank deposit transactions(initiated/verified/declined)
+    # This api is to pull out all the bank deposit transactions(initiated)
     # dict of created by user, created date, receipt, current transaction status,
     # Implement pagination, give count of pages
     # give count of total bank deposit transactions
@@ -563,7 +589,7 @@ class CODViewSet(viewsets.ViewSet):
             bank_deposit_list = []
             accounts = get_object_or_404(Employee, user=request.user)
             cod_action = cod_actions(constants.COD_BANK_DEPOSITED_CODE)
-            all_bank_deposit_cod_transactions = CODTransaction.objects.filter(transaction__title=cod_action)
+            all_bank_deposit_cod_transactions = CODTransaction.objects.filter(transaction__title=cod_action, transaction_status=constants.INITIATED)
             if len(all_bank_deposit_cod_transactions) > 0:
                 # PAGINATION  ----------------------------------------------------------------
                 total_bank_deposit_count = len(all_bank_deposit_cod_transactions)
@@ -586,7 +612,7 @@ class CODViewSet(viewsets.ViewSet):
                     bank_deposit_list.append(all_bank_deposit_cod_transactions_dict)
                 pagination_count_dict = pagination_count_bank_deposit()
                 pagination_count_dict['total_pages'] = total_pages
-                pagination_count_dict['total_bank_deposit_count'] = total_bank_deposit_count
+                pagination_count_dict['total_count'] = total_bank_deposit_count
                 pagination_count_dict['all_transactions'] = bank_deposit_list
                 return response_with_payload(pagination_count_dict, None)
             else:
@@ -693,6 +719,7 @@ class CODViewSet(viewsets.ViewSet):
             emp = get_object_or_404(Employee, user=request.user)
             cod_action = cod_actions(constants.COD_BANK_DEPOSITED_CODE)
             verified_bank_deposits = CODTransaction.objects.filter(transaction__title=cod_action, transaction_status=constants.VERIFIED)
+            verified_bank_deposits = verified_bank_deposits.filter(orderdeliverystatus__cod_status=constants.COD_STATUS_BANK_DEPOSITED)
             if len(verified_bank_deposits) > 0:
                 # DATE FILTERING (optional)
                 if filter_start_date is not None and filter_end_date is not None:
@@ -719,21 +746,15 @@ class CODViewSet(viewsets.ViewSet):
                 # For filtered queryset as well as non filtered queryset
                 # populate dictionary data with date, transaction id, transaction status
                 for single_bd in verified_bank_deposits:
-                    deliveries_list = []
-                    verified_bank_deposit_dict = verified_bank_deposit_list(single_bd)
-                    # deliveries present in this transaction
-                    # for each delivery, return delivery id, cod_amount, vendor name
                     deliveries = single_bd.deliveries
                     deliveries = eval(deliveries)
                     for single_delivery in deliveries:
                         delivery = OrderDeliveryStatus.objects.get(id=single_delivery)
-                        per_order_dict = per_order_list(delivery)
-                        deliveries_list.append(per_order_dict)
-                    verified_bank_deposit_dict['deliveries'] = deliveries_list
-                    all_transactions.append(verified_bank_deposit_dict)
+                        verified_bank_deposit_dict = verified_bank_deposit_list(single_bd, delivery)
+                        all_transactions.append(verified_bank_deposit_dict)
                 pagination_count_dict = pagination_count_bank_deposit()
                 pagination_count_dict['total_pages'] = total_pages
-                pagination_count_dict['total_bank_deposit_count'] = total_verified_bank_deposits_count
+                pagination_count_dict['total_count'] = total_verified_bank_deposits_count
                 pagination_count_dict['all_transactions'] = all_transactions
                 return response_with_payload(pagination_count_dict, None)
             else:
@@ -750,7 +771,7 @@ class CODViewSet(viewsets.ViewSet):
     def transfer_to_client(self, request):
         role = user_role(request.user)
         cod_amount_calc = 0
-        if role == constants.ACCOUNTS or role == constants.SALES:
+        if role == constants.ACCOUNTS:
             try:
                 delivery_id_list = request.data['delivery_ids']
                 total_cod_transferred = request.data['total_cod_transferred']
@@ -789,6 +810,90 @@ class CODViewSet(viewsets.ViewSet):
                 return response_success_with_message(success_message)
             else:
                 error_message = 'Total cod amount from the select orders does not match with the total_cod_transferred'
+                return response_error_with_message(error_message)
+        else:
+            return response_access_denied()
+
+    # Transaction History api
+    # Return the transactions history for a particular DG
+    # Implement Pagination
+    @list_route(methods=['GET'])
+    @method_decorator(user_passes_test(active_check))
+    def dg_transaction_history(self, request):
+        role = user_role(request.user)
+        page = request.QUERY_PARAMS.get('page', 1)
+        if role == constants.DELIVERY_GUY:
+            all_transactions = []
+            delivery_guy = get_object_or_404(DeliveryGuy, user=request.user)
+            history = CODTransaction.objects.filter(created_by_user=delivery_guy.user)
+            history = history.filter(Q(transaction__code=constants.COD_TRANSFERRED_TO_TL_CODE) |
+                                     Q(transaction__code=constants.COD_BANK_DEPOSITED_CODE))
+
+            if len(history) > 0:
+                total_history_count = len(history)
+                page = int(page)
+                # total_pages = int(total_history_count / constants.PAGINATION_PAGE_SIZE) + 1
+                # pagination constant hard coded to 10 for Vinit's testing purposes...
+                total_pages = int(total_history_count / 10) + 1
+                if page > total_pages or page <= 0:
+                    return response_invalid_pagenumber()
+                else:
+                    history = paginate(history, page)
+
+                for single in history:
+                    transaction_history_dict = transaction_history(single)
+                    if single.transaction.code == constants.COD_TRANSFERRED_TO_TL_CODE:
+                        transaction_history_dict['transaction_type'] = "Transfer to TL"
+                    elif single.transaction.code == constants.COD_BANK_DEPOSITED_CODE:
+                        transaction_history_dict['transaction_type'] = "Bank Deposit"
+                    else:
+                        pass
+                    all_transactions.append(transaction_history_dict)
+                pagination_count_dict = pagination_count_bank_deposit()
+                pagination_count_dict['total_pages'] = total_pages
+                pagination_count_dict['total_count'] = total_history_count
+                pagination_count_dict['all_transactions'] = all_transactions
+                return response_with_payload(pagination_count_dict, None)
+            else:
+                error_message = 'No transactions found'
+                return response_error_with_message(error_message)
+        else:
+            return response_access_denied()
+
+    @list_route(methods=['GET'])
+    def vendor_transaction_history(self, request):
+        role = user_role(request.user)
+        page = request.QUERY_PARAMS.get('page', 1)
+        if role == constants.ACCOUNTS or role == constants.SALES:
+            all_transactions = []
+            history = CODTransaction.objects.filter(transaction__code=constants.COD_TRANSFERRED_TO_CLIENT_CODE)
+            if len(history) > 0:
+                total_history_count = len(history)
+                page = int(page)
+                total_pages = int(total_history_count / constants.PAGINATION_PAGE_SIZE) + 1
+                if page > total_pages or page <= 0:
+                    return response_invalid_pagenumber()
+                else:
+                    history = paginate(history, page)
+
+                for single in history:
+                    deliveries_list = []
+                    vendor_transaction_history_dict = vendor_transaction_history(single)
+                    deliveries = single.deliveries
+                    deliveries = eval(deliveries)
+                    for single_delivery in deliveries:
+                        delivery = OrderDeliveryStatus.objects.get(id=single_delivery)
+                        per_order_dict = per_order_list(delivery)
+                        deliveries_list.append(per_order_dict)
+                    vendor_transaction_history_dict['deliveries'] = deliveries_list
+                    all_transactions.append(vendor_transaction_history_dict)
+                pagination_count_dict = pagination_count_bank_deposit()
+                pagination_count_dict['total_pages'] = total_pages
+                pagination_count_dict['total_count'] = total_history_count
+                pagination_count_dict['all_transactions'] = all_transactions
+                return response_with_payload(pagination_count_dict, None)
+            else:
+                error_message = 'No transactions found'
                 return response_error_with_message(error_message)
         else:
             return response_access_denied()
