@@ -35,6 +35,10 @@
 		});
 		$rootScope.$on("$stateChangeStart",function (event, toState, toParams, fromState, fromParams){
 			angular.element($document[0].getElementsByClassName('request-loader')).removeClass('request-loader-hidden');
+			if (toState.redirectTo) {
+				event.preventDefault();
+				$state.go(toState.redirectTo, toParams);
+			}
 		});
 		$rootScope.$on("$stateChangeSuccess",function (event, toState, toParams, fromState, fromParams){
 			$rootScope.previousState = {

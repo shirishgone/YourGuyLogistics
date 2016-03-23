@@ -48,6 +48,8 @@
 		this.showLogoutDialog = function(){
 			$mdDialog.show(confirm).then(function(){
 				self.logout();
+			},function(){
+				self.toggleSideNav();
 			});
 		};
 		/*

@@ -22,7 +22,7 @@
 						$state.go('home.dgList');
 					}
 					else if(user.role === constants.userRole.ACCOUNTS){
-						$state.go('home.cod');
+						$state.go('home.cod.deposit');
 					}
 				});
 			},function (error){
