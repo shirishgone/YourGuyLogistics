@@ -22,7 +22,7 @@
 						$state.go('home.dgList');
 					}
 					else if(user.role === constants.userRole.ACCOUNTS){
-						$state.go('home.cod');
+						$state.go('home.cod.deposit');
 					}
 				});
 			},function (error){
@@ -124,6 +124,8 @@
 		this.showLogoutDialog = function(){
 			$mdDialog.show(confirm).then(function(){
 				self.logout();
+			},function(){
+				self.toggleSideNav();
 			});
 		};
 		/*
@@ -952,6 +954,10 @@
 		});
 		$rootScope.$on("$stateChangeStart",function (event, toState, toParams, fromState, fromParams){
 			angular.element($document[0].getElementsByClassName('request-loader')).removeClass('request-loader-hidden');
+			if (toState.redirectTo) {
+				event.preventDefault();
+				$state.go(toState.redirectTo, toParams);
+			}
 		});
 		$rootScope.$on("$stateChangeSuccess",function (event, toState, toParams, fromState, fromParams){
 			$rootScope.previousState = {
@@ -3085,7 +3091,7 @@
 		self.total_cod_amount = 0;
 		self.deposits = deposits;
 		self.deposits.forEach(function(dp){
-			self.total_cod_amount += dp.deliveries[0].cod_amount;
+			self.total_cod_amount += dp.cod_amount;
 		});
 		self.cancel = function() {
 			$mdDialog.cancel();
@@ -3103,6 +3109,7 @@
 		self.total_deposits = varifiedDeposits.payload.data.total_bank_deposit_count;
 		this.searchVendor = this.params.vendor_id;
 
+		console.log(varifiedDeposits);
 		if(this.params.start_date){
 			this.params.start_date = new Date(this.params.start_date);
 		}
@@ -3128,14 +3135,14 @@
 			toggle : function (item){
 				console.log(self.handleSelection.selectedItemArray.length);
 				if(self.handleSelection.selectedItemArray.length > 0){
-					if(item.deliveries[0].vendor_id != self.handleSelection.selectedVendor){
+					if(item.vendor_id != self.handleSelection.selectedVendor){
 						alert("You cannot select different vendor");
 						return;
 					}
 				}
 				else{
 					console.log("sds");
-					self.handleSelection.selectedVendor = item.deliveries[0].vendor_id;
+					self.handleSelection.selectedVendor = item.vendor_id;
 				}
 				var idx = self.handleSelection.selectedItemArray.indexOf(item);
         		if (idx > -1) self.handleSelection.selectedItemArray.splice(idx, 1);
@@ -3179,7 +3186,7 @@
 			getAlltransactionIds : function(){
 				var array = [];
 				self.handleSelection.selectedItemArray.forEach(function(tr){
-					array.push(tr.deliveries[0].delivery_id);
+					array.push(tr.delivery_id);
 				});
 				return array;
 			}
