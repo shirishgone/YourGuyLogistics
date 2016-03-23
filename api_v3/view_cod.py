@@ -196,12 +196,16 @@ def all_bank_deposit_cod_transactions_list(cod_transaction):
     return all_bank_deposit_cod_transactions_dict
 
 
-def verified_bank_deposit_list(cod_transaction):
+def verified_bank_deposit_list(cod_transaction, delivery):
     verified_bank_deposit_dict = {
         'verified_time_stamp': cod_transaction.verified_time_stamp.date(),
         'transaction_status': cod_transaction.transaction_status,
         'transaction_id': cod_transaction.transaction_uuid,
-        'deliveries': []
+        'cod_amount': delivery.cod_collected_amount,
+        'vendor_id': delivery.order.vendor.id,
+        'vendor_name': delivery.order.vendor.store_name,
+        'delivery_id': delivery.id
+
     }
     return verified_bank_deposit_dict
 
@@ -715,6 +719,7 @@ class CODViewSet(viewsets.ViewSet):
             emp = get_object_or_404(Employee, user=request.user)
             cod_action = cod_actions(constants.COD_BANK_DEPOSITED_CODE)
             verified_bank_deposits = CODTransaction.objects.filter(transaction__title=cod_action, transaction_status=constants.VERIFIED)
+            verified_bank_deposits = verified_bank_deposits.filter(orderdeliverystatus__cod_status=constants.COD_STATUS_BANK_DEPOSITED)
             if len(verified_bank_deposits) > 0:
                 # DATE FILTERING (optional)
                 if filter_start_date is not None and filter_end_date is not None:
@@ -741,18 +746,12 @@ class CODViewSet(viewsets.ViewSet):
                 # For filtered queryset as well as non filtered queryset
                 # populate dictionary data with date, transaction id, transaction status
                 for single_bd in verified_bank_deposits:
-                    deliveries_list = []
-                    verified_bank_deposit_dict = verified_bank_deposit_list(single_bd)
-                    # deliveries present in this transaction
-                    # for each delivery, return delivery id, cod_amount, vendor name
                     deliveries = single_bd.deliveries
                     deliveries = eval(deliveries)
                     for single_delivery in deliveries:
                         delivery = OrderDeliveryStatus.objects.get(id=single_delivery)
-                        per_order_dict = per_order_list(delivery)
-                        deliveries_list.append(per_order_dict)
-                    verified_bank_deposit_dict['deliveries'] = deliveries_list
-                    all_transactions.append(verified_bank_deposit_dict)
+                        verified_bank_deposit_dict = verified_bank_deposit_list(single_bd, delivery)
+                        all_transactions.append(verified_bank_deposit_dict)
                 pagination_count_dict = pagination_count_bank_deposit()
                 pagination_count_dict['total_pages'] = total_pages
                 pagination_count_dict['total_count'] = total_verified_bank_deposits_count
