@@ -839,9 +839,7 @@ class CODViewSet(viewsets.ViewSet):
                     page = int(page)
                 else:
                     page = 1
-                # total_pages = int(total_history_count / constants.PAGINATION_PAGE_SIZE) + 1
-                # pagination constant hard coded to 10 for Vinit's testing purposes...
-                total_pages = int(total_history_count / 10) + 1
+                total_pages = int(total_history_count / constants.PAGINATION_PAGE_SIZE) + 1
                 if page > total_pages or page <= 0:
                     return response_invalid_pagenumber()
                 else:
