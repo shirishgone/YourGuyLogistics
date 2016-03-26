@@ -14,6 +14,7 @@
 		}
 		.history-list {
 			overflow-y: auto;
+			-webkit-overflow-scrolling: touch;
 			.history-data {
 				margin-bottom: 10px;
 				cursor: pointer;

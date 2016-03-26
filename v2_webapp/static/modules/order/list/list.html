@@ -51,31 +51,12 @@
 			{{opsOrder.handleOrdeSelection.numberOfSelectedOrder}} orders selected
 		</div>
 		<span flex></span>
-		<md-button ng-click="opsOrder.statusUpdateDialog($event)"  class="md-icon-button" aria-label="Menu Icon">
+		<md-button ng-click="opsOrder.statusUpdateDialog($event)" ng-if="home.tabs.updateOrder" class="md-icon-button" aria-label="Menu Icon">
 			<md-icon>update</md-icon>
 		</md-button>
-		<md-button ng-click="opsOrder.assignDg($event)"  class="md-icon-button" aria-label="Menu Icon">
+		<md-button ng-click="opsOrder.assignDg($event)" ng-if="home.tabs.assignOrder" class="md-icon-button" aria-label="Menu Icon">
 			<md-icon>assignment_ind</md-icon>
 		</md-button>
-		<!-- <md-menu md-position-mode="target-right target">
-			<md-button class="md-icon-button" id="options" ng-click="$mdOpenMenu($event)" aria-label="Open selected menu">
-				<md-icon>more_vert</md-icon>
-			</md-button>
-			<md-menu-content width="3">
-				<md-menu-item>
-					<md-button ng-click="opsOrder.statusUpdateDialog($event)">
-						<md-icon>update</md-icon>
-						Update Status
-					</md-button>
-				</md-menu-item>
-				<md-menu-item>
-					<md-button ng-click="opsOrder.assignDg($event)">
-						<md-icon>assignment_ind</md-icon>
-						Assign Delivery Guy
-					</md-button>
-				</md-menu-item>
-			</md-menu-content>
-		</md-menu> -->
 	</div>
 </md-toolbar>
 <md-content flex layout-padding layout="row" class="opsOrder">
@@ -176,7 +157,7 @@
 						<md-button class="md-icon-button" aria-label="Favorite" ng-if="order.is_reported">
 							<md-icon ng-style="{color: '#F44336','font-size':'18px', height: '18px', width: '18px'}">error</md-icon>
 						</md-button>
-						<md-menu md-position-mode="target-right target" ng-click="$event.stopPropagation()">
+						<md-menu md-position-mode="target-right target" ng-click="$event.stopPropagation()" ng-if="home.tabs.updateOrder">
 							<md-button class="md-icon-button" id="options" ng-click="$mdOpenMenu($event)" aria-label="Open selected menu">
 								<md-icon ng-style="{color: '#757575','font-size':'18px', height: '18px', width: '18px'}">more_vert</md-icon>
 							</md-button>

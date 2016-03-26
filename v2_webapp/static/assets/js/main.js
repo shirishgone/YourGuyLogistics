@@ -175,7 +175,7 @@
 					controller: 'SuccessToastCntrl',
 					controllerAs : 'successToast',
 					templateUrl: '/static/modules/home/success-toast-template.html',
-					hideDelay: 600000,
+					hideDelay: 5000,
 					position: 'top right'
 				});
 			}
@@ -361,88 +361,130 @@
 	'use strict';
 	var permissible_tabs = {
 		operations : {
-			order:true,
-			dg:true,
-			vendor: true,
-			reports: true,
-			COD: false,
-			customer: false,
-			products: false,
-			feedback: true,
-			tutorial: false,
-			notification : true
+			order           : true,
+			createOrder     : false,
+			assignOrder     : true,
+			updateOrder     : true,
+			dg              : true,
+			dgEdit          : false,
+			dgCreate        : false,
+			dgPromteTeamLead: false,
+			vendor          : true,
+			reports         : true,
+			COD             : false,
+			customer        : false,
+			products        : false,
+			feedback        : true,
+			tutorial        : false,
+			notification    : true
 		},
 		vendor: {
-			order:true,
-			dg:false,
-			vendor: false,
-			reports: true,
-			COD: false,
-			customer: true,
-			products: true,
-			feedback: true,
-			tutorial: true,
-			notification : false
+			order           :true,
+			createOrder     :true,
+			assignOrder     :false,
+			updateOrder     :false,
+			dg              :false,
+			dgEdit          :false,
+			dgCreate        :false,
+			dgPromteTeamLead:false,
+			vendor          :false,
+			reports         :true,
+			COD             :false,
+			customer        :true,
+			products        :true,
+			feedback        :true,
+			tutorial        :true,
+			notification    :false
 		},
 		hr:{
-			order:false,
-			dg:true,
-			vendor: true,
-			reports: false,
-			COD: false,
-			customer: false,
-			products: false,
-			feedback: false,
-			tutorial: false,
-			notification : false
+			order           :false,
+			createOrder     :false,
+			assignOrder     :false,
+			updateOrder     :false,
+			dg              :true,
+			dgEdit          :true,
+			dgCreate        :true,
+			dgPromteTeamLead:true,
+			vendor          :false,
+			reports         :false,
+			COD             :false,
+			customer        :false,
+			products        :false,
+			feedback        :false,
+			tutorial        :false,
+			notification    :false
 		},
 		operations_manager:{
-			order:true,
-			dg:true,
-			vendor: true,
-			reports: true,
-			COD: false,
-			customer: false,
-			products: false,
-			feedback: true,
-			tutorial: false,
-			notification : true
+			order           :true,
+			createOrder     : false,
+			assignOrder     : true,
+			updateOrder     : true,
+			dg              : true,
+			dgEdit          : false,
+			dgCreate        : false,
+			dgPromteTeamLead: false,
+			vendor          : true,
+			reports         : true,
+			COD             : false,
+			customer        : false,
+			products        : false,
+			feedback        : true,
+			tutorial        : false,
+			notification    : true
 		},
 		accounts: {
-			order:false,
-			dg:false,
-			vendor: false,
-			reports: false,
-			COD: true,
-			customer: false,
-			products: false,
-			feedback: false,
-			tutorial: false,
-			notification : false
+			order           : false,
+			createOrder     : false,
+			assignOrder     : false,
+			updateOrder     : false,
+			dg              : false,
+			dgEdit          : false,
+			dgCreate        : false,
+			dgPromteTeamLead: false,
+			vendor          : false,
+			reports         : false,
+			COD             : true,
+			customer        : false,
+			products        : false,
+			feedback        : false,
+			tutorial        : false,
+			notification    : false
 		},
 		sales : {
-			order:true,
-			dg:true,
-			vendor: true,
-			reports: true,
-			COD: false,
-			customer: false,
-			products: false,
-			feedback: true,
-			tutorial: false,
-			notification : false
+			order           : true,
+			createOrder     : false,
+			assignOrder     : false,
+			updateOrder     : false,
+			dg              : true,
+			dgEdit          : false,
+			dgCreate        : false,
+			dgPromteTeamLead: false,
+			vendor          : true,
+			reports         : true,
+			COD             : false,
+			customer        : false,
+			products        : false,
+			feedback        : true,
+			tutorial        : false,
+			notification    : false
 		},
 		sales_manager : {
-			order:true,
-			dg:true,
-			vendor: true,
-			reports: true,
-			COD: false,
-			customer: false,
-			products: false,
-			feedback: true,
-			tutorial: false,
-			notification : true
+			order           : true,
+			createOrder     : false,
+			assignOrder     : false,
+			updateOrder     : false,
+			dg              : true,
+			dgEdit          : false,
+			dgCreate        : false,
+			dgPromteTeamLead: false,
+			vendor          : true,
+			reports         : true,
+			COD             : false,
+			customer        : false,
+			products        : false,
+			feedback        : true,
+			tutorial        : false,
+			notification    : true
 		},
 	};
 	var STATUS_OBJECT = [
@@ -942,7 +984,7 @@
 		return errorHandler;
 	};
 
-	var stateChangeHandler = function ($rootScope, Access, $state,$document){
+	var stateChangeHandler = function ($rootScope, Access, $state,$document,constants){
 		$rootScope.$on("$stateChangeError",function (event, toState, toParams, fromState, fromParams, error){
 			console.log(error);
 			angular.element($document[0].getElementsByClassName('request-loader')).addClass('request-loader-hidden');
@@ -958,12 +1000,37 @@
 				event.preventDefault();
 				$state.go(toState.redirectTo, toParams);
 			}
+			else if(toState.name === 'home') {
+				Access.hasAnyRole([constants.userRole.OPS,constants.userRole.OPS_MANAGER,constants.userRole.SALES,constants.userRole.SALES_MANAGER])
+				.then(function(response){
+					$state.go('home.opsorder');
+				},function(error){
+					Access.hasRole(constants.userRole.HR)
+					.then(function(response){
+						$state.go('home.dgList');
+					},function(error){
+						Access.hasRole(constants.userRole.ACCOUNTS)
+						.then(function(response){
+							$state.go('home.cod.deposit');
+						},function(error){
+							Access.hasRole(constants.userRole.VENDOR)
+							.then(function(response){
+								$state.go('forbidden');
+							},function(error){
+								$state.go('forbidden');
+							});
+						});
+					});
+				});
+			}
 		});
 		$rootScope.$on("$stateChangeSuccess",function (event, toState, toParams, fromState, fromParams){
-			$rootScope.previousState = {
-				state : fromState.name,
-				params : fromParams
-			};
+			if(toState.name != fromState.name){
+				$rootScope.previousState = {
+					state : fromState.name,
+					params : fromParams
+				};
+			}
 			angular.element($document[0].getElementsByClassName('request-loader')).addClass('request-loader-hidden');
 		});
 	};
@@ -984,6 +1051,7 @@
 		'Access',
 		'$state',
 		'$document',
+		'constants',
 		stateChangeHandler
 	]);
 })();
@@ -2397,7 +2465,7 @@
 (function(){
 	'use strict';
 
-	var dgDetailCntrl = function($state,$stateParams,$mdDialog,$mdMedia,DeliveryGuy,dgConstants,leadUserList,DG,PreviousState){
+	var dgDetailCntrl = function($state,$stateParams,$mdDialog,$mdMedia,DeliveryGuy,dgConstants,leadUserList,DG,PreviousState,Notification){
 		var self = this;
 		self.params = $stateParams;
 		self.DG = DG.payload.data;
@@ -2411,7 +2479,7 @@
 			$mdDialog.show({
 				controller         : ('EditDgCntrl',['$mdDialog','dgConstants','DG','OpsManagers','TeamLeads',EditDgCntrl]),
 				controllerAs       : 'dgEdit',
-				templateUrl        : '/static/modules/deliveryguy/dialogs/edit.html',
+				templateUrl        : '/static/modules/deliveryguy/dialogs/edit.html?nd=' + Date.now(),
 				parent             : angular.element(document.body),
 				clickOutsideToClose: false,
 				fullscreen         : useFullScreen,
@@ -2424,9 +2492,11 @@
 				},
 			})
 			.then(function(dg) {
+				Notification.loaderStart();
 				dg.shift_time = angular.fromJson(dg.shift_time);
 				DeliveryGuy.dg.$update(dg,function(response){
 					self.getDgDetails();
+					Notification.loaderComplete();
 				});
 			}, function() {
 				self.status = 'You cancelled the dialog.';
@@ -2457,7 +2527,7 @@
 			$mdDialog.show({
 				controller         : ('AddTeamLeadCntrl',['$mdDialog','DG','DeliveryGuy',AddTeamLeadCntrl]),
 				controllerAs       : 'dgTeamLead',
-				templateUrl        : '/static/modules/deliveryguy/dialogs/teamlead.html',
+				templateUrl        : '/static/modules/deliveryguy/dialogs/teamlead.html?nd=' + Date.now(),
 				parent             : angular.element(document.body),
 				clickOutsideToClose: false,
 				fullscreen         : true,
@@ -2466,13 +2536,16 @@
 				},
 			})
 			.then(function(data) {
+				Notification.loaderStart();
 				if(self.DG.is_teamlead){
 					DeliveryGuy.dg.$update(data,function(response){
+						Notification.loaderComplete();
 						self.getDgDetails();
 					});
 				}
 				else{
 					DeliveryGuy.dg.promoteToTL(data,function(response){
+						Notification.loaderComplete();
 						self.getDgDetails();
 					});
 				}
@@ -2499,7 +2572,7 @@
 
 	function EditDgCntrl($mdDialog,dgConstants,DG,OpsManagers,TeamLeads){
 		var dgEdit = this;
-		dgEdit.DG = DG;
+		dgEdit.DG = angular.copy(DG);
 		dgEdit.DG.team_lead_dg_ids   = [];
 		dgEdit.DG.ops_manager_ids = [];
 		dgEdit.DG.team_leads.forEach(function(lead){
@@ -2596,6 +2669,7 @@
 		'leadUserList',
 		'DG',
 		'PreviousState',
+		'Notification',
 		dgDetailCntrl
 	]);
 })();
@@ -2924,6 +2998,7 @@
 			$mdDialog.cancel();
 		};
 		self.answer = function(answer) {
+			answer.pending_salary_deduction = parseFloat(answer.pending_salary_deduction);
 			answer.is_accepted = false;
 			answer.transaction_id = self.deposit.transaction_id;
 			$mdDialog.hide(answer);
@@ -2962,7 +3037,7 @@
 			$mdDialog.show({
 				controller         : ('EditDgCntrl',['$mdDialog','deposit',VerifyDepositCntrl]),
 				controllerAs       : 'verifyDeposit',
-				templateUrl        : '/static/modules/cod/dialog/verify-deposit.html',
+				templateUrl        : '/static/modules/cod/dialog/verify-deposit.html?nd=' + Date.now(),
 				parent             : angular.element(document.body),
 				clickOutsideToClose: false,
 				locals             : {
@@ -2985,7 +3060,7 @@
 			$mdDialog.show({
 				controller         : ('EditDgCntrl',['$mdDialog','deposit',DeclineDepositCntrl]),
 				controllerAs       : 'declineDeposit',
-				templateUrl        : '/static/modules/cod/dialog/decline-deposit.html',
+				templateUrl        : '/static/modules/cod/dialog/decline-deposit.html?nd=' + Date.now(),
 				parent             : angular.element(document.body),
 				clickOutsideToClose: false,
 				locals             : {
@@ -2994,9 +3069,9 @@
 			})
 			.then(function(data) {
 				Notification.loaderStart();
-				COD.verifyDeposits.update(dp,function(response){
+				COD.verifyDeposits.update(data,function(response){
 					Notification.loaderComplete();
-					Notification.showSuccess('Proof Download Successful');
+					Notification.showSuccess('Deposit Declined Successfully');
 					self.getDeposits();
 				});
 			});

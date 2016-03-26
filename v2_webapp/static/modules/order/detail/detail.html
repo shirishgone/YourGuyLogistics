@@ -5,10 +5,10 @@
 		</md-button>
 		<p>Order {{orderDetail.order.id}}</p>
 		<span flex></span>
-		<md-button ng-click="orderDetail.statusUpdateDialog(orderDetail.order)" class="md-icon-button" aria-label="Menu Icon">
+		<md-button ng-click="orderDetail.statusUpdateDialog(orderDetail.order)" ng-if="home.tabs.updateOrder" class="md-icon-button" aria-label="Menu Icon">
 			<md-icon>update</md-icon>
 		</md-button>
-		<md-button ng-click="orderDetail.assignDgForSingleOrder(orderDetail.order)" class="md-icon-button" aria-label="Menu Icon">
+		<md-button ng-click="orderDetail.assignDgForSingleOrder(orderDetail.order)" ng-if="home.tabs.assignOrder" class="md-icon-button" aria-label="Menu Icon">
 			<md-icon>assignment_ind</md-icon>
 		</md-button>
 		<md-menu md-position-mode="target-right target">

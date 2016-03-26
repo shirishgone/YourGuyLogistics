@@ -99,7 +99,7 @@
 					controller: 'SuccessToastCntrl',
 					controllerAs : 'successToast',
 					templateUrl: '/static/modules/home/success-toast-template.html',
-					hideDelay: 600000,
+					hideDelay: 5000,
 					position: 'top right'
 				});
 			}

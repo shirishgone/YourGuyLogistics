@@ -113,6 +113,7 @@ module.exports = function(grunt){
 					cssDir : 'css',
 					fontsDir: 'fonts',
 					imagesDir :'images',
+					outputStyle:'compressed',
 					raw: 'preferred_syntax = :scss\n'
 				}
 			}

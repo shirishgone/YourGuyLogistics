@@ -1,7 +1,7 @@
 (function(){
 	'use strict';
 
-	var dgDetailCntrl = function($state,$stateParams,$mdDialog,$mdMedia,DeliveryGuy,dgConstants,leadUserList,DG,PreviousState){
+	var dgDetailCntrl = function($state,$stateParams,$mdDialog,$mdMedia,DeliveryGuy,dgConstants,leadUserList,DG,PreviousState,Notification){
 		var self = this;
 		self.params = $stateParams;
 		self.DG = DG.payload.data;
@@ -15,7 +15,7 @@
 			$mdDialog.show({
 				controller         : ('EditDgCntrl',['$mdDialog','dgConstants','DG','OpsManagers','TeamLeads',EditDgCntrl]),
 				controllerAs       : 'dgEdit',
-				templateUrl        : '/static/modules/deliveryguy/dialogs/edit.html',
+				templateUrl        : '/static/modules/deliveryguy/dialogs/edit.html?nd=' + Date.now(),
 				parent             : angular.element(document.body),
 				clickOutsideToClose: false,
 				fullscreen         : useFullScreen,
@@ -28,9 +28,11 @@
 				},
 			})
 			.then(function(dg) {
+				Notification.loaderStart();
 				dg.shift_time = angular.fromJson(dg.shift_time);
 				DeliveryGuy.dg.$update(dg,function(response){
 					self.getDgDetails();
+					Notification.loaderComplete();
 				});
 			}, function() {
 				self.status = 'You cancelled the dialog.';
@@ -61,7 +63,7 @@
 			$mdDialog.show({
 				controller         : ('AddTeamLeadCntrl',['$mdDialog','DG','DeliveryGuy',AddTeamLeadCntrl]),
 				controllerAs       : 'dgTeamLead',
-				templateUrl        : '/static/modules/deliveryguy/dialogs/teamlead.html',
+				templateUrl        : '/static/modules/deliveryguy/dialogs/teamlead.html?nd=' + Date.now(),
 				parent             : angular.element(document.body),
 				clickOutsideToClose: false,
 				fullscreen         : true,
@@ -70,13 +72,16 @@
 				},
 			})
 			.then(function(data) {
+				Notification.loaderStart();
 				if(self.DG.is_teamlead){
 					DeliveryGuy.dg.$update(data,function(response){
+						Notification.loaderComplete();
 						self.getDgDetails();
 					});
 				}
 				else{
 					DeliveryGuy.dg.promoteToTL(data,function(response){
+						Notification.loaderComplete();
 						self.getDgDetails();
 					});
 				}
@@ -103,7 +108,7 @@
 
 	function EditDgCntrl($mdDialog,dgConstants,DG,OpsManagers,TeamLeads){
 		var dgEdit = this;
-		dgEdit.DG = DG;
+		dgEdit.DG = angular.copy(DG);
 		dgEdit.DG.team_lead_dg_ids   = [];
 		dgEdit.DG.ops_manager_ids = [];
 		dgEdit.DG.team_leads.forEach(function(lead){
@@ -200,6 +205,7 @@
 		'leadUserList',
 		'DG',
 		'PreviousState',
+		'Notification',
 		dgDetailCntrl
 	]);
 })();
