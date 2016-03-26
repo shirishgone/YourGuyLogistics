@@ -342,7 +342,9 @@ def is_vendoragentexists(user):
 
 
 def paginate(list, page):
-    paginator = Paginator(list, constants.PAGINATION_PAGE_SIZE)  # Show 25 contacts per page
+    # done only for vinit's testing
+    # paginator = Paginator(list, constants.PAGINATION_PAGE_SIZE)  # Show 25 contacts per page
+    paginator = Paginator(list, 10)
     try:
         result = paginator.page(page)
     except PageNotAnInteger:
