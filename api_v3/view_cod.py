@@ -367,8 +367,8 @@ class CODViewSet(viewsets.ViewSet):
                     dg_total_cod_amount['dg_collections'] = dg_entire_collections
                     return response_with_payload(dg_total_cod_amount, None)
                 else:
-                    error_message = 'No COD collection pending to transfer to TL'
-                    return response_error_with_message(error_message)
+                    success_message = 'No COD collection pending to transfer to TL'
+                    return response_success_with_message(success_message)
             # else:
             #     error_message = 'This is a deactivated dg'
             #     return response_error_with_message(error_message)
