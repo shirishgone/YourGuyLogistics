@@ -1,4 +1,5 @@
 from datetime import datetime
+from django.utils.dateparse import parse_datetime
 from django.db.models import Sum
 from django.utils.decorators import method_decorator
 from django.db.models import Q
@@ -10,7 +11,7 @@ from yourguy.models import CODTransaction, DeliveryGuy, OrderDeliveryStatus, Del
 from rest_framework import authentication, viewsets
 from rest_framework.decorators import list_route
 from rest_framework.permissions import IsAuthenticated
-from api_v3.utils import user_role, log_exception, paginate, send_sms, send_email, check_month
+from api_v3.utils import user_role, log_exception, paginate, send_sms, send_email
 from api_v3.push import send_push
 import uuid
 import pytz
@@ -723,6 +724,8 @@ class CODViewSet(viewsets.ViewSet):
             if len(verified_bank_deposits) > 0:
                 # DATE FILTERING (optional)
                 if filter_start_date is not None and filter_end_date is not None:
+                    filter_start_date = parse_datetime(filter_start_date)
+                    filter_end_date = parse_datetime(filter_end_date)
                     verified_bank_deposits = verified_bank_deposits.filter(verified_time_stamp__gte=filter_start_date,
                                                                            verified_time_stamp__lte=filter_end_date)
                 # VENDOR FILTERING (optional)
@@ -821,7 +824,7 @@ class CODViewSet(viewsets.ViewSet):
     @method_decorator(user_passes_test(active_check))
     def dg_transaction_history(self, request):
         role = user_role(request.user)
-        page = request.QUERY_PARAMS.get('page', 1)
+        page = request.QUERY_PARAMS.get('page', None)
         if role == constants.DELIVERY_GUY:
             all_transactions = []
             delivery_guy = get_object_or_404(DeliveryGuy, user=request.user)
@@ -831,10 +834,12 @@ class CODViewSet(viewsets.ViewSet):
 
             if len(history) > 0:
                 total_history_count = len(history)
-                page = int(page)
-                # total_pages = int(total_history_count / constants.PAGINATION_PAGE_SIZE) + 1
-                # pagination constant hard coded to 10 for Vinit's testing purposes...
-                total_pages = int(total_history_count / 10) + 1
+                # PAGINATION  ----------------------------------------------------------------
+                if page is not None:
+                    page = int(page)
+                else:
+                    page = 1
+                total_pages = int(total_history_count / constants.PAGINATION_PAGE_SIZE) + 1
                 if page > total_pages or page <= 0:
                     return response_invalid_pagenumber()
                 else:
@@ -863,13 +868,39 @@ class CODViewSet(viewsets.ViewSet):
     @list_route(methods=['GET'])
     def vendor_transaction_history(self, request):
         role = user_role(request.user)
-        page = request.QUERY_PARAMS.get('page', 1)
+        page = request.QUERY_PARAMS.get('page', None)
+        search_query = request.QUERY_PARAMS.get('search', None)
+        filter_vendor_id = request.QUERY_PARAMS.get('vendor_id', None)
+        filter_start_date = request.QUERY_PARAMS.get('start_date', None)
+        filter_end_date = request.QUERY_PARAMS.get('end_date', None)
         if role == constants.ACCOUNTS or role == constants.SALES:
             all_transactions = []
             history = CODTransaction.objects.filter(transaction__code=constants.COD_TRANSFERRED_TO_CLIENT_CODE)
             if len(history) > 0:
+                # DATE FILTERING (optional)
+                if filter_start_date is not None and filter_end_date is not None:
+                    filter_start_date = parse_datetime(filter_start_date)
+                    filter_end_date = parse_datetime(filter_end_date)
+                    history = history.filter(created_time_stamp__gte=filter_start_date,
+                                             created_time_stamp__lte=filter_end_date)
+                # VENDOR FILTERING (optional)
+                if filter_vendor_id is not None:
+                    vendor = get_object_or_404(Vendor, pk=filter_vendor_id)
+                    if vendor is not None:
+                        history = history.filter(orderdeliverystatus__order__vendor=vendor).distinct()
+
+                # SEARCH KEYWORD FILTERING (optional)
+                if search_query is not None:
+                    history = search_cod_transactions(request.user, search_query)
+
                 total_history_count = len(history)
-                page = int(page)
+
+                # PAGINATION  ----------------------------------------------------------------
+                if page is not None:
+                    page = int(page)
+                else:
+                    page = 1
+
                 total_pages = int(total_history_count / constants.PAGINATION_PAGE_SIZE) + 1
                 if page > total_pages or page <= 0:
                     return response_invalid_pagenumber()
