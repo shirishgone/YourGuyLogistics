@@ -732,7 +732,9 @@ class CODViewSet(viewsets.ViewSet):
                 if filter_vendor_id is not None:
                     vendor = get_object_or_404(Vendor, pk=filter_vendor_id)
                     if vendor is not None:
-                        verified_bank_deposits = verified_bank_deposits.filter(orderdeliverystatus__order__vendor=vendor).distinct()
+                        # verified_bank_deposits = verified_bank_deposits.filter(orderdeliverystatus__order__vendor=vendor).distinct()
+                        # alternate logic to filter by vendor
+                        verified_bank_deposits = verified_bank_deposits.filter(orderdeliverystatus__order__vendor_id=vendor.id).distinct()
 
                 # SEARCH KEYWORD FILTERING (optional)
                 if search_query is not None:
