@@ -729,12 +729,6 @@ class CODViewSet(viewsets.ViewSet):
                     filter_end_date = parse_datetime(filter_end_date)
                     verified_bank_deposits = verified_bank_deposits.filter(verified_time_stamp__gte=filter_start_date,
                                                                            verified_time_stamp__lte=filter_end_date)
-                # VENDOR FILTERING (optional)
-                # if filter_vendor_id is not None:
-                #     vendor = get_object_or_404(Vendor, pk=filter_vendor_id)
-                #     if vendor is not None:
-                        # verified_bank_deposits = verified_bank_deposits.filter(orderdeliverystatus__order__vendor=vendor).distinct()
-                        # alternate logic to filter by vendor(for each transaction, for each delivery, compare vendor)
 
                 # SEARCH KEYWORD FILTERING (optional)
                 if search_query is not None:
