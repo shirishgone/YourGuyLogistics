@@ -11,7 +11,7 @@ from yourguy.models import CODTransaction, DeliveryGuy, OrderDeliveryStatus, Del
 from rest_framework import authentication, viewsets
 from rest_framework.decorators import list_route
 from rest_framework.permissions import IsAuthenticated
-from api_v3.utils import user_role, log_exception, paginate, send_sms, send_email
+from api_v3.utils import user_role, log_exception, paginate, send_sms, send_email, time_delta
 from api_v3.push import send_push
 import uuid
 import pytz
@@ -725,9 +725,11 @@ class CODViewSet(viewsets.ViewSet):
                 # DATE FILTERING (optional)
                 if filter_start_date is not None and filter_end_date is not None:
                     filter_start_date = parse_datetime(filter_start_date)
+                    filter_start_date = filter_start_date + time_delta()
                     filter_start_date = filter_start_date.replace(day=filter_start_date.day, month=filter_start_date.month, year=filter_start_date.year, hour=00, minute=00, second=00)
 
                     filter_end_date = parse_datetime(filter_end_date)
+                    filter_end_date = filter_end_date + time_delta()
                     filter_end_date = filter_end_date.replace(day=filter_end_date.day, month=filter_end_date.month, year=filter_end_date.year, hour=23, minute=59, second=00)
                     verified_bank_deposits = verified_bank_deposits.filter(verified_time_stamp__gte=filter_start_date,
                                                                            verified_time_stamp__lte=filter_end_date)
@@ -882,9 +884,11 @@ class CODViewSet(viewsets.ViewSet):
                 # DATE FILTERING (optional)
                 if filter_start_date is not None and filter_end_date is not None:
                     filter_start_date = parse_datetime(filter_start_date)
+                    filter_start_date = filter_start_date + time_delta()
                     filter_start_date = filter_start_date.replace(day=filter_start_date.day, month=filter_start_date.month, year=filter_start_date.year, hour=00, minute=00, second=00)
 
                     filter_end_date = parse_datetime(filter_end_date)
+                    filter_end_date = filter_end_date + time_delta()
                     filter_end_date = filter_end_date.replace(day=filter_end_date.day, month=filter_end_date.month, year=filter_end_date.year, hour=23, minute=59, second=00)
                     history = history.filter(created_time_stamp__gte=filter_start_date,
                                              created_time_stamp__lte=filter_end_date)
