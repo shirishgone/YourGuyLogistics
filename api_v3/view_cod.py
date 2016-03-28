@@ -721,7 +721,7 @@ class CODViewSet(viewsets.ViewSet):
             emp = get_object_or_404(Employee, user=request.user)
             cod_action = cod_actions(constants.COD_BANK_DEPOSITED_CODE)
             verified_bank_deposits = CODTransaction.objects.filter(transaction__title=cod_action, transaction_status=constants.VERIFIED)
-            verified_bank_deposits = verified_bank_deposits.filter(orderdeliverystatus__cod_status=constants.COD_STATUS_BANK_DEPOSITED)
+            verified_bank_deposits = verified_bank_deposits.filter(orderdeliverystatus__cod_status=constants.COD_STATUS_BANK_DEPOSITED).distinct()
             if len(verified_bank_deposits) > 0:
                 # DATE FILTERING (optional)
                 if filter_start_date is not None and filter_end_date is not None:
@@ -730,12 +730,11 @@ class CODViewSet(viewsets.ViewSet):
                     verified_bank_deposits = verified_bank_deposits.filter(verified_time_stamp__gte=filter_start_date,
                                                                            verified_time_stamp__lte=filter_end_date)
                 # VENDOR FILTERING (optional)
-                if filter_vendor_id is not None:
-                    vendor = get_object_or_404(Vendor, pk=filter_vendor_id)
-                    if vendor is not None:
+                # if filter_vendor_id is not None:
+                #     vendor = get_object_or_404(Vendor, pk=filter_vendor_id)
+                #     if vendor is not None:
                         # verified_bank_deposits = verified_bank_deposits.filter(orderdeliverystatus__order__vendor=vendor).distinct()
                         # alternate logic to filter by vendor(for each transaction, for each delivery, compare vendor)
-                        verified_bank_deposits = verified_bank_deposits.filter(orderdeliverystatus__order__vendor__exact=vendor).distinct()
 
                 # SEARCH KEYWORD FILTERING (optional)
                 if search_query is not None:
@@ -758,6 +757,10 @@ class CODViewSet(viewsets.ViewSet):
                         delivery = OrderDeliveryStatus.objects.get(id=single_delivery)
                         verified_bank_deposit_dict = verified_bank_deposit_list(single_bd, delivery)
                         all_transactions.append(verified_bank_deposit_dict)
+                if filter_vendor_id is not None:
+                    vendor = get_object_or_404(Vendor, pk=filter_vendor_id)
+                    if vendor is not None:
+                        all_transactions = filter(lambda record: record['vendor_name'] == vendor.store_name, all_transactions)
                 pagination_count_dict = pagination_count_bank_deposit()
                 pagination_count_dict['total_pages'] = total_pages
                 pagination_count_dict['total_count'] = total_verified_bank_deposits_count
