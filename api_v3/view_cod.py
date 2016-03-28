@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.utils.dateparse import parse_datetime
 from django.db.models import Sum
 from django.utils.decorators import method_decorator
@@ -716,7 +716,6 @@ class CODViewSet(viewsets.ViewSet):
         filter_start_date = request.QUERY_PARAMS.get('start_date', None)
         filter_end_date = request.QUERY_PARAMS.get('end_date', None)
         if role == constants.ACCOUNTS or role == constants.SALES:
-            filtered_transactions = []
             all_transactions = []
             emp = get_object_or_404(Employee, user=request.user)
             cod_action = cod_actions(constants.COD_BANK_DEPOSITED_CODE)
@@ -726,7 +725,10 @@ class CODViewSet(viewsets.ViewSet):
                 # DATE FILTERING (optional)
                 if filter_start_date is not None and filter_end_date is not None:
                     filter_start_date = parse_datetime(filter_start_date)
+                    filter_start_date = filter_start_date.replace(day=filter_start_date.day, month=filter_start_date.month, year=filter_start_date.year, hour=00, minute=00, second=00)
+
                     filter_end_date = parse_datetime(filter_end_date)
+                    filter_end_date = filter_end_date.replace(day=filter_end_date.day, month=filter_end_date.month, year=filter_end_date.year, hour=23, minute=59, second=00)
                     verified_bank_deposits = verified_bank_deposits.filter(verified_time_stamp__gte=filter_start_date,
                                                                            verified_time_stamp__lte=filter_end_date)
 
@@ -880,7 +882,10 @@ class CODViewSet(viewsets.ViewSet):
                 # DATE FILTERING (optional)
                 if filter_start_date is not None and filter_end_date is not None:
                     filter_start_date = parse_datetime(filter_start_date)
+                    filter_start_date = filter_start_date.replace(day=filter_start_date.day, month=filter_start_date.month, year=filter_start_date.year, hour=00, minute=00, second=00)
+
                     filter_end_date = parse_datetime(filter_end_date)
+                    filter_end_date = filter_end_date.replace(day=filter_end_date.day, month=filter_end_date.month, year=filter_end_date.year, hour=23, minute=59, second=00)
                     history = history.filter(created_time_stamp__gte=filter_start_date,
                                              created_time_stamp__lte=filter_end_date)
                 # VENDOR FILTERING (optional)
