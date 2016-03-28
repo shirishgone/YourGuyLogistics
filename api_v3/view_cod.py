@@ -716,6 +716,7 @@ class CODViewSet(viewsets.ViewSet):
         filter_start_date = request.QUERY_PARAMS.get('start_date', None)
         filter_end_date = request.QUERY_PARAMS.get('end_date', None)
         if role == constants.ACCOUNTS or role == constants.SALES:
+            filtered_transactions = []
             all_transactions = []
             emp = get_object_or_404(Employee, user=request.user)
             cod_action = cod_actions(constants.COD_BANK_DEPOSITED_CODE)
@@ -733,8 +734,8 @@ class CODViewSet(viewsets.ViewSet):
                     vendor = get_object_or_404(Vendor, pk=filter_vendor_id)
                     if vendor is not None:
                         # verified_bank_deposits = verified_bank_deposits.filter(orderdeliverystatus__order__vendor=vendor).distinct()
-                        # alternate logic to filter by vendor
-                        verified_bank_deposits = verified_bank_deposits.filter(orderdeliverystatus__order__vendor_id=vendor.id).distinct()
+                        # alternate logic to filter by vendor(for each transaction, for each delivery, compare vendor)
+                        verified_bank_deposits = verified_bank_deposits.filter(orderdeliverystatus__order__vendor__exact=vendor).distinct()
 
                 # SEARCH KEYWORD FILTERING (optional)
                 if search_query is not None:
