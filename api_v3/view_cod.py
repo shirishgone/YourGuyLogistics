@@ -585,6 +585,9 @@ class CODViewSet(viewsets.ViewSet):
     @list_route(methods=['GET'])
     def bank_deposits_list(self, request):
         page = request.QUERY_PARAMS.get('page', '1')
+        filter_dg_name = request.QUERY_PARAMS.get('dg_name', None)
+        filter_start_date = request.QUERY_PARAMS.get('start_date', None)
+        filter_end_date = request.QUERY_PARAMS.get('end_date', None)
         role = user_role(request.user)
         if role == constants.ACCOUNTS:
             bank_deposit_list = []
@@ -592,6 +595,23 @@ class CODViewSet(viewsets.ViewSet):
             cod_action = cod_actions(constants.COD_BANK_DEPOSITED_CODE)
             all_bank_deposit_cod_transactions = CODTransaction.objects.filter(transaction__title=cod_action, transaction_status=constants.INITIATED)
             if len(all_bank_deposit_cod_transactions) > 0:
+                # DG FILTERING (optional)
+                if filter_dg_name is not None:
+                    dg = get_object_or_404(DeliveryGuy, user__first_name=filter_dg_name)
+                    if dg is not None:
+                        all_bank_deposit_cod_transactions = all_bank_deposit_cod_transactions.filter(created_by_user=dg.user).distinct()
+
+                # DATE FILTERING (optional)
+                if filter_start_date is not None and filter_end_date is not None:
+                    filter_start_date = parse_datetime(filter_start_date)
+                    filter_start_date = filter_start_date + time_delta()
+                    filter_start_date = filter_start_date.replace(day=filter_start_date.day, month=filter_start_date.month, year=filter_start_date.year, hour=00, minute=00, second=00)
+
+                    filter_end_date = parse_datetime(filter_end_date)
+                    filter_end_date = filter_end_date + time_delta()
+                    filter_end_date = filter_end_date.replace(day=filter_end_date.day, month=filter_end_date.month, year=filter_end_date.year, hour=23, minute=59, second=00)
+                    all_bank_deposit_cod_transactions = all_bank_deposit_cod_transactions.filter(created_time_stamp__gte=filter_start_date,
+                                             created_time_stamp__lte=filter_end_date)
                 # PAGINATION  ----------------------------------------------------------------
                 total_bank_deposit_count = len(all_bank_deposit_cod_transactions)
                 page = int(page)
