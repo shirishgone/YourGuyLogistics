@@ -844,6 +844,29 @@ class DGViewSet(viewsets.ModelViewSet):
         else:
             return response_access_denied()
 
+    @detail_route(methods=['get'])
+    def dg_associated_vendors(self, request, pk):
+        all_associated_vendors = []
+        role = user_role(request.user)
+        if role == constants.DELIVERY_GUY or role == constants.OPERATIONS or role == constants.OPERATIONS_MANAGER or role == constants.HR:
+            delivery_guy = get_object_or_404(DeliveryGuy, pk=pk)
+            associated_vendors = delivery_guy.associated_vendors.all()
+            if len(associated_vendors) > 0:
+                for single in associated_vendors:
+                    asso_vendors_dict = {
+                        'vendor_id': single.id,
+                        'vendor_name': single.store_name,
+                        'vendor_phone_number': single.phone_number,
+                        'is_hyper_local': single.is_hyper_local
+                    }
+                    all_associated_vendors.append(asso_vendors_dict)
+                return response_with_payload(all_associated_vendors, None)
+            else:
+                success_message = 'No Associated Vendors found'
+                return response_success_with_message(success_message)
+        else:
+            return response_access_denied()
+
     @list_route()
     def teamleads(self, request):
         role = user_role(request.user)
