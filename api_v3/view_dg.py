@@ -848,7 +848,7 @@ class DGViewSet(viewsets.ModelViewSet):
     def dg_associated_vendors(self, request, pk):
         all_associated_vendors = []
         role = user_role(request.user)
-        if role == constants.DELIVERY_GUY or role == constants.OPERATIONS or role == constants.OPERATIONS_MANAGER or role == constants.HR:
+        if role == constants.DELIVERY_GUY or role == constants.OPERATIONS or role == constants.OPERATIONS_MANAGER:
             delivery_guy = get_object_or_404(DeliveryGuy, pk=pk)
             associated_vendors = delivery_guy.associated_vendors.all()
             if len(associated_vendors) > 0:
