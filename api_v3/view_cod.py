@@ -339,7 +339,7 @@ class CODViewSet(viewsets.ViewSet):
                         cod_action = cod_actions(constants.COD_TRANSFERRED_TO_TL_CODE)
                         cod_transaction = CODTransaction.objects.filter(transaction__title=cod_action,
                                                                         transaction_status=constants.VERIFIED,
-                                                                        cod_amount=delivery_statuses[0]['sum_of_cod_collected'],
+                                                                        # cod_amount=delivery_statuses[0]['sum_of_cod_collected'],
                                                                         deliveries__in=deliveries)
                         if len(cod_transaction) > 0 and cod_transaction[0].verified_time_stamp is not None:
                             associated_dgs_collections['transferred_time'] = cod_transaction[0].verified_time_stamp
@@ -739,7 +739,8 @@ class CODViewSet(viewsets.ViewSet):
             all_transactions = []
             emp = get_object_or_404(Employee, user=request.user)
             cod_action = cod_actions(constants.COD_BANK_DEPOSITED_CODE)
-            verified_bank_deposits = CODTransaction.objects.filter(transaction__title=cod_action, transaction_status=constants.VERIFIED)
+            verified_bank_deposits = CODTransaction.objects.filter(Q(transaction__title=cod_action, transaction_status=constants.VERIFIED) |
+                                                                   Q(transaction__title=cod_action, transaction_status=constants.DECLINED))
             verified_bank_deposits = verified_bank_deposits.filter(orderdeliverystatus__cod_status=constants.COD_STATUS_BANK_DEPOSITED).distinct()
             if len(verified_bank_deposits) > 0:
                 # DATE FILTERING (optional)
