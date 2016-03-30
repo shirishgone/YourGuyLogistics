@@ -881,6 +881,7 @@ class CODViewSet(viewsets.ViewSet):
                 pagination_count_dict = pagination_count_bank_deposit()
                 pagination_count_dict['total_pages'] = total_pages
                 pagination_count_dict['total_count'] = total_history_count
+                pagination_count_dict['pending_salary_deduction'] = delivery_guy.pending_salary_deduction
                 pagination_count_dict['all_transactions'] = all_transactions
                 return response_with_payload(pagination_count_dict, None)
             else:
