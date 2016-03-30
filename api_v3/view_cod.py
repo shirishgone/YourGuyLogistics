@@ -232,7 +232,7 @@ def pagination_count_bank_deposit():
 
 def transaction_history(cod_transaction):
     transaction_history_dict = {
-        'date': cod_transaction.created_time_stamp.date(),
+        'date': cod_transaction.created_time_stamp,
         'cod_amount': cod_transaction.cod_amount,
         'transaction_type': None,
         'transaction_status': cod_transaction.transaction_status
