@@ -708,6 +708,7 @@ class CODViewSet(viewsets.ViewSet):
                         deliveries = bank_deposit.deliveries
                         deliveries = eval(deliveries)
                         orders = str(deliveries).strip('[]')
+                        orders = str(orders).strip('u')
                         message = 'Dear %s, with respect to your bank deposit of orders %s, ' \
                                   'there is a %dRs deduction in your next month\'s salary, as you hae deposited less' \
                                   % (dg.user.first_name, orders, pending_salary_deduction)
