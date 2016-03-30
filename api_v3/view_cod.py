@@ -739,7 +739,8 @@ class CODViewSet(viewsets.ViewSet):
             all_transactions = []
             emp = get_object_or_404(Employee, user=request.user)
             cod_action = cod_actions(constants.COD_BANK_DEPOSITED_CODE)
-            verified_bank_deposits = CODTransaction.objects.filter(transaction__title=cod_action, transaction_status=constants.VERIFIED)
+            verified_bank_deposits = CODTransaction.objects.filter(Q(transaction__title=cod_action, transaction_status=constants.VERIFIED) |
+                                                                   Q(transaction__title=cod_action, transaction_status=constants.DECLINED))
             verified_bank_deposits = verified_bank_deposits.filter(orderdeliverystatus__cod_status=constants.COD_STATUS_BANK_DEPOSITED).distinct()
             if len(verified_bank_deposits) > 0:
                 # DATE FILTERING (optional)
