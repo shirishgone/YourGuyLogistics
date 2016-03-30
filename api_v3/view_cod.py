@@ -339,8 +339,8 @@ class CODViewSet(viewsets.ViewSet):
                         cod_action = cod_actions(constants.COD_TRANSFERRED_TO_TL_CODE)
                         cod_transaction = CODTransaction.objects.filter(transaction__title=cod_action,
                                                                         transaction_status=constants.VERIFIED,
-                                                                        # cod_amount=delivery_statuses[0]['sum_of_cod_collected'],
-                                                                        deliveries__in=deliveries)
+                                                                        cod_amount=delivery_statuses[0]['sum_of_cod_collected'])
+                                                                        # deliveries__in=deliveries)
                         if len(cod_transaction) > 0 and cod_transaction[0].verified_time_stamp is not None:
                             associated_dgs_collections['transferred_time'] = cod_transaction[0].verified_time_stamp
                         else:
