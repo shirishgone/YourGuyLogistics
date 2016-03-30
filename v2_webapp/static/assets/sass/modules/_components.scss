@@ -75,6 +75,7 @@ body {
 	overflow: hidden;
 	.table-header {
 		width: 100%;
+		height: 100%;
 		background-color: orange-accent-color('400');
 		tr {
 			margin-right: 20px;
@@ -88,7 +89,9 @@ body {
 	}
 	.table-body {
 		overflow-y: auto;
+		-webkit-overflow-scrolling: touch;
 		width: 100%;
+		height: 100%;
 		tr {
 			border-bottom: 1px solid grey-color('300');
 			cursor: pointer;

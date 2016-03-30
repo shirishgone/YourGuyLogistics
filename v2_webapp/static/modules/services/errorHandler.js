@@ -23,7 +23,7 @@
 		return errorHandler;
 	};
 
-	var stateChangeHandler = function ($rootScope, Access, $state,$document){
+	var stateChangeHandler = function ($rootScope, Access, $state,$document,constants){
 		$rootScope.$on("$stateChangeError",function (event, toState, toParams, fromState, fromParams, error){
 			console.log(error);
 			angular.element($document[0].getElementsByClassName('request-loader')).addClass('request-loader-hidden');
@@ -39,12 +39,37 @@
 				event.preventDefault();
 				$state.go(toState.redirectTo, toParams);
 			}
+			else if(toState.name === 'home') {
+				Access.hasAnyRole([constants.userRole.OPS,constants.userRole.OPS_MANAGER,constants.userRole.SALES,constants.userRole.SALES_MANAGER])
+				.then(function(response){
+					$state.go('home.opsorder');
+				},function(error){
+					Access.hasRole(constants.userRole.HR)
+					.then(function(response){
+						$state.go('home.dgList');
+					},function(error){
+						Access.hasRole(constants.userRole.ACCOUNTS)
+						.then(function(response){
+							$state.go('home.cod.deposit');
+						},function(error){
+							Access.hasRole(constants.userRole.VENDOR)
+							.then(function(response){
+								$state.go('forbidden');
+							},function(error){
+								$state.go('forbidden');
+							});
+						});
+					});
+				});
+			}
 		});
 		$rootScope.$on("$stateChangeSuccess",function (event, toState, toParams, fromState, fromParams){
-			$rootScope.previousState = {
-				state : fromState.name,
-				params : fromParams
-			};
+			if(toState.name != fromState.name){
+				$rootScope.previousState = {
+					state : fromState.name,
+					params : fromParams
+				};
+			}
 			angular.element($document[0].getElementsByClassName('request-loader')).addClass('request-loader-hidden');
 		});
 	};
@@ -65,6 +90,7 @@
 		'Access',
 		'$state',
 		'$document',
+		'constants',
 		stateChangeHandler
 	]);
 })();

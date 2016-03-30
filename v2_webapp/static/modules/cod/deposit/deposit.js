@@ -19,6 +19,7 @@
 			$mdDialog.cancel();
 		};
 		self.answer = function(answer) {
+			answer.pending_salary_deduction = parseFloat(answer.pending_salary_deduction);
 			answer.is_accepted = false;
 			answer.transaction_id = self.deposit.transaction_id;
 			$mdDialog.hide(answer);
@@ -57,7 +58,7 @@
 			$mdDialog.show({
 				controller         : ('EditDgCntrl',['$mdDialog','deposit',VerifyDepositCntrl]),
 				controllerAs       : 'verifyDeposit',
-				templateUrl        : '/static/modules/cod/dialog/verify-deposit.html',
+				templateUrl        : '/static/modules/cod/dialog/verify-deposit.html?nd=' + Date.now(),
 				parent             : angular.element(document.body),
 				clickOutsideToClose: false,
 				locals             : {
@@ -80,7 +81,7 @@
 			$mdDialog.show({
 				controller         : ('EditDgCntrl',['$mdDialog','deposit',DeclineDepositCntrl]),
 				controllerAs       : 'declineDeposit',
-				templateUrl        : '/static/modules/cod/dialog/decline-deposit.html',
+				templateUrl        : '/static/modules/cod/dialog/decline-deposit.html?nd=' + Date.now(),
 				parent             : angular.element(document.body),
 				clickOutsideToClose: false,
 				locals             : {
@@ -89,9 +90,9 @@
 			})
 			.then(function(data) {
 				Notification.loaderStart();
-				COD.verifyDeposits.update(dp,function(response){
+				COD.verifyDeposits.update(data,function(response){
 					Notification.loaderComplete();
-					Notification.showSuccess('Proof Download Successful');
+					Notification.showSuccess('Deposit Declined Successfully');
 					self.getDeposits();
 				});
 			});
