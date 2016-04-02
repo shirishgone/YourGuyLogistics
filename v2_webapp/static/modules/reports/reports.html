@@ -28,9 +28,9 @@
 				md-items="vendor in reports.vendorSearchTextChange(reports.searchVendor)"
 				md-item-text="vendor.name"
 				md-min-length="0"
-				md-floating-label="Search Vendor">
+				md-floating-label="Search By Vendor">
 				<md-item-template>
-				<span md-highlight-text="reports.searchVendor" md-highlight-flags="^i">{{vendor.name}}</span>
+				<span md-highlight-text="reports.searchVendor">{{vendor.name}}</span>
 					</md-item-template>
 					<md-not-found>
 					No states matching "{{reports.searchVendor}}" were found.
@@ -40,7 +40,7 @@
 		<span flex hide-xs></span>
 		<div flex="50" flex-xs="100" layout="row" layout-align="end center" layout-wrap  layout-align-xs="space-between start" class="datepicker-section">
 			<div class="date-picker-section" flex-xs="100">
-				<md-datepicker ng-model="reports.params.start_date" md-placeholder="Start date" md-max-date="reports.maxStartDate" ng-change="reports.date_change()"></md-datepicker>
+				<md-datepicker ng-model="reports.params.start_date" md-placeholder="Start date" md-min-date="reports.minStartDate" md-max-date="reports.maxStartDate" ng-change="reports.date_change()"></md-datepicker>
 			</div>
 			<div flex-xs="100">
 				<md-datepicker ng-model="reports.params.end_date" md-placeholder="End date" md-min-date="reports.params.start_date" md-max-date="reports.maxEndDate" ng-change="reports.date_change()"></md-datepicker>

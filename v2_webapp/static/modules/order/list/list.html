@@ -66,7 +66,15 @@
 								                	Order List View Section
 			_________________________________________________________________________________________________________
 		-->
-		<section flex="90" class="list">
+		<div flex="90" layout="row" layout-align="center center" class="no-content" ng-if="opsOrder.noContent">
+			<div flex="50" flex-xs="90" ng-if="opsOrder.filterApplied()">
+				<img src="/static/assets/images/Orders/no-content/welcom-02.png">
+			</div>
+			<div flex="50"  flex-xs="90" ng-if="!opsOrder.filterApplied()">
+				<img src="/static/assets/images/Orders/no-content/welcom-03.png">
+			</div>
+		</div>
+		<section flex="90" class="list" ng-if="!opsOrder.noContent">
 			<div ng-repeat="order in opsOrder.orders">
 				<!-- _______________________________________________________________________________________________________
 

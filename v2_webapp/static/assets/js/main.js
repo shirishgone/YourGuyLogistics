@@ -1667,6 +1667,25 @@
 	'use strict';
 	var opsOrderCntrl = function ($state,$mdSidenav,$mdDialog,$mdMedia,$stateParams,DeliveryGuy,Order,Vendor,orders,constants,orderSelection,Pincodes,$q,orderDgAssign,OrderStatusUpdate){
 		/*
+			 Check if any filter is applied or not to show no-content images
+		*/
+		var filterApplied = function(){
+			if(self.params.order_status.length  !== 0 || 
+				self.params.vendor_id   !== undefined || 
+				self.params.dg_username !== undefined || 
+				self.params.search      !== undefined || 
+				self.params.end_time    !== undefined || 
+				self.params.start_time  !== undefined || 
+				self.params.is_retail   !== false     ||
+				self.params.is_cod      !== false     || 
+				self.params.pincodes    !== undefined){
+				return true;
+			}
+			else{
+				return false;
+			}
+		};
+		/*
 			 Variable definations for the route(Url)
 		*/
 		var self = this;
@@ -1681,13 +1700,21 @@
 			 scope Orders variable assignments are done from this section for the controller
 		*/
 		this.orders = orders.payload.data.data;
-		this.orderFrom = ( ( ( this.params.page -1 ) * 50 ) + 1 );
-		this.orderTo  = (this.orderFrom-1) + orders.payload.data.data.length;
 		this.total_pages = orders.payload.data.total_pages;
 		this.total_orders = orders.payload.data.total_orders;
 		this.pending_orders_count = orders.payload.data.pending_orders_count;
 		this.unassigned_orders_count = orders.payload.data.unassigned_orders_count;
 		this.pincodes = Pincodes.payload.data;
+
+		if(self.orders.length === 0 && filterApplied()){
+			self.noContent = true;
+		}
+		else if(self.orders.length === 0 && !filterApplied()){
+			self.noContent = true;
+		}
+		else{
+			self.noContent = false;
+		}
 		/*
 			@ status_list: scope order status for eg: 'INTRANSIT' ,'DELIVERED' variable assignments.
 			@ time_list: scope order time for time filer variable assignments.
@@ -2758,9 +2785,10 @@
 		this.searchVendorActive = (this.params.vendor_id !== undefined) ? true : false;
 		self.report_stats = report.payload.data;
 
-		self.params.start_date = moment(self.params.start_date).toDate();
-		self.params.end_date   = moment(self.params.end_date).toDate();
+		self.params.start_date = new Date(self.params.start_date);
+		self.params.end_date   = new Date(self.params.end_date);
 		self.maxStartDate = moment().toDate();
+		self.minStartDate = moment("2015-01-01").toDate();
 		self.maxEndDate = moment(self.params.start_date).add(3 , 'months').toDate();
 
 		/*
@@ -2770,7 +2798,6 @@
 			self.params.vendor_id = undefined;
 			self.searchVendorActive = false;
 			self.getReports();
-			
 		};
 		
 		self.vendorSearchTextChange = function(text){
@@ -2871,7 +2898,7 @@
 
 		self.date_change = function(){
 			if( moment(self.params.end_date).diff(self.params.start_date,'months') > 3 ){
-				self.params.end_date = moment(self.params.start_date).add(3, 'months');
+				self.params.end_date = moment(self.params.start_date).add(3, 'months').toDate();
 			}
 			if( moment(self.params.end_date).diff(self.params.start_date,'days') < 0 ){
 				self.params.end_date = self.params.start_date;
@@ -2912,8 +2939,12 @@
     						return Access.hasAnyRole(allowed_user); 
     					}],
     			report: ['Reports','$stateParams', function (Reports,$stateParams){
-    						$stateParams.start_date = ($stateParams.start_date !== undefined) ? moment(new Date($stateParams.start_date)).toISOString() : moment().set('date', 1).toISOString();
-    						$stateParams.end_date   = ($stateParams.end_date !== undefined) ? moment(new Date($stateParams.end_date)).toISOString() : moment().toISOString();
+    						var x = new Date();
+    						x.setHours(0);
+    						x.setMinutes(0);
+    						x.setSeconds(0);
+    						$stateParams.start_date = ($stateParams.start_date !== undefined) ? new Date($stateParams.start_date).toISOString() : x.toISOString();
+    						$stateParams.end_date   = ($stateParams.end_date !== undefined) ? new Date($stateParams.end_date).toISOString() : new Date().toISOString();
     						return Reports.getReport.stats($stateParams).$promise;
     					}]
     		}
