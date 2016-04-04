@@ -2615,6 +2615,14 @@
 		dgEdit.shift_timings = dgConstants.shift_timings;
 		dgEdit.transportation_mode = dgConstants.transportation_mode;
 
+		dgEdit.findShiftTime = function(shift_time){
+			return dgEdit.shift_timings.findIndex(function(shift){
+				return shift.start_time == shift_time.start_time;
+			});
+		};
+		dgEdit.DG.shift_time = dgEdit.shift_timings[dgEdit.findShiftTime(dgEdit.DG.shift_time)];
+		console.log(dgEdit.DG.shift_time);
+
 		dgEdit.cancel = function() {
 			$mdDialog.cancel();
 		};
