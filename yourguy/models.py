@@ -446,7 +446,7 @@ class CODTransaction(models.Model):
     bank_deposit_proof = models.ForeignKey(ProofOfBankDeposit, blank=True, null=True, on_delete=models.PROTECT)
     vendor = models.ForeignKey(Vendor, blank=True, null=True, on_delete=models.PROTECT)
     utr_number = models.CharField(max_length=300, blank=True, null=True)
-
+    salary_deduction = models.FloatField(default=0.0)
 
     def __unicode__(self):
         return u"%s - %s" % (self.id, self.transaction)

@@ -235,7 +235,8 @@ def transaction_history(cod_transaction):
         'date': cod_transaction.created_time_stamp,
         'cod_amount': cod_transaction.cod_amount,
         'transaction_type': None,
-        'transaction_status': cod_transaction.transaction_status
+        'transaction_status': cod_transaction.transaction_status,
+        'salary_deduction': cod_transaction.salary_deduction
     }
     return transaction_history_dict
 
@@ -702,6 +703,8 @@ class CODViewSet(viewsets.ViewSet):
                     dg = DeliveryGuy.objects.get(user__username=transaction_initiated_by)
                     current_deduction = dg.pending_salary_deduction
                     if pending_salary_deduction is not None:
+                        bank_deposit.salary_deduction = pending_salary_deduction
+                        bank_deposit.save()
                         dg.pending_salary_deduction = current_deduction + pending_salary_deduction
                         dg.save()
                         dg_phone_number = dg.user.username
@@ -883,7 +886,6 @@ class CODViewSet(viewsets.ViewSet):
                 pagination_count_dict = pagination_count_bank_deposit()
                 pagination_count_dict['total_pages'] = total_pages
                 pagination_count_dict['total_count'] = total_history_count
-                pagination_count_dict['pending_salary_deduction'] = delivery_guy.pending_salary_deduction
                 pagination_count_dict['all_transactions'] = all_transactions
                 return response_with_payload(pagination_count_dict, None)
             else:
