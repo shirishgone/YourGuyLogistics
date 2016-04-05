@@ -7,9 +7,10 @@
 		this.searchVendorActive = (this.params.vendor_id !== undefined) ? true : false;
 		self.report_stats = report.payload.data;
 
-		self.params.start_date = moment(self.params.start_date).toDate();
-		self.params.end_date   = moment(self.params.end_date).toDate();
+		self.params.start_date = new Date(self.params.start_date);
+		self.params.end_date   = new Date(self.params.end_date);
 		self.maxStartDate = moment().toDate();
+		self.minStartDate = moment("2015-01-01").toDate();
 		self.maxEndDate = moment(self.params.start_date).add(3 , 'months').toDate();
 
 		/*
@@ -19,7 +20,6 @@
 			self.params.vendor_id = undefined;
 			self.searchVendorActive = false;
 			self.getReports();
-			
 		};
 		
 		self.vendorSearchTextChange = function(text){
@@ -120,7 +120,7 @@
 
 		self.date_change = function(){
 			if( moment(self.params.end_date).diff(self.params.start_date,'months') > 3 ){
-				self.params.end_date = moment(self.params.start_date).add(3, 'months');
+				self.params.end_date = moment(self.params.start_date).add(3, 'months').toDate();
 			}
 			if( moment(self.params.end_date).diff(self.params.start_date,'days') < 0 ){
 				self.params.end_date = self.params.start_date;
@@ -161,8 +161,12 @@
     						return Access.hasAnyRole(allowed_user); 
     					}],
     			report: ['Reports','$stateParams', function (Reports,$stateParams){
-    						$stateParams.start_date = ($stateParams.start_date !== undefined) ? moment(new Date($stateParams.start_date)).toISOString() : moment().set('date', 1).toISOString();
-    						$stateParams.end_date   = ($stateParams.end_date !== undefined) ? moment(new Date($stateParams.end_date)).toISOString() : moment().toISOString();
+    						var x = new Date();
+    						x.setHours(0);
+    						x.setMinutes(0);
+    						x.setSeconds(0);
+    						$stateParams.start_date = ($stateParams.start_date !== undefined) ? new Date($stateParams.start_date).toISOString() : x.toISOString();
+    						$stateParams.end_date   = ($stateParams.end_date !== undefined) ? new Date($stateParams.end_date).toISOString() : new Date().toISOString();
     						return Reports.getReport.stats($stateParams).$promise;
     					}]
     		}

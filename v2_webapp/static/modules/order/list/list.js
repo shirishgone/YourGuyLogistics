@@ -2,6 +2,25 @@
 	'use strict';
 	var opsOrderCntrl = function ($state,$mdSidenav,$mdDialog,$mdMedia,$stateParams,DeliveryGuy,Order,Vendor,orders,constants,orderSelection,Pincodes,$q,orderDgAssign,OrderStatusUpdate){
 		/*
+			 Check if any filter is applied or not to show no-content images
+		*/
+		var filterApplied = function(){
+			if(self.params.order_status.length  !== 0 || 
+				self.params.vendor_id   !== undefined || 
+				self.params.dg_username !== undefined || 
+				self.params.search      !== undefined || 
+				self.params.end_time    !== undefined || 
+				self.params.start_time  !== undefined || 
+				self.params.is_retail   !== false     ||
+				self.params.is_cod      !== false     || 
+				self.params.pincodes    !== undefined){
+				return true;
+			}
+			else{
+				return false;
+			}
+		};
+		/*
 			 Variable definations for the route(Url)
 		*/
 		var self = this;
@@ -16,13 +35,21 @@
 			 scope Orders variable assignments are done from this section for the controller
 		*/
 		this.orders = orders.payload.data.data;
-		this.orderFrom = ( ( ( this.params.page -1 ) * 50 ) + 1 );
-		this.orderTo  = (this.orderFrom-1) + orders.payload.data.data.length;
 		this.total_pages = orders.payload.data.total_pages;
 		this.total_orders = orders.payload.data.total_orders;
 		this.pending_orders_count = orders.payload.data.pending_orders_count;
 		this.unassigned_orders_count = orders.payload.data.unassigned_orders_count;
 		this.pincodes = Pincodes.payload.data;
+
+		if(self.orders.length === 0 && filterApplied()){
+			self.noContent = true;
+		}
+		else if(self.orders.length === 0 && !filterApplied()){
+			self.noContent = true;
+		}
+		else{
+			self.noContent = false;
+		}
 		/*
 			@ status_list: scope order status for eg: 'INTRANSIT' ,'DELIVERED' variable assignments.
 			@ time_list: scope order time for time filer variable assignments.

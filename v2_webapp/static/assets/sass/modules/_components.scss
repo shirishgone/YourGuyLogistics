@@ -57,7 +57,7 @@ body {
 	background-color: orange-accent-color('500');
 }
 .badge.CANCELLED {
-	background-color: $red-color;
+	background-color: primary-color('500');
 }
 
 .badge-warn {
@@ -148,6 +148,13 @@ body {
 		width:21px;
 		@include border-radius(10px);
 		z-index: 1000;
+	}
+}
+
+.no-content {
+	img {
+		width: 100%;
+		height: auto;
 	}
 }
 

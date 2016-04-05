@@ -65,7 +65,7 @@
                                     {{ops.name}}
                                 </md-option>
                             </md-select>
-                            <div ng-messages="dgEditForm.operationalmanager.$error">
+                            <div ng-messages="dgEditForm.operationalmanager.$error" ng-if="dgEditForm.$dirty">
                                 <div ng-message="required">This is required.</div>
                             </div>
                         </md-input-container>
@@ -73,8 +73,8 @@
                     <div flex="50" flex-xs="50" class="profile-data">
                         <md-input-container class="md-block">
                             <label>Shift Timings</label>
-                            <md-select layout="column" name="shifttime" ng-model="dgEdit.DG.shift_time" ng-required="true">
-                                <md-option ng-repeat="time in dgEdit.shift_timings" value="{{time}}">
+                            <md-select name="shifttime" ng-model="dgEdit.DG.shift_time" ng-required="true" ng-model-options="{trackBy: '$value.start_time'}">
+                                <md-option ng-repeat="time in dgEdit.shift_timings" ng-value="time">
                                     {{time.start_time | timeAsDate}} - {{time.end_time | timeAsDate}}
                                 </md-option>
                             </md-select>
