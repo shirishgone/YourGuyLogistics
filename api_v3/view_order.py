@@ -437,12 +437,20 @@ def delivery_guy_app(delivery_status):
             'total_cost': delivery_status.order.total_cost,
             'cod_remarks': delivery_status.cod_remarks,
             'delivery_charges': delivery_status.order.delivery_charges,
-            'order_placed_datetime': delivery_status.order.created_date_time
+            'order_placed_datetime': delivery_status.order.created_date_time,
+            'delivery_transactions': []
         }
         res_order.update(common_params(delivery_status))
         return res_order
     else:
         return None
+
+
+def delivery_transactions_list(delivery_tx):
+    delivery_transactions_dict = {
+        'delivery_transaction_title':delivery_tx.action.title
+    }
+    return delivery_transactions_dict
 
 
 def webapp_list(delivery_status):
@@ -554,16 +562,29 @@ class OrderViewSet(viewsets.ViewSet):
 
     def retrieve(self, request, pk=None):
         delivery_status = get_object_or_404(OrderDeliveryStatus, id=pk)
-
+        all_transactions_details = []
         # VENDOR PERMISSION CHECK ---------------------------------------------
         role = user_role(request.user)
         if role == constants.VENDOR:
             vendor_agent = get_object_or_404(VendorAgent, user=request.user)
             vendor = vendor_agent.vendor
             if delivery_status.order.vendor.id != vendor.id:
-                return response_access_denied()                
-
+                return response_access_denied()
         result = delivery_guy_app(delivery_status)
+        delivery_tx = (delivery_status.delivery_transactions.all())
+        if len(delivery_tx) > 0:
+            for single in delivery_tx:
+                delivery_transactions_dict = delivery_transactions_list(single)
+                if single.by_user is not None:
+                    delivery_transactions_dict['created_by_user'] = single.by_user.first_name
+                if single.time_stamp is not None:
+                    delivery_transactions_dict['delivery_transaction_timestamp'] = single.time_stamp
+                if single.location is not None and single.location.latitude is not None:
+                    delivery_transactions_dict['delivery_transaction_location_latitude'] = single.location.latitude
+                if single.location is not None and single.location.longitude is not None:
+                    delivery_transactions_dict['delivery_transaction_location_longitude'] = single.location.longitude
+                all_transactions_details.append(delivery_transactions_dict)
+            result['delivery_transactions'] = all_transactions_details
         return response_with_payload(result, None)
 
     def list(self, request):
