@@ -249,6 +249,13 @@
 .statusUpdate {
 	.status-tab {
 		padding: 25px;
-		text-align: center;
+		text-align: left;
+		.status-tab-child {
+			padding: 0 15px 0 11px;
+			text-align: left;
+			md-input-container .md-errors-spacer{
+				display: none;
+			}
+		}
 	}
 }

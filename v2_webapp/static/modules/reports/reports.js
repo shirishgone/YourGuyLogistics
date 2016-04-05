@@ -3,7 +3,7 @@
 	var reportsCntrl = function($state,$stateParams,Reports,Vendor,report,Notification){
 		var self = this;
 		self.params = $stateParams;
-		self.searchVendor  = self.params.vendor_id;
+		self.searchVendor  = self.params.vednor_name;
 		this.searchVendorActive = (this.params.vendor_id !== undefined) ? true : false;
 		self.report_stats = report.payload.data;
 
@@ -18,6 +18,7 @@
 		*/ 
 		this.backFromSearch = function(){
 			self.params.vendor_id = undefined;
+			self.params.vednor_name = undefined;
 			self.searchVendorActive = false;
 			self.getReports();
 		};
@@ -27,15 +28,20 @@
 				search : text
 			};
 			return Vendor.query(search).$promise.then(function (response){
+				if(self.params.vendor_id){
+					response.payload.data.data.push({name:'All Vendors'});
+				}
 				return response.payload.data.data;
 			});
 		};
 		self.selectedVendorChange = function(vendor){
-			if(vendor){
+			if(vendor.id){
 				self.params.vendor_id = vendor.id;
+				self.params.vednor_name = vendor.name;
 			}
 			else{
 				self.params.vendor_id = undefined;
+				self.params.vednor_name = undefined;
 			}
 			self.getReports();
 		};
@@ -141,6 +147,9 @@
 		*/
 		self.getReports = function(){
 			Notification.loaderStart();
+			if (!self.params.vendor_id) {
+				self.params.vednor_name = undefined;
+			}
 			$state.transitionTo($state.current, self.params, { reload: true, inherit: false, notify: true });
 		};
 	};
@@ -151,7 +160,7 @@
 	.config(['$stateProvider',function($stateProvider) {
 		$stateProvider
 		.state('home.reports', {
-			url: "^/reports?start_date&end_date&vendor_id",
+			url: "^/reports?start_date&end_date&vendor_id&vednor_name",
 			templateUrl  : "/static/modules/reports/reports.html",
 			controllerAs : 'reports',
     		controller   : "reportsCntrl",
@@ -165,6 +174,7 @@
     						x.setHours(0);
     						x.setMinutes(0);
     						x.setSeconds(0);
+    						x.setDate(1);
     						$stateParams.start_date = ($stateParams.start_date !== undefined) ? new Date($stateParams.start_date).toISOString() : x.toISOString();
     						$stateParams.end_date   = ($stateParams.end_date !== undefined) ? new Date($stateParams.end_date).toISOString() : new Date().toISOString();
     						return Reports.getReport.stats($stateParams).$promise;

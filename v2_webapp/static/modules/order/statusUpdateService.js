@@ -23,40 +23,14 @@
 	*/
 	function OrderStatusUpdateCntrl($mdDialog){
 		var self = this;
-		this.pickup = {
-			isPickup: true,
-			data : {
-				pickup_attempted : false,
-				delivery_remarks : null
-			}
-		};
-		this.delivery = {
-			isPickup: false ,
-			data : {
-				delivered_at : null,
-				delivery_attempted : false,
-				delivery_remarks: null,
-				cod_collected_amount: null
-			}
+		this.status_object = {
+			data : {}
 		};
 
 		this.cancel = function() {
 			$mdDialog.cancel();
 		};
-		this.updatePickupAttempted = function(answer){
-			answer.data.pickup_attempted = true;
-			$mdDialog.hide(answer);
-		};
-		this.updatePickup = function(answer){
-			answer.data.pickup_attempted = false;
-			$mdDialog.hide(answer);
-		};
-		this.updateDeliveryAttempted = function(answer){
-			answer.data.delivery_attempted = true;
-			$mdDialog.hide(answer);
-		};
-		this.updateDelivery = function(answer){
-			answer.data.delivery_attempted = false;
+		this.answer = function(answer){
 			$mdDialog.hide(answer);
 		};
 	}
