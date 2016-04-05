@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.utils.dateparse import parse_datetime
 from django.db.models import Sum
 from django.utils.decorators import method_decorator
@@ -11,7 +11,7 @@ from yourguy.models import CODTransaction, DeliveryGuy, OrderDeliveryStatus, Del
 from rest_framework import authentication, viewsets
 from rest_framework.decorators import list_route
 from rest_framework.permissions import IsAuthenticated
-from api_v3.utils import user_role, log_exception, paginate, send_sms, send_email
+from api_v3.utils import user_role, log_exception, paginate, send_sms, send_email, time_delta
 from api_v3.push import send_push
 import uuid
 import pytz
@@ -232,10 +232,11 @@ def pagination_count_bank_deposit():
 
 def transaction_history(cod_transaction):
     transaction_history_dict = {
-        'date': cod_transaction.created_time_stamp.date(),
+        'date': cod_transaction.created_time_stamp,
         'cod_amount': cod_transaction.cod_amount,
         'transaction_type': None,
-        'transaction_status': cod_transaction.transaction_status
+        'transaction_status': cod_transaction.transaction_status,
+        'salary_deduction': cod_transaction.salary_deduction
     }
     return transaction_history_dict
 
@@ -339,8 +340,8 @@ class CODViewSet(viewsets.ViewSet):
                         cod_action = cod_actions(constants.COD_TRANSFERRED_TO_TL_CODE)
                         cod_transaction = CODTransaction.objects.filter(transaction__title=cod_action,
                                                                         transaction_status=constants.VERIFIED,
-                                                                        cod_amount=delivery_statuses[0]['sum_of_cod_collected'],
-                                                                        deliveries__in=deliveries)
+                                                                        cod_amount=delivery_statuses[0]['sum_of_cod_collected'])
+                                                                        # deliveries__in=deliveries)
                         if len(cod_transaction) > 0 and cod_transaction[0].verified_time_stamp is not None:
                             associated_dgs_collections['transferred_time'] = cod_transaction[0].verified_time_stamp
                         else:
@@ -367,8 +368,8 @@ class CODViewSet(viewsets.ViewSet):
                     dg_total_cod_amount['dg_collections'] = dg_entire_collections
                     return response_with_payload(dg_total_cod_amount, None)
                 else:
-                    error_message = 'No COD collection pending to transfer to TL'
-                    return response_error_with_message(error_message)
+                    success_message = 'No COD collection pending to transfer to TL'
+                    return response_success_with_message(success_message)
             # else:
             #     error_message = 'This is a deactivated dg'
             #     return response_error_with_message(error_message)
@@ -585,6 +586,9 @@ class CODViewSet(viewsets.ViewSet):
     @list_route(methods=['GET'])
     def bank_deposits_list(self, request):
         page = request.QUERY_PARAMS.get('page', '1')
+        filter_dg_name = request.QUERY_PARAMS.get('dg_name', None)
+        filter_start_date = request.QUERY_PARAMS.get('start_date', None)
+        filter_end_date = request.QUERY_PARAMS.get('end_date', None)
         role = user_role(request.user)
         if role == constants.ACCOUNTS:
             bank_deposit_list = []
@@ -592,6 +596,23 @@ class CODViewSet(viewsets.ViewSet):
             cod_action = cod_actions(constants.COD_BANK_DEPOSITED_CODE)
             all_bank_deposit_cod_transactions = CODTransaction.objects.filter(transaction__title=cod_action, transaction_status=constants.INITIATED)
             if len(all_bank_deposit_cod_transactions) > 0:
+                # DG FILTERING (optional)
+                if filter_dg_name is not None:
+                    dg = get_object_or_404(DeliveryGuy, user__first_name=filter_dg_name)
+                    if dg is not None:
+                        all_bank_deposit_cod_transactions = all_bank_deposit_cod_transactions.filter(created_by_user=dg.user).distinct()
+
+                # DATE FILTERING (optional)
+                if filter_start_date is not None and filter_end_date is not None:
+                    filter_start_date = parse_datetime(filter_start_date)
+                    filter_start_date = filter_start_date + time_delta()
+                    filter_start_date = filter_start_date.replace(day=filter_start_date.day, month=filter_start_date.month, year=filter_start_date.year, hour=00, minute=00, second=00)
+
+                    filter_end_date = parse_datetime(filter_end_date)
+                    filter_end_date = filter_end_date + time_delta()
+                    filter_end_date = filter_end_date.replace(day=filter_end_date.day, month=filter_end_date.month, year=filter_end_date.year, hour=23, minute=59, second=00)
+                    all_bank_deposit_cod_transactions = all_bank_deposit_cod_transactions.filter(created_time_stamp__gte=filter_start_date,
+                                             created_time_stamp__lte=filter_end_date)
                 # PAGINATION  ----------------------------------------------------------------
                 total_bank_deposit_count = len(all_bank_deposit_cod_transactions)
                 page = int(page)
@@ -682,12 +703,15 @@ class CODViewSet(viewsets.ViewSet):
                     dg = DeliveryGuy.objects.get(user__username=transaction_initiated_by)
                     current_deduction = dg.pending_salary_deduction
                     if pending_salary_deduction is not None:
+                        bank_deposit.salary_deduction = pending_salary_deduction
+                        bank_deposit.save()
                         dg.pending_salary_deduction = current_deduction + pending_salary_deduction
                         dg.save()
                         dg_phone_number = dg.user.username
                         deliveries = bank_deposit.deliveries
                         deliveries = eval(deliveries)
                         orders = str(deliveries).strip('[]')
+                        orders = str(orders).strip('u')
                         message = 'Dear %s, with respect to your bank deposit of orders %s, ' \
                                   'there is a %dRs deduction in your next month\'s salary, as you hae deposited less' \
                                   % (dg.user.first_name, orders, pending_salary_deduction)
@@ -719,20 +743,21 @@ class CODViewSet(viewsets.ViewSet):
             all_transactions = []
             emp = get_object_or_404(Employee, user=request.user)
             cod_action = cod_actions(constants.COD_BANK_DEPOSITED_CODE)
-            verified_bank_deposits = CODTransaction.objects.filter(transaction__title=cod_action, transaction_status=constants.VERIFIED)
-            verified_bank_deposits = verified_bank_deposits.filter(orderdeliverystatus__cod_status=constants.COD_STATUS_BANK_DEPOSITED)
+            verified_bank_deposits = CODTransaction.objects.filter(Q(transaction__title=cod_action, transaction_status=constants.VERIFIED) |
+                                                                   Q(transaction__title=cod_action, transaction_status=constants.DECLINED))
+            verified_bank_deposits = verified_bank_deposits.filter(orderdeliverystatus__cod_status=constants.COD_STATUS_BANK_DEPOSITED).distinct()
             if len(verified_bank_deposits) > 0:
                 # DATE FILTERING (optional)
                 if filter_start_date is not None and filter_end_date is not None:
                     filter_start_date = parse_datetime(filter_start_date)
+                    filter_start_date = filter_start_date + time_delta()
+                    filter_start_date = filter_start_date.replace(day=filter_start_date.day, month=filter_start_date.month, year=filter_start_date.year, hour=00, minute=00, second=00)
+
                     filter_end_date = parse_datetime(filter_end_date)
+                    filter_end_date = filter_end_date + time_delta()
+                    filter_end_date = filter_end_date.replace(day=filter_end_date.day, month=filter_end_date.month, year=filter_end_date.year, hour=23, minute=59, second=00)
                     verified_bank_deposits = verified_bank_deposits.filter(verified_time_stamp__gte=filter_start_date,
                                                                            verified_time_stamp__lte=filter_end_date)
-                # VENDOR FILTERING (optional)
-                if filter_vendor_id is not None:
-                    vendor = get_object_or_404(Vendor, pk=filter_vendor_id)
-                    if vendor is not None:
-                        verified_bank_deposits = verified_bank_deposits.filter(orderdeliverystatus__order__vendor=vendor).distinct()
 
                 # SEARCH KEYWORD FILTERING (optional)
                 if search_query is not None:
@@ -755,6 +780,10 @@ class CODViewSet(viewsets.ViewSet):
                         delivery = OrderDeliveryStatus.objects.get(id=single_delivery)
                         verified_bank_deposit_dict = verified_bank_deposit_list(single_bd, delivery)
                         all_transactions.append(verified_bank_deposit_dict)
+                if filter_vendor_id is not None:
+                    vendor = get_object_or_404(Vendor, pk=filter_vendor_id)
+                    if vendor is not None:
+                        all_transactions = filter(lambda record: record['vendor_name'] == vendor.store_name, all_transactions)
                 pagination_count_dict = pagination_count_bank_deposit()
                 pagination_count_dict['total_pages'] = total_pages
                 pagination_count_dict['total_count'] = total_verified_bank_deposits_count
@@ -880,7 +909,12 @@ class CODViewSet(viewsets.ViewSet):
                 # DATE FILTERING (optional)
                 if filter_start_date is not None and filter_end_date is not None:
                     filter_start_date = parse_datetime(filter_start_date)
+                    filter_start_date = filter_start_date + time_delta()
+                    filter_start_date = filter_start_date.replace(day=filter_start_date.day, month=filter_start_date.month, year=filter_start_date.year, hour=00, minute=00, second=00)
+
                     filter_end_date = parse_datetime(filter_end_date)
+                    filter_end_date = filter_end_date + time_delta()
+                    filter_end_date = filter_end_date.replace(day=filter_end_date.day, month=filter_end_date.month, year=filter_end_date.year, hour=23, minute=59, second=00)
                     history = history.filter(created_time_stamp__gte=filter_start_date,
                                              created_time_stamp__lte=filter_end_date)
                 # VENDOR FILTERING (optional)

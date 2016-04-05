@@ -445,6 +445,13 @@ def delivery_guy_app(delivery_status):
         return None
 
 
+def delivery_transactions_list(delivery_tx):
+    delivery_transactions_dict = {
+        'delivery_transaction_title':delivery_tx.action.title
+    }
+    return delivery_transactions_dict
+
+
 def webapp_list(delivery_status):
     if delivery_status is not None:
 
@@ -495,18 +502,28 @@ def webapp_details(delivery_status):
         'pickup_address': address_string(delivery_status.order.pickup_address),
         'delivery_address': address_string(delivery_status.order.delivery_address),
         'status': delivery_status.order_status,
-        'customer_name': delivery_status.order.consumer.full_name,
+        'is_reverse_pickup': delivery_status.order.is_reverse_pickup,
         'is_reported': delivery_status.is_reported,
         'reported_reason': delivery_status.reported_reason,
         'vendor_id': delivery_status.order.vendor.id,
         'vendor_name': delivery_status.order.vendor.store_name,
         'vendor_order_id': delivery_status.order.vendor_order_id,
+        'vendor_phonenumber': delivery_status.order.vendor.phone_number,
         'cod_amount': delivery_status.order.cod_amount,
+        'cod_collected_amount': delivery_status.cod_collected_amount,
+        'customer_name': delivery_status.order.consumer.full_name,
         'customer_phonenumber': delivery_status.order.consumer.phone_number,
+        'delivered_at': delivery_status.delivered_at,
+        'pickedup_datetime': delivery_status.pickedup_datetime,
+        'completed_datetime': delivery_status.completed_datetime,
         'notes': delivery_status.order.notes,
-        'total_cost': delivery_status.order.total_cost
+        'total_cost': delivery_status.order.total_cost,
+        'cod_remarks': delivery_status.cod_remarks,
+        'delivery_charges': delivery_status.order.delivery_charges,
+        'order_placed_datetime': delivery_status.order.created_date_time,
+        'delivery_transactions': []
     }
-    res_order.update(delivery_status)
+    res_order.update(common_params(delivery_status))
     return res_order
 
 
@@ -554,16 +571,29 @@ class OrderViewSet(viewsets.ViewSet):
 
     def retrieve(self, request, pk=None):
         delivery_status = get_object_or_404(OrderDeliveryStatus, id=pk)
-
+        all_transactions_details = []
         # VENDOR PERMISSION CHECK ---------------------------------------------
         role = user_role(request.user)
         if role == constants.VENDOR:
             vendor_agent = get_object_or_404(VendorAgent, user=request.user)
             vendor = vendor_agent.vendor
             if delivery_status.order.vendor.id != vendor.id:
-                return response_access_denied()                
-
-        result = delivery_guy_app(delivery_status)
+                return response_access_denied()
+        result = webapp_details(delivery_status)
+        delivery_tx = (delivery_status.delivery_transactions.all())
+        if len(delivery_tx) > 0:
+            for single in delivery_tx:
+                delivery_transactions_dict = delivery_transactions_list(single)
+                if single.by_user is not None:
+                    delivery_transactions_dict['created_by_user'] = single.by_user.first_name
+                if single.time_stamp is not None:
+                    delivery_transactions_dict['delivery_transaction_timestamp'] = single.time_stamp
+                if single.location is not None and single.location.latitude is not None:
+                    delivery_transactions_dict['delivery_transaction_location_latitude'] = single.location.latitude
+                if single.location is not None and single.location.longitude is not None:
+                    delivery_transactions_dict['delivery_transaction_location_longitude'] = single.location.longitude
+                all_transactions_details.append(delivery_transactions_dict)
+            result['delivery_transactions'] = all_transactions_details
         return response_with_payload(result, None)
 
     def list(self, request):
