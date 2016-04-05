@@ -437,8 +437,7 @@ def delivery_guy_app(delivery_status):
             'total_cost': delivery_status.order.total_cost,
             'cod_remarks': delivery_status.cod_remarks,
             'delivery_charges': delivery_status.order.delivery_charges,
-            'order_placed_datetime': delivery_status.order.created_date_time,
-            'delivery_transactions': []
+            'order_placed_datetime': delivery_status.order.created_date_time
         }
         res_order.update(common_params(delivery_status))
         return res_order
@@ -503,18 +502,28 @@ def webapp_details(delivery_status):
         'pickup_address': address_string(delivery_status.order.pickup_address),
         'delivery_address': address_string(delivery_status.order.delivery_address),
         'status': delivery_status.order_status,
-        'customer_name': delivery_status.order.consumer.full_name,
+        'is_reverse_pickup': delivery_status.order.is_reverse_pickup,
         'is_reported': delivery_status.is_reported,
         'reported_reason': delivery_status.reported_reason,
         'vendor_id': delivery_status.order.vendor.id,
         'vendor_name': delivery_status.order.vendor.store_name,
         'vendor_order_id': delivery_status.order.vendor_order_id,
+        'vendor_phonenumber': delivery_status.order.vendor.phone_number,
         'cod_amount': delivery_status.order.cod_amount,
+        'cod_collected_amount': delivery_status.cod_collected_amount,
+        'customer_name': delivery_status.order.consumer.full_name,
         'customer_phonenumber': delivery_status.order.consumer.phone_number,
+        'delivered_at': delivery_status.delivered_at,
+        'pickedup_datetime': delivery_status.pickedup_datetime,
+        'completed_datetime': delivery_status.completed_datetime,
         'notes': delivery_status.order.notes,
-        'total_cost': delivery_status.order.total_cost
+        'total_cost': delivery_status.order.total_cost,
+        'cod_remarks': delivery_status.cod_remarks,
+        'delivery_charges': delivery_status.order.delivery_charges,
+        'order_placed_datetime': delivery_status.order.created_date_time,
+        'delivery_transactions': []
     }
-    res_order.update(delivery_status)
+    res_order.update(common_params(delivery_status))
     return res_order
 
 
@@ -570,7 +579,7 @@ class OrderViewSet(viewsets.ViewSet):
             vendor = vendor_agent.vendor
             if delivery_status.order.vendor.id != vendor.id:
                 return response_access_denied()
-        result = delivery_guy_app(delivery_status)
+        result = webapp_details(delivery_status)
         delivery_tx = (delivery_status.delivery_transactions.all())
         if len(delivery_tx) > 0:
             for single in delivery_tx:
