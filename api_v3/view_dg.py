@@ -293,6 +293,7 @@ class DGViewSet(viewsets.ModelViewSet):
                 Q(order_status=constants.ORDER_STATUS_INTRANSIT) |
                 Q(order_status=constants.ORDER_STATUS_PICKUP_ATTEMPTED) |
                 Q(order_status=constants.ORDER_STATUS_DELIVERY_ATTEMPTED) |
+                Q(order_status=constants.ORDER_STATUS_OUTFORDELIVERY) |
                 Q(order_status=constants.ORDER_STATUS_DELIVERED)
             )
             assigned_orders_today = assigned_orders_today.exclude(delivery_guy=None)
