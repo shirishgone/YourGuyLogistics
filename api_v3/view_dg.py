@@ -315,13 +315,14 @@ class DGViewSet(viewsets.ModelViewSet):
                 worked_hours = 0
 
                 if attendance is not None:
-                    if attendance.login_time is not None:
-                        worked_hours = (now - attendance.login_time)
-                        total_seconds_worked = int(worked_hours.total_seconds())
-                        hours, remainder = divmod(total_seconds_worked, 60 * 60)
-                        minutes, seconds = divmod(remainder, 60)
-
-                        worked_hours = "%d:%d:%d" % (hours, minutes, seconds)
+                    worked_hours = working_hours_calculation(attendance)
+                    # if attendance.login_time is not None:
+                    #     worked_hours = (now - attendance.login_time)
+                    #     total_seconds_worked = int(worked_hours.total_seconds())
+                    #     hours, remainder = divmod(total_seconds_worked, 60 * 60)
+                    #     minutes, seconds = divmod(remainder, 60)
+                    #
+                    #     worked_hours = "%d:%d:%d" % (hours, minutes, seconds)
 
                 result.append(
                     dg_list_dict(delivery_guy, attendance, no_of_assigned_orders, no_of_executed_orders, worked_hours))
