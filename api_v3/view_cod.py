@@ -113,13 +113,13 @@ def dg_total_cod_amount_dict(delivery_status):
     return dg_total_cod_amount
 
 
-def associated_dgs_collections_dict(dg):
+def associated_dgs_collections_dict(dg, cod_transaction):
     associated_dgs_collections = {
         'dg_id': dg.id,
         'dg_name': dg.user.first_name,
-        'cod_transferred': None,
-        'transferred_time': None,
-        'delivery_ids': []
+        'cod_transferred': cod_transaction.cod_amount,
+        'transferred_time': cod_transaction.verified_time_stamp,
+        'delivery_ids': cod_transaction.deliveries
     }
     return associated_dgs_collections
 
@@ -320,11 +320,38 @@ class CODViewSet(viewsets.ViewSet):
                 dg_tl_collections['tls_collections'] = tl_collections
 
                 balance_amount = cod_balance_calculation(dg)
-
                 delivery_guy_tl = DeliveryTeamLead.objects.get(delivery_guy=dg)
                 associated_dgs = delivery_guy_tl.associate_delivery_guys.all()
                 associated_dgs = associated_dgs.filter(is_active=True)
                 for single_dg in associated_dgs:
+
+                    # -------------------------------------
+                    # deliveries = []
+                    # delivery_statuses = OrderDeliveryStatus.objects.filter(delivery_guy=single_dg,
+                    #                                                        cod_status=constants.COD_STATUS_TRANSFERRED_TO_TL,
+                    #                                                        cod_transactions__transaction_status=constants.VERIFIED,
+                    #                                                        cod_transactions__dg_tl_id=dg_tl_id)
+                    # for single in delivery_statuses:
+                    #     deliveries.append(single.id)
+                    # delivery_statuses = delivery_statuses.values('delivery_guy__user__username').annotate(sum_of_cod_collected=Sum('cod_collected_amount'))
+                    # if len(delivery_statuses) > 0:
+                    #     associated_dgs_collections = associated_dgs_collections_dict(single_dg)
+                    #     associated_dgs_collections['delivery_ids'] = deliveries
+                    #     associated_dgs_collections['cod_transferred'] = delivery_statuses[0]['sum_of_cod_collected']
+                    #     cod_action = cod_actions(constants.COD_TRANSFERRED_TO_TL_CODE)
+                    #     cod_transaction = CODTransaction.objects.filter(transaction__title=cod_action,
+                    #                                                     transaction_status=constants.VERIFIED,
+                    #                                                     dg_id=single_dg.id,
+                    #                                                     dg_tl_id=dg_tl_id)
+                    #                                                     # cod_amount=delivery_statuses[0]['sum_of_cod_collected'])
+                    #                                                     # deliveries__in=deliveries)
+                    #     if len(cod_transaction) > 0 and cod_transaction[0].verified_time_stamp is not None:
+                    #         associated_dgs_collections['transferred_time'] = cod_transaction[0].verified_time_stamp
+                    #     else:
+                    #         associated_dgs_collections['transferred_time'] = None
+                    #
+                    #     asso_dg_collections.append(associated_dgs_collections)
+                    # ------------------------------------
                     deliveries = []
                     delivery_statuses = OrderDeliveryStatus.objects.filter(delivery_guy=single_dg,
                                                                            cod_status=constants.COD_STATUS_TRANSFERRED_TO_TL,
@@ -332,23 +359,20 @@ class CODViewSet(viewsets.ViewSet):
                                                                            cod_transactions__dg_tl_id=dg_tl_id)
                     for single in delivery_statuses:
                         deliveries.append(single.id)
-                    delivery_statuses = delivery_statuses.values('delivery_guy__user__username').annotate(sum_of_cod_collected=Sum('cod_collected_amount'))
-                    if len(delivery_statuses) > 0:
-                        associated_dgs_collections = associated_dgs_collections_dict(single_dg)
-                        associated_dgs_collections['delivery_ids'] = deliveries
-                        associated_dgs_collections['cod_transferred'] = delivery_statuses[0]['sum_of_cod_collected']
-                        cod_action = cod_actions(constants.COD_TRANSFERRED_TO_TL_CODE)
-                        cod_transaction = CODTransaction.objects.filter(transaction__title=cod_action,
-                                                                        transaction_status=constants.VERIFIED,
-                                                                        cod_amount=delivery_statuses[0]['sum_of_cod_collected'])
-                                                                        # deliveries__in=deliveries)
-                        if len(cod_transaction) > 0 and cod_transaction[0].verified_time_stamp is not None:
-                            associated_dgs_collections['transferred_time'] = cod_transaction[0].verified_time_stamp
-                        else:
-                            associated_dgs_collections['transferred_time'] = None
-
-                        asso_dg_collections.append(associated_dgs_collections)
-
+                    cod_action = cod_actions(constants.COD_TRANSFERRED_TO_TL_CODE)
+                    cod_transaction = CODTransaction.objects.filter(transaction__title=cod_action,
+                                                                    transaction_status=constants.VERIFIED,
+                                                                    dg_id=single_dg.id,
+                                                                    dg_tl_id=dg_tl_id)
+                    for single_tx in cod_transaction:
+                        tx_deliveries = single_tx.deliveries
+                        tx_deliveries = tx_deliveries.strip('u')
+                        delivery_ids = eval(tx_deliveries)
+                        cod_transaction = cod_transaction.filter(deliveries=delivery_ids)
+                        if len(cod_transaction) > 0:
+                            for single in cod_transaction:
+                                associated_dgs_collections = associated_dgs_collections_dict(single_dg, single)
+                                asso_dg_collections.append(associated_dgs_collections)
                 dg_tl_collections['total_cod_amount'] = balance_amount
                 dg_tl_collections['associated_dg_collections'] = asso_dg_collections
                 return response_with_payload(dg_tl_collections, None)
