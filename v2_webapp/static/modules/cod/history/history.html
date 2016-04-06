@@ -43,11 +43,18 @@
 <md-sidenav class="filter-sidenav md-sidenav-right md-whiteframe-z3" layout="column" md-component-id="cod-filter">
 	<md-toolbar class="md-primary md-whiteframe-z1">
 		<div class="md-toolbar-tools">
-			<md-button class="md-icon-button" aria-label="Filter Button" ng-click="history.resetParams()">
-				<md-icon>backspace</md-icon>
-			</md-button>
+			Filters
 			<span flex></span>
+			<md-button class="md-icon-button" aria-label="Filter Button" ng-click="history.resetParams()">
+				<md-tooltip md-direction="bottom">
+          			Reset
+        		</md-tooltip>
+				<md-icon>refresh</md-icon>
+			</md-button>
 			<md-button class="md-icon-button" aria-label="Filter Button" ng-click="history.getDeposits()">
+				<md-tooltip md-direction="bottom">
+          			Apply
+        		</md-tooltip>
 				<md-icon>done</md-icon>
 			</md-button>
 		</div>
@@ -71,7 +78,7 @@
 					md-selected-item-change="history.selectedVendorChange(vendor)"
 					md-items="vendor in history.vendorSearchTextChange(history.searchVendor)"
 					md-item-text="vendor.name"
-					md-min-length="1"
+					md-min-length="0"
 					placeholder="Search Vendor">
 					<md-item-template>
 						<span md-highlight-text="history.searchVendor" md-highlight-flags="^i">{{vendor.name}}</span>

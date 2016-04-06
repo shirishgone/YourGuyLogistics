@@ -28,8 +28,8 @@
 		this.params.order_status = ($stateParams.order_status)? $stateParams.order_status.split(','): [];
 		this.params.pincodes     = ($stateParams.pincodes)    ? $stateParams.pincodes.split(','): [];
 		this.params.date         = new Date(this.params.date);
-		this.searchedDg          = this.params.dg_username;
-		this.searchVendor        = this.params.vendor_id;
+		this.searchedDg          = this.params.dg_name;
+		this.searchVendor        = this.params.vendor_name;
 		this.searchOrderActive = (this.params.search !== undefined) ? true : false;
 		/*
 			 scope Orders variable assignments are done from this section for the controller
@@ -134,9 +134,11 @@
 		this.selectedDgChange = function(dg){
 			if(dg){
 				self.params.dg_username = dg.phone_number;
+				self.params.dg_name = dg.name;
 			}
 			else{
 				self.params.dg_username = undefined;
+				self.params.dg_name = undefined;
 			}
 		};
 		/*
@@ -156,9 +158,11 @@
 		this.selectedVendorChange = function(vendor){
 			if(vendor){
 				self.params.vendor_id = vendor.id;
+				self.params.vendor_name = vendor.name;
 			}
 			else{
 				self.params.vendor_id = undefined;
+				self.params.vendor_name = undefined;
 			}
 		};
 		/*
@@ -313,6 +317,12 @@
 			@getOrders rleoads the order controller according too the filter to get the new filtered data.
 		*/
 		this.getOrders = function(){
+			if (!self.params.vendor_id) {
+				self.params.vendor_name = undefined;
+			}
+			if (!self.params.dg_username) {
+				self.params.dg_name = undefined;
+			}
 			$state.transitionTo($state.current, self.params, { reload: true, inherit: false, notify: true });
 		};
 	};

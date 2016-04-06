@@ -1367,7 +1367,7 @@
 	.config(['$stateProvider',function ($stateProvider) {
 		$stateProvider
 		.state('home.opsorder', {
-			url: "^/all-orders?date&vendor_id&dg_username&order_status&page&start_time&end_time&is_cod&search&delivery_ids&pincodes&is_retail",
+			url: "^/all-orders?date&vendor_id&dg_username&order_status&page&start_time&end_time&is_cod&search&delivery_ids&pincodes&is_retail&vendor_name&dg_name",
 			templateUrl: "/static/modules/order/list/list.html",
 			controllerAs : 'opsOrder',
     		controller: "opsOrderCntrl",
@@ -1677,8 +1677,8 @@
 		this.params.order_status = ($stateParams.order_status)? $stateParams.order_status.split(','): [];
 		this.params.pincodes     = ($stateParams.pincodes)    ? $stateParams.pincodes.split(','): [];
 		this.params.date         = new Date(this.params.date);
-		this.searchedDg          = this.params.dg_username;
-		this.searchVendor        = this.params.vendor_id;
+		this.searchedDg          = this.params.dg_name;
+		this.searchVendor        = this.params.vendor_name;
 		this.searchOrderActive = (this.params.search !== undefined) ? true : false;
 		/*
 			 scope Orders variable assignments are done from this section for the controller
@@ -1783,9 +1783,11 @@
 		this.selectedDgChange = function(dg){
 			if(dg){
 				self.params.dg_username = dg.phone_number;
+				self.params.dg_name = dg.name;
 			}
 			else{
 				self.params.dg_username = undefined;
+				self.params.dg_name = undefined;
 			}
 		};
 		/*
@@ -1805,9 +1807,11 @@
 		this.selectedVendorChange = function(vendor){
 			if(vendor){
 				self.params.vendor_id = vendor.id;
+				self.params.vendor_name = vendor.name;
 			}
 			else{
 				self.params.vendor_id = undefined;
+				self.params.vendor_name = undefined;
 			}
 		};
 		/*
@@ -1962,6 +1966,12 @@
 			@getOrders rleoads the order controller according too the filter to get the new filtered data.
 		*/
 		this.getOrders = function(){
+			if (!self.params.vendor_id) {
+				self.params.vendor_name = undefined;
+			}
+			if (!self.params.dg_username) {
+				self.params.dg_name = undefined;
+			}
 			$state.transitionTo($state.current, self.params, { reload: true, inherit: false, notify: true });
 		};
 	};
@@ -3277,7 +3287,7 @@
 		self.varifiedDeposits = varifiedDeposits.payload.data.all_transactions;
 		self.total_pages = varifiedDeposits.payload.data.total_pages;
 		self.total_deposits = varifiedDeposits.payload.data.total_bank_deposit_count;
-		this.searchVendor = this.params.vendor_id;
+		this.searchVendor = this.params.vendor_name;
 
 		if(this.params.start_date){
 			this.params.start_date = new Date(this.params.start_date);
@@ -3405,9 +3415,11 @@
 		self.selectedVendorChange = function(vendor){
 			if(vendor){
 				self.params.vendor_id = vendor.id;
+				self.params.vendor_name = vendor.name;
 			}
 			else{
 				self.params.vendor_id = undefined;
+				self.params.vendor_name = undefined;
 			}
 		};
 		/*
@@ -3421,6 +3433,9 @@
 			@getDeposits rleoads the cod controller according too the filter to get the new filtered data.
 		*/
 		this.getDeposits = function(){
+			if (!self.params.vendor_id) {
+				self.params.vendor_name = undefined;
+			}
 			$state.transitionTo($state.current, self.params, { reload: true, inherit: false, notify: true });
 		};
 	};
@@ -3429,7 +3444,7 @@
 	.config(['$stateProvider',function($stateProvider) {
 		$stateProvider
 		.state('home.cod.transfer',{
-			url: "^/cod/transfer?page&start_date&end_date&vendor_id",
+			url: "^/cod/transfer?page&start_date&end_date&vendor_id&vendor_name",
 			templateUrl: "/static/modules/cod/transfer/transfer.html",
 			controllerAs : 'transfer',
     		controller: "codTransferCntrl",
@@ -3466,8 +3481,7 @@
 		self.historyDeposits = historyDeposits.payload.data.all_transactions;
 		self.total_pages = historyDeposits.payload.data.total_pages;
 		self.total_deposits = historyDeposits.payload.data.total_count;
-		this.searchVendor = this.params.vendor_id;
-		console.log(historyDeposits);
+		this.searchVendor = this.params.vendor_name;
 
 		if(this.params.start_date){
 			this.params.start_date = new Date(this.params.start_date);
@@ -3506,9 +3520,11 @@
 		self.selectedVendorChange = function(vendor){
 			if(vendor){
 				self.params.vendor_id = vendor.id;
+				self.params.vendor_name = vendor.name;
 			}
 			else{
 				self.params.vendor_id = undefined;
+				self.params.vendor_name = undefined;
 			}
 		};
 		/*
@@ -3522,6 +3538,9 @@
 			@getDeposits rleoads the cod controller according too the filter to get the new filtered data.
 		*/
 		this.getDeposits = function(){
+			if (!self.params.vendor_id) {
+				self.params.vendor_name = undefined;
+			}
 			$state.transitionTo($state.current, self.params, { reload: true, inherit: false, notify: true });
 		};
 	};
@@ -3530,7 +3549,7 @@
 	.config(['$stateProvider',function($stateProvider) {
 		$stateProvider
 		.state('home.cod.history',{
-			url: "^/cod/history?page&start_date&end_date&vendor_id",
+			url: "^/cod/history?page&start_date&end_date&vendor_id&vendor_name",
 			templateUrl: "/static/modules/cod/history/history.html",
 			controllerAs : 'history',
     		controller: "codHistoryCntrl",

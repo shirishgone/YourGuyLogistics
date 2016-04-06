@@ -8,7 +8,7 @@
 	.config(['$stateProvider',function ($stateProvider) {
 		$stateProvider
 		.state('home.opsorder', {
-			url: "^/all-orders?date&vendor_id&dg_username&order_status&page&start_time&end_time&is_cod&search&delivery_ids&pincodes&is_retail",
+			url: "^/all-orders?date&vendor_id&dg_username&order_status&page&start_time&end_time&is_cod&search&delivery_ids&pincodes&is_retail&vendor_name&dg_name",
 			templateUrl: "/static/modules/order/list/list.html",
 			controllerAs : 'opsOrder',
     		controller: "opsOrderCntrl",

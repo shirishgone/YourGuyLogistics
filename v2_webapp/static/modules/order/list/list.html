@@ -352,7 +352,7 @@
 						md-selected-item-change="opsOrder.selectedVendorChange(vendor)"
 						md-items="vendor in opsOrder.vendorSearchTextChange(opsOrder.searchVendor)"
 						md-item-text="vendor.name"
-						md-min-length="1"
+						md-min-length="0"
 						placeholder="Search Vendor">
 						<md-item-template>
 							<span md-highlight-text="opsOrder.searchVendor" md-highlight-flags="^i">{{vendor.name}}</span>
@@ -371,7 +371,7 @@
 						md-selected-item-change="opsOrder.selectedDgChange(dg)"
 						md-items="dg in opsOrder.dgSearchTextChange(opsOrder.searchedDg)"
 						md-item-text="dg.name"
-						md-min-length="1"
+						md-min-length="0"
 						placeholder="Search Delivery Guy">
 						<md-item-template>
 							<span md-highlight-text="opsOrder.searchedDg" md-highlight-flags="^i">{{dg.name}}</span>
