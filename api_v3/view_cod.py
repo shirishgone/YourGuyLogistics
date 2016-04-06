@@ -253,7 +253,7 @@ def vendor_transaction_history(cod_transaction):
 
 def send_salary_deduction_email(first_name, orders, amount, pending_amount):
     subject = '%s Salary Deduction' % first_name
-    body = 'Hello,\n\nThere has been a salary deduction for %s  \n\nOrder id: %s\nCOD Amount deposited: %d\nSalary Deduction amount: %d'%(first_name, orders, amount, pending_amount)
+    body = 'Hello,\n\nThere has been a salary deduction for %s  \n\nOrder id: %s\nCOD Amount deposited: %d\nSalary Deduction amount: %.2f'%(first_name, orders, amount, pending_amount)
     body = body + '\n\nThanks \n-YourGuy BOT'
     send_email(constants.EMAIL_DG_SALARY_DEDUCTIONS, subject, body)
 
@@ -713,7 +713,7 @@ class CODViewSet(viewsets.ViewSet):
                         orders = str(deliveries).strip('[]')
                         orders = str(orders).strip('u')
                         message = 'Dear %s, with respect to your bank deposit of orders %s, ' \
-                                  'there is a %dRs deduction in your next month\'s salary, as you hae deposited less' \
+                                  'there is a %.2f Rs deduction in your next month\'s salary, as you have deposited less' \
                                   % (dg.user.first_name, orders, pending_salary_deduction)
                         send_sms(dg_phone_number, message)
                         send_salary_deduction_email(dg.user.first_name, orders, bank_deposit.cod_amount, pending_salary_deduction)
