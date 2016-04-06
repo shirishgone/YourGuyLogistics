@@ -19,19 +19,22 @@
 						<md-button class="md-icon-button" id="options" ng-click="transfer.handleSelection.clearAll()" aria-label="Open selected menu">
 							<md-icon ng-style="{color: '#757575','font-size':'24px', height: '24px', width: '24px'}">arrow_back</md-icon>
 						</md-button>
+						{{transfer.handleSelection.selectedItemArray.length}}  Selected
 					</th>
-					<th flex flex-xs="30"></th>
+					<th flex flex-xs="30">
+						
+					</th>
 					<th flex flex-xs="20"></th>
 					<th flex flex-xs="30"></th>
 					<th flex layout="row" layout-align="end start">
-						<md-button class="md-button md-primary" id="options" ng-click="transfer.transferDeposit()" aria-label="Open selected menu">
+						<md-button class="md-primary md-raised transfer-button" id="options" ng-click="transfer.transferDeposit()" aria-label="Open selected menu">
 						Transfer
 						</md-button>
 					</th>
 				</tr>
 			</thead>
 			<tbody class="table-body">
-				<tr ng-repeat="dp in transfer.varifiedDeposits" layout="row" layout-align="start start">
+				<tr ng-repeat="dp in transfer.varifiedDeposits" layout="row" layout-align="start start" ng-class="{'selected': transfer.handleSelection.exists(dp)}">
 					<td>
 						<md-checkbox class="md-primary" ng-checked="transfer.handleSelection.exists(dp)" ng-click="transfer.handleSelection.toggle(dp)" aria-label="Checkbox">
 		        		</md-checkbox>

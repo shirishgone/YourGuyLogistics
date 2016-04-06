@@ -93,7 +93,7 @@
 		self.downloadPop = function(){ 
 			var param = {
 				Bucket : constants.S3_BUCKET,
-				Prefix : self.params.id+'/'+self.order.pickedup_datetime.slice(0,10)+'/pop'
+				Prefix : self.params.id+'/'+self.order.pickup_datetime.slice(0,10)+'/pop'
 			};
 			self.download_image(param);
 		};
@@ -101,7 +101,7 @@
 		self.downloadPod = function(){ 
 			var param = {
 				Bucket : constants.S3_BUCKET,
-				Prefix : self.params.id+'/'+self.order.pickedup_datetime.slice(0,10)+'/pod'
+				Prefix : self.params.id+'/'+self.order.pickup_datetime.slice(0,10)+'/pod'
 			};
 			self.download_image(param);
 		};

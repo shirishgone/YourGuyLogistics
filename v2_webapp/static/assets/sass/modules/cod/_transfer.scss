@@ -23,6 +23,16 @@
 					}
 				}
 			}
+			.transfer-button {
+				background-color: $success-color !important;
+			}
+			.table-body {
+				tr {
+					&.selected {
+						background-color: orange-accent-color('100');
+					}
+				}
+			}
 		}
 	} 
 	.footer {

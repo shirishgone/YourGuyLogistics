@@ -2081,7 +2081,7 @@
 		self.downloadPop = function(){ 
 			var param = {
 				Bucket : constants.S3_BUCKET,
-				Prefix : self.params.id+'/'+self.order.pickedup_datetime.slice(0,10)+'/pop'
+				Prefix : self.params.id+'/'+self.order.pickup_datetime.slice(0,10)+'/pop'
 			};
 			self.download_image(param);
 		};
@@ -2089,7 +2089,7 @@
 		self.downloadPod = function(){ 
 			var param = {
 				Bucket : constants.S3_BUCKET,
-				Prefix : self.params.id+'/'+self.order.pickedup_datetime.slice(0,10)+'/pod'
+				Prefix : self.params.id+'/'+self.order.pickup_datetime.slice(0,10)+'/pod'
 			};
 			self.download_image(param);
 		};
@@ -3279,7 +3279,6 @@
 		self.total_deposits = varifiedDeposits.payload.data.total_bank_deposit_count;
 		this.searchVendor = this.params.vendor_id;
 
-		console.log(varifiedDeposits);
 		if(this.params.start_date){
 			this.params.start_date = new Date(this.params.start_date);
 		}
@@ -3303,7 +3302,6 @@
 			selectedItemArray : [],
 			selectedVendor : undefined,
 			toggle : function (item){
-				console.log(self.handleSelection.selectedItemArray.length);
 				if(self.handleSelection.selectedItemArray.length > 0){
 					if(item.vendor_id != self.handleSelection.selectedVendor){
 						alert("You cannot select different vendor");
@@ -3311,7 +3309,6 @@
 					}
 				}
 				else{
-					console.log("sds");
 					self.handleSelection.selectedVendor = item.vendor_id;
 				}
 				var idx = self.handleSelection.selectedItemArray.indexOf(item);
