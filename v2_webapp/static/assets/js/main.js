@@ -880,6 +880,16 @@
 				update : {
 					method: 'PUT'
 				}
+			}),
+			updatePickupAttempted : $resource(constants.v3baseUrl+'order/:id/pickup_attempted/',{id:"@id"},{
+				update : {
+					method: 'PUT'
+				}
+			}),
+			updateDeliveryAttempted : $resource(constants.v3baseUrl+'order/:id/delivery_attempted/',{id:"@id"},{
+				update : {
+					method: 'PUT'
+				}
 			})
 		};
 	};
@@ -1618,40 +1628,14 @@
 	*/
 	function OrderStatusUpdateCntrl($mdDialog){
 		var self = this;
-		this.pickup = {
-			isPickup: true,
-			data : {
-				pickup_attempted : false,
-				delivery_remarks : null
-			}
-		};
-		this.delivery = {
-			isPickup: false ,
-			data : {
-				delivered_at : null,
-				delivery_attempted : false,
-				delivery_remarks: null,
-				cod_collected_amount: null
-			}
+		this.status_object = {
+			data : {}
 		};
 
 		this.cancel = function() {
 			$mdDialog.cancel();
 		};
-		this.updatePickupAttempted = function(answer){
-			answer.data.pickup_attempted = true;
-			$mdDialog.hide(answer);
-		};
-		this.updatePickup = function(answer){
-			answer.data.pickup_attempted = false;
-			$mdDialog.hide(answer);
-		};
-		this.updateDeliveryAttempted = function(answer){
-			answer.data.delivery_attempted = true;
-			$mdDialog.hide(answer);
-		};
-		this.updateDelivery = function(answer){
-			answer.data.delivery_attempted = false;
+		this.answer = function(answer){
 			$mdDialog.hide(answer);
 		};
 	}
@@ -1889,11 +1873,17 @@
 			OrderStatusUpdate.openStatusDialog()
 			.then(function(status_data) {
 				status_data.delivery_ids = [order.id];
-				if(status_data.isPickup){
+				if(status_data.status == 'pickup'){
 					self.updatePickupStatus(status_data);
 				}
-				else{
+				else if(status_data.status == 'delivered'){
 					self.updateDeliveryStatus(status_data);
+				}
+				else if(status_data.status == 'pickup_attempted'){
+					self.updatePickupAttemtedStatus(status_data);
+				}
+				else if(status_data.status == 'delivery_attempted'){
+					self.updateDeliveryAtemptedStatus(status_data);
 				}
 			});
 		};
@@ -1902,11 +1892,17 @@
 			OrderStatusUpdate.openStatusDialog()
 			.then(function(status_data) {
 				status_data.delivery_ids = orderSelection.getAllItemsIds();
-				if(status_data.isPickup){
+				if(status_data.status == 'pickup'){
 					self.updatePickupStatus(status_data);
 				}
-				else{
+				else if(status_data.status == 'delivered'){
 					self.updateDeliveryStatus(status_data);
+				}
+				else if(status_data.status == 'pickup_attempted'){
+					self.updatePickupAttemtedStatus(status_data);
+				}
+				else if(status_data.status == 'delivery_attempted'){
+					self.updateDeliveryAtemptedStatus(status_data);
 				}
 			});
 		};
@@ -1926,6 +1922,28 @@
 			for(var i=0; i< status_data.delivery_ids.length;i++){
 				status_data.data.id = status_data.delivery_ids[i];
 				array.push(Order.updateDelivered.update(status_data.data).$promise);
+			}
+			$q.all(array).then(function(data){
+				orderSelection.clearAll();
+				self.getOrders();
+			});
+		};
+		self.updateDeliveryAtemptedStatus = function(status_data){
+			var array = [];
+			for(var i=0; i< status_data.delivery_ids.length;i++){
+				status_data.data.id = status_data.delivery_ids[i];
+				array.push(Order.updateDeliveryAttempted.update(status_data.data).$promise);
+			}
+			$q.all(array).then(function(data){
+				orderSelection.clearAll();
+				self.getOrders();
+			});
+		};
+		self.updatePickupAttemtedStatus = function(status_data){
+			var array = [];
+			for(var i=0; i< status_data.delivery_ids.length;i++){
+				status_data.data.id = status_data.delivery_ids[i];
+				array.push(Order.updatePickupAttempted.update(status_data.data).$promise);
 			}
 			$q.all(array).then(function(data){
 				orderSelection.clearAll();
@@ -2161,15 +2179,43 @@
 				self.getOrder();
 			});
 		};
+		self.updateDeliveryAtemptedStatus = function(status_data){
+			var array = [];
+			for(var i=0; i< status_data.delivery_ids.length;i++){
+				status_data.data.id = status_data.delivery_ids[i];
+				array.push(Order.updateDeliveryAttempted.update(status_data.data).$promise);
+			}
+			Notification.loaderStart();
+			$q.all(array).then(function(data){
+				self.getOrder();
+			});
+		};
+		self.updatePickupAttemtedStatus = function(status_data){
+			var array = [];
+			for(var i=0; i< status_data.delivery_ids.length;i++){
+				status_data.data.id = status_data.delivery_ids[i];
+				array.push(Order.updatePickupAttempted.update(status_data.data).$promise);
+			}
+			Notification.loaderStart();
+			$q.all(array).then(function(data){
+				self.getOrder();
+			});
+		};
 		self.statusUpdateDialog = function(order){
 			OrderStatusUpdate.openStatusDialog()
 			.then(function(status_data) {
 				status_data.delivery_ids = [order.id];
-				if(status_data.isPickup){
+				if(status_data.status == 'pickup'){
 					self.updatePickupStatus(status_data);
 				}
-				else{
+				else if(status_data.status == 'delivered'){
 					self.updateDeliveryStatus(status_data);
+				}
+				else if(status_data.status == 'pickup_attempted'){
+					self.updatePickupAttemtedStatus(status_data);
+				}
+				else if(status_data.status == 'delivery_attempted'){
+					self.updateDeliveryAtemptedStatus(status_data);
 				}
 			});
 		};
@@ -2789,7 +2835,7 @@
 	var reportsCntrl = function($state,$stateParams,Reports,Vendor,report,Notification){
 		var self = this;
 		self.params = $stateParams;
-		self.searchVendor  = self.params.vendor_id;
+		self.searchVendor  = self.params.vednor_name;
 		this.searchVendorActive = (this.params.vendor_id !== undefined) ? true : false;
 		self.report_stats = report.payload.data;
 
@@ -2804,6 +2850,7 @@
 		*/ 
 		this.backFromSearch = function(){
 			self.params.vendor_id = undefined;
+			self.params.vednor_name = undefined;
 			self.searchVendorActive = false;
 			self.getReports();
 		};
@@ -2813,15 +2860,20 @@
 				search : text
 			};
 			return Vendor.query(search).$promise.then(function (response){
+				if(self.params.vendor_id){
+					response.payload.data.data.push({name:'All Vendors'});
+				}
 				return response.payload.data.data;
 			});
 		};
 		self.selectedVendorChange = function(vendor){
-			if(vendor){
+			if(vendor.id){
 				self.params.vendor_id = vendor.id;
+				self.params.vednor_name = vendor.name;
 			}
 			else{
 				self.params.vendor_id = undefined;
+				self.params.vednor_name = undefined;
 			}
 			self.getReports();
 		};
@@ -2927,6 +2979,9 @@
 		*/
 		self.getReports = function(){
 			Notification.loaderStart();
+			if (!self.params.vendor_id) {
+				self.params.vednor_name = undefined;
+			}
 			$state.transitionTo($state.current, self.params, { reload: true, inherit: false, notify: true });
 		};
 	};
@@ -2937,7 +2992,7 @@
 	.config(['$stateProvider',function($stateProvider) {
 		$stateProvider
 		.state('home.reports', {
-			url: "^/reports?start_date&end_date&vendor_id",
+			url: "^/reports?start_date&end_date&vendor_id&vednor_name",
 			templateUrl  : "/static/modules/reports/reports.html",
 			controllerAs : 'reports',
     		controller   : "reportsCntrl",
@@ -2951,6 +3006,7 @@
     						x.setHours(0);
     						x.setMinutes(0);
     						x.setSeconds(0);
+    						x.setDate(1);
     						$stateParams.start_date = ($stateParams.start_date !== undefined) ? new Date($stateParams.start_date).toISOString() : x.toISOString();
     						$stateParams.end_date   = ($stateParams.end_date !== undefined) ? new Date($stateParams.end_date).toISOString() : new Date().toISOString();
     						return Reports.getReport.stats($stateParams).$promise;

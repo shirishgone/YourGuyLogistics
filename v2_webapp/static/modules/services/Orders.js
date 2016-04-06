@@ -22,6 +22,16 @@
 				update : {
 					method: 'PUT'
 				}
+			}),
+			updatePickupAttempted : $resource(constants.v3baseUrl+'order/:id/pickup_attempted/',{id:"@id"},{
+				update : {
+					method: 'PUT'
+				}
+			}),
+			updateDeliveryAttempted : $resource(constants.v3baseUrl+'order/:id/delivery_attempted/',{id:"@id"},{
+				update : {
+					method: 'PUT'
+				}
 			})
 		};
 	};

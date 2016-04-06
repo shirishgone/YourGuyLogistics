@@ -224,11 +224,17 @@
 			OrderStatusUpdate.openStatusDialog()
 			.then(function(status_data) {
 				status_data.delivery_ids = [order.id];
-				if(status_data.isPickup){
+				if(status_data.status == 'pickup'){
 					self.updatePickupStatus(status_data);
 				}
-				else{
+				else if(status_data.status == 'delivered'){
 					self.updateDeliveryStatus(status_data);
+				}
+				else if(status_data.status == 'pickup_attempted'){
+					self.updatePickupAttemtedStatus(status_data);
+				}
+				else if(status_data.status == 'delivery_attempted'){
+					self.updateDeliveryAtemptedStatus(status_data);
 				}
 			});
 		};
@@ -237,11 +243,17 @@
 			OrderStatusUpdate.openStatusDialog()
 			.then(function(status_data) {
 				status_data.delivery_ids = orderSelection.getAllItemsIds();
-				if(status_data.isPickup){
+				if(status_data.status == 'pickup'){
 					self.updatePickupStatus(status_data);
 				}
-				else{
+				else if(status_data.status == 'delivered'){
 					self.updateDeliveryStatus(status_data);
+				}
+				else if(status_data.status == 'pickup_attempted'){
+					self.updatePickupAttemtedStatus(status_data);
+				}
+				else if(status_data.status == 'delivery_attempted'){
+					self.updateDeliveryAtemptedStatus(status_data);
 				}
 			});
 		};
@@ -261,6 +273,28 @@
 			for(var i=0; i< status_data.delivery_ids.length;i++){
 				status_data.data.id = status_data.delivery_ids[i];
 				array.push(Order.updateDelivered.update(status_data.data).$promise);
+			}
+			$q.all(array).then(function(data){
+				orderSelection.clearAll();
+				self.getOrders();
+			});
+		};
+		self.updateDeliveryAtemptedStatus = function(status_data){
+			var array = [];
+			for(var i=0; i< status_data.delivery_ids.length;i++){
+				status_data.data.id = status_data.delivery_ids[i];
+				array.push(Order.updateDeliveryAttempted.update(status_data.data).$promise);
+			}
+			$q.all(array).then(function(data){
+				orderSelection.clearAll();
+				self.getOrders();
+			});
+		};
+		self.updatePickupAttemtedStatus = function(status_data){
+			var array = [];
+			for(var i=0; i< status_data.delivery_ids.length;i++){
+				status_data.data.id = status_data.delivery_ids[i];
+				array.push(Order.updatePickupAttempted.update(status_data.data).$promise);
 			}
 			$q.all(array).then(function(data){
 				orderSelection.clearAll();
