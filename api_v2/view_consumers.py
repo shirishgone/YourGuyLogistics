@@ -18,27 +18,8 @@ import datetime
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 import constants
 from django.db.models import Q
-    
-def create_address(full_address, pin_code, landmark):
-    new_address = Address.objects.create(full_address = full_address, pin_code = pin_code)
-    if landmark is not None:
-        new_address.landmark = landmark
-        new_address.save()
-    return new_address    
 
-def create_consumer(name, phone_number, address, vendor):    
-    try:
-        consumer = Consumer.objects.get(phone_number=phone_number, vendor = vendor)
-    except Exception as e:
-        try:
-            user = User.objects.get(username = phone_number)
-        except Exception, e:
-            user = User.objects.create(username = phone_number)
-        consumer = Consumer.objects.create(user = user, phone_number=phone_number, full_name = name, vendor = vendor)
-    consumer.associated_vendor.add(vendor)
-    consumer.addresses.add(address)
-    consumer.save()
-    return consumer
+from api_v3.view_consumer import is_consumer_has_same_address_already, fetch_or_create_consumer, fetch_or_create_consumer_address
 
 def consumer_list_dict(consumer):
     consumer_dict = {
@@ -183,8 +164,8 @@ class ConsumerViewSet(viewsets.ModelViewSet):
                 return Response(content, status = status.HTTP_400_BAD_REQUEST)
             # -------------------------------------------------------------
             
-            new_address = create_address(full_address, pin_code, landmark)
-            new_consumer = create_consumer(name, phone_number, new_address, vendor_agent.vendor)
+            new_consumer = fetch_or_create_consumer(name, phone_number, vendor_agent.vendor)
+            new_address = fetch_or_create_consumer_address(new_consumer, full_address, pin_code, landmark)
             
             content = {
             'consumer_id': new_consumer.id,
@@ -234,15 +215,7 @@ class ConsumerViewSet(viewsets.ModelViewSet):
         role = user_role(request.user)
         if role == constants.VENDOR:
             consumer = get_object_or_404(Consumer, pk = pk)
-            
-            # CREATE NEW ADDRESS OBJECT ------------------------------------------
-            new_address = Address.objects.create(full_address = full_address, pin_code = pin_code)
-            if landmark is not None:
-                new_address.landmark = landmark
-                new_address.save()
-            # --------------------------------------------------------
-            
-            consumer.addresses.add(new_address)
+            new_address = fetch_or_create_consumer_address(consumer, full_address, pin_code, landmark)
             content = {
             'address_id': new_address.id
             }

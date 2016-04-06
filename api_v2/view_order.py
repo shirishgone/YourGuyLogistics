@@ -18,7 +18,7 @@ from yourguy.models import Notification, NotificationType
 from api.views import user_role, ist_day_start, ist_day_end, is_userexists, send_sms, send_email, days_in_int, time_delta
 from api.views import is_today_date, log_exception, ist_datetime
 
-from api_v2.utils import is_pickup_time_acceptable, is_consumer_has_same_address_already, is_correct_pincode, is_vendor_has_same_address_already
+from api_v2.utils import is_pickup_time_acceptable, is_correct_pincode, is_vendor_has_same_address_already
 from api_v2.utils import notification_type_for_code, ops_manager_for_dg, ops_executive_for_pincode
 from api_v2.views import paginate
 
@@ -35,6 +35,8 @@ from dateutil.rrule import rrule, WEEKLY
 from api.push import send_push
 from django.db.models import Prefetch
 import string
+
+from api_v3.view_consumer import fetch_or_create_consumer, fetch_or_create_consumer_address
 
 def is_deliveryguy_assigned(delivery):
     if delivery.delivery_guy is not None:
@@ -93,31 +95,6 @@ def retail_order_send_email(vendor, new_order_ids):
     body = 'Hello,\n\n%s has placed few orders.\n\nOrder Nos: %s \n\n Please check' % (client_name, order_ids)
     body = body + '\n\nThanks \n-YourGuy BOT'
     send_email(constants.RETAIL_EMAIL_ID, subject, body)
-
-def fetch_consumer(phone_number, name, vendor):
-    try:
-        consumer = Consumer.objects.get(phone_number=phone_number, vendor = vendor)
-    except Exception as e:
-        try:
-            user = User.objects.get(username = phone_number)    
-        except Exception, e:
-            user = User.objects.create(username = phone_number)                
-        consumer = Consumer.objects.create(user = user, phone_number=phone_number, full_name = name, vendor = vendor)
-    consumer.associated_vendor.add(vendor)
-    consumer.save()
-    return consumer
-
-def fetch_consumer_address(consumer, full_address, pincode, landmark):
-    address = is_consumer_has_same_address_already(consumer, pincode)
-    if address is None:
-        address = Address.objects.create(pin_code = pincode)
-        if full_address is not None:
-            address.full_address = full_address
-        if landmark is not None:
-            address.landmark = landmark
-        address.save()
-        consumer.addresses.add(address)
-    return address
 
 def fetch_vendor_address(vendor, full_address, pincode, landmark):
     address = is_vendor_has_same_address_already(vendor, pincode)
@@ -788,16 +765,16 @@ class OrderViewSet(viewsets.ViewSet):
                 return Response(content, status = status.HTTP_400_BAD_REQUEST)
             
             try:
-                fetch_consumer(consumer_phone_number, consumer_name, vendor)
+                consumer = fetch_or_create_consumer(consumer_phone_number, consumer_name, vendor)
                 
                 # ADDRESS CHECK ----------------------------------
                 try:
                     if is_reverse_pickup is True:
-                        pickup_address = fetch_consumer_address(consumer, delivery_full_address, delivery_pin_code, delivery_landmark)
+                        pickup_address = fetch_or_create_consumer_address(consumer, delivery_full_address, delivery_pin_code, delivery_landmark)
                         delivery_address = get_object_or_404(Address, pk = pickup_address_id)                
                     else:
                         pickup_address = get_object_or_404(Address, pk = pickup_address_id)
-                        delivery_address = fetch_consumer_address(consumer, delivery_full_address, delivery_pin_code, delivery_landmark)
+                        delivery_address = fetch_or_create_consumer_address(consumer, delivery_full_address, delivery_pin_code, delivery_landmark)
                 except:
                     content = {'error':' Error parsing addresses'}
                     return Response(content, status = status.HTTP_400_BAD_REQUEST)
@@ -1136,7 +1113,7 @@ class OrderViewSet(viewsets.ViewSet):
         # ---------------------------------------------------
 
         try:
-            consumer = fetch_consumer(consumer_phone_number, consumer_name, vendor)    
+            consumer = fetch_or_create_consumer(consumer_phone_number, consumer_name, vendor)
             
             # ADDRESS CHECK ---------------------------------------------------
             try:
@@ -1158,10 +1135,10 @@ class OrderViewSet(viewsets.ViewSet):
             # SORTING PICKUP AND DELIVERY ADDRESSES ------------------------------
             try:
                 if is_reverse_pickup is False:
-                    delivery_adr = fetch_consumer_address(consumer, delivery_full_address, delivery_pin_code, delivery_landmark)                    
+                    delivery_adr = fetch_or_create_consumer_address(consumer, delivery_full_address, delivery_pin_code, delivery_landmark)                    
                     pickup_adr = fetch_vendor_address(vendor, pickup_full_address, pickup_pin_code, pickup_landmark)
                 else:
-                    pickup_adr = fetch_consumer_address(consumer, pickup_full_address, pickup_pin_code, pickup_landmark)                                        
+                    pickup_adr = fetch_or_create_consumer_address(consumer, pickup_full_address, pickup_pin_code, pickup_landmark)                                        
                     delivery_adr = fetch_vendor_address(vendor, delivery_full_address, delivery_pin_code, delivery_landmark)        
             except:
                 content = {
@@ -1304,8 +1281,8 @@ class OrderViewSet(viewsets.ViewSet):
                 return Response(content, status = status.HTTP_400_BAD_REQUEST)
                 
             # FETCH CUSTOMER or CREATE NEW CUSTOMER ----------------
-            consumer = fetch_consumer(consumer_phonenumber, consumer_name, vendor)
-            consumer_address = fetch_consumer_address(consumer, None, pincode, None)
+            consumer = fetch_or_create_consumer(consumer_phonenumber, consumer_name, vendor)
+            consumer_address = fetch_or_create_consumer_address(consumer, None, pincode, None)
             # ------------------------------------------------------                    
             
             extra_note = 'Additional order added by delivery boy: %s' % delivery_boy.user.first_name
