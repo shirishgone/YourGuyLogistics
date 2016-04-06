@@ -288,7 +288,8 @@ class DGViewSet(viewsets.ModelViewSet):
 
             # -------------------------------------------------------------------------------------
             delivery_statuses_today = OrderDeliveryStatus.objects.filter(date__gte=day_start, date__lte=day_end)
-            assigned_orders_today = delivery_statuses_today.filter(
+            # PG assigned orders
+            pg_assigned_orders = delivery_statuses_today.filter(
                 Q(order_status=constants.ORDER_STATUS_QUEUED) |
                 Q(order_status=constants.ORDER_STATUS_INTRANSIT) |
                 Q(order_status=constants.ORDER_STATUS_PICKUP_ATTEMPTED) |
@@ -296,9 +297,31 @@ class DGViewSet(viewsets.ModelViewSet):
                 Q(order_status=constants.ORDER_STATUS_OUTFORDELIVERY) |
                 Q(order_status=constants.ORDER_STATUS_DELIVERED)
             )
-            assigned_orders_today = assigned_orders_today.exclude(delivery_guy=None)
-            executed_orders_today = delivery_statuses_today.filter(order_status=constants.ORDER_STATUS_DELIVERED)
-            executed_orders_today = executed_orders_today.exclude(delivery_guy=None)
+            # DG assigned orders
+            dg_assigned_orders = delivery_statuses_today.filter(
+                Q(order_status=constants.ORDER_STATUS_QUEUED) |
+                Q(order_status=constants.ORDER_STATUS_INTRANSIT) |
+                Q(order_status=constants.ORDER_STATUS_DELIVERY_ATTEMPTED) |
+                Q(order_status=constants.ORDER_STATUS_OUTFORDELIVERY) |
+                Q(order_status=constants.ORDER_STATUS_DELIVERED)
+            )
+            # PG executed orders
+            pg_executed_orders = delivery_statuses_today.filter(
+                Q(order_status=constants.ORDER_STATUS_PICKUP_ATTEMPTED) |
+                Q(order_status=constants.ORDER_STATUS_OUTFORDELIVERY) |
+                Q(order_status=constants.ORDER_STATUS_DELIVERED)
+            )
+            # DG executed orders
+            dg_executed_orders = delivery_statuses_today.filter(
+                Q(order_status=constants.ORDER_STATUS_DELIVERY_ATTEMPTED) |
+                Q(order_status=constants.ORDER_STATUS_DELIVERED)
+            )
+            pg_assigned_orders = pg_assigned_orders.exclude(pickup_guy=None)
+            dg_assigned_orders = dg_assigned_orders.exclude(delivery_guy=None)
+            pg_executed_orders = pg_executed_orders.exclude(pickup_guy=None)
+            dg_executed_orders = dg_executed_orders.exclude(delivery_guy=None)
+
+            # ---------------------------------------------------------------
 
             # Attendance for the DG of the day -----------------------------------------------------
             result = []
@@ -310,19 +333,18 @@ class DGViewSet(viewsets.ModelViewSet):
                     attendance = None
 
                 # append cod, executed, assigned for that dg
-                no_of_assigned_orders = assigned_orders_today.filter(delivery_guy=delivery_guy).count()
-                no_of_executed_orders = executed_orders_today.filter(delivery_guy=delivery_guy).count()
+                pg_no_of_assigned_orders = pg_assigned_orders.filter(pickup_guy=delivery_guy).count()
+                dg_no_of_assigned_orders = dg_assigned_orders.filter(delivery_guy=delivery_guy).count()
+                no_of_assigned_orders = pg_no_of_assigned_orders + dg_no_of_assigned_orders
+
+                pg_no_of_executed_orders = pg_executed_orders.filter(pickup_guy=delivery_guy).count()
+                dg_no_of_executed_orders = dg_executed_orders.filter(delivery_guy=delivery_guy).count()
+                no_of_executed_orders = pg_no_of_executed_orders + dg_no_of_executed_orders
+
                 worked_hours = 0
 
                 if attendance is not None:
                     worked_hours = working_hours_calculation(attendance)
-                    # if attendance.login_time is not None:
-                    #     worked_hours = (now - attendance.login_time)
-                    #     total_seconds_worked = int(worked_hours.total_seconds())
-                    #     hours, remainder = divmod(total_seconds_worked, 60 * 60)
-                    #     minutes, seconds = divmod(remainder, 60)
-                    #
-                    #     worked_hours = "%d:%d:%d" % (hours, minutes, seconds)
 
                 result.append(
                     dg_list_dict(delivery_guy, attendance, no_of_assigned_orders, no_of_executed_orders, worked_hours))
