@@ -16,7 +16,7 @@ from api_v3 import constants
 from api_v3.push import send_push
 from api_v3.utils import log_exception, send_sms, ist_datetime, user_role, address_string, ist_day_start, ist_day_end, \
     paginate, is_correct_pincode, is_pickup_time_acceptable, timedelta, is_userexists, \
-    is_consumer_has_same_address_already, days_in_int, send_email, is_today_date, is_vendor_has_same_address_already, \
+    days_in_int, send_email, is_today_date, is_vendor_has_same_address_already, \
     delivery_actions, ops_manager_for_dg, notification_type_for_code, ops_executive_for_pincode, address_with_location, \
     response_access_denied, response_incomplete_parameters, response_success_with_message, response_with_payload, response_invalid_pagenumber, \
     response_error_with_message, cod_actions
@@ -26,6 +26,8 @@ from yourguy.models import User, Vendor, DeliveryGuy, VendorAgent, Picture, Proo
     Consumer, Address, Order, Product, OrderItem, Notification, Location, DeliveryTransaction, CODTransaction
 
 from api_v3.cron_jobs import create_notif_for_no_ops_exec_for_pincode
+from api_v3.view_consumer import fetch_or_create_consumer, fetch_or_create_consumer_address
+
 
 def add_action_for_delivery(action, delivery, user, latitude, longitude, timestamp, remarks):
     delivery_transaction = DeliveryTransaction.objects.create(action=action, by_user=user,
@@ -126,32 +128,6 @@ def is_reschedule_allowed(delivery_status):
         return True
     else:
         return False
-
-def fetch_consumer(phone_number, name, vendor):
-    try:
-        consumer = Consumer.objects.get(phone_number=phone_number, vendor = vendor)
-    except Exception as e:
-        try:
-            user = User.objects.get(username = phone_number)
-        except Exception, e:
-            user = User.objects.create(username = phone_number)
-        consumer = Consumer.objects.create(user = user, phone_number=phone_number, full_name = name, vendor = vendor)
-    consumer.associated_vendor.add(vendor)
-    consumer.save()
-    return consumer
-
-def fetch_consumer_address(consumer, full_address, pincode, landmark):
-    address = is_consumer_has_same_address_already(consumer, pincode)
-    if address is None:
-        address = Address.objects.create(pin_code=pincode)
-        if full_address is not None:
-            address.full_address = full_address
-        if landmark is not None:
-            address.landmark = landmark
-        address.save()
-        consumer.addresses.add(address)
-    return address
-
 
 def fetch_vendor_address(vendor, full_address, pincode, landmark):
     address = is_vendor_has_same_address_already(vendor, pincode)
@@ -1013,15 +989,15 @@ class OrderViewSet(viewsets.ViewSet):
                 return response_error_with_message(error_message)
             
             try:
-                consumer = fetch_consumer(consumer_phone_number, consumer_name, vendor)                
+                consumer = fetch_or_create_consumer(consumer_phone_number, consumer_name, vendor)                
                 # ADDRESS CHECK ----------------------------------
                 try:
                     if is_reverse_pickup is True:
-                        pickup_address = fetch_consumer_address(consumer, delivery_full_address, delivery_pin_code, delivery_landmark)
+                        pickup_address = fetch_or_create_consumer_address(consumer, delivery_full_address, delivery_pin_code, delivery_landmark)
                         delivery_address = get_object_or_404(Address, pk = pickup_address_id)                
                     else:
                         pickup_address = get_object_or_404(Address, pk = pickup_address_id)
-                        delivery_address = fetch_consumer_address(consumer, delivery_full_address, delivery_pin_code, delivery_landmark)
+                        delivery_address = fetch_or_create_consumer_address(consumer, delivery_full_address, delivery_pin_code, delivery_landmark)
                 except:
                     error_message = 'error parsing addresses'
                     return response_error_with_message(error_message)
@@ -1570,8 +1546,8 @@ class OrderViewSet(viewsets.ViewSet):
                 return response_incomplete_parameters(parameters)
 
             # FETCH CUSTOMER or CREATE NEW CUSTOMER ----------------
-            consumer = fetch_consumer(consumer_phonenumber, consumer_name, vendor)
-            consumer_address = fetch_consumer_address(consumer, None, pincode, None)
+            consumer = fetch_or_create_consumer(consumer_phonenumber, consumer_name, vendor)
+            consumer_address = fetch_or_create_consumer_address(consumer, None, pincode, None)
             # ------------------------------------------------------
 
             extra_note = 'Additional delivery added by the boy: %s' % delivery_boy.user.first_name

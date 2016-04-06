@@ -8,7 +8,7 @@ from api_v3.utils import send_email, ist_day_start, ist_day_end
 from yourguy.models import DeliveryGuy, OrderDeliveryStatus, DGAttendance, Vendor, Employee
 from rest_framework.decorators import api_view
 
-
+@api_view(['GET'])
 def daily_report():
     date = datetime.today()
     day_start = ist_day_start(date)
