@@ -57,6 +57,13 @@
 		this.status_list = constants.status;
 		this.time_list = constants.time;
 		/*
+			@revertToPageOne is a function to revert back to first page if any kind of filter is applied
+		*/ 
+		this.revertToPageOne = function(){
+			self.params.page = 1;
+			self.getOrders();
+		};
+		/*
 			@backFromSearch is a function to revert back from a searched dorder view to complete list view of orders
 		*/ 
 		this.backFromSearch = function(){

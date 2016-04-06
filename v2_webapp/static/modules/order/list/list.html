@@ -40,9 +40,9 @@
 			<md-icon>arrow_back</md-icon>
 		</md-button>
 		<md-input-container flex  md-no-float>
-        	<input ng-model="opsOrder.params.search" type="text" placeholder="Search Orders" ng-keyup="$event.which === 13 && opsOrder.getOrders()" md-autofocus="opsOrder.searchOrderActive == true">
+        	<input ng-model="opsOrder.params.search" type="text" placeholder="Search Orders" ng-keyup="$event.which === 13 && opsOrder.revertToPageOne()" md-autofocus="opsOrder.searchOrderActive == true">
         </md-input-container>
-        <md-button class="md-icon-button" aria-label="Search dg Button" ng-click="opsOrder.getOrders()">
+        <md-button class="md-icon-button" aria-label="Search dg Button" ng-click="opsOrder.revertToPageOne()">
         	<md-tooltip md-direction="bottom">
           		Search
         	</md-tooltip>
@@ -332,7 +332,7 @@
 			<div class="md-toolbar-tools">
 				<h1 class="md-subhead md-toolbar-tools">FILTERS</h1>
         		<span flex></span>
-				<md-button class="md-icon-button" aria-label="Filter Button" ng-click="opsOrder.getOrders()">
+				<md-button class="md-icon-button" aria-label="Filter Button" ng-click="opsOrder.revertToPageOne()">
 					<md-icon>done</md-icon>
 				</md-button>
 			</div>

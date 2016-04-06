@@ -1006,6 +1006,23 @@
 		});
 		$rootScope.$on("$stateChangeStart",function (event, toState, toParams, fromState, fromParams){
 			angular.element($document[0].getElementsByClassName('request-loader')).removeClass('request-loader-hidden');
+			// var toProps = Object.getOwnPropertyNames(toParams);
+   // 			var fromProps = Object.getOwnPropertyNames(fromParams);
+   // 			if(fromState.name === toState.name && toParams.hasOwnProperty('page')){
+   // 				for( var key in toParams){
+   // 					if(key !== 'page' && key !== 'date') {
+   // 						console.log(typeof toParams[key]+"-->"+key);
+   // 						// console.log(toParams.pincodes);
+   // 						if(toParams[key] !== fromParams[key]){
+   // 							console.log(key);
+   // 							console.log(toParams);
+   // 							console.log(fromParams);
+   // 							toParams.page = 1;
+   // 							return;
+   // 						}
+   // 					}
+   // 				}
+   // 			}
 			if (toState.redirectTo) {
 				event.preventDefault();
 				$state.go(toState.redirectTo, toParams);
@@ -1380,15 +1397,15 @@
     			orders: ['Order','$stateParams', function (Order,$stateParams){
     						$stateParams.date = ($stateParams.date !== undefined) ? new Date($stateParams.date).toISOString() : new Date().toISOString();
     						$stateParams.page = (!isNaN($stateParams.page))? parseInt($stateParams.page): 1;
-						    $stateParams.is_cod = ($stateParams.is_cod == 'true')? Boolean($stateParams.is_cod): null;
-						    $stateParams.is_retail = ($stateParams.is_retail == 'true')? Boolean($stateParams.is_retail): null;
+						    $stateParams.is_cod = ($stateParams.is_cod == 'true')? Boolean($stateParams.is_cod): undefined;
+						    $stateParams.is_retail = ($stateParams.is_retail == 'true')? Boolean($stateParams.is_retail): undefined;
 
 						    if(Array.isArray($stateParams.order_status)){
-    							$stateParams.order_status = ($stateParams.order_status.length > 0) ? $stateParams.order_status.toString(): null;
+    							$stateParams.order_status = ($stateParams.order_status.length > 0) ? $stateParams.order_status.toString(): undefined;
     						}
     						
     						if(Array.isArray($stateParams.pincodes)){
-    							$stateParams.pincodes = ($stateParams.pincodes.length > 0) ? $stateParams.pincodes.toString(): null;
+    							$stateParams.pincodes = ($stateParams.pincodes.length > 0) ? $stateParams.pincodes.toString(): undefined;
     						}
     						return Order.getOrders.query($stateParams).$promise;
     					}],
@@ -1705,6 +1722,13 @@
 		*/
 		this.status_list = constants.status;
 		this.time_list = constants.time;
+		/*
+			@revertToPageOne is a function to revert back to first page if any kind of filter is applied
+		*/ 
+		this.revertToPageOne = function(){
+			self.params.page = 1;
+			self.getOrders();
+		};
 		/*
 			@backFromSearch is a function to revert back from a searched dorder view to complete list view of orders
 		*/ 
@@ -2446,6 +2470,13 @@
 				self.params.page = self.params.page - 1;
 				self.getDgs();
 			}
+		};
+		/*
+			@revertToPageOne is a function to revert back to first page if any kind of filter is applied
+		*/ 
+		this.revertToPageOne = function(){
+			self.params.page = 1;
+			self.getDgs();
 		};
 		/*
 			@backFromSearch is a function to revert back from a searched delivery guy name to complete list view of delivery guys
@@ -3218,6 +3249,13 @@
 			}
 		};
 		/*
+			@revertToPageOne is a function to revert back to first page if any kind of filter is applied
+		*/ 
+		this.revertToPageOne = function(){
+			self.params.page = 1;
+			self.getDeposits();
+		};
+		/*
 			@resetParams funcion to reset the filter.
 		*/
 		self.resetParams = function(){
@@ -3423,6 +3461,13 @@
 			}
 		};
 		/*
+			@revertToPageOne is a function to revert back to first page if any kind of filter is applied
+		*/ 
+		this.revertToPageOne = function(){
+			self.params.page = 1;
+			self.getDeposits();
+		};
+		/*
 			@resetParams funcion to reset the filter.
 		*/
 		self.resetParams = function(){
@@ -3526,6 +3571,13 @@
 				self.params.vendor_id = undefined;
 				self.params.vendor_name = undefined;
 			}
+		};
+		/*
+			@revertToPageOne is a function to revert back to first page if any kind of filter is applied
+		*/ 
+		this.revertToPageOne = function(){
+			self.params.page = 1;
+			self.getDeposits();
 		};
 		/*
 			@resetParams funcion to reset the filter.

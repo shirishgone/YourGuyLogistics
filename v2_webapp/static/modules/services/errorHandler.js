@@ -35,6 +35,23 @@
 		});
 		$rootScope.$on("$stateChangeStart",function (event, toState, toParams, fromState, fromParams){
 			angular.element($document[0].getElementsByClassName('request-loader')).removeClass('request-loader-hidden');
+			// var toProps = Object.getOwnPropertyNames(toParams);
+   // 			var fromProps = Object.getOwnPropertyNames(fromParams);
+   // 			if(fromState.name === toState.name && toParams.hasOwnProperty('page')){
+   // 				for( var key in toParams){
+   // 					if(key !== 'page' && key !== 'date') {
+   // 						console.log(typeof toParams[key]+"-->"+key);
+   // 						// console.log(toParams.pincodes);
+   // 						if(toParams[key] !== fromParams[key]){
+   // 							console.log(key);
+   // 							console.log(toParams);
+   // 							console.log(fromParams);
+   // 							toParams.page = 1;
+   // 							return;
+   // 						}
+   // 					}
+   // 				}
+   // 			}
 			if (toState.redirectTo) {
 				event.preventDefault();
 				$state.go(toState.redirectTo, toParams);

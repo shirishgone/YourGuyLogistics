@@ -21,15 +21,15 @@
     			orders: ['Order','$stateParams', function (Order,$stateParams){
     						$stateParams.date = ($stateParams.date !== undefined) ? new Date($stateParams.date).toISOString() : new Date().toISOString();
     						$stateParams.page = (!isNaN($stateParams.page))? parseInt($stateParams.page): 1;
-						    $stateParams.is_cod = ($stateParams.is_cod == 'true')? Boolean($stateParams.is_cod): null;
-						    $stateParams.is_retail = ($stateParams.is_retail == 'true')? Boolean($stateParams.is_retail): null;
+						    $stateParams.is_cod = ($stateParams.is_cod == 'true')? Boolean($stateParams.is_cod): undefined;
+						    $stateParams.is_retail = ($stateParams.is_retail == 'true')? Boolean($stateParams.is_retail): undefined;
 
 						    if(Array.isArray($stateParams.order_status)){
-    							$stateParams.order_status = ($stateParams.order_status.length > 0) ? $stateParams.order_status.toString(): null;
+    							$stateParams.order_status = ($stateParams.order_status.length > 0) ? $stateParams.order_status.toString(): undefined;
     						}
     						
     						if(Array.isArray($stateParams.pincodes)){
-    							$stateParams.pincodes = ($stateParams.pincodes.length > 0) ? $stateParams.pincodes.toString(): null;
+    							$stateParams.pincodes = ($stateParams.pincodes.length > 0) ? $stateParams.pincodes.toString(): undefined;
     						}
     						return Order.getOrders.query($stateParams).$promise;
     					}],

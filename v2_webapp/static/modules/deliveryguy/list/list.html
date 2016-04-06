@@ -36,9 +36,9 @@
 			<md-icon>arrow_back</md-icon>
 		</md-button>
 		<md-input-container flex  md-no-float>
-        	<input ng-model="dgList.params.search" type="text" placeholder="Search delivery guy" ng-keyup="$event.which === 13 && dgList.getDgs()" md-autofocus="dgList.searchDgActive == true">
+        	<input ng-model="dgList.params.search" type="text" placeholder="Search delivery guy" ng-keyup="$event.which === 13 && dgList.revertToPageOne()" md-autofocus="dgList.searchDgActive == true">
         </md-input-container>
-        <md-button class="md-icon-button" aria-label="Search dg Button" ng-click="dgList.getDgs()">
+        <md-button class="md-icon-button" aria-label="Search dg Button" ng-click="dgList.revertToPageOne()">
 			<md-icon>search</md-icon>
 		</md-button>
 	</div>
@@ -83,7 +83,7 @@
 			<div class="md-toolbar-tools">
 				<h1 class="md-subhead">FILTERS</h1>
 				<span flex></span>
-				<md-button class="md-icon-button" aria-label="Filter Button" ng-click="dgList.getDgs()">
+				<md-button class="md-icon-button" aria-label="Filter Button" ng-click="dgList.revertToPageOne()">
 					<md-icon>done</md-icon>
 				</md-button>
 			</div>
