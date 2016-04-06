@@ -69,11 +69,18 @@
 <md-sidenav class="filter-sidenav md-sidenav-right md-whiteframe-z3" layout="column" md-component-id="cod-filter">
 	<md-toolbar class="md-primary md-whiteframe-z1">
 		<div class="md-toolbar-tools">
-			<md-button class="md-icon-button" aria-label="Filter Button" ng-click="deposit.resetParams()">
-				<md-icon>backspace</md-icon>
-			</md-button>
+			Filters
 			<span flex></span>
-			<md-button class="md-icon-button" aria-label="Filter Button" ng-click="deposit.getDeposits()">
+			<md-button class="md-icon-button" aria-label="Filter Button" ng-click="deposit.resetParams()">
+				<md-tooltip md-direction="bottom">
+          			Reset
+        		</md-tooltip>
+				<md-icon>refresh</md-icon>
+			</md-button>
+			<md-button class="md-icon-button" aria-label="Filter Button" ng-click="deposit.revertToPageOne()">
+				<md-tooltip md-direction="bottom">
+          			Apply
+        		</md-tooltip>
 				<md-icon>done</md-icon>
 			</md-button>
 		</div>

@@ -5,9 +5,11 @@
 		</md-button>
 		<p>Feedback {{feedbackDetail.ticket.subject | limitTo :20}}{{feedbackDetail.ticket.subject.length > 20 ? '...' : ''}}</p>
 		<span flex></span>
-		<md-button class="tootbar-button" ng-click="feedbackDetail.showConfirm($event)" ng-if="feedbackDetail.ticket.status == 2">
-			<md-icon ng-style="{color: '#FFFFFF','font-size':'28px', height: '28px', width: '28px'}">done</md-icon> <br>
-			<span>resolve</span>
+		<md-button ng-click="feedbackDetail.showConfirm($event)" ng-if="feedbackDetail.ticket.status == 2">
+			<md-tooltip md-direction="bottom">
+          		Resolve
+        	</md-tooltip>
+			<md-icon>done</md-icon>
 		</md-button>
 	</div>
 </md-toolbar>
@@ -42,12 +44,12 @@
 			</div>
 		</div>
 		<div flex="none" class="note-text" layout="row" ng-if="feedbackDetail.ticket.status == 2">
-			<textarea flex="80" flex-xs="100" ng-model="ticket_data.note.helpdesk_note.body" maxlength="500" rows="5"></textarea>
-			<input type="text" ng-model="ticket_data.note.helpdesk_note.private" ng-init="ticket_data.note.helpdesk_note.private = false" style="display: none;">
+			<textarea flex="80" flex-xs="100" ng-model="feedbackDetail.ticket_data.note.helpdesk_note.body" maxlength="500" rows="5"></textarea>
+			<input type="text" ng-model="feedbackDetail.ticket_data.note.helpdesk_note.private" ng-init="feedbackDetail.ticket_data.note.helpdesk_note.private = false" style="display: none;">
 		</div>
 		<div flex="none" layout="row" ng-if="feedbackDetail.ticket.status == 2" >
 			<div flex="80" flex-xs="100" layout="row" layout-align="end center">
-				<md-button class="md-raised md-primary" ng-click="feedbackDetail.addNotes(ticket_data)" ng-disabled="!ticket_data.note.helpdesk_note.body" >SEND</md-button>
+				<md-button class="md-raised md-primary" ng-click="feedbackDetail.addNotes(feedbackDetail.ticket_data)" ng-disabled="!feedbackDetail.ticket_data.note.helpdesk_note.body" >SEND</md-button>
 			</div>
 		</div>
 	</section>

@@ -3,19 +3,31 @@
 		<md-button ng-click="home.toggleSideNav()" class="md-icon-button" aria-label="Menu Icon">
 			<md-icon>menu</md-icon>
 		</md-button>
-		<p>Delivery Boy</p>
+		<p>DeliveryBoys</p>
 		<span flex></span>
 		<md-button class="md-icon-button" aria-label="search Button" ng-click="dgList.searchDgActive = true">
+			<md-tooltip md-direction="bottom">
+          		Search
+        	</md-tooltip>
 			<md-icon>search</md-icon>
 		</md-button>
 		<md-button class="md-icon-button" ng-click="dgList.downloadAttendance()" aria-label="Notification Button">
+			<md-tooltip md-direction="bottom">
+          		Download attendance
+        	</md-tooltip>
 			<md-icon>file_download</md-icon>
 		</md-button>
 		<md-button ui-sref="home.notification" class="md-icon-button notifications_count" aria-label="Notification Button">
 			<span ng-show="home.count > 0" class="count-over-icon">{{home.count | limitTo :2}}{{home.count > 99 ? '+' : ''}}</span>
+			<md-tooltip md-direction="bottom">
+          		Notifications
+        	</md-tooltip>
 			<md-icon>notifications_none</md-icon>
 		</md-button>
 		<md-button ng-click="dgList.toggleFilter()" class="md-icon-button" aria-label="Filter Button">
+			<md-tooltip md-direction="bottom">
+          		Filters
+        	</md-tooltip>
 			<md-icon>filter_list</md-icon>
 		</md-button>
 	</div>
@@ -24,9 +36,9 @@
 			<md-icon>arrow_back</md-icon>
 		</md-button>
 		<md-input-container flex  md-no-float>
-        	<input ng-model="dgList.params.search" type="text" placeholder="Search delivery guy" ng-keyup="$event.which === 13 && dgList.getDgs()" md-autofocus="dgList.searchDgActive == true">
+        	<input ng-model="dgList.params.search" type="text" placeholder="Search delivery guy" ng-keyup="$event.which === 13 && dgList.revertToPageOne()" md-autofocus="dgList.searchDgActive == true">
         </md-input-container>
-        <md-button class="md-icon-button" aria-label="Search dg Button" ng-click="dgList.getDgs()">
+        <md-button class="md-icon-button" aria-label="Search dg Button" ng-click="dgList.revertToPageOne()">
 			<md-icon>search</md-icon>
 		</md-button>
 	</div>
@@ -71,7 +83,7 @@
 			<div class="md-toolbar-tools">
 				<h1 class="md-subhead">FILTERS</h1>
 				<span flex></span>
-				<md-button class="md-icon-button" aria-label="Filter Button" ng-click="dgList.getDgs()">
+				<md-button class="md-icon-button" aria-label="Filter Button" ng-click="dgList.revertToPageOne()">
 					<md-icon>done</md-icon>
 				</md-button>
 			</div>

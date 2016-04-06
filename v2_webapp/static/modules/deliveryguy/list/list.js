@@ -38,6 +38,13 @@
 			}
 		};
 		/*
+			@revertToPageOne is a function to revert back to first page if any kind of filter is applied
+		*/ 
+		this.revertToPageOne = function(){
+			self.params.page = 1;
+			self.getDgs();
+		};
+		/*
 			@backFromSearch is a function to revert back from a searched delivery guy name to complete list view of delivery guys
 		*/ 
 		this.backFromSearch = function(){

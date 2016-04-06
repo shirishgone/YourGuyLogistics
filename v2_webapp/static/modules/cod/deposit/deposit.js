@@ -134,6 +134,13 @@
 			}
 		};
 		/*
+			@revertToPageOne is a function to revert back to first page if any kind of filter is applied
+		*/ 
+		this.revertToPageOne = function(){
+			self.params.page = 1;
+			self.getDeposits();
+		};
+		/*
 			@resetParams funcion to reset the filter.
 		*/
 		self.resetParams = function(){

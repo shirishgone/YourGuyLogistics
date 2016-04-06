@@ -6,8 +6,7 @@
 		self.historyDeposits = historyDeposits.payload.data.all_transactions;
 		self.total_pages = historyDeposits.payload.data.total_pages;
 		self.total_deposits = historyDeposits.payload.data.total_count;
-		this.searchVendor = this.params.vendor_id;
-		console.log(historyDeposits);
+		this.searchVendor = this.params.vendor_name;
 
 		if(this.params.start_date){
 			this.params.start_date = new Date(this.params.start_date);
@@ -46,10 +45,19 @@
 		self.selectedVendorChange = function(vendor){
 			if(vendor){
 				self.params.vendor_id = vendor.id;
+				self.params.vendor_name = vendor.name;
 			}
 			else{
 				self.params.vendor_id = undefined;
+				self.params.vendor_name = undefined;
 			}
+		};
+		/*
+			@revertToPageOne is a function to revert back to first page if any kind of filter is applied
+		*/ 
+		this.revertToPageOne = function(){
+			self.params.page = 1;
+			self.getDeposits();
 		};
 		/*
 			@resetParams funcion to reset the filter.
@@ -62,6 +70,9 @@
 			@getDeposits rleoads the cod controller according too the filter to get the new filtered data.
 		*/
 		this.getDeposits = function(){
+			if (!self.params.vendor_id) {
+				self.params.vendor_name = undefined;
+			}
 			$state.transitionTo($state.current, self.params, { reload: true, inherit: false, notify: true });
 		};
 	};
@@ -70,7 +81,7 @@
 	.config(['$stateProvider',function($stateProvider) {
 		$stateProvider
 		.state('home.cod.history',{
-			url: "^/cod/history?page&start_date&end_date&vendor_id",
+			url: "^/cod/history?page&start_date&end_date&vendor_id&vendor_name",
 			templateUrl: "/static/modules/cod/history/history.html",
 			controllerAs : 'history',
     		controller: "codHistoryCntrl",

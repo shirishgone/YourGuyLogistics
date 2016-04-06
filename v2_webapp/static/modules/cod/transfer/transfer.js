@@ -21,9 +21,8 @@
 		self.varifiedDeposits = varifiedDeposits.payload.data.all_transactions;
 		self.total_pages = varifiedDeposits.payload.data.total_pages;
 		self.total_deposits = varifiedDeposits.payload.data.total_bank_deposit_count;
-		this.searchVendor = this.params.vendor_id;
+		this.searchVendor = this.params.vendor_name;
 
-		console.log(varifiedDeposits);
 		if(this.params.start_date){
 			this.params.start_date = new Date(this.params.start_date);
 		}
@@ -47,7 +46,6 @@
 			selectedItemArray : [],
 			selectedVendor : undefined,
 			toggle : function (item){
-				console.log(self.handleSelection.selectedItemArray.length);
 				if(self.handleSelection.selectedItemArray.length > 0){
 					if(item.vendor_id != self.handleSelection.selectedVendor){
 						alert("You cannot select different vendor");
@@ -55,7 +53,6 @@
 					}
 				}
 				else{
-					console.log("sds");
 					self.handleSelection.selectedVendor = item.vendor_id;
 				}
 				var idx = self.handleSelection.selectedItemArray.indexOf(item);
@@ -152,10 +149,19 @@
 		self.selectedVendorChange = function(vendor){
 			if(vendor){
 				self.params.vendor_id = vendor.id;
+				self.params.vendor_name = vendor.name;
 			}
 			else{
 				self.params.vendor_id = undefined;
+				self.params.vendor_name = undefined;
 			}
+		};
+		/*
+			@revertToPageOne is a function to revert back to first page if any kind of filter is applied
+		*/ 
+		this.revertToPageOne = function(){
+			self.params.page = 1;
+			self.getDeposits();
 		};
 		/*
 			@resetParams funcion to reset the filter.
@@ -168,6 +174,9 @@
 			@getDeposits rleoads the cod controller according too the filter to get the new filtered data.
 		*/
 		this.getDeposits = function(){
+			if (!self.params.vendor_id) {
+				self.params.vendor_name = undefined;
+			}
 			$state.transitionTo($state.current, self.params, { reload: true, inherit: false, notify: true });
 		};
 	};
@@ -176,7 +185,7 @@
 	.config(['$stateProvider',function($stateProvider) {
 		$stateProvider
 		.state('home.cod.transfer',{
-			url: "^/cod/transfer?page&start_date&end_date&vendor_id",
+			url: "^/cod/transfer?page&start_date&end_date&vendor_id&vendor_name",
 			templateUrl: "/static/modules/cod/transfer/transfer.html",
 			controllerAs : 'transfer',
     		controller: "codTransferCntrl",

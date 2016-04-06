@@ -19,7 +19,7 @@
 					md-selected-item-change="assignDG.pickupDgChange(dg)"
 					md-items="dg in assignDG.dgSearchTextChange(assignDG.searchedPickupDg)"
 					md-item-text="dg.name"
-					md-min-length="1"
+					md-min-length="0"
 					placeholder="Type Pickup Guy Name">
 					<md-item-template>
 						<span md-highlight-text="assignDG.searchedPickupDg" md-highlight-flags="^i">{{dg.name}}</span>
@@ -40,7 +40,7 @@
 					md-selected-item-change="assignDG.deliveryDgChange(dg)"
 					md-items="dg in assignDG.dgSearchTextChange(assignDG.searchedDeliveryDg)"
 					md-item-text="dg.name"
-					md-min-length="1"
+					md-min-length="0"
 					placeholder="Type Delivery Guy Name">
 					<md-item-template>
 						<span md-highlight-text="assignDG.searchedDeliveryDg" md-highlight-flags="^i">{{dg.name}}</span>

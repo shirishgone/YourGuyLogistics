@@ -6,10 +6,16 @@
 		<p>Vendors</p>
 		<span flex></span>
 		<md-button class="md-icon-button" aria-label="search Button" ng-click="vendorList.searchVendorActive = true">
+			<md-tooltip md-direction="bottom">
+          		Search
+        	</md-tooltip>
 			<md-icon>search</md-icon>
 		</md-button>
 		<md-button ui-sref="home.notification" class="md-icon-button notifications_count" aria-label="Notification Button">
 			<span ng-show="home.count > 0" class="count-over-icon">{{home.count | limitTo :2}}{{home.count > 99 ? '+' : ''}}</span>
+			<md-tooltip md-direction="bottom">
+          		Notifications
+        	</md-tooltip>
 			<md-icon>notifications_none</md-icon>
 		</md-button>
 		<!-- <md-button ng-click="vendorList.toggleFilter()" class="md-icon-button" aria-label="Filter Button">

@@ -1006,6 +1006,23 @@
 		});
 		$rootScope.$on("$stateChangeStart",function (event, toState, toParams, fromState, fromParams){
 			angular.element($document[0].getElementsByClassName('request-loader')).removeClass('request-loader-hidden');
+			// var toProps = Object.getOwnPropertyNames(toParams);
+   // 			var fromProps = Object.getOwnPropertyNames(fromParams);
+   // 			if(fromState.name === toState.name && toParams.hasOwnProperty('page')){
+   // 				for( var key in toParams){
+   // 					if(key !== 'page' && key !== 'date') {
+   // 						console.log(typeof toParams[key]+"-->"+key);
+   // 						// console.log(toParams.pincodes);
+   // 						if(toParams[key] !== fromParams[key]){
+   // 							console.log(key);
+   // 							console.log(toParams);
+   // 							console.log(fromParams);
+   // 							toParams.page = 1;
+   // 							return;
+   // 						}
+   // 					}
+   // 				}
+   // 			}
 			if (toState.redirectTo) {
 				event.preventDefault();
 				$state.go(toState.redirectTo, toParams);
@@ -1367,7 +1384,7 @@
 	.config(['$stateProvider',function ($stateProvider) {
 		$stateProvider
 		.state('home.opsorder', {
-			url: "^/all-orders?date&vendor_id&dg_username&order_status&page&start_time&end_time&is_cod&search&delivery_ids&pincodes&is_retail",
+			url: "^/all-orders?date&vendor_id&dg_username&order_status&page&start_time&end_time&is_cod&search&delivery_ids&pincodes&is_retail&vendor_name&dg_name",
 			templateUrl: "/static/modules/order/list/list.html",
 			controllerAs : 'opsOrder',
     		controller: "opsOrderCntrl",
@@ -1380,15 +1397,15 @@
     			orders: ['Order','$stateParams', function (Order,$stateParams){
     						$stateParams.date = ($stateParams.date !== undefined) ? new Date($stateParams.date).toISOString() : new Date().toISOString();
     						$stateParams.page = (!isNaN($stateParams.page))? parseInt($stateParams.page): 1;
-						    $stateParams.is_cod = ($stateParams.is_cod == 'true')? Boolean($stateParams.is_cod): null;
-						    $stateParams.is_retail = ($stateParams.is_retail == 'true')? Boolean($stateParams.is_retail): null;
+						    $stateParams.is_cod = ($stateParams.is_cod == 'true')? Boolean($stateParams.is_cod): undefined;
+						    $stateParams.is_retail = ($stateParams.is_retail == 'true')? Boolean($stateParams.is_retail): undefined;
 
 						    if(Array.isArray($stateParams.order_status)){
-    							$stateParams.order_status = ($stateParams.order_status.length > 0) ? $stateParams.order_status.toString(): null;
+    							$stateParams.order_status = ($stateParams.order_status.length > 0) ? $stateParams.order_status.toString(): undefined;
     						}
     						
     						if(Array.isArray($stateParams.pincodes)){
-    							$stateParams.pincodes = ($stateParams.pincodes.length > 0) ? $stateParams.pincodes.toString(): null;
+    							$stateParams.pincodes = ($stateParams.pincodes.length > 0) ? $stateParams.pincodes.toString(): undefined;
     						}
     						return Order.getOrders.query($stateParams).$promise;
     					}],
@@ -1677,8 +1694,8 @@
 		this.params.order_status = ($stateParams.order_status)? $stateParams.order_status.split(','): [];
 		this.params.pincodes     = ($stateParams.pincodes)    ? $stateParams.pincodes.split(','): [];
 		this.params.date         = new Date(this.params.date);
-		this.searchedDg          = this.params.dg_username;
-		this.searchVendor        = this.params.vendor_id;
+		this.searchedDg          = this.params.dg_name;
+		this.searchVendor        = this.params.vendor_name;
 		this.searchOrderActive = (this.params.search !== undefined) ? true : false;
 		/*
 			 scope Orders variable assignments are done from this section for the controller
@@ -1705,6 +1722,13 @@
 		*/
 		this.status_list = constants.status;
 		this.time_list = constants.time;
+		/*
+			@revertToPageOne is a function to revert back to first page if any kind of filter is applied
+		*/ 
+		this.revertToPageOne = function(){
+			self.params.page = 1;
+			self.getOrders();
+		};
 		/*
 			@backFromSearch is a function to revert back from a searched dorder view to complete list view of orders
 		*/ 
@@ -1783,9 +1807,11 @@
 		this.selectedDgChange = function(dg){
 			if(dg){
 				self.params.dg_username = dg.phone_number;
+				self.params.dg_name = dg.name;
 			}
 			else{
 				self.params.dg_username = undefined;
+				self.params.dg_name = undefined;
 			}
 		};
 		/*
@@ -1805,9 +1831,11 @@
 		this.selectedVendorChange = function(vendor){
 			if(vendor){
 				self.params.vendor_id = vendor.id;
+				self.params.vendor_name = vendor.name;
 			}
 			else{
 				self.params.vendor_id = undefined;
+				self.params.vendor_name = undefined;
 			}
 		};
 		/*
@@ -1962,6 +1990,12 @@
 			@getOrders rleoads the order controller according too the filter to get the new filtered data.
 		*/
 		this.getOrders = function(){
+			if (!self.params.vendor_id) {
+				self.params.vendor_name = undefined;
+			}
+			if (!self.params.dg_username) {
+				self.params.dg_name = undefined;
+			}
 			$state.transitionTo($state.current, self.params, { reload: true, inherit: false, notify: true });
 		};
 	};
@@ -2081,7 +2115,7 @@
 		self.downloadPop = function(){ 
 			var param = {
 				Bucket : constants.S3_BUCKET,
-				Prefix : self.params.id+'/'+self.order.pickedup_datetime.slice(0,10)+'/pop'
+				Prefix : self.params.id+'/'+self.order.pickup_datetime.slice(0,10)+'/pop'
 			};
 			self.download_image(param);
 		};
@@ -2089,7 +2123,7 @@
 		self.downloadPod = function(){ 
 			var param = {
 				Bucket : constants.S3_BUCKET,
-				Prefix : self.params.id+'/'+self.order.pickedup_datetime.slice(0,10)+'/pod'
+				Prefix : self.params.id+'/'+self.order.pickup_datetime.slice(0,10)+'/pod'
 			};
 			self.download_image(param);
 		};
@@ -2436,6 +2470,13 @@
 				self.params.page = self.params.page - 1;
 				self.getDgs();
 			}
+		};
+		/*
+			@revertToPageOne is a function to revert back to first page if any kind of filter is applied
+		*/ 
+		this.revertToPageOne = function(){
+			self.params.page = 1;
+			self.getDgs();
 		};
 		/*
 			@backFromSearch is a function to revert back from a searched delivery guy name to complete list view of delivery guys
@@ -3208,6 +3249,13 @@
 			}
 		};
 		/*
+			@revertToPageOne is a function to revert back to first page if any kind of filter is applied
+		*/ 
+		this.revertToPageOne = function(){
+			self.params.page = 1;
+			self.getDeposits();
+		};
+		/*
 			@resetParams funcion to reset the filter.
 		*/
 		self.resetParams = function(){
@@ -3277,9 +3325,8 @@
 		self.varifiedDeposits = varifiedDeposits.payload.data.all_transactions;
 		self.total_pages = varifiedDeposits.payload.data.total_pages;
 		self.total_deposits = varifiedDeposits.payload.data.total_bank_deposit_count;
-		this.searchVendor = this.params.vendor_id;
+		this.searchVendor = this.params.vendor_name;
 
-		console.log(varifiedDeposits);
 		if(this.params.start_date){
 			this.params.start_date = new Date(this.params.start_date);
 		}
@@ -3303,7 +3350,6 @@
 			selectedItemArray : [],
 			selectedVendor : undefined,
 			toggle : function (item){
-				console.log(self.handleSelection.selectedItemArray.length);
 				if(self.handleSelection.selectedItemArray.length > 0){
 					if(item.vendor_id != self.handleSelection.selectedVendor){
 						alert("You cannot select different vendor");
@@ -3311,7 +3357,6 @@
 					}
 				}
 				else{
-					console.log("sds");
 					self.handleSelection.selectedVendor = item.vendor_id;
 				}
 				var idx = self.handleSelection.selectedItemArray.indexOf(item);
@@ -3408,10 +3453,19 @@
 		self.selectedVendorChange = function(vendor){
 			if(vendor){
 				self.params.vendor_id = vendor.id;
+				self.params.vendor_name = vendor.name;
 			}
 			else{
 				self.params.vendor_id = undefined;
+				self.params.vendor_name = undefined;
 			}
+		};
+		/*
+			@revertToPageOne is a function to revert back to first page if any kind of filter is applied
+		*/ 
+		this.revertToPageOne = function(){
+			self.params.page = 1;
+			self.getDeposits();
 		};
 		/*
 			@resetParams funcion to reset the filter.
@@ -3424,6 +3478,9 @@
 			@getDeposits rleoads the cod controller according too the filter to get the new filtered data.
 		*/
 		this.getDeposits = function(){
+			if (!self.params.vendor_id) {
+				self.params.vendor_name = undefined;
+			}
 			$state.transitionTo($state.current, self.params, { reload: true, inherit: false, notify: true });
 		};
 	};
@@ -3432,7 +3489,7 @@
 	.config(['$stateProvider',function($stateProvider) {
 		$stateProvider
 		.state('home.cod.transfer',{
-			url: "^/cod/transfer?page&start_date&end_date&vendor_id",
+			url: "^/cod/transfer?page&start_date&end_date&vendor_id&vendor_name",
 			templateUrl: "/static/modules/cod/transfer/transfer.html",
 			controllerAs : 'transfer',
     		controller: "codTransferCntrl",
@@ -3469,8 +3526,7 @@
 		self.historyDeposits = historyDeposits.payload.data.all_transactions;
 		self.total_pages = historyDeposits.payload.data.total_pages;
 		self.total_deposits = historyDeposits.payload.data.total_count;
-		this.searchVendor = this.params.vendor_id;
-		console.log(historyDeposits);
+		this.searchVendor = this.params.vendor_name;
 
 		if(this.params.start_date){
 			this.params.start_date = new Date(this.params.start_date);
@@ -3509,10 +3565,19 @@
 		self.selectedVendorChange = function(vendor){
 			if(vendor){
 				self.params.vendor_id = vendor.id;
+				self.params.vendor_name = vendor.name;
 			}
 			else{
 				self.params.vendor_id = undefined;
+				self.params.vendor_name = undefined;
 			}
+		};
+		/*
+			@revertToPageOne is a function to revert back to first page if any kind of filter is applied
+		*/ 
+		this.revertToPageOne = function(){
+			self.params.page = 1;
+			self.getDeposits();
 		};
 		/*
 			@resetParams funcion to reset the filter.
@@ -3525,6 +3590,9 @@
 			@getDeposits rleoads the cod controller according too the filter to get the new filtered data.
 		*/
 		this.getDeposits = function(){
+			if (!self.params.vendor_id) {
+				self.params.vendor_name = undefined;
+			}
 			$state.transitionTo($state.current, self.params, { reload: true, inherit: false, notify: true });
 		};
 	};
@@ -3533,7 +3601,7 @@
 	.config(['$stateProvider',function($stateProvider) {
 		$stateProvider
 		.state('home.cod.history',{
-			url: "^/cod/history?page&start_date&end_date&vendor_id",
+			url: "^/cod/history?page&start_date&end_date&vendor_id&vendor_name",
 			templateUrl: "/static/modules/cod/history/history.html",
 			controllerAs : 'history',
     		controller: "codHistoryCntrl",
