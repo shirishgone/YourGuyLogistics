@@ -8,16 +8,25 @@
 		<md-button ng-click="home.toggleSideNav()" class="md-icon-button" aria-label="Menu Icon">
 			<md-icon>menu</md-icon>
 		</md-button>
-		<p>ORDERS</p>
+		<p>Orders</p>
 		<span flex></span>
 		<md-button class="md-icon-button" aria-label="search Button" ng-click="opsOrder.searchOrderActive = true">
+			<md-tooltip md-direction="bottom">
+          		Search
+        	</md-tooltip>
 			<md-icon>search</md-icon>
 		</md-button>
 		<md-button ui-sref="home.notification" class="md-icon-button notifications_count" aria-label="Notification Button">
 			<span ng-show="home.count > 0" class="count-over-icon">{{home.count | limitTo :2}}{{home.count > 99 ? '+' : ''}}</span>
+			<md-tooltip md-direction="bottom">
+          		Notifications
+        	</md-tooltip>
 			<md-icon>notifications_none</md-icon>
 		</md-button>
 		<md-button ng-click="opsOrder.toggleFilter()" class="md-icon-button" aria-label="Filter Button">
+			<md-tooltip md-direction="bottom">
+          		Filters
+        	</md-tooltip>
 			<md-icon>filter_list</md-icon>
 		</md-button>
 	</div>
@@ -34,6 +43,9 @@
         	<input ng-model="opsOrder.params.search" type="text" placeholder="Search Orders" ng-keyup="$event.which === 13 && opsOrder.getOrders()" md-autofocus="opsOrder.searchOrderActive == true">
         </md-input-container>
         <md-button class="md-icon-button" aria-label="Search dg Button" ng-click="opsOrder.getOrders()">
+        	<md-tooltip md-direction="bottom">
+          		Search
+        	</md-tooltip>
 			<md-icon>search</md-icon>
 		</md-button>
 	</div>
@@ -52,9 +64,15 @@
 		</div>
 		<span flex></span>
 		<md-button ng-click="opsOrder.statusUpdateDialog($event)" ng-if="home.tabs.updateOrder" class="md-icon-button" aria-label="Menu Icon">
+			<md-tooltip md-direction="bottom">
+          		Update order status
+        	</md-tooltip>
 			<md-icon>update</md-icon>
 		</md-button>
 		<md-button ng-click="opsOrder.assignDg($event)" ng-if="home.tabs.assignOrder" class="md-icon-button" aria-label="Menu Icon">
+			<md-tooltip md-direction="bottom">
+          		Assign dg
+        	</md-tooltip>
 			<md-icon>assignment_ind</md-icon>
 		</md-button>
 	</div>

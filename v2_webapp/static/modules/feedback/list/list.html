@@ -7,6 +7,9 @@
 		<span flex></span>
 		<md-button ui-sref="home.notification" class="md-icon-button notifications_count" aria-label="Notification Button">
 			<span ng-show="home.count > 0" class="count-over-icon">{{home.count | limitTo :2}}{{home.count > 99 ? '+' : ''}}</span>
+			<md-tooltip md-direction="bottom">
+          		Notifications
+        	</md-tooltip>
 			<md-icon>notifications_none</md-icon>
 		</md-button>
 	</div>
