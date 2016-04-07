@@ -338,7 +338,7 @@ class CODViewSet(viewsets.ViewSet):
                                                                     dg_id=single_dg.id,
                                                                     dg_tl_id=dg_tl_id)
                     result_transactions = []
-                    # for single_tx in cod_transaction:
+                    
                     for single_delivery in deliveries:
                         first_qx = '%s,'%(single_delivery)
                         second_qx = ',%s'%(single_delivery)
@@ -346,30 +346,18 @@ class CODViewSet(viewsets.ViewSet):
                         fourth_qx = '%s'%(single_delivery)
                         fifth_qx = '[%s]'%(single_delivery)
                         sixth_qx = "'%s'" %(single_delivery)
-                        # tx_deliveries = tx_deliveries.strip('u')
-                        # delivery_ids = eval(tx_deliveries)
-                        # cod_transaction = cod_transaction.filter(deliveries=tx_deliveries)
                         temp_transactions = cod_transaction.filter(Q(deliveries__startswith=first_qx) | Q(deliveries__endswith=second_qx)
                                                                    | Q(deliveries__contains=third_qx) | Q(deliveries__exact=fourth_qx) |
                                                                    Q(deliveries__exact=fifth_qx) | Q(deliveries__contains=sixth_qx))
                         result_transactions.extend(temp_transactions)
 
+                    result_transactions = list(set(result_transactions))
                     for transaction in result_transactions:
                         associated_dgs_collections = associated_dgs_collections_dict(single_dg, transaction)
                         delivery_ids = eval(transaction.deliveries)
                         associated_dgs_collections['delivery_ids'] = delivery_ids
                         asso_dg_collections.append(associated_dgs_collections)
 
-                        # # cod_transactions = cod_transaction.filter(Q(deliveries__startswith=tx_deliveries)) |
-                        #
-                        # if len(cod_transaction) > 0:
-                        #     for single in cod_transaction:
-                        #         associated_dgs_collections = associated_dgs_collections_dict(single_dg, single)
-                        #         delivery_ids = single.deliveries.strip('u')
-                        #         # delivery_ids = eval(single.deliveries)
-                        #         delivery_ids = eval(delivery_ids)
-                        #         associated_dgs_collections['delivery_ids'] = delivery_ids
-                        #         asso_dg_collections.append(associated_dgs_collections)
                 dg_tl_collections['total_cod_amount'] = balance_amount
                 dg_tl_collections['associated_dg_collections'] = asso_dg_collections
                 return response_with_payload(dg_tl_collections, None)
