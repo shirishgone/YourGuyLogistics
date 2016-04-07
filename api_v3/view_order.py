@@ -1652,7 +1652,7 @@ class OrderViewSet(viewsets.ViewSet):
         except Exception as e:
             parameters = ['dg_id', 'delivery_ids']
             return response_incomplete_parameters(parameters)
-
+        
         role = user_role(request.user)
         if role == constants.DELIVERY_GUY:
             dg_tl = get_object_or_404(DeliveryGuy, user=request.user)
@@ -1660,11 +1660,11 @@ class OrderViewSet(viewsets.ViewSet):
             if dg.is_active is True:
                 for delivery_id in delivery_ids:
                     delivery_status = get_object_or_404(OrderDeliveryStatus, pk=delivery_id)
-                    if delivery_status.pickup_guy is not None and delivery_status.pickup_guy == dg_tl:
+                    if delivery_status.pickup_guy is not None and delivery_status.pickup_guy == dg_tl and delivery_status.order_status == constants.ORDER_STATUS_QUEUED:
                         delivery_status.pickup_guy = dg
                         delivery_status.save()
 
-                    if delivery_status.delivery_guy is not None and delivery_status.delivery_guy == dg_tl:
+                    if delivery_status.delivery_guy is not None and delivery_status.delivery_guy == dg_tl and (delivery_status.order_status == constants.ORDER_STATUS_QUEUED or delivery_status.order_status == constants.ORDER_STATUS_INTRANSIT or delivery_status.order_status == constants.ORDER_STATUS_OUTFORDELIVERY):
                         delivery_status.delivery_guy = dg
                         delivery_status.save()
 
