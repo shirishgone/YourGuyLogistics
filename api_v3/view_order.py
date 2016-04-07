@@ -27,7 +27,7 @@ from yourguy.models import User, Vendor, DeliveryGuy, VendorAgent, Picture, Proo
 
 from api_v3.cron_jobs import create_notif_for_no_ops_exec_for_pincode
 from api_v3.view_consumer import fetch_or_create_consumer, fetch_or_create_consumer_address
-
+from api_v3.view_dg import teamlead_for_pincode
 
 def add_action_for_delivery(action, delivery, user, latitude, longitude, timestamp, remarks):
     delivery_transaction = DeliveryTransaction.objects.create(action=action, by_user=user,
@@ -1562,7 +1562,7 @@ class OrderViewSet(viewsets.ViewSet):
 
             # FETCH CUSTOMER or CREATE NEW CUSTOMER ----------------
             consumer = fetch_or_create_consumer(consumer_phonenumber, consumer_name, vendor)
-            consumer_address = fetch_or_create_consumer_address(consumer, None, pincode, None)
+            consumer_address = fetch_or_create_consumer_address(consumer, '', pincode, None)
             # ------------------------------------------------------
 
             extra_note = 'Additional delivery added by the boy: %s' % delivery_boy.user.first_name
@@ -1578,11 +1578,15 @@ class OrderViewSet(viewsets.ViewSet):
 
             delivery_status = OrderDeliveryStatus.objects.create(date=pickup_datetime, order=new_order)
             
-
             # ASSIGN PICKUP AS SAME BOY -------------------------------------------
             delivery_status.pickup_guy = delivery_boy
             if vendor.is_hyper_local is True:
                 delivery_status.delivery_guy = delivery_boy
+            else:
+                delivery_pincode = new_order.delivery_address.pin_code
+                teamlead_dg = teamlead_for_pincode(pincode)
+                if teamlead_dg is not None:
+                    delivery_status.delivery_guy = teamlead_dg
             delivery_status.save()
             # ---------------------------------------------------------------------
             created_orders.append(delivery_guy_app(delivery_status))

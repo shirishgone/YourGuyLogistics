@@ -19,6 +19,16 @@ from yourguy.models import DeliveryGuy, DGAttendance, Location, OrderDeliverySta
 
 from api_v3.utils import response_access_denied, response_with_payload, response_error_with_message, response_success_with_message, response_invalid_pagenumber, response_incomplete_parameters
 
+def teamlead_for_pincode(pincode):
+    try:
+        pincode_obj = ServiceablePincode.objects.get(pincode=pincode)
+        dg_team_lead = DeliveryTeamLead.objects.filter(serving_pincodes = pincode_obj)
+        if len(dg_team_lead)> 0:
+            return dg_team_lead[0].delivery_guy
+        else:
+            return None
+    except Exception, e:
+        return None
 
 def dg_list_dict(delivery_guy, attendance, no_of_assigned_orders, no_of_executed_orders, worked_hours):
     dg_list_dict = {
