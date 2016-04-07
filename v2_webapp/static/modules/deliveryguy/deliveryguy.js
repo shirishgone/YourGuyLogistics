@@ -4,7 +4,7 @@
 	.config(['$stateProvider',function ($stateProvider) {
 		$stateProvider
 		.state('home.dgList', {
-			url: "^/deliveryguy/list?date&attendance&search&page",
+			url: "^/deliveryguy/list?start_date&end_date&attendance&search&page",
 			templateUrl: "/static/modules/deliveryguy/list/list.html",
 			controllerAs : 'dgList',
     		controller: "dgListCntrl",
@@ -15,7 +15,25 @@
     						return Access.hasAnyRole(allowed_user); 
     					}],
     			dgs: ['DeliveryGuy','$stateParams', function (DeliveryGuy,$stateParams){
-    						$stateParams.date = ($stateParams.date !== undefined) ? new Date($stateParams.date).toISOString() : new Date().toISOString();
+    						var x,y;
+	    					if(!$stateParams.start_date){
+	    						x =  moment();
+								x.startOf('day');
+	    					}
+	    					else{
+	    						$stateParams.start_date = moment(new Date($stateParams.start_date));
+	    						$stateParams.start_date.startOf('day');
+	    					}
+	    					if(!$stateParams.end_date){
+	    						y =  moment();
+								y.endOf('day');
+	    					}
+	    					else{
+	    						$stateParams.end_date = moment(new Date($stateParams.end_date));
+	    						$stateParams.end_date.endOf('day');
+	    					}
+    						$stateParams.start_date = ($stateParams.start_date !== undefined) ? $stateParams.start_date.toISOString() : x.toISOString();
+    						$stateParams.end_date = ($stateParams.end_date !== undefined) ?  $stateParams.end_date.toISOString() : y.toISOString();
     						$stateParams.attendance = ($stateParams.attendance!== undefined) ? $stateParams.attendance : 'ALL';
     						$stateParams.page = (!isNaN($stateParams.page))? parseInt($stateParams.page): 1;
     						return DeliveryGuy.dgPageQuery.query($stateParams).$promise;
