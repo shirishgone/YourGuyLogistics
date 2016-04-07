@@ -330,9 +330,18 @@
 	<md-sidenav class="filter-sidenav md-sidenav-right md-whiteframe-z3" layout="column" md-component-id="order-filter">
 		<md-toolbar class="md-primary md-whiteframe-z1">
 			<div class="md-toolbar-tools">
-				<h1 class="md-subhead md-toolbar-tools">FILTERS</h1>
+				<h1 class="md-subhead md-toolbar-tools">Filters</h1>
         		<span flex></span>
+        		<md-button class="md-icon-button" aria-label="Filter Button" ng-click="opsOrder.resetParams()">
+					<md-tooltip md-direction="bottom">
+	          			Reset
+	        		</md-tooltip>
+					<md-icon>refresh</md-icon>
+				</md-button>
 				<md-button class="md-icon-button" aria-label="Filter Button" ng-click="opsOrder.revertToPageOne()">
+					<md-tooltip md-direction="bottom">
+	          			Apply
+	        		</md-tooltip>
 					<md-icon>done</md-icon>
 				</md-button>
 			</div>

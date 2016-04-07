@@ -64,6 +64,13 @@
 			self.getOrders();
 		};
 		/*
+			@resetParams funcion to reset the filter.
+		*/
+		this.resetParams = function(){
+			self.params = {};
+			self.getOrders();
+		};
+		/*
 			@backFromSearch is a function to revert back from a searched dorder view to complete list view of orders
 		*/ 
 		this.backFromSearch = function(){
