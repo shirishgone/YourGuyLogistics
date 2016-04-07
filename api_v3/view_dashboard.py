@@ -145,14 +145,12 @@ def dashboard_stats(request):
         Q(order_status=constants.ORDER_STATUS_QUEUED) | 
         Q(order_status=constants.ORDER_STATUS_INTRANSIT) |
         Q(order_status=constants.ORDER_STATUS_OUTFORDELIVERY) |
-        Q(order_status=constants.ORDER_STATUS_DELIVERY_ATTEMPTED) |
         Q(order_status=constants.ORDER_STATUS_DELIVERED))
     total_cod_dict = executable_deliveries.aggregate(total_cod=Sum('order__cod_amount'))
     total_cod = total_cod_dict['total_cod']
     
     # TOTAL COD COLLECTED ------------------------------------
-    executed_deliveries = delivery_status_queryset.filter(Q(order_status=constants.ORDER_STATUS_DELIVERY_ATTEMPTED) |
-                                                          Q(order_status=constants.ORDER_STATUS_DELIVERED))
+    executed_deliveries = delivery_status_queryset.filter(Q(order_status=constants.ORDER_STATUS_DELIVERED))
     total_cod_dict = executed_deliveries.aggregate(total_cod=Sum('order__cod_amount'))
     cod_collected = total_cod_dict['total_cod']
 
