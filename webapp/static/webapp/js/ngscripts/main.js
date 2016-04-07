@@ -119,7 +119,7 @@ angular.module('production',[]).constant('baseURl',{
 });
 
 var ygVendors = angular.module('ygwebapp',['ui.router','ngCookies','ngStorage','ngAnimate','cfp.loadingBar',
-  'base64','smart-table','ui.bootstrap','gm.datepickerMultiSelect','ng-fusioncharts','ngMaterial','stage'
+  'base64','smart-table','ui.bootstrap','gm.datepickerMultiSelect','ng-fusioncharts','ngMaterial','production'
 ]);
 
 ygVendors.run(function ($rootScope, $location, $state, $localStorage,$templateCache) {
@@ -2962,10 +2962,10 @@ ygVendors.controller('createComplaintsCntrl',function ($scope,$timeout,$state,St
 
   $scope.getGroups()
 
-  $scope.doComplain = function(){
+  $scope.doComplain = function(data){
     cfpLoadingBar.start();
     $scope.complain_btn_disable = true;
-    Complaints.creatTickets($scope.tickets).finally(function(){
+    Complaints.creatTickets(data).finally(function(){
       var status =  Errorhandler.getStatus();
       if(status.has_error){
         cfpLoadingBar.complete()
