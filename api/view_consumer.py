@@ -13,7 +13,7 @@ from api.serializers import ConsumerSerializer
 from api.views import user_role
 from api.views import user_role, is_userexists, is_vendorexists, is_dgexists
 import constants
-
+from api_v3.view_consumer import is_consumer_has_same_address_already, fetch_or_create_consumer, fetch_or_create_consumer_address
 
 class ConsumerViewSet(viewsets.ModelViewSet):
     """
@@ -83,21 +83,10 @@ class ConsumerViewSet(viewsets.ModelViewSet):
                     }   
                 return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
+            consumer = fetch_or_create_consumer(phone_number, name, vendor)
+            full_address = flat_number + building + street
+            address = fetch_or_create_consumer_address(consumer, full_address, None, None)            
             
-            try:
-                consumer = Consumer.objects.get(phone_number=phone_number, vendor = vendor)    
-            except Exception as e:
-                try:
-                    user = User.objects.get(username = phone_number)
-                except Exception, e:
-                    user = User.objects.create(username = phone_number)    
-                consumer = Consumer.objects.create(user = user, phone_number=phone_number, full_name = name, vendor = vendor)
-            address = Address.objects.create(flat_number = flat_number, building = building, street = street, area = area)                
-            consumer.associated_vendor.add(vendor_agent.vendor)
-            consumer.addresses.add(address)
-            consumer.save()            
-            
-            # SUCCESS RESPONSE FOR CONSUMER CREATION BY VENDOR
             serializer = ConsumerSerializer(consumer)
             content = {
             'consumer':serializer.data

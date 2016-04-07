@@ -70,5 +70,13 @@
       "code": "yg_da_09",
       "title": "OutForDelivery"
     }
+  },
+  {
+    "model": "yourguy.DeliveryAction",
+    "pk": 10,
+    "fields": {
+      "code": "yg_da_10",
+      "title": "COD Update"
+    }
   }
 ]

@@ -16,7 +16,7 @@ from api_v3 import constants
 from api_v3.push import send_push
 from api_v3.utils import log_exception, send_sms, ist_datetime, user_role, address_string, ist_day_start, ist_day_end, \
     paginate, is_correct_pincode, is_pickup_time_acceptable, timedelta, is_userexists, \
-    is_consumer_has_same_address_already, days_in_int, send_email, is_today_date, is_vendor_has_same_address_already, \
+    days_in_int, send_email, is_today_date, is_vendor_has_same_address_already, \
     delivery_actions, ops_manager_for_dg, notification_type_for_code, ops_executive_for_pincode, address_with_location, \
     response_access_denied, response_incomplete_parameters, response_success_with_message, response_with_payload, response_invalid_pagenumber, \
     response_error_with_message, cod_actions
@@ -26,6 +26,8 @@ from yourguy.models import User, Vendor, DeliveryGuy, VendorAgent, Picture, Proo
     Consumer, Address, Order, Product, OrderItem, Notification, Location, DeliveryTransaction, CODTransaction
 
 from api_v3.cron_jobs import create_notif_for_no_ops_exec_for_pincode
+from api_v3.view_consumer import fetch_or_create_consumer, fetch_or_create_consumer_address
+from api_v3.view_dg import teamlead_for_pincode
 
 def add_action_for_delivery(action, delivery, user, latitude, longitude, timestamp, remarks):
     delivery_transaction = DeliveryTransaction.objects.create(action=action, by_user=user,
@@ -127,32 +129,6 @@ def is_reschedule_allowed(delivery_status):
     else:
         return False
 
-def fetch_consumer(phone_number, name, vendor):
-    try:
-        consumer = Consumer.objects.get(phone_number=phone_number, vendor = vendor)
-    except Exception as e:
-        try:
-            user = User.objects.get(username = phone_number)
-        except Exception, e:
-            user = User.objects.create(username = phone_number)
-        consumer = Consumer.objects.create(user = user, phone_number=phone_number, full_name = name, vendor = vendor)
-    consumer.associated_vendor.add(vendor)
-    consumer.save()
-    return consumer
-
-def fetch_consumer_address(consumer, full_address, pincode, landmark):
-    address = is_consumer_has_same_address_already(consumer, pincode)
-    if address is None:
-        address = Address.objects.create(pin_code=pincode)
-        if full_address is not None:
-            address.full_address = full_address
-        if landmark is not None:
-            address.landmark = landmark
-        address.save()
-        consumer.addresses.add(address)
-    return address
-
-
 def fetch_vendor_address(vendor, full_address, pincode, landmark):
     address = is_vendor_has_same_address_already(vendor, pincode)
     if address is None:
@@ -165,6 +141,21 @@ def fetch_vendor_address(vendor, full_address, pincode, landmark):
         vendor.addresses.add(address)
     return address
 
+
+def send_dg_COD_update_notification(dg, delivery_id, new_cod):
+    try:
+        message = 'COD amount upated for order: %s'%(delivery_id)
+        data = {
+            'message': message,
+            'type': 'cod_update',
+            'data': {
+                'delivery_id': delivery_id,
+                'new_cod':new_cod
+            }
+        }
+        send_push(dg.device_token, data)
+    except Exception as e:
+        log_exception(e, 'Push notification not sent in order assignment')
 
 def send_dg_notification(dg, delivery_ids):
     try:
@@ -499,8 +490,8 @@ def webapp_details(delivery_status):
         'id': delivery_status.id,
         'pickup_datetime': new_pickup_datetime,
         'delivery_datetime': new_delivery_datetime,
-        'pickup_address': address_string(delivery_status.order.pickup_address),
-        'delivery_address': address_string(delivery_status.order.delivery_address),
+        'pickup_address': address_with_location(delivery_status.order.pickup_address),
+        'delivery_address': address_with_location(delivery_status.order.delivery_address),
         'status': delivery_status.order_status,
         'is_reverse_pickup': delivery_status.order.is_reverse_pickup,
         'is_reported': delivery_status.is_reported,
@@ -1013,15 +1004,15 @@ class OrderViewSet(viewsets.ViewSet):
                 return response_error_with_message(error_message)
             
             try:
-                consumer = fetch_consumer(consumer_phone_number, consumer_name, vendor)                
+                consumer = fetch_or_create_consumer(consumer_phone_number, consumer_name, vendor)                
                 # ADDRESS CHECK ----------------------------------
                 try:
                     if is_reverse_pickup is True:
-                        pickup_address = fetch_consumer_address(consumer, delivery_full_address, delivery_pin_code, delivery_landmark)
+                        pickup_address = fetch_or_create_consumer_address(consumer, delivery_full_address, delivery_pin_code, delivery_landmark)
                         delivery_address = get_object_or_404(Address, pk = pickup_address_id)                
                     else:
                         pickup_address = get_object_or_404(Address, pk = pickup_address_id)
-                        delivery_address = fetch_consumer_address(consumer, delivery_full_address, delivery_pin_code, delivery_landmark)
+                        delivery_address = fetch_or_create_consumer_address(consumer, delivery_full_address, delivery_pin_code, delivery_landmark)
                 except:
                     error_message = 'error parsing addresses'
                     return response_error_with_message(error_message)
@@ -1570,8 +1561,8 @@ class OrderViewSet(viewsets.ViewSet):
                 return response_incomplete_parameters(parameters)
 
             # FETCH CUSTOMER or CREATE NEW CUSTOMER ----------------
-            consumer = fetch_consumer(consumer_phonenumber, consumer_name, vendor)
-            consumer_address = fetch_consumer_address(consumer, None, pincode, None)
+            consumer = fetch_or_create_consumer(consumer_phonenumber, consumer_name, vendor)
+            consumer_address = fetch_or_create_consumer_address(consumer, '', pincode, None)
             # ------------------------------------------------------
 
             extra_note = 'Additional delivery added by the boy: %s' % delivery_boy.user.first_name
@@ -1587,11 +1578,15 @@ class OrderViewSet(viewsets.ViewSet):
 
             delivery_status = OrderDeliveryStatus.objects.create(date=pickup_datetime, order=new_order)
             
-
             # ASSIGN PICKUP AS SAME BOY -------------------------------------------
             delivery_status.pickup_guy = delivery_boy
             if vendor.is_hyper_local is True:
                 delivery_status.delivery_guy = delivery_boy
+            else:
+                delivery_pincode = new_order.delivery_address.pin_code
+                teamlead_dg = teamlead_for_pincode(pincode)
+                if teamlead_dg is not None:
+                    delivery_status.delivery_guy = teamlead_dg
             delivery_status.save()
             # ---------------------------------------------------------------------
             created_orders.append(delivery_guy_app(delivery_status))
@@ -1657,7 +1652,7 @@ class OrderViewSet(viewsets.ViewSet):
         except Exception as e:
             parameters = ['dg_id', 'delivery_ids']
             return response_incomplete_parameters(parameters)
-
+        
         role = user_role(request.user)
         if role == constants.DELIVERY_GUY:
             dg_tl = get_object_or_404(DeliveryGuy, user=request.user)
@@ -1665,11 +1660,11 @@ class OrderViewSet(viewsets.ViewSet):
             if dg.is_active is True:
                 for delivery_id in delivery_ids:
                     delivery_status = get_object_or_404(OrderDeliveryStatus, pk=delivery_id)
-                    if delivery_status.pickup_guy is not None and delivery_status.pickup_guy == dg_tl:
+                    if delivery_status.pickup_guy is not None and delivery_status.pickup_guy == dg_tl and delivery_status.order_status == constants.ORDER_STATUS_QUEUED:
                         delivery_status.pickup_guy = dg
                         delivery_status.save()
 
-                    if delivery_status.delivery_guy is not None and delivery_status.delivery_guy == dg_tl:
+                    if delivery_status.delivery_guy is not None and delivery_status.delivery_guy == dg_tl and (delivery_status.order_status == constants.ORDER_STATUS_QUEUED or delivery_status.order_status == constants.ORDER_STATUS_INTRANSIT or delivery_status.order_status == constants.ORDER_STATUS_OUTFORDELIVERY):
                         delivery_status.delivery_guy = dg
                         delivery_status.save()
 
@@ -1678,5 +1673,33 @@ class OrderViewSet(viewsets.ViewSet):
             else:
                 error_message = 'This is not a active DG.'
                 return response_error_with_message(error_message)
+        else:
+            return response_access_denied()
+    
+    @detail_route(methods=['put'])
+    def update_cod(self, request, pk):
+        try:
+            new_cod = request.data['new_cod']
+            remarks = request.data['reason']
+        except Exception as e:
+            parameters = ['new_cod', 'reason']
+            return response_incomplete_parameters(parameters)
+
+        role = user_role(request.user)
+        if role == constants.OPERATIONS or role == constants.OPERATIONS_MANAGER:
+            delivery = get_object_or_404(OrderDeliveryStatus, pk=pk)
+            order = delivery.order
+            order.cod_amount = float(new_cod)
+            order.save()
+
+            current_datetime = datetime.now()
+            action = delivery_actions(constants.COD_UPDATE_CODE)
+            add_action_for_delivery(action, delivery, request.user, None, None, current_datetime, remarks)
+                
+            if delivery.delivery_guy is not None:    
+                send_dg_COD_update_notification(delivery.delivery_guy, pk, new_cod)
+
+            success_message = 'COD Updated successfully'
+            return response_success_with_message(success_message)
         else:
             return response_access_denied()
