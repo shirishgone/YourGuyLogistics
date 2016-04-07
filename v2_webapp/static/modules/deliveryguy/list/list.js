@@ -5,7 +5,7 @@
 		Its resolved after loading all the dgs from the server.
 			
 	*/
-	var dgListCntrl = function($state,$mdSidenav,$stateParams,dgs,constants,DeliveryGuy){
+	var dgListCntrl = function($state,$mdSidenav,$stateParams,dgs,constants,DeliveryGuy,Notification){
 		var self = this;
 		this.params = $stateParams;
 		this.params.date = new Date(this.params.date);
@@ -23,6 +23,13 @@
 		*/
 		this.toggleFilter = function(){
 			$mdSidenav('dgList-filter').toggle();
+		};
+		/*
+			@resetParams funcion to reset the filter.
+		*/
+		this.resetParams = function(){
+			self.params = {};
+			self.getDgs();
 		};
 		/*
 			@paginate is a function to paginate to the next and previous page of the delivery guy list
@@ -54,6 +61,7 @@
 			
 		};
 		this.downloadAttendance = function(){
+			Notification.loaderStart();
 			var attendance_params = {
 				start_date : moment(self.params.date).format(),
 				end_date   : moment(self.params.date).format()
@@ -61,6 +69,7 @@
 			DeliveryGuy.dgsAttendance.query(attendance_params,function(response){
 				var str = 'SELECT name AS Name,IsoToDate(attendance -> 0 -> date) AS Date,attendance -> 0 -> worked_hrs AS Hours';
 				alasql( str+' INTO XLSX("attendance.xlsx",{headers:true}) FROM ?',[response.payload.data]);
+				Notification.loaderComplete();
 			});
 		};
 		/*
@@ -79,6 +88,7 @@
 		'dgs',
 		'constants',
 		'DeliveryGuy',
+		'Notification',
 		dgListCntrl 
 	]);
 })();

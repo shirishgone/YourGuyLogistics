@@ -2,7 +2,7 @@
 <md-sidenav  class="site-sidenav md-sidenav-left md-whiteframe-z2 md-primary" md-component-id="left">
 	<div class="nav-header">
 		<a md-ink-ripple layout="column" layout-align="center center">
-			<img flex="none" src="/static/assets/images/logo.png">
+			<img flex="none" src="/static/assets/images/User.png">
 			<h1 flex="none" class="md-headline">{{::home.user_name}}</h1>
 		</a>
 	</div>
@@ -63,7 +63,7 @@
 			<md-subheader>HELP</md-subheader>
 			<md-list-item md-ink-ripple class="md-1-line" ng-if="home.tabs.feedback" ui-sref-active="active">
 				<a flex ui-sref="home.feedbackList" class="tab-liks"  layout="row" ng-click="home.toggleSideNav()">
-					<img ng-src="/static/assets/images/phone.png" class="md-avatar" alt="{{item.who}}" />
+					<img ng-src="/static/assets/images/compose.png" class="md-avatar" alt="{{item.who}}" />
 					<h1 class="md-subhead">Feedback</h1>
 				</a>
 				<!-- <md-divider ></md-divider> -->

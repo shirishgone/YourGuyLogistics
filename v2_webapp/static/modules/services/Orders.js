@@ -32,6 +32,11 @@
 				update : {
 					method: 'PUT'
 				}
+			}),
+			editCODAmount : $resource(constants.v3baseUrl+'order/:id/update_cod/',{id:"@id"},{
+				update : {
+					method: 'PUT'
+				}
 			})
 		};
 	};

@@ -5,6 +5,12 @@
 		</md-button>
 		<p>Order {{orderDetail.order.id}}</p>
 		<span flex></span>
+		<md-button ng-click="orderDetail.editCodDialog(orderDetail.order)" ng-if="home.tabs.updateOrder" class="md-icon-button" aria-label="Menu Icon">
+			<md-tooltip md-direction="bottom">
+          		Edit COD
+        	</md-tooltip>
+			<md-icon>mode_edit</md-icon>
+		</md-button>
 		<md-button ng-click="orderDetail.statusUpdateDialog(orderDetail.order)" ng-if="home.tabs.updateOrder" class="md-icon-button" aria-label="Menu Icon">
 			<md-tooltip md-direction="bottom">
           		Update order status

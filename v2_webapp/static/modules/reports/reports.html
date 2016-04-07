@@ -53,7 +53,7 @@
 			</div>
 		</div>
 	</div>
-	<div flex="100" layout="row" layout-wrap layout-align="space-between start" layout-align-xs="space-around start" class="stats-section">
+	<div flex="100" layout="row" layout-wrap layout-align="space-between start" layout-align-xs="space-around start" class="stats-section" ng-if="reports.report_stats.total_orders > 0">
 		<div flex="20" flex-xs="40" class="stat-box">
 			<p>{{reports.report_stats.total_orders}}</p>
 			<span>total orders</span>
@@ -71,8 +71,13 @@
 			<span>total cod collected</span>
 		</div>
 	</div>
-	<div flex="100" class="chart-section">
+	<div flex="100" class="chart-section" ng-if="reports.report_stats.total_orders > 0">
         <div fusioncharts width="100%" height="100%" type="stackedcolumn2d" dataSource="{{reports.graphData}}"></div>
+    </div>
+    <div flex="100" layout="row" layout-align="center center" class="no-content" ng-if="reports.report_stats.total_orders == 0">
+    	<div flex="50" flex-xs="90">
+			<img src="/static/assets/images/reports/reports.png">
+		</div>
     </div>
 
 </md-content>

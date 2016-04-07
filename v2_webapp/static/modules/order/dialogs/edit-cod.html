@@ -1,0 +1,34 @@
+<md-dialog aria-label="EDIT COD FOR ORDER" ng-cloak class="editCod">
+	<md-toolbar>
+        <div class="md-toolbar-tools">
+            <h2>Edit</h2>
+            <span flex></span>
+            <md-button ng-click="editCod.cancel()" class="md-icon-button" aria-label="close dg edit">
+            	<md-icon>clear</md-icon>
+            </md-button>
+        </div>
+    </md-toolbar>
+    <form name="codEditForm">
+		<md-dialog-content>
+				<div class="md-dialog-content" layout="row" layout-wrap>
+					<md-input-container class="md-block">
+						<label>Enter COD Amount</label>
+			        	<input name="cod" ng-model="editCod.cod_object.new_cod" ng-pattern="/^\d+$/" required>
+					</md-input-container>
+					<md-input-container flex="80">
+						<label>Reason</label>
+			        	<input ng-model="editCod.cod_object.reason" required>
+					</md-input-container>
+				</div>
+		</md-dialog-content>
+		<md-dialog-actions layout="row">
+	     	<span flex></span>
+			<md-button ng-click="editCod.cancel()" class="md-warn">
+				cancel
+			</md-button>
+			<md-button ng-click="editCod.answer(editCod.cod_object)" ng-disabled="codEditForm.$invalid || codEditForm.cod.$invalid" class="md-primary" style="margin-right:20px;">
+				Update
+			</md-button>
+	    </md-dialog-actions>
+    </form>
+</md-dialog>

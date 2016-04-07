@@ -22,6 +22,10 @@
 				promoteToTL : {
 					url : constants.v3baseUrl+'deliveryguy/:id'+'/promote_to_teamlead/',
 					method : 'PUT'
+				},
+				deactivate : {
+					url : constants.v3baseUrl+'deliveryguy/:id'+'/deactivate/',
+					method : 'PUT'
 				}
 			}),
 			dgPageQuery : $resource(constants.v3baseUrl+'deliveryguy/:id/',{id:"@id"},{

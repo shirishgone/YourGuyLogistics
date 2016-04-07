@@ -27,6 +27,12 @@
 			z-index: 9;
 			overflow-y: hidden;
 			.table-body {
+				tr {
+					cursor: auto;
+					&:hover {
+						background-color: $white-color;
+					}
+				}
 				.reciept-button {
 					border-style : none;
 					background-color: primary-color('800');

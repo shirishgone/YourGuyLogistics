@@ -32,7 +32,7 @@
 		self.params = $stateParams;
 		self.deposits = deposits.payload.data.all_transactions;
 		self.total_pages = deposits.payload.data.total_pages;
-		self.total_deposits = deposits.payload.data.total_bank_deposit_count;
+		self.total_deposits = deposits.payload.data.total_count;
 		
 		this.searchVendor = this.params.vendor_id;
 		if(this.params.start_date){

@@ -723,6 +723,10 @@
 				promoteToTL : {
 					url : constants.v3baseUrl+'deliveryguy/:id'+'/promote_to_teamlead/',
 					method : 'PUT'
+				},
+				deactivate : {
+					url : constants.v3baseUrl+'deliveryguy/:id'+'/deactivate/',
+					method : 'PUT'
 				}
 			}),
 			dgPageQuery : $resource(constants.v3baseUrl+'deliveryguy/:id/',{id:"@id"},{
@@ -887,6 +891,11 @@
 				}
 			}),
 			updateDeliveryAttempted : $resource(constants.v3baseUrl+'order/:id/delivery_attempted/',{id:"@id"},{
+				update : {
+					method: 'PUT'
+				}
+			}),
+			editCODAmount : $resource(constants.v3baseUrl+'order/:id/update_cod/',{id:"@id"},{
 				update : {
 					method: 'PUT'
 				}
@@ -1524,6 +1533,48 @@
 })();
 (function(){
 	'use strict';
+	var codEdit = function($mdMedia,$mdDialog){
+		return {
+			openCodDialog : function(){
+				return $mdDialog.show({
+					controller         : ('EditCodCntrl',['$mdDialog',EditCodCntrl]),
+					controllerAs       : 'editCod',
+					templateUrl        : '/static/modules/order/dialogs/edit-cod.html?nd=' + Date.now(),
+					parent             : angular.element(document.body),
+					clickOutsideToClose: false,
+					fullscreen         : false,
+					openFrom           : '#options',
+					closeTo            : '#options',
+				});
+			}
+
+		};
+	};
+	/*
+		@EditCodCntrl controller function for the edit cod for orders dialog
+	*/
+	function EditCodCntrl($mdDialog){
+		var self = this;
+		this.cod_object = {
+		};
+
+		this.cancel = function() {
+			$mdDialog.cancel();
+		};
+		this.answer = function(answer){
+			$mdDialog.hide(answer);
+		};
+	}
+
+	angular.module('order')
+	.factory('EditCod', [
+		'$mdMedia',
+		'$mdDialog',
+		codEdit
+	]);
+})();
+(function(){
+	'use strict';
 	var orderFilter = function(){
 		var orderfilter = {
 			filter : {
@@ -2022,7 +2073,7 @@
 })();
 (function(){
 	'use strict';	
-	var orderDetailCntrl = function($state,$stateParams,$rootScope,order,DeliveryGuy,Order,orderDgAssign,OrderStatusUpdate,PreviousState,constants,$q,Notification){
+	var orderDetailCntrl = function($state,$stateParams,$rootScope,order,DeliveryGuy,Order,orderDgAssign,OrderStatusUpdate,EditCod,PreviousState,constants,$q,Notification){
 		var s3 = new AWS.S3();
 		var self = this;
 		self.params = $stateParams;
@@ -2254,6 +2305,20 @@
 			});
 		};
 		/*
+			@editCod is a function to allow the users to edit cod of the particular order.
+		*/
+		self.editCodDialog = function(order){
+			EditCod.openCodDialog()
+			.then(function(cod_data){
+				Notification.loaderStart();
+				cod_data.id = order.id;
+				Order.editCODAmount.update(cod_data,function(response){
+					Notification.showSuccess('COD amount updated successfully');
+					self.getOrder();
+				});
+			});
+		};
+		/*
 			@getOrder rleoads the order controller according too the filter to get the new filtered data.
 		*/
 		self.getOrder = function(){
@@ -2271,6 +2336,7 @@
 		'Order',
 		'orderDgAssign',
 		'OrderStatusUpdate',
+		'EditCod',
 		'PreviousState',
 		'constants',
 		'$q',
@@ -2439,7 +2505,7 @@
 		Its resolved after loading all the dgs from the server.
 			
 	*/
-	var dgListCntrl = function($state,$mdSidenav,$stateParams,dgs,constants,DeliveryGuy){
+	var dgListCntrl = function($state,$mdSidenav,$stateParams,dgs,constants,DeliveryGuy,Notification){
 		var self = this;
 		this.params = $stateParams;
 		this.params.date = new Date(this.params.date);
@@ -2457,6 +2523,13 @@
 		*/
 		this.toggleFilter = function(){
 			$mdSidenav('dgList-filter').toggle();
+		};
+		/*
+			@resetParams funcion to reset the filter.
+		*/
+		this.resetParams = function(){
+			self.params = {};
+			self.getDgs();
 		};
 		/*
 			@paginate is a function to paginate to the next and previous page of the delivery guy list
@@ -2488,6 +2561,7 @@
 			
 		};
 		this.downloadAttendance = function(){
+			Notification.loaderStart();
 			var attendance_params = {
 				start_date : moment(self.params.date).format(),
 				end_date   : moment(self.params.date).format()
@@ -2495,6 +2569,7 @@
 			DeliveryGuy.dgsAttendance.query(attendance_params,function(response){
 				var str = 'SELECT name AS Name,IsoToDate(attendance -> 0 -> date) AS Date,attendance -> 0 -> worked_hrs AS Hours';
 				alasql( str+' INTO XLSX("attendance.xlsx",{headers:true}) FROM ?',[response.payload.data]);
+				Notification.loaderComplete();
 			});
 		};
 		/*
@@ -2513,6 +2588,7 @@
 		'dgs',
 		'constants',
 		'DeliveryGuy',
+		'Notification',
 		dgListCntrl 
 	]);
 })();
@@ -2627,7 +2703,30 @@
 				$state.go('home.dgList');
 			}
 		};
-
+		/*
+		*/
+		self.deactivateDgDialog = function(){
+			var useFullScreen = ($mdMedia('sm') || $mdMedia('xs'));
+			$mdDialog.show({
+				controller         : ('DeactivateDgCntrl',['$mdDialog','DG',DeactivateDgCntrl]),
+				controllerAs       : 'dgDeactivate',
+				templateUrl        : '/static/modules/deliveryguy/dialogs/deactivate.html?nd=' + Date.now(),
+				parent             : angular.element(document.body),
+				clickOutsideToClose: false,
+				fullscreen         : useFullScreen,
+				locals             : {
+					            DG : self.DG
+				},
+			})
+			.then(function(dg) {
+				Notification.loaderStart();
+				DeliveryGuy.dg.deactivate(dg,function(response){
+					Notification.loaderComplete();
+					Notification.showSuccess('DG deactivated successfully');
+					self.getDgDetails();
+				});
+			});
+		};
 		self.onlyMonthsPredicate = function(date) {
 			var day = moment(date).date();
 			return day === 1;
@@ -2777,6 +2876,20 @@
 
 		dgTeamLead.submitTlData = function(){
 			$mdDialog.hide(dgTeamLead.teamLeadData);
+		};
+	}
+
+	function DeactivateDgCntrl($mdDialog,DG){
+		var dgDeactivate = this;
+		dgDeactivate.DG = DG;
+
+		dgDeactivate.cancel = function() {
+			$mdDialog.cancel();
+		};
+
+		dgDeactivate.answer = function(answer){
+			answer.id = dgDeactivate.DG.id;
+			$mdDialog.hide(answer);
 		};
 	}
 
@@ -3147,7 +3260,7 @@
 		self.params = $stateParams;
 		self.deposits = deposits.payload.data.all_transactions;
 		self.total_pages = deposits.payload.data.total_pages;
-		self.total_deposits = deposits.payload.data.total_bank_deposit_count;
+		self.total_deposits = deposits.payload.data.total_count;
 		
 		this.searchVendor = this.params.vendor_id;
 		if(this.params.start_date){
@@ -3324,7 +3437,7 @@
 		self.params = $stateParams;
 		self.varifiedDeposits = varifiedDeposits.payload.data.all_transactions;
 		self.total_pages = varifiedDeposits.payload.data.total_pages;
-		self.total_deposits = varifiedDeposits.payload.data.total_bank_deposit_count;
+		self.total_deposits = varifiedDeposits.payload.data.total_count;
 		this.searchVendor = this.params.vendor_name;
 
 		if(this.params.start_date){
