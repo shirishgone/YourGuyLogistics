@@ -8,7 +8,8 @@
 	var dgListCntrl = function($state,$mdSidenav,$stateParams,dgs,constants,DeliveryGuy,Notification){
 		var self = this;
 		this.params = $stateParams;
-		this.params.date = new Date(this.params.date);
+		this.params.start_date = new Date(this.params.start_date);
+		this.params.end_date = new Date(this.params.end_date);
 		this.dg_status = constants.dg_status;
 		this.searchDgActive = (this.params.search !== undefined) ? true : false;
 		/*
@@ -63,12 +64,14 @@
 		this.downloadAttendance = function(){
 			Notification.loaderStart();
 			var attendance_params = {
-				start_date : moment(self.params.date).format(),
-				end_date   : moment(self.params.date).format()
+				start_date : moment(self.params.start_date).startOf('day').toISOString(),
+				end_date   : moment(self.params.end_date).endOf('day').toISOString()
 			};
+			// console.log(attendance_params);
 			DeliveryGuy.dgsAttendance.query(attendance_params,function(response){
-				var str = 'SELECT name AS Name,IsoToDate(attendance -> 0 -> date) AS Date,attendance -> 0 -> worked_hrs AS Hours';
-				alasql( str+' INTO XLSX("attendance.xlsx",{headers:true}) FROM ?',[response.payload.data]);
+				alasql('SEARCH / AS @a UNION ALL(attendance / AS @b RETURN(@a.name AS Name , IsoToDate(@b.date) AS DATE, @b.worked_hrs AS Hours)) INTO XLSX("attendance.xlsx",{headers:true}) FROM ?',[response.payload.data]);
+				// var str = 'SELECT name AS Name,IsoToDate(attendance -> 0 -> date) AS Date,attendance -> 0 -> worked_hrs AS Hours';
+				// alasql( str+' INTO XLSX("attendance.xlsx",{headers:true}) FROM ?',[response.payload.data]);
 				Notification.loaderComplete();
 			});
 		};
