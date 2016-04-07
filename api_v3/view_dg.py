@@ -319,6 +319,7 @@ class DGViewSet(viewsets.ModelViewSet):
             pg_executed_orders = delivery_statuses_today.filter(
                 Q(order_status=constants.ORDER_STATUS_PICKUP_ATTEMPTED) |
                 Q(order_status=constants.ORDER_STATUS_OUTFORDELIVERY) |
+                Q(order_status=constants.ORDER_STATUS_DELIVERY_ATTEMPTED) |
                 Q(order_status=constants.ORDER_STATUS_DELIVERED)
             )
             # DG executed orders

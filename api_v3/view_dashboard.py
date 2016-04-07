@@ -25,7 +25,7 @@ def excel_download(request):
 
         end_date = parse_datetime(end_date_string)
         end_date = ist_day_end(end_date)        
-    except Exception, e:
+    except Exception as e:
         params = ['start_date', 'end_date']
         return response_incomplete_parameters(params)
         
@@ -100,7 +100,7 @@ def dashboard_stats(request):
 
         end_date = parse_datetime(end_date_string)
         end_date = ist_datetime(end_date)        
-    except Exception, e:
+    except Exception as e:
         params = ['start_date', 'end_date']
         return response_incomplete_parameters(params)
 
@@ -130,7 +130,8 @@ def dashboard_stats(request):
     delivery_status_queryset = delivery_status_queryset.filter(date__gte=start_date, date__lte=end_date)
     total_orders = delivery_status_queryset.filter(
         Q(order_status=constants.ORDER_STATUS_QUEUED) | 
-        Q(order_status=constants.ORDER_STATUS_INTRANSIT) | 
+        Q(order_status=constants.ORDER_STATUS_INTRANSIT) |
+        Q(order_status=constants.ORDER_STATUS_OUTFORDELIVERY) |
         Q(order_status=constants.ORDER_STATUS_DELIVERED) | 
         Q(order_status=constants.ORDER_STATUS_DELIVERY_ATTEMPTED)).count()
 
@@ -142,13 +143,16 @@ def dashboard_stats(request):
     # TOTAL COD TO BE COLLECTED -----------------------------
     executable_deliveries = delivery_status_queryset.filter(
         Q(order_status=constants.ORDER_STATUS_QUEUED) | 
-        Q(order_status=constants.ORDER_STATUS_INTRANSIT) | 
+        Q(order_status=constants.ORDER_STATUS_INTRANSIT) |
+        Q(order_status=constants.ORDER_STATUS_OUTFORDELIVERY) |
+        Q(order_status=constants.ORDER_STATUS_DELIVERY_ATTEMPTED) |
         Q(order_status=constants.ORDER_STATUS_DELIVERED))
     total_cod_dict = executable_deliveries.aggregate(total_cod=Sum('order__cod_amount'))
     total_cod = total_cod_dict['total_cod']
     
     # TOTAL COD COLLECTED ------------------------------------
-    executed_deliveries = delivery_status_queryset.filter(Q(order_status=constants.ORDER_STATUS_DELIVERED))
+    executed_deliveries = delivery_status_queryset.filter(Q(order_status=constants.ORDER_STATUS_DELIVERY_ATTEMPTED) |
+                                                          Q(order_status=constants.ORDER_STATUS_DELIVERED))
     total_cod_dict = executed_deliveries.aggregate(total_cod=Sum('order__cod_amount'))
     cod_collected = total_cod_dict['total_cod']
 
@@ -161,18 +165,14 @@ def dashboard_stats(request):
         delivery_status_per_date = delivery_status_queryset.filter(date__gte=day_start, date__lte=day_end)
 
         total_orders_per_day = delivery_status_per_date.count()
-        orders_delivered_count = delivery_status_per_date.filter(
-            Q(order_status=constants.ORDER_STATUS_DELIVERED)).count()
-        orders_delivered_attempted_count = delivery_status_per_date.filter(
-            Q(order_status=constants.ORDER_STATUS_DELIVERY_ATTEMPTED)).count()
-        orders_pickup_attempted_count = delivery_status_per_date.filter(
-            Q(order_status=constants.ORDER_STATUS_PICKUP_ATTEMPTED)).count()
-        orders_cancelled_count = delivery_status_per_date.filter(
-            Q(order_status=constants.ORDER_STATUS_CANCELLED)).count()
-        orders_undelivered_count = delivery_status_per_date.filter(
-            Q(order_status=constants.ORDER_STATUS_PLACED) | Q(order_status=constants.ORDER_STATUS_QUEUED)).count()
-        orders_intransit_count = delivery_status_per_date.filter(
-            Q(order_status=constants.ORDER_STATUS_INTRANSIT)).count()
+        orders_delivered_count = delivery_status_per_date.filter(Q(order_status=constants.ORDER_STATUS_DELIVERED)).count()
+        orders_delivered_attempted_count = delivery_status_per_date.filter(Q(order_status=constants.ORDER_STATUS_DELIVERY_ATTEMPTED)).count()
+        orders_pickup_attempted_count = delivery_status_per_date.filter(Q(order_status=constants.ORDER_STATUS_PICKUP_ATTEMPTED)).count()
+        orders_cancelled_count = delivery_status_per_date.filter(Q(order_status=constants.ORDER_STATUS_CANCELLED)).count()
+        orders_undelivered_count = delivery_status_per_date.filter(Q(order_status=constants.ORDER_STATUS_PLACED) |
+                                                                   Q(order_status=constants.ORDER_STATUS_QUEUED)).count()
+        orders_intransit_count = delivery_status_per_date.filter(Q(order_status=constants.ORDER_STATUS_OUTFORDELIVERY) |
+                                                                 Q(order_status=constants.ORDER_STATUS_INTRANSIT)).count()
 
         ist_timedelta = timedelta(hours=5, minutes=30)
         display_date = date + ist_timedelta
