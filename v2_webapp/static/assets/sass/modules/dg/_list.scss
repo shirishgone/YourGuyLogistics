@@ -6,7 +6,8 @@
 			color: $white-color !important;
 			border-color: rgba(255,255,255,1);
 			@include input-placeholder {
-				color: $white-color !important;
+				color: #eee !important;
+				font-size: 14px;
 
 			}
 		}

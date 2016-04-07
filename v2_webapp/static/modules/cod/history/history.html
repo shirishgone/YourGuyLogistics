@@ -1,4 +1,4 @@
-<md-content flex layout-fill layout="column" class="history">
+<md-content flex layout-fill layout="column" class="history" ng-if="history.total_deposits > 0">
 	<section flex="90" layout="column" class="list" layout-align="start stretch">
 		<div class="header-list" layout="row">
 			<div flex>Date</div>
@@ -39,6 +39,11 @@
 	<section flex="10" class="footer">
 		<div yd-pagination total="{{history.total_deposits}}" total-page="{{history.total_pages}}" params="history.params" list-length="{{history.historyDeposits.length}}" paginate="history.paginate" get-data="history.getDeposits()"></div>
 	</section>
+</md-content>
+<md-content flex layout-fill layout="row" class="no-content" layout-align="center center" ng-if="history.total_deposits == 0">
+	<div flex="50" flex-xs="90">
+		<img src="/static/assets/images/COD/history.png">
+	</div>
 </md-content>
 <md-sidenav class="filter-sidenav md-sidenav-right md-whiteframe-z3" layout="column" md-component-id="cod-filter">
 	<md-toolbar class="md-primary md-whiteframe-z1">

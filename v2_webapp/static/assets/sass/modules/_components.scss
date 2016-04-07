@@ -48,16 +48,16 @@ body {
 	background-color: $success-color;
 }
 .badge.PICKUPATTEMPTED {
-	background-color: $accent-color;
+	background-color: primary-color('500');
 }
 .badge.DELIVERYATTEMPTED {
-	background-color: $accent-color;
+	background-color: primary-color('500');
 }
 .badge.OUTFORDELIVERY {
 	background-color: orange-accent-color('500');
 }
 .badge.CANCELLED {
-	background-color: primary-color('500');
+	background-color: grey-color('500');
 }
 
 .badge-warn {

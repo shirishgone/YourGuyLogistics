@@ -36,7 +36,7 @@
 			<md-icon>arrow_back</md-icon>
 		</md-button>
 		<md-input-container flex  md-no-float>
-        	<input ng-model="dgList.params.search" type="text" placeholder="Search delivery guy" ng-keyup="$event.which === 13 && dgList.revertToPageOne()" md-autofocus="dgList.searchDgActive == true">
+        	<input ng-model="dgList.params.search" md-autofocus type="text" placeholder="Search Delivery Guy" ng-keyup="$event.which === 13 && dgList.revertToPageOne()" md-autofocus="dgList.searchDgActive == true">
         </md-input-container>
         <md-button class="md-icon-button" aria-label="Search dg Button" ng-click="dgList.revertToPageOne()">
 			<md-icon>search</md-icon>
@@ -44,7 +44,7 @@
 	</div>
 </md-toolbar>
 <md-content flex layout-fill layout="row" class="dgList">
-	<div flex layout="column" class="dg-list">
+	<div flex layout="column" class="dg-list" ng-if="dgList.total_dgs > 0">
 		<section flex="90" class="list" layout="row" layout-align="center stretch">
 			<md-content md-scroll-x flex layout="column" layout-align="start stretch">
 				<table class="table-list" layout="column">
@@ -78,12 +78,26 @@
 			<div yd-pagination total="{{dgList.total_dgs}}" total-page="{{dgList.total_pages}}" params="dgList.params" list-length="{{dgList.dgs.length}}" paginate="dgList.paginate" get-data="dgList.getDgs()"></div>
 		</section>
 	</div>
+	<div flex layout="row" layout-align="center center" class="no-content"  ng-if="dgList.total_dgs == 0">
+		<div flex="50" flex-xs="90">
+				<img src="/static/assets/images/dg/dg.png">
+			</div>
+	</div>
 	<md-sidenav class="filter-sidenav md-sidenav-right md-whiteframe-z3" layout="column" md-component-id="dgList-filter">
 		<md-toolbar class="md-primary md-whiteframe-z1">
 			<div class="md-toolbar-tools">
-				<h1 class="md-subhead">FILTERS</h1>
+				<h1 class="md-subhead">Filters</h1>
 				<span flex></span>
+				<md-button class="md-icon-button" aria-label="Filter Button" ng-click="dgList.resetParams()">
+					<md-tooltip md-direction="bottom">
+	          			Reset
+	        		</md-tooltip>
+					<md-icon>refresh</md-icon>
+				</md-button>
 				<md-button class="md-icon-button" aria-label="Filter Button" ng-click="dgList.revertToPageOne()">
+					<md-tooltip md-direction="bottom">
+	          			Apply
+	        		</md-tooltip>
 					<md-icon>done</md-icon>
 				</md-button>
 			</div>
@@ -98,7 +112,7 @@
 				<md-list-item class="md-1-line" flex>
      				<form name="dgstatusselectform" flex>
      					<md-radio-group ng-model="dgList.params.attendance">
-							<md-radio-button ng-value="item.value" class="md-warn" ng-repeat="item in dgList.dg_status">
+							<md-radio-button ng-value="item.value" class="md-primary" ng-repeat="item in dgList.dg_status">
 								{{item.status}}
 							</md-radio-button>
 					    </md-radio-group>

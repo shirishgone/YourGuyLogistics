@@ -20,7 +20,7 @@
 		self.params = $stateParams;
 		self.varifiedDeposits = varifiedDeposits.payload.data.all_transactions;
 		self.total_pages = varifiedDeposits.payload.data.total_pages;
-		self.total_deposits = varifiedDeposits.payload.data.total_bank_deposit_count;
+		self.total_deposits = varifiedDeposits.payload.data.total_count;
 		this.searchVendor = this.params.vendor_name;
 
 		if(this.params.start_date){

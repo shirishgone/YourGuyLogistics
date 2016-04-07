@@ -1,4 +1,4 @@
-<md-content flex layout-fill layout="column" class="deposit">
+<md-content flex layout-fill layout="column" class="deposit" ng-if="deposit.total_deposits > 0">
 	<section flex="90" layout="column" class="list" layout-align="center stretch">
 		<table flex class="table-list" layout="column">
 			<thead class="table-header">
@@ -65,6 +65,11 @@
 	<section flex="10" class="footer">
 		<div yd-pagination total="{{deposit.total_deposits}}" total-page="{{deposit.total_pages}}" params="deposit.params" list-length="{{deposit.deposits.length}}" paginate="deposit.paginate" get-data="deposit.getDgs()"></div>
 	</section>
+</md-content>
+<md-content flex layout-fill layout="row" class="no-content" layout-align="center center" ng-if="deposit.total_deposits == 0">
+	<div flex="50" flex-xs="90">
+		<img src="/static/assets/images/COD/deposit.png">
+	</div>
 </md-content>
 <md-sidenav class="filter-sidenav md-sidenav-right md-whiteframe-z3" layout="column" md-component-id="cod-filter">
 	<md-toolbar class="md-primary md-whiteframe-z1">

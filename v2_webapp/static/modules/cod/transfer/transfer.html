@@ -1,4 +1,4 @@
-<md-content flex layout-fill layout="column" class="transfer">
+<md-content flex layout-fill layout="column" class="transfer" ng-if="transfer.total_deposits > 0">
 	<section flex="90" layout="column" class="list" layout-align="center stretch">
 		<table flex class="table-list" layout="column">
 			<thead class="table-header" ng-if="!transfer.handleSelection.isSelected()">
@@ -50,6 +50,11 @@
 	<section flex="10" class="footer">
 		<div yd-pagination total="{{transfer.total_deposits}}" total-page="{{transfer.total_pages}}" params="transfer.params" list-length="{{transfer.varifiedDeposits.length}}" paginate="transfer.paginate" get-data="deposit.getDeposits()"></div>
 	</section>
+</md-content>
+<md-content flex layout-fill layout="row" class="no-content" layout-align="center center" ng-if="transfer.total_deposits == 0">
+	<div flex="50" flex-xs="90">
+		<img src="/static/assets/images/COD/transfer.png">
+	</div>
 </md-content>
 <md-sidenav class="filter-sidenav md-sidenav-right md-whiteframe-z3" layout="column" md-component-id="cod-filter">
 	<md-toolbar class="md-primary md-whiteframe-z1">

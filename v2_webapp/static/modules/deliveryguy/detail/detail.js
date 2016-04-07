@@ -49,7 +49,30 @@
 				$state.go('home.dgList');
 			}
 		};
-
+		/*
+		*/
+		self.deactivateDgDialog = function(){
+			var useFullScreen = ($mdMedia('sm') || $mdMedia('xs'));
+			$mdDialog.show({
+				controller         : ('DeactivateDgCntrl',['$mdDialog','DG',DeactivateDgCntrl]),
+				controllerAs       : 'dgDeactivate',
+				templateUrl        : '/static/modules/deliveryguy/dialogs/deactivate.html?nd=' + Date.now(),
+				parent             : angular.element(document.body),
+				clickOutsideToClose: false,
+				fullscreen         : useFullScreen,
+				locals             : {
+					            DG : self.DG
+				},
+			})
+			.then(function(dg) {
+				Notification.loaderStart();
+				DeliveryGuy.dg.deactivate(dg,function(response){
+					Notification.loaderComplete();
+					Notification.showSuccess('DG deactivated successfully');
+					self.getDgDetails();
+				});
+			});
+		};
 		self.onlyMonthsPredicate = function(date) {
 			var day = moment(date).date();
 			return day === 1;
@@ -199,6 +222,20 @@
 
 		dgTeamLead.submitTlData = function(){
 			$mdDialog.hide(dgTeamLead.teamLeadData);
+		};
+	}
+
+	function DeactivateDgCntrl($mdDialog,DG){
+		var dgDeactivate = this;
+		dgDeactivate.DG = DG;
+
+		dgDeactivate.cancel = function() {
+			$mdDialog.cancel();
+		};
+
+		dgDeactivate.answer = function(answer){
+			answer.id = dgDeactivate.DG.id;
+			$mdDialog.hide(answer);
 		};
 	}
 

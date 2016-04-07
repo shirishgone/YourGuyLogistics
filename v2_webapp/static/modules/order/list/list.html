@@ -135,7 +135,7 @@
 		        		<div flex="30" flex-xs="50" hide-xs  class="dg" layout="row" layout-align="start start">
 		        			<div class="icon">
 			        			<md-icon md-font-library="material-icons" 
-			        			ng-style="order.pickupguy_name && order.deliveryguy_name && {color: '#757575'} || {color:'#F44336'}">motorcycle</md-icon>
+			        			ng-style="{color: '#757575'}">motorcycle</md-icon>
 			        		</div>
 			        		<div flex>
 			        			<span>PG: </span> <span class="dg_status">{{order.pickupguy_name || 'Not Assigned'}}</span>
@@ -330,9 +330,18 @@
 	<md-sidenav class="filter-sidenav md-sidenav-right md-whiteframe-z3" layout="column" md-component-id="order-filter">
 		<md-toolbar class="md-primary md-whiteframe-z1">
 			<div class="md-toolbar-tools">
-				<h1 class="md-subhead md-toolbar-tools">FILTERS</h1>
+				<h1 class="md-subhead md-toolbar-tools">Filters</h1>
         		<span flex></span>
+        		<md-button class="md-icon-button" aria-label="Filter Button" ng-click="opsOrder.resetParams()">
+					<md-tooltip md-direction="bottom">
+	          			Reset
+	        		</md-tooltip>
+					<md-icon>refresh</md-icon>
+				</md-button>
 				<md-button class="md-icon-button" aria-label="Filter Button" ng-click="opsOrder.revertToPageOne()">
+					<md-tooltip md-direction="bottom">
+	          			Apply
+	        		</md-tooltip>
 					<md-icon>done</md-icon>
 				</md-button>
 			</div>

@@ -1,6 +1,6 @@
 (function(){
 	'use strict';	
-	var orderDetailCntrl = function($state,$stateParams,$rootScope,order,DeliveryGuy,Order,orderDgAssign,OrderStatusUpdate,PreviousState,constants,$q,Notification){
+	var orderDetailCntrl = function($state,$stateParams,$rootScope,order,DeliveryGuy,Order,orderDgAssign,OrderStatusUpdate,EditCod,PreviousState,constants,$q,Notification){
 		var s3 = new AWS.S3();
 		var self = this;
 		self.params = $stateParams;
@@ -232,6 +232,20 @@
 			});
 		};
 		/*
+			@editCod is a function to allow the users to edit cod of the particular order.
+		*/
+		self.editCodDialog = function(order){
+			EditCod.openCodDialog()
+			.then(function(cod_data){
+				Notification.loaderStart();
+				cod_data.id = order.id;
+				Order.editCODAmount.update(cod_data,function(response){
+					Notification.showSuccess('COD amount updated successfully');
+					self.getOrder();
+				});
+			});
+		};
+		/*
 			@getOrder rleoads the order controller according too the filter to get the new filtered data.
 		*/
 		self.getOrder = function(){
@@ -249,6 +263,7 @@
 		'Order',
 		'orderDgAssign',
 		'OrderStatusUpdate',
+		'EditCod',
 		'PreviousState',
 		'constants',
 		'$q',
