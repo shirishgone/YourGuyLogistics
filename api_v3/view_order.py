@@ -142,6 +142,21 @@ def fetch_vendor_address(vendor, full_address, pincode, landmark):
     return address
 
 
+def send_dg_COD_update_notification(dg, delivery_id, new_cod):
+    try:
+        message = 'COD amount upated for order: %s'%(delivery_id)
+        data = {
+            'message': message,
+            'type': 'cod_update',
+            'data': {
+                'delivery_id': delivery_id,
+                'new_cod':new_cod
+            }
+        }
+        send_push(dg.device_token, data)
+    except Exception as e:
+        log_exception(e, 'Push notification not sent in order assignment')
+
 def send_dg_notification(dg, delivery_ids):
     try:
         data = {
@@ -1654,5 +1669,33 @@ class OrderViewSet(viewsets.ViewSet):
             else:
                 error_message = 'This is not a active DG.'
                 return response_error_with_message(error_message)
+        else:
+            return response_access_denied()
+    
+    @detail_route(methods=['put'])
+    def update_cod(self, request, pk):
+        try:
+            new_cod = request.data['new_cod']
+            remarks = request.data['reason']
+        except Exception as e:
+            parameters = ['new_cod', 'reason']
+            return response_incomplete_parameters(parameters)
+
+        role = user_role(request.user)
+        if role == constants.OPERATIONS or role == constants.OPERATIONS_MANAGER:
+            delivery = get_object_or_404(OrderDeliveryStatus, pk=pk)
+            order = delivery.order
+            order.cod_amount = float(new_cod)
+            order.save()
+
+            current_datetime = datetime.now()
+            action = delivery_actions(constants.COD_UPDATE_CODE)
+            add_action_for_delivery(action, delivery, request.user, None, None, current_datetime, remarks)
+                
+            if delivery.delivery_guy is not None:    
+                send_dg_COD_update_notification(delivery.delivery_guy, pk, new_cod)
+
+            success_message = 'COD Updated successfully'
+            return response_success_with_message(success_message)
         else:
             return response_access_denied()
