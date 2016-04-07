@@ -339,14 +339,14 @@ class CODViewSet(viewsets.ViewSet):
                                                                     dg_tl_id=dg_tl_id)
                     for single_tx in cod_transaction:
                         tx_deliveries = single_tx.deliveries
-                        tx_deliveries = tx_deliveries.strip('u')
+                        # tx_deliveries = tx_deliveries.strip('u')
                         delivery_ids = eval(tx_deliveries)
                         cod_transaction = cod_transaction.filter(deliveries=delivery_ids)
                         if len(cod_transaction) > 0:
                             for single in cod_transaction:
                                 associated_dgs_collections = associated_dgs_collections_dict(single_dg, single)
-                                delivery_ids = single.deliveries.strip('u')
-                                delivery_ids = eval(delivery_ids)
+                                # delivery_ids = single.deliveries.strip('u')
+                                delivery_ids = eval(single.deliveries)
                                 associated_dgs_collections['delivery_ids'] = delivery_ids
                                 asso_dg_collections.append(associated_dgs_collections)
                 dg_tl_collections['total_cod_amount'] = balance_amount
