@@ -5,7 +5,7 @@
 			<p>Decline amount will be duducted from delivery guy salary</p>
 			<md-input-container>
 				<label>Enter Difference Amount</label>
-	        	<input ng-model="declineDeposit.decline.pending_salary_deduction">
+	        	<input ng-model="declineDeposit.decline.pending_salary_deduction" ng-pattern="/^\d+$/">
 			</md-input-container>
 		</div>
 	</md-dialog-content>
@@ -14,7 +14,7 @@
 		<md-button ng-click="declineDeposit.cancel()" class="md-warn">
 			cancel
 		</md-button>
-		<md-button ng-click="declineDeposit.answer(declineDeposit.decline)" class="md-primary" style="margin-right:20px;">
+		<md-button ng-click="declineDeposit.answer(declineDeposit.decline)" ng-disabled="declineDeposit.verifyAmount(declineDeposit.decline)" class="md-primary" style="margin-right:20px;">
 			Decline
 		</md-button>
     </md-dialog-actions>

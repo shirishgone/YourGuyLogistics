@@ -3184,13 +3184,30 @@
     						return Access.hasAnyRole(allowed_user); 
     					}],
     			report: ['Reports','$stateParams', function (Reports,$stateParams){
-    						var x = new Date();
-    						x.setHours(0);
-    						x.setMinutes(0);
-    						x.setSeconds(0);
-    						x.setDate(1);
-    						$stateParams.start_date = ($stateParams.start_date !== undefined) ? new Date($stateParams.start_date).toISOString() : x.toISOString();
-    						$stateParams.end_date   = ($stateParams.end_date !== undefined) ? new Date($stateParams.end_date).toISOString() : new Date().toISOString();
+    						// var x = new Date();
+    						// x.setHours(0);
+    						// x.setMinutes(0);
+    						// x.setSeconds(0);
+    						// x.setDate(1);
+    						var x,y;
+	    					if(!$stateParams.start_date){
+	    						x =  moment();
+								x.startOf('day');
+	    					}
+	    					else{
+	    						$stateParams.start_date = moment(new Date($stateParams.start_date));
+	    						$stateParams.start_date.startOf('day');
+	    					}
+	    					if(!$stateParams.end_date){
+	    						y =  moment();
+								y.endOf('day');
+	    					}
+	    					else{
+	    						$stateParams.end_date = moment(new Date($stateParams.end_date));
+	    						$stateParams.end_date.endOf('day');
+	    					}
+    						$stateParams.start_date = ($stateParams.start_date !== undefined) ? $stateParams.start_date.toISOString() : x.toISOString();
+    						$stateParams.end_date   = ($stateParams.end_date !== undefined) ? $stateParams.end_date.toISOString() : y.toISOString();
     						return Reports.getReport.stats($stateParams).$promise;
     					}]
     		}
@@ -3271,6 +3288,20 @@
 	function DeclineDepositCntrl($mdDialog,deposit){
 		var self = this;
 		self.deposit = deposit;
+		self.verifyAmount = function(data){
+			if(!data || !data.pending_salary_deduction){
+				return true;
+			}
+			else{
+				if(parseFloat(data.pending_salary_deduction) > 0 && parseFloat(data.pending_salary_deduction) <= self.deposit.cod_amount){
+					return false;
+				}
+				else {
+					return true;
+				}
+			}
+		};
+
 		self.cancel = function() {
 			$mdDialog.cancel();
 		};
