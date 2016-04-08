@@ -1282,7 +1282,7 @@ class OrderViewSet(viewsets.ViewSet):
                 
             # FETCH CUSTOMER or CREATE NEW CUSTOMER ----------------
             consumer = fetch_or_create_consumer(consumer_phonenumber, consumer_name, vendor)
-            consumer_address = fetch_or_create_consumer_address(consumer, None, pincode, None)
+            consumer_address = fetch_or_create_consumer_address(consumer, '', pincode, None)
             # ------------------------------------------------------                    
             
             extra_note = 'Additional order added by delivery boy: %s' % delivery_boy.user.first_name
