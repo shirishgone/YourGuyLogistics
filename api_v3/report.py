@@ -9,7 +9,7 @@ from yourguy.models import DeliveryGuy, OrderDeliveryStatus, DGAttendance, Vendo
 from rest_framework.decorators import api_view
 
 @api_view(['GET'])
-def daily_report():
+def daily_report(request):
     date = datetime.today()
     day_start = ist_day_start(date)
     day_end = ist_day_end(date)
