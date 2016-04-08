@@ -15,6 +15,20 @@
 	function DeclineDepositCntrl($mdDialog,deposit){
 		var self = this;
 		self.deposit = deposit;
+		self.verifyAmount = function(data){
+			if(!data || !data.pending_salary_deduction){
+				return true;
+			}
+			else{
+				if(parseFloat(data.pending_salary_deduction) > 0 && parseFloat(data.pending_salary_deduction) <= self.deposit.cod_amount){
+					return false;
+				}
+				else {
+					return true;
+				}
+			}
+		};
+
 		self.cancel = function() {
 			$mdDialog.cancel();
 		};
