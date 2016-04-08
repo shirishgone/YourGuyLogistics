@@ -40,7 +40,7 @@
 		};
 	}
 
-	var codDepositCntrl = function($state,$stateParams,$mdDialog,deposits,COD,Notification){
+	var codDepositCntrl = function($state,$stateParams,$mdDialog,deposits,COD,Notification,DeliveryGuy){
 		// variable definations
 		var self = this;
 		self.params = $stateParams;
@@ -48,7 +48,7 @@
 		self.total_pages = deposits.payload.data.total_pages;
 		self.total_deposits = deposits.payload.data.total_count;
 		
-		this.searchVendor = this.params.vendor_id;
+		this.searchVendor = this.params.dg_name;
 		if(this.params.start_date){
 			this.params.start_date = new Date(this.params.start_date);
 		}
@@ -125,26 +125,27 @@
 			}
 		};
 		/*
-			@vendorSearchTextChange is a function for vendor guy search for filter. When ever the filtered vendor change, 
+			@dgSearchTextChange is a function for Delivery guy search for filter. When the filtered dg change, 
 			this function is called.
 
-			@selectedVendorChange is a callback function after vendor guy selection in the filter.
+			@selectedDgChange is a callback function after delivery guy selection in the filter.
 		*/
-		self.vendorSearchTextChange = function(text){
+		this.dgSearchTextChange = function(text){
 			var search = {
 				search : text
 			};
-			return Vendor.query(search).$promise.then(function (response){
+			return DeliveryGuy.dgPageQuery.query(search).$promise.then(function (response){
 				return response.payload.data.data;
 			});
 		};
-
-		self.selectedVendorChange = function(vendor){
-			if(vendor){
-				self.params.vendor_id = vendor.id;
+		this.selectedDgChange = function(dg){
+			if(dg){
+				self.params.dg_id = dg.id;
+				self.params.dg_name = dg.name;
 			}
 			else{
-				self.params.vendor_id = undefined;
+				self.params.dg_id = undefined;
+				self.params.dg_name = undefined;
 			}
 		};
 		/*
@@ -165,6 +166,9 @@
 			@getDeposits rleoads the cod controller according too the filter to get the new filtered data.
 		*/
 		this.getDeposits = function(){
+			if (!self.params.dg_id) {
+				self.params.dg_name = undefined;
+			}
 			$state.transitionTo($state.current, self.params, { reload: true, inherit: false, notify: true });
 		};
 	};
@@ -173,7 +177,7 @@
 	.config(['$stateProvider',function($stateProvider) {
 		$stateProvider
 		.state('home.cod.deposit',{
-			url: "^/cod/deposits?page&start_date&end_date&vendor_id",
+			url: "^/cod/deposits?page&start_date&end_date&dg_id&dg_name",
 			templateUrl: "/static/modules/cod/deposit/deposit.html",
 			controllerAs : 'deposit',
     		controller: "codDepositCntrl",
@@ -198,6 +202,7 @@
 		'deposits',
 		'COD',
 		'Notification',
+		'DeliveryGuy',
 		codDepositCntrl
 	]);
 })();

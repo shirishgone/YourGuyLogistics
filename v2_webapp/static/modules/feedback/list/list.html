@@ -31,7 +31,7 @@
 					<tr ng-repeat="cpl in feedbackList.tickets" layout="row" layout-align="center start" ui-sref="home.feedbackDetail({ticket_id:cpl.id})">
 						<td flex>{{cpl.subject | limitTo :20}}{{cpl.subject.length > 20 ? '...' : ''}}</td>
 						<td flex>{{feedbackList.getGroupName(cpl.group_id)}}</td>
-						<td flex> {{cpl.description | limitTo :20 }}{{cpl.description.length > 20 ? '......' : ''}}</td>
+						<td flex> {{cpl.description_text | limitTo :20 }}{{cpl.description_text.length > 20 ? '......' : ''}}</td>
 						<td flex>
 							<span class="badge QUEUED" ng-if="cpl.status == 2">Pending</span>
 							<span class="badge DELIVERED" ng-if="cpl.status == 5">Closed</span>
