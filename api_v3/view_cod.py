@@ -317,6 +317,7 @@ class CODViewSet(viewsets.ViewSet):
                 for single in delivery_statuses:
                     dg_collections = dg_collections_dict(single)
                     tl_collections.append(dg_collections)
+                    tl_collections.sort(key=lambda item: item['delivery_date_time'], reverse=True)
                 dg_tl_collections['tls_collections'] = tl_collections
 
                 balance_amount = cod_balance_calculation(dg)
@@ -357,7 +358,7 @@ class CODViewSet(viewsets.ViewSet):
                         delivery_ids = eval(transaction.deliveries)
                         associated_dgs_collections['delivery_ids'] = delivery_ids
                         asso_dg_collections.append(associated_dgs_collections)
-
+                        asso_dg_collections.sort(key=lambda item: item['transferred_time'], reverse=True)
                 dg_tl_collections['total_cod_amount'] = balance_amount
                 dg_tl_collections['associated_dg_collections'] = asso_dg_collections
                 return response_with_payload(dg_tl_collections, None)
@@ -374,6 +375,7 @@ class CODViewSet(viewsets.ViewSet):
                     for single in delivery_statuses:
                         dg_collections = dg_collections_dict(single)
                         dg_entire_collections.append(dg_collections)
+                        dg_entire_collections.sort(key=lambda item: item['delivery_date_time'], reverse=True)
                     dg_total_cod_amount['dg_collections'] = dg_entire_collections
                     return response_with_payload(dg_total_cod_amount, None)
                 else:
@@ -437,6 +439,7 @@ class CODViewSet(viewsets.ViewSet):
                 try:
                     delivery_guy_tl = DeliveryTeamLead.objects.get(delivery_guy=delivery_guy)
                     associated_dgs = delivery_guy_tl.associate_delivery_guys.all()
+                    associated_dgs = associated_dgs.order_by('user__first_name')
                     associated_dgs = associated_dgs.filter(is_active=True)
                     for single in associated_dgs:
                         delivery_statuses = OrderDeliveryStatus.objects.filter(delivery_guy=single,
@@ -641,6 +644,7 @@ class CODViewSet(viewsets.ViewSet):
                         else:
                             all_bank_deposit_cod_transactions_dict['receipt'] = None
                     bank_deposit_list.append(all_bank_deposit_cod_transactions_dict)
+                    bank_deposit_list.sort(key=lambda item: item['created_time_stamp'], reverse=True)
                 pagination_count_dict = pagination_count_bank_deposit()
                 pagination_count_dict['total_pages'] = total_pages
                 pagination_count_dict['total_count'] = total_bank_deposit_count
@@ -789,6 +793,7 @@ class CODViewSet(viewsets.ViewSet):
                         delivery = OrderDeliveryStatus.objects.get(id=single_delivery)
                         verified_bank_deposit_dict = verified_bank_deposit_list(single_bd, delivery)
                         all_transactions.append(verified_bank_deposit_dict)
+                        all_transactions.sort(key=lambda item: item['verified_time_stamp'], reverse=True)
                 if filter_vendor_id is not None:
                     vendor = get_object_or_404(Vendor, pk=filter_vendor_id)
                     if vendor is not None:
@@ -892,6 +897,7 @@ class CODViewSet(viewsets.ViewSet):
                     else:
                         pass
                     all_transactions.append(transaction_history_dict)
+                    all_transactions.sort(key=lambda item: item['date'], reverse=True)
                 pagination_count_dict = pagination_count_bank_deposit()
                 pagination_count_dict['total_pages'] = total_pages
                 pagination_count_dict['total_count'] = total_history_count
@@ -961,6 +967,7 @@ class CODViewSet(viewsets.ViewSet):
                         deliveries_list.append(per_order_dict)
                     vendor_transaction_history_dict['deliveries'] = deliveries_list
                     all_transactions.append(vendor_transaction_history_dict)
+                    all_transactions.sort(key=lambda item: item['date'], reverse=True)
                 pagination_count_dict = pagination_count_bank_deposit()
                 pagination_count_dict['total_pages'] = total_pages
                 pagination_count_dict['total_count'] = total_history_count
