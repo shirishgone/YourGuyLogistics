@@ -29,6 +29,7 @@ def daily_report():
         email_body = email_body + "\n\n- YourGuy BOT"
 
         send_email(constants.EMAIL_IDS_EVERYBODY, email_subject, email_body)
+        return Response(status=status.HTTP_200_OK)
     else:
         # TOTAL ORDERS ASSIGNED vs UNASSIGNED ORDERS ----------------------------------------
         orders_unassigned_count = delivery_statuses_today.filter(delivery_guy=None).count()
@@ -175,6 +176,7 @@ def daily_report():
         email_body = email_body + "\n\n- YourGuy BOT"
 
         send_email(constants.EMAIL_DAILY_REPORT, email_subject, email_body)
+        return Response(status=status.HTTP_200_OK)
         # ------------------------------------------------------------------------------------------------
 
 @api_view(['GET'])
