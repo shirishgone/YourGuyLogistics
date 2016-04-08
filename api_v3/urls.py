@@ -53,7 +53,8 @@ urlpatterns = patterns(
     url(r'^mark_all_notifications_read/', view_internals.mark_all_notifications_read, name='mark_all_notifications_read'),
     url(r'^consumers_refill/', view_internals.consumers_refill, name='consumers_refill'),    
     url(r'^consumers_with_more_than_one_vendor/', view_internals.consumers_with_more_than_one_vendor, name='consumers_with_more_than_one_vendor'),    
-    url(r'^refill_consumers_with_one_vendor/', view_internals.refill_consumers_with_one_vendor, name='refill_consumers_with_one_vendor')    
+    url(r'^refill_consumers_with_one_vendor/', view_internals.refill_consumers_with_one_vendor, name='refill_consumers_with_one_vendor'),    
+    url(r'^consumers_with_zero_single_vendor_association/', view_internals.consumers_with_zero_single_vendor_association, name='consumers_with_zero_single_vendor_association')    
     # --------------------------------------------------------
 )
 

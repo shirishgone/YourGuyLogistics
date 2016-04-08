@@ -101,6 +101,22 @@ def consumers_refill(request):
         return Response(status=status.HTTP_200_OK)
 
 @api_view(['GET'])
+def consumers_with_zero_single_vendor_association(request):
+    if request.user.is_staff is False:
+        content = {
+            'error': 'insufficient permissions',
+            'description': 'Only admin can access this method'
+        }
+        return Response(content, status=status.HTTP_400_BAD_REQUEST)
+    else:
+        consumers = Consumer.objects.filter(vendor__isnull=True)
+        count = consumers.count()
+        content = {
+            'count': count
+        }        
+        return Response(content, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
 def consumers_with_more_than_one_vendor(request):
     if request.user.is_staff is False:
         content = {
