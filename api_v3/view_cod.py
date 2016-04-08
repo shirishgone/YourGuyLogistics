@@ -168,9 +168,9 @@ def cod_balance_calculation(dg):
                     deliveries.append(single.id)
                 delivery_statuses = delivery_statuses.values('delivery_guy__user__username').annotate(sum_of_cod_collected=Sum('cod_collected_amount'))
                 if len(delivery_statuses) > 0:
-                    balance_amount = balance_amount + delivery_statuses[0]['sum_of_cod_collected']            
+                    balance_amount = balance_amount + delivery_statuses[0]['sum_of_cod_collected']
         except Exception, e:
-            pass    
+            pass
     return balance_amount
 
 def create_proof(bank_deposit_proof, user, cod_amount, bank_receipt_number):
