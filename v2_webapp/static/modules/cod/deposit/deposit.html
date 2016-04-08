@@ -100,22 +100,22 @@
  			<md-list-item class="md-1-line">
 				<md-datepicker ng-model="deposit.params.end_date" md-placeholder="Enter date"></md-datepicker>
 			</md-list-item>
-			<md-subheader>VENDOR</md-subheader>
-			<div class="vendor-list">
+			<md-subheader>DELIVERY GUY</md-subheader>
+			<div class="dg-list">
 				<md-autocomplete
 					md-no-cache="true"
-					md-selected-item="deposit.selectedVendor"
-					md-search-text="deposit.searchVendor"
-					md-selected-item-change="deposit.selectedVendorChange(vendor)"
-					md-items="vendor in deposit.vendorSearchTextChange(deposit.searchVendor)"
-					md-item-text="vendor.name"
-					md-min-length="1"
-					placeholder="Search Vendor">
+					md-selected-item="deposit.selectedDg"
+					md-search-text="deposit.searchDg"
+					md-selected-item-change="deposit.selectedDgChange(dg)"
+					md-items="dg in deposit.dgSearchTextChange(deposit.searchDg)"
+					md-item-text="dg.name"
+					md-min-length="0"
+					placeholder="Search DG">
 					<md-item-template>
-						<span md-highlight-text="deposit.searchVendor" md-highlight-flags="^i">{{vendor.name}}</span>
+						<span md-highlight-text="deposit.searchDg" md-highlight-flags="^i">{{dg.name}}</span>
 					</md-item-template>
 					<md-not-found>
-						No states matching "{{deposit.searchVendor}}" were found.
+						No states matching "{{deposit.searchDg}}" were found.
 					</md-not-found>
 				</md-autocomplete>
 			</div>

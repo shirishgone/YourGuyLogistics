@@ -3,13 +3,17 @@
 		<div class="header-list" layout="row">
 			<div flex>Date</div>
 			<div flex>Vendor</div>
+			<div flex>UTR</div>
 			<div flex>Amount</div>
 		</div>
 		<div class="history-list">
 			<div ng-repeat="hs in history.historyDeposits" class="history-data" ng-click="hs.open = !hs.open">
 				<div class="history-overview" layout="row">
 					<div flex>{{hs.date}}</div>
-					<div flex>{{hs.deliveries[0].vendor_name}}</div>
+					<div flex hide-xs>{{hs.deliveries[0].vendor_name}}</div>
+					<div flex hide-gt-xs>{{hs.deliveries[0].vendor_name | limitTo :5}}{{hs.deliveries[0].vendor_name > 5 ? '...' : ''}}</div>
+					<div flex hide-xs>{{hs.utr_number | limitTo :10}}{{hs.utr_number.length > 10 ? '...' : ''}}</div>
+					<div flex hide-gt-xs>{{hs.utr_number | limitTo :5}}{{hs.utr_number.length > 5 ? '...' : ''}}</div>
 					<div flex layout="row">
 						<span>{{hs.cod_amount}}</span>
 						<span flex></span>
@@ -24,11 +28,13 @@
 						<div flex>Order Id</div>
 						<div flex>Amount</div>
 						<div flex></div>
+						<div flex></div>
 					</div>
 					<div ng-repeat="dl in hs.deliveries">
 						<div class="deliveries-overview" layout="row">
 							<div flex>{{dl.delivery_id}}</div>
 							<div flex>{{dl.cod_amount}}</div>
+							<div flex></div>
 							<div flex></div>
 						</div>
 					</div>

@@ -15,7 +15,7 @@ from api_v3 import constants
 from api_v3.utils import paginate, user_role, ist_day_start, ist_day_end, is_userexists, create_token, assign_usergroup, \
     check_month, ist_datetime
 from yourguy.models import DeliveryGuy, DGAttendance, Location, OrderDeliveryStatus, User, Employee, DeliveryTeamLead, \
-    ServiceablePincode, Picture
+    ServiceablePincode, Picture, Vendor
 
 from api_v3.utils import response_access_denied, response_with_payload, response_error_with_message, response_success_with_message, response_invalid_pagenumber, response_incomplete_parameters
 from api_v3.view_cod import cod_balance_calculation
@@ -74,6 +74,7 @@ def associated_dg_tl_details(dg_tl):
 
 
 def dg_details_dict(delivery_guy):
+    cod_balance = cod_balance_calculation(delivery_guy)
     dg_detail_dict = {
         'id': delivery_guy.id,
         'employee_code': delivery_guy.employee_code,
@@ -259,7 +260,7 @@ class DGViewSet(viewsets.ModelViewSet):
         if role == constants.VENDOR:
             return response_access_denied()
         else:
-            all_dgs = DeliveryGuy.objects.order_by('user__first_name')
+            all_dgs = DeliveryGuy.objects.filter(is_active = True).order_by('user__first_name')
 
             # SEARCH KEYWORD FILTERING ---------------------------------------------------
             if search_query is not None:
@@ -882,6 +883,22 @@ class DGViewSet(viewsets.ModelViewSet):
             else:
                 error_message = 'This is not a DG team lead or this is a deactivated DG team lead'
                 return response_error_with_message(error_message)
+        else:
+            return response_access_denied()
+
+    @detail_route(methods=['PUT'])
+    def add_vendor(self, request, pk):
+        role = user_role(request.user)
+        if role == constants.HR or role == constants.OPERATIONS or role == constants.OPERATIONS_MANAGER:
+            delivery_guy = get_object_or_404(DeliveryGuy, pk=pk)
+            vendor_ids = request.data['vendor_ids']
+            for vendor_id in vendor_ids:
+                vendor = get_object_or_404(Vendor, pk = vendor_id)
+                delivery_guy.associated_vendors.add(vendor)
+                delivery_guy.save()
+
+            message = 'Successfully added'
+            return response_success_with_message(message)
         else:
             return response_access_denied()
 
