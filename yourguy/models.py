@@ -256,11 +256,10 @@ class Employee(YGUser):
     def __unicode__(self):
         return u"%s - %s" % (self.user.username, self.user.first_name)
 
-class Consumer(YGUser):
+class Consumer(models.Model):
     created_date = models.DateTimeField(auto_now_add = True, blank = True, null = True)
     phone_number = models.CharField(max_length = 100, blank = True, null = True)
     full_name = models.CharField(max_length = 100, blank = True, null = True)
-    associated_vendor = models.ManyToManyField(Vendor, blank = True, related_name = 'multiple_vendor')
     vendor = models.ForeignKey(Vendor, blank = True, null = True, related_name = 'single_vendor')
     phone_verified = models.BooleanField(blank = True, default = False)
     addresses  = models.ManyToManyField(Address, blank = True)

@@ -35,16 +35,7 @@ def fetch_or_create_consumer(name, phone_number, vendor):
     try:
         consumer = Consumer.objects.get(phone_number = phone_number, vendor = vendor)
     except Exception as e:
-        try:
-            user = User.objects.get(username = phone_number)
-        except Exception, e:
-            user = User.objects.create(username = phone_number, first_name = name)        
-        try:
-            consumer = Consumer.objects.create(user = user, phone_number=phone_number, full_name = name, vendor = vendor)
-        except Exception, e:
-            consumer = Consumer.objects.get(user = user)
-    
-    consumer.associated_vendor.add(vendor)
+        consumer = Consumer.objects.create(phone_number=phone_number, full_name = name, vendor = vendor)
     consumer.save()
     return consumer
 
@@ -102,17 +93,8 @@ class ConsumerViewSet(viewsets.ModelViewSet):
     queryset = Consumer.objects.all()
 
     def destroy(self, request, pk):
-        role = user_role(request.user)
-        if role == constants.VENDOR:
-            vendor_agent = get_object_or_404(VendorAgent, user=request.user)
-            vendor = vendor_agent.vendor
-            consumer = get_object_or_404(Consumer, pk=pk)
-            consumer.associated_vendor.remove(vendor)
-            success_message = 'Customer removed.'
-            return response_success_with_message(success_message)
-        else:
-            return response_access_denied()
-    
+        return response_access_denied()
+                
     def retrieve(self, request, pk=None):
         consumer = get_object_or_404(Consumer, id=pk)
         role = user_role(request.user)
