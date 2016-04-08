@@ -76,13 +76,24 @@
         </md-list-item>
 		<md-list-item class="status-section" layout="row" layout-align="center center">
 			<div class="status-image">
-				<p>{{orderDetail.order.order_placed_datetime | date:'h:mm a'}}</p>
+				<p class="success-msg">		      
+					{{orderDetail.order.order_placed_datetime | date:'h:mm a'}}
+				</p>
 				<img src="/static/assets/images/Orders/details/queued.png">
+				<p>{{orderDetail.order.order_placed_datetime | date:'h:mm a'}}</p>
 				<p>queued</p>
 			</div>
 			<div class="status-divider"></div>
 			<div class="status-image">
-				<p>{{orderDetail.order.pickup_datetime | date:'h:mm a'}}</p>
+				<p ng-class="{
+						PICKUPATTEMPTED:'error-msg',
+						DELIVERYATTEMPTED:'success-msg',
+						DELIVERED:'success-msg',
+						INTRANSIT:'success-msg',
+						OUTFORDELIVERY:'success-msg',
+					}[orderDetail.order.status]">
+					{{orderDetail.order.pickedup_datetime || '-----' | date:'h:mm a' }}
+				</p>
 				<span ng-switch on="orderDetail.order.status">
 					<img ng-switch-when="QUEUED" src="/static/assets/images/Orders/details/pickup.png">
 					<img ng-switch-when="INTRANSIT" src="/static/assets/images/Orders/details/pickedup.png">
@@ -93,6 +104,7 @@
 					<img ng-switch-default  src="/static/assets/images/Orders/details/pickup.png">
 				</span>
 				<span ng-switch on="orderDetail.order.status">
+					<p>{{orderDetail.order.pickup_datetime | date:'h:mm a'}}</p>
 					<p ng-switch-when="QUEUED">intransit</p>
 					<p ng-switch-when="INTRANSIT">intransit</p>
 					<p ng-switch-when="DELIVERED">intransit</p>
@@ -103,7 +115,13 @@
 			</div>
 			<div class="status-divider"></div>
 			<div class="status-image">
-				<p>{{orderDetail.order.pickup_datetime | date:'h:mm a'}}</p>
+				<p ng-class="{
+						DELIVERYATTEMPTED:'success-msg',
+						DELIVERED:'success-msg',
+						OUTFORDELIVERY:'success-msg'
+					}[orderDetail.order.status]">
+					{{orderDetail.order.out_for_delivery_time || '-----' | date:'h:mm a'}}
+				</p>
 				<span ng-switch on="orderDetail.order.status">
 					<img ng-switch-when="QUEUED" src="/static/assets/images/Orders/details/out_for_delivery.png">
 					<img ng-switch-when="INTRANSIT" src="/static/assets/images/Orders/details/out_for_delivery.png">
@@ -114,6 +132,7 @@
 					<img ng-switch-default  src="/static/assets/images/Orders/details/out_for_delivery.png">
 				</span>
 				<span ng-switch on="orderDetail.order.status">
+					<p>-----</p>
 					<p ng-switch-when="QUEUED">out for delivery</p>
 					<p ng-switch-when="INTRANSIT">out for delivery</p>
 					<p ng-switch-when="DELIVERED">out for delivery</p>
@@ -124,7 +143,12 @@
 			</div>
 			<div class="status-divider"></div>
 			<div class="status-image">
-				<p>{{orderDetail.order.delivery_datetime | date:'h:mm a'}}</p>
+				<p ng-class="{
+						DELIVERYATTEMPTED:'success-msg',
+						DELIVERED:'success-msg'
+					}[orderDetail.order.status]">
+					{{orderDetail.order.completed_datetime || '-----' | date:'h:mm a'}}
+				</p>
 				<span ng-switch on="orderDetail.order.status">
 					<img ng-switch-when="QUEUED" src="/static/assets/images/Orders/details/deliver.png">
 					<img ng-switch-when="INTRANSIT" src="/static/assets/images/Orders/details/deliver.png">
@@ -135,6 +159,7 @@
 					<img ng-switch-default  src="/static/assets/images/Orders/details/deliver.png">
 				</span>
 				<span ng-switch on="orderDetail.order.status">
+					<p>{{orderDetail.order.delivery_datetime | date:'h:mm a'}}</p>
 					<p ng-switch-when="QUEUED">delivered</p>
 					<p ng-switch-when="INTRANSIT">delivered</p>
 					<p ng-switch-when="DELIVERED">delivered</p>

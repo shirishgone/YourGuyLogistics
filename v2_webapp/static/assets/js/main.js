@@ -2085,6 +2085,16 @@
 		var self = this;
 		self.params = $stateParams;
 		self.order = order.payload.data;
+		if(self.order.delivery_transactions.length > 0){
+			for( var i = 0; i < self.order.delivery_transactions.length;i++){
+				if( self.order.delivery_transactions[i].delivery_transaction_title == 'OutForDelivery'){
+					self.order.out_for_delivery_time = self.order.delivery_transactions[i].delivery_transaction_timestamp; 
+				}
+				if( self.order.delivery_transactions[i].delivery_transaction_title == 'COD Update'){
+					self.order.cod_update_reason = self.order.delivery_transactions[i].delivery_transaction_timestamp; 
+				}
+			}
+		}
 
 		function drawConvertedImage(bufferStr , name) {
 			var image_proof = new Image();
