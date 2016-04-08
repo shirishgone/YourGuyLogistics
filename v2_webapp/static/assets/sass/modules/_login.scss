@@ -1,0 +1,48 @@
+.login-page {
+	height:100%;
+	height: 100vh;
+	position: relative;
+	@include background-image(linear-gradient(primary-color('500'),primary-color('700')));
+	.login-error-message {
+		margin: 15px 10px;
+		color: $red-color;
+	}
+	.form-header {
+		text-align: center;
+		color: primary-color('700');
+		font-size: 40px !important;
+	}
+	.md-button {
+		padding: 8px 40px;
+		font-size: 18px;
+	}
+
+	.logo {
+		position: absolute;
+		top: 0px;
+		left: 10%;
+		width: 150px;
+		height: 150px;
+		@include background(image-url("/static/assets/images/login/logo.png") no-repeat center center);
+		@include background-size(contain);
+		@include border-radius(0 0 5px 5px);
+		@include mobile {
+			width: 80px;
+			height: 80px;
+		}
+	}
+
+	@include mobile {
+		.form-header {
+			text-align: center;
+			color: primary-color('700');
+			.md-display-1 {
+				font-size: 24px;
+			}
+		}
+		.md-button {
+			padding: 5px 30px;
+			font-size: 18px;
+		}
+	}
+}

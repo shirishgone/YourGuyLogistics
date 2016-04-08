@@ -1,0 +1,61 @@
+<md-dialog aria-label="UPDATE ORDER STATUS" ng-cloak class="statusUpdate  md-cornered" flex="50">
+	<md-toolbar>
+        <div class="md-toolbar-tools">
+            <h2>Update Orders</h2>
+            <span flex></span>
+            <md-button ng-click="statusUpdate.cancel()" class="md-icon-button" aria-label="close dg edit">
+            	<md-icon>clear</md-icon>
+            </md-button>
+        </div>
+    </md-toolbar>
+    <md-dialog-content layout="row" layout-wrap layout-margin>
+    <div class="status-tab">
+    	<form ng-cloak>
+    		<md-radio-group ng-model="statusUpdate.status_object.status">
+	    		<md-radio-button value="pickup" class="md-primary">Pickup</md-radio-button>
+	    		<md-radio-button value="pickup_attempted" class="md-primary"> Pickup Attempted </md-radio-button> 
+	    			<div class="status-tab-child" ng-if="statusUpdate.status_object.status == 'pickup_attempted'">
+	    				<md-input-container flex="100" layout-margin>
+							<label>Enter remarks</label>
+							<input ng-model="statusUpdate.status_object.data.remarks">
+						</md-input-container>
+	    			</div>
+	    		<md-radio-button value="delivered" class="md-primary"> Delivery </md-radio-button>
+	    			<div class="status-tab-child" layout="row" layout-wrap ng-if="statusUpdate.status_object.status == 'delivered'">
+						<md-radio-group flex="100" layout-gt-xs="row" ng-model="statusUpdate.status_object.data.delivered_at" style="margin-left: 16px">
+							<md-radio-button flex="20" value="CUSTOMER" style="min-width: 130px;margin-top: 16px" class="md-primary">Customer</md-radio-button>
+							<md-radio-button flex="20" value="RECEPTION" style="min-width: 130px;" class="md-primary">Reception</md-radio-button>
+							<md-radio-button flex="20" value="DOOR_STEP" style="min-width: 130px;" class="md-primary">Door Step</md-radio-button>
+							<md-radio-button flex="20" value="SECURITY"  style="min-width: 130px;" class="md-primary">Security</md-radio-button>
+					    </md-radio-group>
+						<md-input-container flex="30" flex-xs="100" layout-margin>
+							<label>Enter Cod Amount</label>
+							<input ng-model="statusUpdate.status_object.data.cod_collected_amount">
+						</md-input-container>
+						<span flex="10" hide-xs></span>
+						<md-input-container flex="50" flex-xs="100" layout-margin>
+							<label>Enter the remarks</label>
+							<input ng-model="statusUpdate.status_object.data.delivery_remarks">
+						</md-input-container>	
+					</div>
+	    		<md-radio-button value="delivery_attempted" class="md-primary"> Delivery Attempted </md-radio-button>
+	    		<div class="status-tab-child" ng-if="statusUpdate.status_object.status == 'delivery_attempted'">
+    				<md-input-container flex="100" layout-margin>
+						<label>Enter remarks</label>
+						<input ng-model="statusUpdate.status_object.data.remarks">
+					</md-input-container>
+	    		</div>
+    		</md-radio-group>
+    	</form>
+	</div>    
+    </md-dialog-content>
+    <md-dialog-actions layout="row">
+        <span flex></span>
+        <md-button ng-click="statusUpdate.cancel()" class="md-warn">
+            Cancel
+        </md-button>
+        <md-button ng-click="statusUpdate.answer(statusUpdate.status_object)" class="md-primary" style="margin-right:20px;">
+            Done
+        </md-button>
+    </md-dialog-actions>
+</md-dialog>

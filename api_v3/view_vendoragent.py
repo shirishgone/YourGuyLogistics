@@ -77,7 +77,6 @@ class VendorAgentViewSet(viewsets.ModelViewSet):
                 log_exception(e, 'Group settings failed for vendor agent')
 
             token = create_token(user, constants.VENDOR)
-            content = {'auth_token': token.key}
-            return response_with_payload(content, None)
+            return response_with_payload(token.key, None)
         else:
             return response_access_denied()

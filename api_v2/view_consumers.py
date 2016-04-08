@@ -10,7 +10,7 @@ from rest_framework.decorators import detail_route, list_route
 from rest_framework.response import Response
 
 from yourguy.models import Consumer, Vendor, VendorAgent, Address, Area
-from api.views import user_role, is_userexists, is_consumerexists
+from api.views import user_role, is_userexists
 
 from api_v2.views import paginate
 
@@ -18,38 +18,14 @@ import datetime
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 import constants
 from django.db.models import Q
-    
-def create_address(full_address, pin_code, landmark):
-    new_address = Address.objects.create(full_address = full_address, pin_code = pin_code)
-    if landmark is not None:
-        new_address.landmark = landmark
-        new_address.save()
-    return new_address    
 
-def create_consumer(username, phone_number, address):
-
-    # FETCH USER WITH PHONE NUMBER -------------------------------
-    if is_userexists(phone_number) is False:
-        user = User.objects.create(username = phone_number, first_name = username, password = '')
-    else:
-        user = get_object_or_404(User, username = phone_number)
-    # -------------------------------------------------------------
-
-    if is_consumerexists(user) is False:
-        consumer = Consumer.objects.create(user = user)
-        consumer.addresses.add(address)
-        consumer.save()
-    else:
-        consumer = get_object_or_404(Consumer, user = user)
-         
-    return consumer
-
+from api_v3.view_consumer import is_consumer_has_same_address_already, fetch_or_create_consumer, fetch_or_create_consumer_address
 
 def consumer_list_dict(consumer):
     consumer_dict = {
             'id' : consumer.id,
-            'name':consumer.user.first_name,
-            'phone_number':consumer.user.username
+            'name':consumer.full_name,
+            'phone_number':consumer.phone_number
             }
     return consumer_dict
 
@@ -57,8 +33,8 @@ def consumer_list_dict(consumer):
 def consumer_detail_dict(consumer):
     consumer_dict = {
             'id' : consumer.id,
-            'name':consumer.user.first_name,
-            'phone_number':consumer.user.username,
+            'name':consumer.full_name,
+            'phone_number':consumer.phone_number,
             "addresses":[]
             }
     
@@ -76,8 +52,8 @@ def consumer_detail_dict(consumer):
 
 def excel_download_consumer_detail(consumer):
     consumer_dict = {
-            'name':consumer.user.first_name,
-            'phone_number':consumer.user.username,
+            'name':consumer.full_name,
+            'phone_number':consumer.phone_number,
             "addresses":[]
             }
     
@@ -107,16 +83,9 @@ class ConsumerViewSet(viewsets.ModelViewSet):
         role = user_role(request.user)
         if role == constants.VENDOR:
             vendor_agent = get_object_or_404(VendorAgent, user = request.user)
-            all_associated_vendors = consumer.associated_vendor.all()
-            is_consumer_associated_to_vendor = False
-            for vendor in all_associated_vendors:
-                if vendor.id == vendor_agent.vendor.id:
-                    is_consumer_associated_to_vendor = True
-                    break
-            if is_consumer_associated_to_vendor:
+            if consumer.vendor.id == vendor_agent.vendor.id:
                 detail_dict = consumer_detail_dict(consumer)
-                response_content = { "data": detail_dict}
-                return Response(response_content, status = status.HTTP_200_OK)
+                return Response(detail_dict, status = status.HTTP_200_OK)
             else:
                 content = {'error':'You dont have permissions to view this consumer.'}
                 return Response(content, status = status.HTTP_400_BAD_REQUEST)  
@@ -137,11 +106,11 @@ class ConsumerViewSet(viewsets.ModelViewSet):
         role = user_role(request.user)
         if role == constants.VENDOR:
             vendor_agent = get_object_or_404(VendorAgent, user = request.user)
-            total_consumers_of_vendor = Consumer.objects.filter(associated_vendor = vendor_agent.vendor).order_by(Lower('user__first_name'))
+            total_consumers_of_vendor = Consumer.objects.filter(vendor = vendor_agent.vendor).order_by(Lower('full_name'))
         
             # SEARCH KEYWORD FILTERING -------------------------------------------------
             if search_query is not None:
-                total_consumers_of_vendor = total_consumers_of_vendor.filter(Q(user__first_name__icontains=search_query) | Q(user__username=search_query))
+                total_consumers_of_vendor = total_consumers_of_vendor.filter(Q(full_name__icontains=search_query) | Q(phone_number=search_query))
                 addresses_required = True
             # --------------------------------------------------------------------------
 
@@ -176,9 +145,10 @@ class ConsumerViewSet(viewsets.ModelViewSet):
             content = {'error':'You dont have permissions to view all Consumers'}
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
     
-    def create(self, request):
+    def create(self, request):        
         role = user_role(request.user)
         if (role == constants.VENDOR):
+            vendor_agent = VendorAgent.objects.get(user = request.user)
             # REQUEST PARAM CHECK --------------------------------------------
             try:
                 phone_number = request.data['phone_number']
@@ -194,23 +164,9 @@ class ConsumerViewSet(viewsets.ModelViewSet):
                 return Response(content, status = status.HTTP_400_BAD_REQUEST)
             # -------------------------------------------------------------
             
-            new_address = create_address(full_address, pin_code, landmark)
-            new_consumer = create_consumer(name, phone_number, new_address)
-
-            # SETTING USER GROUP -------------------------------------------
-            try:
-                group = get_object_or_404(Group, name=constants.CONSUMER)
-                group.user_set.add(new_consumer.user)        
-            except Exception, e:
-                print 'group not set'
-            # --------------------------------------------------------------
+            new_consumer = fetch_or_create_consumer(name, phone_number, vendor_agent.vendor)
+            new_address = fetch_or_create_consumer_address(new_consumer, full_address, pin_code, landmark)
             
-            # SETTING ASSOCIATED VENDOR ------------------------------------
-            vendor_agent = VendorAgent.objects.get(user = request.user)
-            new_consumer.associated_vendor.add(vendor_agent.vendor)
-            new_consumer.save()
-            # ---------------------------------------------------------------
-
             content = {
             'consumer_id': new_consumer.id,
             'new_address_id':new_address.id
@@ -225,7 +181,7 @@ class ConsumerViewSet(viewsets.ModelViewSet):
         role = user_role(request.user)
         if role == constants.VENDOR:
             vendor_agent = get_object_or_404(VendorAgent, user = request.user)
-            all_consumers_of_vendor = Consumer.objects.filter(associated_vendor = vendor_agent.vendor).order_by(Lower('user__first_name'))
+            all_consumers_of_vendor = Consumer.objects.filter(vendor = vendor_agent.vendor).order_by(Lower('full_name'))
             
             result = []
             for consumer in all_consumers_of_vendor:
@@ -259,15 +215,7 @@ class ConsumerViewSet(viewsets.ModelViewSet):
         role = user_role(request.user)
         if role == constants.VENDOR:
             consumer = get_object_or_404(Consumer, pk = pk)
-            
-            # CREATE NEW ADDRESS OBJECT ------------------------------------------
-            new_address = Address.objects.create(full_address = full_address, pin_code = pin_code)
-            if landmark is not None:
-                new_address.landmark = landmark
-                new_address.save()
-            # --------------------------------------------------------
-            
-            consumer.addresses.add(new_address)
+            new_address = fetch_or_create_consumer_address(consumer, full_address, pin_code, landmark)
             content = {
             'address_id': new_address.id
             }

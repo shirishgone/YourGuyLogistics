@@ -1,0 +1,95 @@
+<md-toolbar class="yg-toolbar md-primary md-whiteframe-z2">
+	<div class="md-toolbar-tools" ng-if="!vendorList.searchVendorActive">
+		<md-button ng-click="home.toggleSideNav()" class="md-icon-button" aria-label="Menu Icon">
+			<md-icon>menu</md-icon>
+		</md-button>
+		<p>Vendors</p>
+		<span flex></span>
+		<md-button class="md-icon-button" aria-label="search Button" ng-click="vendorList.searchVendorActive = true">
+			<md-tooltip md-direction="bottom">
+          		Search
+        	</md-tooltip>
+			<md-icon>search</md-icon>
+		</md-button>
+		<md-button ui-sref="home.notification" class="md-icon-button notifications_count" aria-label="Notification Button">
+			<span ng-show="home.count > 0" class="count-over-icon">{{home.count | limitTo :2}}{{home.count > 99 ? '+' : ''}}</span>
+			<md-tooltip md-direction="bottom">
+          		Notifications
+        	</md-tooltip>
+			<md-icon>notifications_none</md-icon>
+		</md-button>
+		<!-- <md-button ng-click="vendorList.toggleFilter()" class="md-icon-button" aria-label="Filter Button">
+			<md-icon>filter_list</md-icon>
+		</md-button> -->
+	</div>
+	<div class="md-toolbar-tools search-toolbar" ng-if="vendorList.searchVendorActive">
+		<md-button ng-click="vendorList.backFromSearch()" class="md-icon-button" aria-label="Clear Icon">
+			<md-icon>arrow_back</md-icon>
+		</md-button>
+		<md-input-container flex  md-no-float>
+        	<input ng-model="vendorList.params.search" type="text" placeholder="Search Vendor" ng-keyup="$event.which === 13 && vendorList.getVendors()" md-autofocus="vendorList.searchVendorActive == true">
+        </md-input-container>
+        <md-button class="md-icon-button" aria-label="Search dg Button" ng-click="vendorList.getVendors()">
+			<md-icon>search</md-icon>
+		</md-button>
+	</div>
+</md-toolbar>
+<md-content flex layout-fill layout="row" class="vendorList" >
+	<div flex layout="column" class="vendor-list" ng-if="vendorList.total_vendors > 0">
+		<section flex="90" class="list" layout="row" layout-align="center stretch">
+			<md-content flex layout="column" layout-align="start stretch">
+				<table class="table-list" layout="column">
+					<thead class="table-header">
+						<tr layout="row" layout-align="center start">
+							<th flex="100">Name</th>
+							<!-- <th flex="50">Retail</th> -->
+						</tr>
+					</thead>
+					<tbody  class="table-body">
+						<tr ng-repeat="vendor in vendorList.vendors" layout="row" layout-align="center start">
+							<td flex="100">{{vendor.name}}</td>
+							<!-- <td flex="50">{{vendor.is_retail? 'Yes':'No' }}</td> -->
+						</tr>
+					</tbody>
+				</table>
+			</md-content>
+		</section>
+		<section flex="10" class="footer">
+			<div yd-pagination total="{{vendorList.total_vendors}}" total-page="{{vendorList.total_pages}}" params="vendorList.params" list-length="{{vendorList.vendors.length}}" paginate="vendorList.paginate" get-data="vendorList.getVendors()"></div>
+		</section>
+	</div>
+	<div flex layout="row" layout-align="center center" class="no-content"  ng-if="vendorList.total_vendors == 0">
+		<div flex="50" flex-xs="90">
+				<img src="/static/assets/images/vendor/vendor.png">
+			</div>
+	</div>
+	<!-- <md-sidenav class="filter-sidenav md-sidenav-right md-whiteframe-z3" layout="column" md-component-id="dgList-filter">
+		<md-toolbar class="md-primary md-whiteframe-z1">
+			<div class="md-toolbar-tools">
+				<h1 class="md-subhead">FILTERS</h1>
+				<span flex></span>
+				<md-button class="md-icon-button" aria-label="Filter Button" ng-click="dgList.getDgs()">
+					<md-icon>done</md-icon>
+				</md-button>
+			</div>
+     	</md-toolbar>
+     	<md-content flex layout="column">
+     		<md-list>
+     			<md-subheader>DATE</md-subheader>
+     			<md-list-item class="md-1-line">
+					<md-datepicker ng-model="dgList.params.date" md-placeholder="Enter date"></md-datepicker>
+				</md-list-item>
+				<md-subheader>STATUS</md-subheader>
+				<md-list-item class="md-1-line" flex>
+     				<form name="dgstatusselectform" flex>
+     					<md-radio-group ng-model="dgList.params.attendance">
+							<md-radio-button ng-value="item.value" class="md-warn" ng-repeat="item in dgList.dg_status">
+								{{item.status}}
+							</md-radio-button>
+					    </md-radio-group>
+     				</form>
+				</md-list-item>
+     		</md-list>
+     	</md-content>
+	</md-sidenav> -->
+</md-content>

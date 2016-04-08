@@ -1,0 +1,187 @@
+<md-toolbar class="yg-toolbar md-primary md-whiteframe-z2">
+	<div class="md-toolbar-tools">
+		<md-button ng-click="dgDetail.goBack()" class="md-icon-button" aria-label="Menu Icon">
+			<md-icon>arrow_back</md-icon>
+		</md-button>
+		<p>{{dgDetail.DG.name}}</p>
+		<span flex></span>
+		<md-button ng-click="dgDetail.showEditDialog($event)" ng-if="home.tabs.dgEdit" id="dgEditDialog" class="md-icon-button" aria-label="Menu Icon">
+			<md-tooltip md-direction="bottom">
+          		Edit Dg
+        	</md-tooltip>
+			<md-icon>edit</md-icon>
+		</md-button>
+		<md-menu md-position-mode="target-right target" ng-click="$event.stopPropagation()" ng-if="home.tabs.dgEdit">
+			<md-button class="md-icon-button" id="options" ng-click="$mdOpenMenu($event)" aria-label="Open selected menu">
+				<md-icon>more_vert</md-icon>
+			</md-button>
+			<md-menu-content width="3">
+				<md-menu-item>
+					<md-button ng-click="dgDetail.deactivateDgDialog(DG)">
+						Deactivate
+					</md-button>
+				</md-menu-item>
+			</md-menu-content>
+		</md-menu>
+	</div>
+</md-toolbar>
+<md-content flex layout-fill class="dgDetail" layout="column">
+	<section flex="none" layout="row" layout-fill layout-wrap class="profile-view">
+		<!-- <div flex="20" flex-xs="100">
+			PROFILE IMAGE
+		</div> -->
+		<div flex flex-xs="100" layout="row" layout-wrap>
+			<div flex="30" flex-xs="50" class="profile-data">
+				<label>Name</label>
+				<h5>{{dgDetail.DG.name}}</h5>
+			</div>
+			<div flex="30" flex-xs="50"class="profile-data">
+				<label>Phone Number</label>
+				<h5>{{dgDetail.DG.phone_number}}</h5>
+			</div>
+			<div flex="30" flex-xs="50" class="profile-data">
+				<label>Shift Time</label>
+				<h5>{{dgDetail.DG.shift_time.start_time | timeAsDate}} - {{dgDetail.DG.shift_time.end_time | timeAsDate}}</h5>
+			</div>
+			<div flex="30" flex-xs="50" class="profile-data">
+				<label>Transportation Mode</label>
+				<h5>{{dgDetail.DG.transportation_mode}}</h5>
+			</div>
+			<div flex="30" flex-xs="50" class="profile-data" ng-if="dgDetail.DG.pincode.length > 0">
+				<label>Pin Codes</label>
+				<div ng-repeat=" pin in dgDetail.DG.pincode">
+					<h5>{{pin}}</h5>
+				</div>
+			</div>
+			<div flex="30" flex-xs="50" class="profile-data" ng-if="!dgDetail.DG.is_teamlead">
+				<label>Team Lead</label>
+				<div ng-repeat=" lead in dgDetail.DG.team_leads">
+					<h5>{{lead.name}}</h5>
+				</div>
+			</div>
+			<div flex="30" flex-xs="50" class="profile-data">
+				<label>operational Managers</label>
+				<div ng-repeat="op in dgDetail.DG.ops_managers">
+					<h5>{{op.name}}</h5>
+				</div>
+			</div>
+			
+			<!-- <div flex="30" flex-xs="50" class="profile-data">
+				<label>Weekly Off</label>
+				<h5>{{dgDetail.DG.pincode}}</h5>
+			</div> -->
+			<!-- <div flex="30" flex-xs="50" class="profile-data">
+				<label>COD</label>
+				<h5>{{dgDetail.DG.cod}}</h5>
+			</div> -->
+			<div flex="30" flex-xs="50" class="profile-data" ng-if="home.tabs.dgPromteTeamLead">
+				<md-checkbox ng-checked="dgDetail.DG.is_teamlead" ng-click="dgDetail.toTeamlead()" aria-label="TEAM LEAD">
+            		Team Lead
+          		</md-checkbox>
+			</div>
+		</div>
+	</section>
+	<section flex class="tabs-view" layout-fill>
+		<md-content>
+			<md-tabs md-selected="0" md-dynamic-height md-border-bottom class="md-primary md-hue-3">
+				<!-- <md-tab label="WORK DETAILS" md-on-select="dgDetail.getWorkDetails()">
+					<md-content class="md-padding">
+						<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla venenatis ante augue. Phasellus volutpat neque ac dui mattis vulputate. Etiam consequat aliquam cursus. In sodales pretium ultrices. Maecenas lectus est, sollicitudin consectetur felis nec, feugiat ultricies mi.</p>
+					</md-content>
+				</md-tab> -->
+				<md-tab label="ATTENDANCE" md-on-select="dgDetail.getAttendance()">
+					<md-content>
+						<div layout="column" layout-fill class="attendance" >
+							<div class="attendance-action" layout="row">
+								<md-datepicker ng-model="dgDetail.attendance_date" md-placeholder="Enter date" md-min-date="dgDetail.attendanceMinDate" md-max-date="dgDetail.attendanceMaxDate" md-date-filter="dgDetail.onlyMonthsPredicate" ng-change="dgDetail.getAttendance()"></md-datepicker>
+								<span flex></span>
+								<md-button yd-excel-download workbook-data="dgDetail.dg_monthly_attendance" class="md-raised md-warn attendance-button" ng-if="dgDetail.dg_monthly_attendance">
+									<md-icon>file_download</md-icon>
+									ATTENDANCE
+								</md-button>
+							</div>
+							<div class="attendance-table">
+								<table flex class="table-list">
+									<thead class="table-header">
+										<tr>
+											<th>
+												Date
+											</th>
+											<th>
+												In Time
+											</th>
+											<th>
+												Out Time
+											</th>
+											<th>
+												Total Hours
+											</th>
+											<!-- <th>
+												Delivery Executed / Assigned
+											</th> -->
+										</tr>
+									</thead>
+									<tbody class="table-body">
+										<tr ng-repeat="attendance in dgDetail.dg_monthly_attendance">
+											<td>
+												{{attendance.date | date :'MMM d'}}
+											</td>
+											<td>
+												{{attendance.login_time || 'Not Checked In' | date :'h mm a' }}
+											</td>
+											<td>
+												{{attendance.logout_time || 'Not Checked Out' | date :'h mm a' }}
+											</td>
+											<td>
+												{{attendance.worked_hrs}}
+											</td>
+											<!-- <td>
+												attendance.date
+											</td> -->
+										</tr>
+									</tbody>
+								</table>
+							</div>
+						</div>
+					</md-content>
+				</md-tab>
+				<md-tab md-on-select="dgDetail.getTeamMembers()" ng-if="dgDetail.DG.is_teamlead">
+					<md-tab-label>
+						TEAM LEAD
+					</md-tab-label>
+					<md-tab-body>
+						<md-content class="md-padding">
+							<div class="team-members">
+								<h5>Team Members</h5>
+								<table class="md-whiteframe-3dp">
+									<thead>
+										<tr>
+											<th>Name</th>
+											<th>Phone Number</th>
+										</tr>
+									</thead>
+									<tbody>
+										<tr ng-repeat="member in dgDetail.associated_dg_list">
+											<td>{{member.dg_name}}</td>
+											<td>{{member.dg_phonenumber}}</td>
+										</tr>
+									</tbody>
+									<tfoot ng-click="dgDetail.toTeamlead()">
+										<tr ng-if="home.tabs.dgPromteTeamLead">
+											<td>
+												Add team Members
+											</td>
+											<td>
+												
+											</td>
+										</tr>
+									</tfoot>
+								</table>
+							</div>
+						</md-content>
+					</md-tab-body>
+				</md-tab>
+			</md-tabs>
+		</md-content>
+	</section>
+</md-content>

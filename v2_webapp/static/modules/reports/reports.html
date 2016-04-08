@@ -1,0 +1,83 @@
+<md-toolbar class="yg-toolbar md-primary md-whiteframe-z2" >
+	<div class="md-toolbar-tools">
+		<md-button ng-click="home.toggleSideNav()" class="md-icon-button" aria-label="Menu Icon" ng-if="!reports.searchVendorActive">
+			<md-icon>menu</md-icon>
+		</md-button>
+		<md-button ng-click="reports.backFromSearch()" class="md-icon-button" aria-label="Menu Icon" ng-if="reports.searchVendorActive">
+			<md-icon>arrow_back</md-icon>
+		</md-button>
+		<p>Reports</p>
+		<span flex></span>
+		<md-button class="md-icon-button" aria-label="search Button" ng-click="reports.downloadReportExcel()">
+			<md-tooltip md-direction="bottom">
+          		Download reports
+        	</md-tooltip>
+			<md-icon>file_download</md-icon>
+		</md-button>
+		<md-button ui-sref="home.notification" class="md-icon-button notifications_count" aria-label="Notification Button">
+			<span ng-show="home.count > 0" class="count-over-icon">{{home.count | limitTo :2}}{{home.count > 99 ? '+' : ''}}</span>
+			<md-tooltip md-direction="bottom">
+          		Notifications
+        	</md-tooltip>
+			<md-icon>notifications_none</md-icon>
+		</md-button>
+	</div>
+</md-toolbar>
+<md-content flex class="reports" layout="row" layout-wrap>
+	<div flex="100" flex-xs="100" layout="row" layout-wrap class="action-section">
+		<div class="vendor" flex="20" flex-xs="100" layout-align="start start">
+			<md-autocomplete
+				md-no-cache="true"
+				md-selected-item="reports.selectedVendor"
+				md-search-text="reports.searchVendor"
+				md-selected-item-change="reports.selectedVendorChange(vendor)"
+				md-items="vendor in reports.vendorSearchTextChange(reports.searchVendor)"
+				md-item-text="vendor.name"
+				md-min-length="0"
+				md-floating-label="Search By Vendor">
+				<md-item-template>
+				<span md-highlight-text="reports.searchVendor">{{vendor.name}}</span>
+					</md-item-template>
+					<md-not-found>
+					No states matching "{{reports.searchVendor}}" were found.
+				</md-not-found>
+			</md-autocomplete>
+		</div>
+		<span flex hide-xs></span>
+		<div flex="50" flex-xs="100" layout="row" layout-align="end center" layout-wrap  layout-align-xs="space-between start" class="datepicker-section">
+			<div class="date-picker-section" flex-xs="100">
+				<md-datepicker ng-model="reports.params.start_date" md-placeholder="Start date" md-min-date="reports.minStartDate" md-max-date="reports.maxStartDate" ng-change="reports.date_change()"></md-datepicker>
+			</div>
+			<div flex-xs="100">
+				<md-datepicker ng-model="reports.params.end_date" md-placeholder="End date" md-min-date="reports.params.start_date" md-max-date="reports.maxEndDate" ng-change="reports.date_change()"></md-datepicker>
+			</div>
+		</div>
+	</div>
+	<div flex="100" layout="row" layout-wrap layout-align="space-between start" layout-align-xs="space-around start" class="stats-section" ng-if="reports.report_stats.total_orders > 0">
+		<div flex="20" flex-xs="40" class="stat-box">
+			<p>{{reports.report_stats.total_orders}}</p>
+			<span>total orders</span>
+		</div>
+		<div flex="20" flex-xs="40" class="stat-box accent">
+			<p>{{reports.report_stats.total_orders_executed}}</p>
+			<span>orders executed</span>
+		</div>
+		<div flex="20" flex-xs="40" class="stat-box warn">
+			<p>{{reports.report_stats.total_cod | number:2}}</p>
+			<span>total cod amount</span>
+		</div>
+		<div flex="20" flex-xs="40" class="stat-box success">
+			<p>{{reports.report_stats.cod_collected | number:2}}</p>
+			<span>total cod collected</span>
+		</div>
+	</div>
+	<div flex="100" class="chart-section" ng-if="reports.report_stats.total_orders > 0">
+        <div fusioncharts width="100%" height="100%" type="stackedcolumn2d" dataSource="{{reports.graphData}}"></div>
+    </div>
+    <div flex="100" layout="row" layout-align="center center" class="no-content" ng-if="reports.report_stats.total_orders == 0">
+    	<div flex="50" flex-xs="90">
+			<img src="/static/assets/images/reports/reports.png">
+		</div>
+    </div>
+
+</md-content>

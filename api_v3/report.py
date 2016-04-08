@@ -8,7 +8,7 @@ from api_v3.utils import send_email, ist_day_start, ist_day_end
 from yourguy.models import DeliveryGuy, OrderDeliveryStatus, DGAttendance, Vendor, Employee
 from rest_framework.decorators import api_view
 
-
+@api_view(['GET'])
 def daily_report():
     date = datetime.today()
     day_start = ist_day_start(date)
@@ -48,6 +48,9 @@ def daily_report():
         orders_intransit_count = delivery_statuses_today.filter(order_status=constants.ORDER_STATUS_INTRANSIT).count()
         orders_intransit_percentage = "{0:.0f}%".format(float(orders_intransit_count) / float(orders_total_count) * 100)
 
+        orders_out_for_delivery_count = delivery_statuses_today.filter(order_status=constants.ORDER_STATUS_OUTFORDELIVERY).count()
+        orders_out_for_delivery_percentage = "{0:.0f}%".format(float(orders_out_for_delivery_count) / float(orders_total_count) * 100)
+
         orders_delivered_count = delivery_statuses_today.filter(order_status=constants.ORDER_STATUS_DELIVERED).count()
         orders_delivered_percentage = "{0:.0f}%".format(float(orders_delivered_count) / float(orders_total_count) * 100)
 
@@ -67,7 +70,7 @@ def daily_report():
         orders_canceled_count = delivery_statuses_today.filter(order_status=constants.ORDER_STATUS_CANCELLED).count()
         orders_canceled_percentage = "{0:.0f}%".format(float(orders_canceled_count) / float(orders_total_count) * 100)
 
-        pending_orders_count = orders_queued_count + orders_placed_count + orders_intransit_count
+        pending_orders_count = orders_queued_count + orders_placed_count + orders_intransit_count + orders_out_for_delivery_count
         pending_orders_percentage = "{0:.0f}%".format(float(pending_orders_count) / float(orders_total_count) * 100)
 
         completed_orders_count = orders_delivered_count + orders_pickup_attempted_count + \
@@ -93,6 +96,7 @@ def daily_report():
             Q(order_status=constants.ORDER_STATUS_INTRANSIT) |
             Q(order_status=constants.ORDER_STATUS_DELIVERED) |
             Q(order_status=constants.ORDER_STATUS_DELIVERY_ATTEMPTED) |
+            Q(order_status=constants.ORDER_STATUS_OUTFORDELIVERY) |
             Q(order_status=constants.ORDER_STATUS_PICKUP_ATTEMPTED))
         total_cod_dict = executable_deliveries.aggregate(total_cod=Sum('order__cod_amount'))
         total_cod_to_be_collected = total_cod_dict['total_cod']
@@ -138,7 +142,9 @@ def daily_report():
         email_body = email_body + "\nQueued         = %s [%s percent]" % (orders_queued_count, orders_queued_percentage)
         email_body = email_body + "\nInTransit      = %s [%s percent]" % (
             orders_intransit_count, orders_intransit_percentage)
-        email_body = email_body + "\ndelivered      = %s [%s percent]" % (
+        email_body = email_body + "\nOutForDelivery      = %s [%s percent]" % (
+            orders_out_for_delivery_count, orders_out_for_delivery_percentage)
+        email_body = email_body + "\nDelivered      = %s [%s percent]" % (
             orders_delivered_count, orders_delivered_percentage)
         email_body = email_body + "\nPickup Attempted   = %s [%s percent]" % (
             orders_pickup_attempted_count, orders_pickup_attempted_percentage)
@@ -171,7 +177,8 @@ def daily_report():
         send_email(constants.EMAIL_DAILY_REPORT, email_subject, email_body)
         # ------------------------------------------------------------------------------------------------
 
-def cod_report():
+@api_view(['GET'])
+def cod_report(request):
     date = datetime.today()
     day_start = ist_day_start(date)
     day_end = ist_day_end(date)
@@ -191,9 +198,11 @@ def cod_report():
         email_body = email_body + "\n\n- YourGuy BOT"
 
         send_email(constants.EMAIL_COD_REPORT, email_subject, email_body)
+        return Response(status=status.HTTP_200_OK)
     else:
         # COD as per ORDER_STATUS --------------------------------------------------------
         orders_pending_queryset = delivery_statuses_today.filter(Q(order_status=constants.ORDER_STATUS_QUEUED) |
+                                                                 Q(order_status=constants.ORDER_STATUS_OUTFORDELIVERY) |
                                                                  Q(order_status=constants.ORDER_STATUS_INTRANSIT))
         orders_pending = orders_pending_queryset.aggregate(sum_of_cod_amount=Sum('order__cod_amount'))
         pending_cod_amount = orders_pending['sum_of_cod_amount']
@@ -231,26 +240,11 @@ def cod_report():
         if pending_cod_amount is None:
             pending_cod_amount = 0
 
-        orders_executed_queryset = delivery_statuses_today.filter(order_status=constants.ORDER_STATUS_DELIVERED)
-        orders_executed = orders_executed_queryset.aggregate(sum_of_cod_collected=Sum('cod_collected_amount'),
-                                                             sum_of_cod_amount=Sum('order__cod_amount'))
-        delivered_cod_collected = orders_executed['sum_of_cod_collected']
-        if delivered_cod_collected is None:
-            delivered_cod_collected = 0
-
-        delivered_cod_amount = orders_executed['sum_of_cod_amount']
-        if delivered_cod_amount is None:
-            delivered_cod_amount = 0
-
-        pending_cod = delivered_cod_amount - delivered_cod_collected
-        pending_cod_amount = pending_cod_amount + pending_cod
-
         delivery_statuses_tracked_queryset = delivery_statuses_today.filter(
             Q(order_status=constants.ORDER_STATUS_QUEUED) |
             Q(order_status=constants.ORDER_STATUS_INTRANSIT) |
             Q(order_status=constants.ORDER_STATUS_DELIVERED) |
-            Q(order_status=constants.ORDER_STATUS_CANCELLED) |
-            Q(order_status=constants.ORDER_STATUS_PICKUP_ATTEMPTED) |
+            Q(order_status=constants.ORDER_STATUS_OUTFORDELIVERY) |
             Q(order_status=constants.ORDER_STATUS_DELIVERY_ATTEMPTED)
         )
 
@@ -286,6 +280,8 @@ def cod_report():
         delivery_statuses_tracked_queryset = delivery_statuses_today.filter(
             Q(order_status=constants.ORDER_STATUS_QUEUED) |
             Q(order_status=constants.ORDER_STATUS_INTRANSIT) |
+            Q(order_status=constants.ORDER_STATUS_OUTFORDELIVERY) |
+            Q(order_status=constants.ORDER_STATUS_DELIVERY_ATTEMPTED) |
             Q(order_status=constants.ORDER_STATUS_DELIVERED))
         delivery_statuses_tracked_queryset = delivery_statuses_tracked_queryset.filter(order__cod_amount__gt=0)
         vendors_tracked = delivery_statuses_tracked_queryset.values('order__vendor__store_name'). \
@@ -335,7 +331,7 @@ def cod_report():
             else:
                 dg_full_name = 'Unassigned'
 
-            cod_with_dg = "\n%s - COD: %s/%s" % \
+            cod_with_dg = "%s - COD: %s/%s" % \
                           (dg_full_name, sum_of_cod_collected, sum_of_cod_amount)
             email_body = email_body + "\n\n" + cod_with_dg
             # ===============================================================
@@ -346,6 +342,8 @@ def cod_report():
                 date__lte=day_end)
             orders_tracked = orders_tracked.filter(Q(order_status=constants.ORDER_STATUS_QUEUED) |
                                                    Q(order_status=constants.ORDER_STATUS_INTRANSIT) |
+                                                   Q(order_status=constants.ORDER_STATUS_OUTFORDELIVERY) |
+                                                   Q(order_status=constants.ORDER_STATUS_DELIVERY_ATTEMPTED) |
                                                    Q(order_status=constants.ORDER_STATUS_DELIVERED))
             orders_tracked = orders_tracked.filter(order__cod_amount__gt=0)
             vendor_tracked_per_order = orders_tracked.values('order__vendor__store_name').annotate(
@@ -361,7 +359,7 @@ def cod_report():
                     sum_of_cod_amount = 0
 
                 cod_with_vendor = ''
-                cod_with_vendor = "\n  %s- COD: %s/%s" % (vendor_name, sum_of_cod_collected, sum_of_cod_amount)
+                cod_with_vendor = "  %s- COD: %s/%s" % (vendor_name, sum_of_cod_collected, sum_of_cod_amount)
                 email_body = email_body + "\n" + cod_with_vendor
 
         # ---------------------------------------------------------------------------
@@ -369,6 +367,7 @@ def cod_report():
         email_body = email_body + "\n\n- YourGuy BOT"
 
         send_email(constants.EMAIL_COD_REPORT, email_subject, email_body)
+    return Response(status=status.HTTP_200_OK)
         # ------------------------------------------------------------------------------------------------
 
 def dg_report():
@@ -602,6 +601,7 @@ def vendor_report(request):
         Q(order_status=constants.ORDER_STATUS_PICKUP_ATTEMPTED) |
         Q(order_status=constants.ORDER_STATUS_DELIVERY_ATTEMPTED) |
         Q(order_status=constants.ORDER_STATUS_DELIVERED) |
+        Q(order_status=constants.ORDER_STATUS_OUTFORDELIVERY) |
         Q(order_status=constants.ORDER_STATUS_CANCELLED)
     )
     delivery_statuses_cancelled_today = delivery_statuses_today.filter(order_status=constants.ORDER_STATUS_CANCELLED)

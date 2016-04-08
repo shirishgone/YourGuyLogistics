@@ -14,7 +14,7 @@ from rest_framework.authtoken.models import Token
 
 from api_v3 import constants
 from server import settings
-from yourguy.models import Order, OrderDeliveryStatus, VendorAgent, Consumer, Employee, NotificationType, DeliveryAction, ServiceablePincode
+from yourguy.models import Order, OrderDeliveryStatus, VendorAgent, Consumer, Employee, NotificationType, DeliveryAction, ServiceablePincode, CODAction
 from django.db.models import Q
 from rest_framework.response import Response
 from rest_framework import status
@@ -212,14 +212,6 @@ def is_userexists(username):
     else:
         return False
 
-
-def is_consumerexists(user):
-    if Consumer.objects.filter(user=user).count():
-        return True
-    else:
-        return False
-
-
 def is_groupexists(name):
     if Group.objects.filter(name=name).count():
         return True
@@ -299,8 +291,6 @@ def user_role(user):
     role = token_string.split(':').pop()
     if role == constants.VENDOR:
         return constants.VENDOR
-    elif role == constants.CONSUMER:
-        return constants.CONSUMER
     elif role == constants.OPERATIONS:
         return constants.OPERATIONS
     elif role == constants.OPERATIONS_MANAGER:
@@ -309,6 +299,10 @@ def user_role(user):
         return constants.SALES
     elif role == constants.DELIVERY_GUY:
         return constants.DELIVERY_GUY
+    elif role == constants.HR:
+        return constants.HR
+    elif role == constants.ACCOUNTS:
+        return constants.ACCOUNTS
     else:
         return None
 
@@ -377,6 +371,9 @@ def inform_dgs_about_orders_assigned():
 def delivery_actions(code):
     return DeliveryAction.objects.get(code=code)
 
+
+def cod_actions(code):
+    return CODAction.objects.get(code=code)
 
 # Util method for calculating the month start date and end date
 def check_month(month, year):

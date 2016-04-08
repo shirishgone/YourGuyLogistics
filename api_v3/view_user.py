@@ -4,10 +4,13 @@ from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view
 from rest_framework.exceptions import APIException
 from rest_framework.authtoken.models import Token
+from rest_framework.decorators import authentication_classes, permission_classes
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.permissions import IsAuthenticated
 
 from api_v3 import constants
 from api_v3.utils import is_userexists, create_token, assign_usergroup_with_name, assign_usergroup, user_role
-from yourguy.models import User, Vendor, VendorAgent, Consumer, DeliveryGuy, Employee
+from yourguy.models import User, Vendor, VendorAgent, DeliveryGuy, Employee
 
 from api_v3.utils import response_access_denied, response_with_payload, response_error_with_message, response_success_with_message, response_invalid_pagenumber, response_incomplete_parameters
 
@@ -17,6 +20,7 @@ def dg_details_dict(delivery_guy):
         'auth_token': None,
         'id': delivery_guy.id,
         'username': delivery_guy.user.username,
+        'dg_name': delivery_guy.user.first_name,
         'shift_start_datetime': delivery_guy.shift_start_datetime,
         'shift_end_datetime': delivery_guy.shift_end_datetime,
         'is_teamlead': delivery_guy.is_teamlead,
@@ -39,7 +43,7 @@ def vendor_details_dict(vendor_agent):
 def emp_details_dict(emp):
     emp_detail_dict = {
         'auth_token': None,
-        'vendor_agent_name': emp.user.first_name,
+        'employee_name': emp.user.first_name,
         'role': None
     }
     return emp_detail_dict
@@ -148,7 +152,7 @@ def register(request):
     if email is not None:
         user.email = email
     user.save()
-
+    
     token = None
     if role == constants.VENDOR:
         token = create_token(user, constants.VENDOR)
@@ -159,9 +163,6 @@ def register(request):
         token = create_token(user, constants.DELIVERY_GUY)
         delivery_guy = DeliveryGuy.objects.create(user=user)
         assign_usergroup(user)
-    elif role == constants.CONSUMER:
-        consumer = Consumer.objects.create(user=user)
-        assign_usergroup_with_name(user, constants.CONSUMER)
     elif role == constants.OPERATIONS:
         token = create_token(user, constants.OPERATIONS)
         employee = Employee.objects.create(user=user)
@@ -177,9 +178,26 @@ def register(request):
         employee = Employee.objects.create(user=user)
         employee.department = constants.SALES
         assign_usergroup(user)
+    elif role == constants.HR:
+        token = create_token(user, constants.HR)
+        employee = Employee.objects.create(user=user)
+        employee.department = constants.HR
+        assign_usergroup(user)
+    elif role == constants.ACCOUNTS:
+        token = create_token(user, constants.ACCOUNTS)
+        employee = Employee.objects.create(user=user)
+        employee.department = constants.ACCOUNTS
+        assign_usergroup(user)
+    elif role == constants.CALLER:
+        token = create_token(user, constants.CALLER)
+        employee = Employee.objects.create(user=user)
+        employee.department = constants.CALLER
+        assign_usergroup(user)
     else:
         token = None
-
+    
+    employee.save()
+    
     if token is not None:
         content = {'auth_token': token.key}
     else:
@@ -187,6 +205,30 @@ def register(request):
                    'user created for group: ': role}
 
     return response_with_payload(content, None)
+
+
+
+
+@api_view(['GET'])
+@authentication_classes((TokenAuthentication,))
+@permission_classes((IsAuthenticated,))
+def profile(request):
+    role = user_role(request.user)
+    if role == constants.VENDOR:
+        vendor_agent = VendorAgent.objects.get(user=request.user)
+        name = vendor_agent.vendor.store_name
+    elif role == constants.OPERATIONS or role == constants.OPERATIONS_MANAGER or role == constants.SALES or role == constants.HR or role == constants.ACCOUNTS or role == constants.CALLER:
+        employee = Employee.objects.get(user = request.user)
+        name = employee.user.first_name
+    else:
+        return response_access_denied()
+
+    result = {
+    'name':name,
+    'role':role
+    }
+    return response_with_payload(result, None)
+
 
 # DO NOT DELETE
 # Reset password implementation will be implemented later on

@@ -13,23 +13,22 @@ from yourguy.models import OrderDeliveryStatus, Vendor, VendorAgent
 
 from api_v3.utils import response_access_denied, response_with_payload, response_error_with_message, response_success_with_message, response_invalid_pagenumber, response_incomplete_parameters
 
-@api_view(['PUT'])
+@api_view(['GET'])
 @permission_classes((IsAuthenticated,))
 def excel_download(request):
     try:
-        start_date_string = request.data['start_date']
-        end_date_string = request.data['end_date']
+        start_date_string = request.QUERY_PARAMS.get('start_date', None)
+        end_date_string = request.QUERY_PARAMS.get('end_date', None)
 
         start_date = parse_datetime(start_date_string)
         start_date = ist_day_start(start_date)
 
         end_date = parse_datetime(end_date_string)
-        end_date = ist_day_end(end_date)
-
-    except APIException as e:
+        end_date = ist_day_end(end_date)        
+    except Exception as e:
         params = ['start_date', 'end_date']
         return response_incomplete_parameters(params)
-
+        
     # VENDOR FILTERING -----------------------------------------------------------
     vendor = None
     role = user_role(request.user)
@@ -37,7 +36,7 @@ def excel_download(request):
         vendor_agent = get_object_or_404(VendorAgent, user=request.user)
         vendor = vendor_agent.vendor
     else:
-        vendor_id = request.data.get('vendor_id')
+        vendor_id = request.QUERY_PARAMS.get('vendor_id', None)
         if vendor_id is not None:
             vendor = get_object_or_404(Vendor, pk=vendor_id)
         else:
@@ -68,8 +67,8 @@ def excel_download(request):
             excel_order = {
                 'date': date.strftime('%d-%m-%Y'),
                 'order_id': delivery_status.id,
-                'customer_name': order.consumer.user.first_name,
-                'customer_phone_number': order.consumer.user.username,
+                'customer_name': order.consumer.full_name,
+                'customer_phone_number': order.consumer.phone_number,
                 'cod_amount': order.cod_amount,
                 'cod_collected': delivery_status.cod_collected_amount,
                 'cod_reason': delivery_status.cod_remarks,
@@ -87,23 +86,21 @@ def excel_download(request):
             excel_order_details.append(excel_order)
         except Exception as e:
             pass
-    content = {'orders': excel_order_details}
-    return response_with_payload(content, None)
+    return response_with_payload(excel_order_details, None)
 
-@api_view(['POST'])
+@api_view(['GET'])
 @permission_classes((IsAuthenticated,))
 def dashboard_stats(request):
     try:
-        start_date_string = request.data['start_date']
-        end_date_string = request.data['end_date']
-
+        start_date_string = request.QUERY_PARAMS.get('start_date', None)
+        end_date_string = request.QUERY_PARAMS.get('end_date', None)
+        
         start_date = parse_datetime(start_date_string)
         start_date = ist_datetime(start_date)
 
         end_date = parse_datetime(end_date_string)
-        end_date = ist_datetime(end_date)
-
-    except APIException as e:
+        end_date = ist_datetime(end_date)        
+    except Exception as e:
         params = ['start_date', 'end_date']
         return response_incomplete_parameters(params)
 
@@ -118,7 +115,7 @@ def dashboard_stats(request):
         vendor_agent = get_object_or_404(VendorAgent, user=request.user)
         vendor = vendor_agent.vendor
     else:
-        vendor_id = request.data.get('vendor_id')
+        vendor_id = request.QUERY_PARAMS.get('vendor_id', None)        
         if vendor_id is not None:
             vendor = get_object_or_404(Vendor, pk=vendor_id)
         else:
@@ -133,7 +130,8 @@ def dashboard_stats(request):
     delivery_status_queryset = delivery_status_queryset.filter(date__gte=start_date, date__lte=end_date)
     total_orders = delivery_status_queryset.filter(
         Q(order_status=constants.ORDER_STATUS_QUEUED) | 
-        Q(order_status=constants.ORDER_STATUS_INTRANSIT) | 
+        Q(order_status=constants.ORDER_STATUS_INTRANSIT) |
+        Q(order_status=constants.ORDER_STATUS_OUTFORDELIVERY) |
         Q(order_status=constants.ORDER_STATUS_DELIVERED) | 
         Q(order_status=constants.ORDER_STATUS_DELIVERY_ATTEMPTED)).count()
 
@@ -145,14 +143,15 @@ def dashboard_stats(request):
     # TOTAL COD TO BE COLLECTED -----------------------------
     executable_deliveries = delivery_status_queryset.filter(
         Q(order_status=constants.ORDER_STATUS_QUEUED) | 
-        Q(order_status=constants.ORDER_STATUS_INTRANSIT) | 
+        Q(order_status=constants.ORDER_STATUS_INTRANSIT) |
+        Q(order_status=constants.ORDER_STATUS_OUTFORDELIVERY) |
         Q(order_status=constants.ORDER_STATUS_DELIVERED))
     total_cod_dict = executable_deliveries.aggregate(total_cod=Sum('order__cod_amount'))
     total_cod = total_cod_dict['total_cod']
     
     # TOTAL COD COLLECTED ------------------------------------
     executed_deliveries = delivery_status_queryset.filter(Q(order_status=constants.ORDER_STATUS_DELIVERED))
-    total_cod_dict = executed_deliveries.aggregate(total_cod=Sum('order__cod_amount'))
+    total_cod_dict = executed_deliveries.aggregate(total_cod=Sum('cod_collected_amount'))
     cod_collected = total_cod_dict['total_cod']
 
     # FOR ORDER COUNT FOR INDIVIDUAL DATES -----------------------------------------
@@ -164,18 +163,14 @@ def dashboard_stats(request):
         delivery_status_per_date = delivery_status_queryset.filter(date__gte=day_start, date__lte=day_end)
 
         total_orders_per_day = delivery_status_per_date.count()
-        orders_delivered_count = delivery_status_per_date.filter(
-            Q(order_status=constants.ORDER_STATUS_DELIVERED)).count()
-        orders_delivered_attempted_count = delivery_status_per_date.filter(
-            Q(order_status=constants.ORDER_STATUS_DELIVERY_ATTEMPTED)).count()
-        orders_pickup_attempted_count = delivery_status_per_date.filter(
-            Q(order_status=constants.ORDER_STATUS_PICKUP_ATTEMPTED)).count()
-        orders_cancelled_count = delivery_status_per_date.filter(
-            Q(order_status=constants.ORDER_STATUS_CANCELLED)).count()
-        orders_undelivered_count = delivery_status_per_date.filter(
-            Q(order_status=constants.ORDER_STATUS_PLACED) | Q(order_status=constants.ORDER_STATUS_QUEUED)).count()
-        orders_intransit_count = delivery_status_per_date.filter(
-            Q(order_status=constants.ORDER_STATUS_INTRANSIT)).count()
+        orders_delivered_count = delivery_status_per_date.filter(Q(order_status=constants.ORDER_STATUS_DELIVERED)).count()
+        orders_delivered_attempted_count = delivery_status_per_date.filter(Q(order_status=constants.ORDER_STATUS_DELIVERY_ATTEMPTED)).count()
+        orders_pickup_attempted_count = delivery_status_per_date.filter(Q(order_status=constants.ORDER_STATUS_PICKUP_ATTEMPTED)).count()
+        orders_cancelled_count = delivery_status_per_date.filter(Q(order_status=constants.ORDER_STATUS_CANCELLED)).count()
+        orders_undelivered_count = delivery_status_per_date.filter(Q(order_status=constants.ORDER_STATUS_PLACED) |
+                                                                   Q(order_status=constants.ORDER_STATUS_QUEUED)).count()
+        orders_intransit_count = delivery_status_per_date.filter(Q(order_status=constants.ORDER_STATUS_OUTFORDELIVERY) |
+                                                                 Q(order_status=constants.ORDER_STATUS_INTRANSIT)).count()
 
         ist_timedelta = timedelta(hours=5, minutes=30)
         display_date = date + ist_timedelta

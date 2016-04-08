@@ -81,7 +81,7 @@ def assign_dg():
                         delivery_status.pickup_guy = latest_assigned_pickup.pickup_guy
                         delivery_status.save()
             except Exception, e:
-                unassigned_pickups = unassigned_pickups + "\n %s - %s - %s" % (vendor.store_name, delivery_status.id, consumer.user.first_name)
+                unassigned_pickups = unassigned_pickups + "\n %s - %s - %s" % (vendor.store_name, delivery_status.id, consumer.full_name)
                 pass
             # ------------------------------------------------------------------------------------------------
             # PICK LATEST DELIVERY ASSIGNED AND ASSIGN FOR TODAY ------------------------------------------------
@@ -92,7 +92,7 @@ def assign_dg():
                         delivery_status.delivery_guy = latest_assigned_delivery.delivery_guy
                         delivery_status.save()
             except Exception, e:
-                unassigned_deliveries = unassigned_deliveries + "\n %s - %s - %s" % (vendor.store_name, delivery_status.id, consumer.user.first_name)
+                unassigned_deliveries = unassigned_deliveries + "\n %s - %s - %s" % (vendor.store_name, delivery_status.id, consumer.full_name)
                 pass
             # ------------------------------------------------------------------------------------------------                
         except Exception, e:

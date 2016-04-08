@@ -11,9 +11,9 @@ from rest_framework.response import Response
 from yourguy.models import Consumer, Vendor, VendorAgent, Address, Area
 from api.serializers import ConsumerSerializer
 from api.views import user_role
-from api.views import user_role, is_userexists, is_vendorexists, is_consumerexists, is_dgexists
+from api.views import user_role, is_userexists, is_vendorexists, is_dgexists
 import constants
-
+from api_v3.view_consumer import is_consumer_has_same_address_already, fetch_or_create_consumer, fetch_or_create_consumer_address
 
 class ConsumerViewSet(viewsets.ModelViewSet):
     """
@@ -32,7 +32,7 @@ class ConsumerViewSet(viewsets.ModelViewSet):
         role = user_role(request.user)
         if role == constants.VENDOR:
             vendor_agent = get_object_or_404(VendorAgent, user = request.user)
-            consumers_of_vendor = Consumer.objects.filter(associated_vendor = vendor_agent.vendor).order_by(Lower('user__first_name'))
+            consumers_of_vendor = Consumer.objects.filter(vendor = vendor_agent.vendor).order_by(Lower('full_name'))
             
             serializer = ConsumerSerializer(consumers_of_vendor, many=True)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -44,11 +44,11 @@ class ConsumerViewSet(viewsets.ModelViewSet):
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
     @detail_route(methods=['post'])
-    def add_vendor(self, request, pk=None):
+    def add_vendor(self, request, pk):
         vendor_id = request.POST['vendor_id']
         vendor = get_object_or_404(Vendor, id = vendor_id)
         
-        current_consumer = get_object_or_404(Consumer, user = request.user)
+        current_consumer = get_object_or_404(Consumer, pk = pk)
         current_consumer.associated_vendor.add(vendor)
         current_consumer.save()
         
@@ -57,8 +57,8 @@ class ConsumerViewSet(viewsets.ModelViewSet):
 
     def create(self, request):
         role = user_role(request.user)
-        if (role == constants.VENDOR) or (role == constants.SALES):
-        # CREATING CONSUMER BY VENDOR or SALES
+        if (role == constants.VENDOR):
+            vendor_agent = VendorAgent.objects.get(user = request.user)
             try:
                 phone_number = request.data['phone_number']
                 name = request.data['name']
@@ -83,34 +83,11 @@ class ConsumerViewSet(viewsets.ModelViewSet):
                     }   
                 return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
-            if is_userexists(phone_number) is True:
-                user = get_object_or_404(User, username = phone_number)
-                if is_consumerexists(user) is True:
-                    consumer = get_object_or_404(Consumer, user = user)
-                else:
-                    consumer = Consumer.objects.create(user = user)
-                    address = Address.objects.create(flat_number = flat_number, building = building, street = street, area = area)
-                    consumer.addresses.add(address)
-                    consumer.save()
-            else:
-                user = User.objects.create(username = phone_number, first_name = name, password = '')
-                consumer = Consumer.objects.create(user = user)
-                address = Address.objects.create(flat_number=flat_number, building=building, street=street, area= area)
-                consumer.addresses.add(address)
-                consumer.save()
-
-            # SETTING USER GROUP
-            group = get_object_or_404(Group, name=constants.CONSUMER)
-            group.user_set.add(user)
-
-            # SETTING ASSOCIATED VENDOR
-            vendor_agent = VendorAgent.objects.get(user = request.user)
-            consumer.associated_vendor.add(vendor_agent.vendor)
-            consumer.save()
+            consumer = fetch_or_create_consumer(phone_number, name, vendor)
+            full_address = flat_number + building + street
+            address = fetch_or_create_consumer_address(consumer, full_address, None, None)            
             
-            # SUCCESS RESPONSE FOR CONSUMER CREATION BY VENDOR
             serializer = ConsumerSerializer(consumer)
-            
             content = {
             'consumer':serializer.data
             }

@@ -2,7 +2,7 @@ import json
 import time
 from datetime import datetime
 from itertools import chain
-
+import uuid
 import pytz
 from dateutil.rrule import rrule, WEEKLY
 from django.db.models import Q
@@ -15,17 +15,19 @@ from rest_framework.permissions import IsAuthenticated
 from api_v3 import constants
 from api_v3.push import send_push
 from api_v3.utils import log_exception, send_sms, ist_datetime, user_role, address_string, ist_day_start, ist_day_end, \
-    paginate, is_correct_pincode, is_pickup_time_acceptable, timedelta, is_userexists, is_consumerexists, \
-    is_consumer_has_same_address_already, days_in_int, send_email, is_today_date, is_vendor_has_same_address_already, \
+    paginate, is_correct_pincode, is_pickup_time_acceptable, timedelta, is_userexists, \
+    days_in_int, send_email, is_today_date, is_vendor_has_same_address_already, \
     delivery_actions, ops_manager_for_dg, notification_type_for_code, ops_executive_for_pincode, address_with_location, \
     response_access_denied, response_incomplete_parameters, response_success_with_message, response_with_payload, response_invalid_pagenumber, \
-    response_error_with_message
+    response_error_with_message, cod_actions
 
 
 from yourguy.models import User, Vendor, DeliveryGuy, VendorAgent, Picture, ProofOfDelivery, OrderDeliveryStatus, \
-    Consumer, Address, Order, Product, OrderItem, Notification, Location, DeliveryTransaction
+    Consumer, Address, Order, Product, OrderItem, Notification, Location, DeliveryTransaction, CODTransaction
 
 from api_v3.cron_jobs import create_notif_for_no_ops_exec_for_pincode
+from api_v3.view_consumer import fetch_or_create_consumer, fetch_or_create_consumer_address
+from api_v3.view_dg import teamlead_for_pincode
 
 def add_action_for_delivery(action, delivery, user, latitude, longitude, timestamp, remarks):
     delivery_transaction = DeliveryTransaction.objects.create(action=action, by_user=user,
@@ -38,6 +40,22 @@ def add_action_for_delivery(action, delivery, user, latitude, longitude, timesta
     delivery_transaction.save()
     delivery.delivery_transactions.add(delivery_transaction)
     delivery.save()
+
+def add_cod_action_for_delivery(transaction, user, timestamp, latitude, longitude, transaction_uuid, delivery, remarks):
+    cod_transaction = CODTransaction.objects.create(transaction=transaction,
+                                                    created_by_user=user,
+                                                    created_time_stamp=timestamp,
+                                                    transaction_uuid=transaction_uuid,
+                                                    deliveries=delivery)
+    if latitude is not None and longitude is not None:
+        location = Location.objects.create(latitude=latitude, longitude=longitude)
+        cod_transaction.location = location
+    if remarks is not None:
+        cod_transaction.remarks = remarks
+    cod_transaction.save()
+    delivery_status = get_object_or_404(OrderDeliveryStatus, pk=delivery)
+    delivery_status.cod_transactions.add(cod_transaction)
+    delivery_status.save()
 
 def is_deliveryguy_assigned(delivery):
     if delivery.delivery_guy is not None:
@@ -77,7 +95,7 @@ def send_cod_discrepency_email(delivery_status, user):
             body = body + '\n\nThere is some discrepancy in COD collection for following order.'
             body = body + '\n\nOrder no: %s' % (delivery_status.id)
             body = body + '\nVendor: %s' % (delivery_status.order.vendor.store_name)
-            body = body + '\nCustomer name: %s' % (delivery_status.order.consumer.user.first_name)
+            body = body + '\nCustomer name: %s' % (delivery_status.order.consumer.full_name)
             body = body + '\nCOD to be collected: %s' % (delivery_status.order.cod_amount)
             body = body + '\nCOD collected: %s' % (delivery_status.cod_collected_amount)
             body = body + '\nDeliveryGuy: %s'% (user.first_name)
@@ -111,36 +129,6 @@ def is_reschedule_allowed(delivery_status):
     else:
         return False
 
-def fetch_consumer(consumer_phone_number, consumer_name, vendor):
-    # CREATING USER & CONSUMER IF DOESNT EXISTS ------------------------
-    if is_userexists(consumer_phone_number) is True:
-        user = get_object_or_404(User, username=consumer_phone_number)
-        if is_consumerexists(user) is True:
-            consumer = get_object_or_404(Consumer, user=user)
-        else:
-            consumer = Consumer.objects.create(user=user)
-            consumer.associated_vendor.add(vendor)
-    else:
-        user = User.objects.create(username=consumer_phone_number, first_name=consumer_name, password='')
-        consumer = Consumer.objects.create(user=user)
-        consumer.associated_vendor.add(vendor)
-    # ---------------------------------------------------
-    return consumer
-
-
-def fetch_consumer_address(consumer, full_address, pincode, landmark):
-    address = is_consumer_has_same_address_already(consumer, pincode)
-    if address is None:
-        address = Address.objects.create(pin_code=pincode)
-        if full_address is not None:
-            address.full_address = full_address
-        if landmark is not None:
-            address.landmark = landmark
-        address.save()
-        consumer.addresses.add(address)
-    return address
-
-
 def fetch_vendor_address(vendor, full_address, pincode, landmark):
     address = is_vendor_has_same_address_already(vendor, pincode)
     if address is None:
@@ -153,6 +141,21 @@ def fetch_vendor_address(vendor, full_address, pincode, landmark):
         vendor.addresses.add(address)
     return address
 
+
+def send_dg_COD_update_notification(dg, delivery_id, new_cod):
+    try:
+        message = 'COD amount upated for order: %s'%(delivery_id)
+        data = {
+            'message': message,
+            'type': 'cod_update',
+            'data': {
+                'delivery_id': delivery_id,
+                'new_cod':new_cod
+            }
+        }
+        send_push(dg.device_token, data)
+    except Exception as e:
+        log_exception(e, 'Push notification not sent in order assignment')
 
 def send_dg_notification(dg, delivery_ids):
     try:
@@ -185,8 +188,8 @@ def send_sms_to_dg_about_order(date, dg, delivery_status):
         message = 'New Order:{},Pickup:{},Client:{},Cust:{},{},{},COD:{}'.format(delivery_status.id,
                                                                                  pickup_total_string,
                                                                                  delivery_status.order.vendor.store_name,
-                                                                                 delivery_status.order.consumer.user.first_name,
-                                                                                 delivery_status.order.consumer.user.username,
+                                                                                 delivery_status.order.consumer.full_name,
+                                                                                 delivery_status.order.consumer.phone_number,
                                                                                  delivery_status.order.delivery_address,
                                                                                  delivery_status.order.cod_amount)
         send_sms(dg.user.username, message)
@@ -258,7 +261,7 @@ def can_update_order(delivery_status, status):
         else:
             return False
     elif status == constants.ORDER_STATUS_DELIVERY_ATTEMPTED:
-        if delivery_status.order_status == constants.ORDER_STATUS_INTRANSIT:
+        if delivery_status.order_status == constants.ORDER_STATUS_INTRANSIT or delivery_status.order_status == constants.ORDER_STATUS_OUTFORDELIVERY:
             return True
         else:
             return False
@@ -353,7 +356,10 @@ def update_delivery_status_delivered(delivery_status, delivered_at, delivered_da
 
 def common_params(delivery_status):
     res_order = {}
-    
+
+    if delivery_status.order.vendor.id is not None:
+        res_order['vendor_id'] = delivery_status.order.vendor.id
+
     if delivery_status.order.pickup_datetime is not None:
         new_pickup_datetime = datetime.combine(delivery_status.date, delivery_status.order.pickup_datetime.time())
         res_order['pickup_datetime'] = pytz.utc.localize(new_pickup_datetime)
@@ -394,6 +400,7 @@ def common_params(delivery_status):
         order_items_array.append(order_item_obj)
 
     res_order['order_items'] = order_items_array
+
     return res_order
 
 def delivery_guy_app(delivery_status):
@@ -409,8 +416,8 @@ def delivery_guy_app(delivery_status):
             'reported_reason': delivery_status.reported_reason,
             'cod_amount': delivery_status.order.cod_amount,
             'cod_collected_amount': delivery_status.cod_collected_amount,
-            'customer_name': delivery_status.order.consumer.user.first_name,
-            'customer_phonenumber': delivery_status.order.consumer.user.username,
+            'customer_name': delivery_status.order.consumer.full_name,
+            'customer_phonenumber': delivery_status.order.consumer.phone_number,
             'vendor_name': delivery_status.order.vendor.store_name,
             'delivered_at': delivery_status.delivered_at,
             'pickedup_datetime': delivery_status.pickedup_datetime,
@@ -420,12 +427,20 @@ def delivery_guy_app(delivery_status):
             'vendor_phonenumber': delivery_status.order.vendor.phone_number,
             'total_cost': delivery_status.order.total_cost,
             'cod_remarks': delivery_status.cod_remarks,
-            'delivery_charges': delivery_status.order.delivery_charges
+            'delivery_charges': delivery_status.order.delivery_charges,
+            'order_placed_datetime': delivery_status.order.created_date_time
         }
         res_order.update(common_params(delivery_status))
         return res_order
     else:
         return None
+
+
+def delivery_transactions_list(delivery_tx):
+    delivery_transactions_dict = {
+        'delivery_transaction_title':delivery_tx.action.title
+    }
+    return delivery_transactions_dict
 
 
 def webapp_list(delivery_status):
@@ -441,7 +456,7 @@ def webapp_list(delivery_status):
             'reported_reason': delivery_status.reported_reason,
             'cod_amount': delivery_status.order.cod_amount,
             'cod_collected': delivery_status.cod_collected_amount,
-            'customer_name': delivery_status.order.consumer.user.first_name,
+            'customer_name': delivery_status.order.consumer.full_name,
             'vendor_name': delivery_status.order.vendor.store_name,
             'delivered_at': delivery_status.delivered_at,
             'is_reverse_pickup': delivery_status.order.is_reverse_pickup
@@ -454,7 +469,7 @@ def webapp_list(delivery_status):
 def dg_created_orders(delivery):
     result = {
     'id': delivery.id,
-    'customer_name': delivery.order.consumer.user.first_name
+    'customer_name': delivery.order.consumer.full_name
     }
     return result
 
@@ -475,21 +490,31 @@ def webapp_details(delivery_status):
         'id': delivery_status.id,
         'pickup_datetime': new_pickup_datetime,
         'delivery_datetime': new_delivery_datetime,
-        'pickup_address': address_string(delivery_status.order.pickup_address),
-        'delivery_address': address_string(delivery_status.order.delivery_address),
+        'pickup_address': address_with_location(delivery_status.order.pickup_address),
+        'delivery_address': address_with_location(delivery_status.order.delivery_address),
         'status': delivery_status.order_status,
-        'customer_name': delivery_status.order.consumer.user.first_name,
+        'is_reverse_pickup': delivery_status.order.is_reverse_pickup,
         'is_reported': delivery_status.is_reported,
         'reported_reason': delivery_status.reported_reason,
         'vendor_id': delivery_status.order.vendor.id,
         'vendor_name': delivery_status.order.vendor.store_name,
         'vendor_order_id': delivery_status.order.vendor_order_id,
+        'vendor_phonenumber': delivery_status.order.vendor.phone_number,
         'cod_amount': delivery_status.order.cod_amount,
-        'customer_phonenumber': delivery_status.order.consumer.user.username,
+        'cod_collected_amount': delivery_status.cod_collected_amount,
+        'customer_name': delivery_status.order.consumer.full_name,
+        'customer_phonenumber': delivery_status.order.consumer.phone_number,
+        'delivered_at': delivery_status.delivered_at,
+        'pickedup_datetime': delivery_status.pickedup_datetime,
+        'completed_datetime': delivery_status.completed_datetime,
         'notes': delivery_status.order.notes,
-        'total_cost': delivery_status.order.total_cost
+        'total_cost': delivery_status.order.total_cost,
+        'cod_remarks': delivery_status.cod_remarks,
+        'delivery_charges': delivery_status.order.delivery_charges,
+        'order_placed_datetime': delivery_status.order.created_date_time,
+        'delivery_transactions': []
     }
-    res_order.update(delivery_status)
+    res_order.update(common_params(delivery_status))
     return res_order
 
 
@@ -503,22 +528,22 @@ def search_order(user, search_query):
         if search_query.isdigit():
             delivery_status_queryset = delivery_status_queryset.filter(
                 Q(id=search_query) |
-                Q(order__consumer__user__username=search_query) |
+                Q(order__consumer__phone_number=search_query) |
                 Q(order__vendor_order_id=search_query))
         else:
             delivery_status_queryset = delivery_status_queryset.filter(
-                Q(order__consumer__user__first_name__icontains=search_query) |
+                Q(order__consumer__full_name__icontains=search_query) |
                 Q(order__vendor_order_id=search_query))
 
     elif role == constants.OPERATIONS or role == constants.SALES:
         if search_query.isdigit():
             delivery_status_queryset = OrderDeliveryStatus.objects.filter(
                 Q(id=search_query) |
-                Q(order__consumer__user__username=search_query) |
+                Q(order__consumer__phone_number=search_query) |
                 Q(order__vendor_order_id=search_query))
         else:
             delivery_status_queryset = OrderDeliveryStatus.objects.filter(
-                Q(order__consumer__user__first_name__icontains=search_query) |
+                Q(order__consumer__full_name__icontains=search_query) |
                 Q(order__vendor_order_id=search_query))
     else:
         pass
@@ -537,16 +562,29 @@ class OrderViewSet(viewsets.ViewSet):
 
     def retrieve(self, request, pk=None):
         delivery_status = get_object_or_404(OrderDeliveryStatus, id=pk)
-
+        all_transactions_details = []
         # VENDOR PERMISSION CHECK ---------------------------------------------
         role = user_role(request.user)
         if role == constants.VENDOR:
             vendor_agent = get_object_or_404(VendorAgent, user=request.user)
             vendor = vendor_agent.vendor
             if delivery_status.order.vendor.id != vendor.id:
-                return response_access_denied()                
-
-        result = delivery_guy_app(delivery_status)
+                return response_access_denied()
+        result = webapp_details(delivery_status)
+        delivery_tx = (delivery_status.delivery_transactions.all())
+        if len(delivery_tx) > 0:
+            for single in delivery_tx:
+                delivery_transactions_dict = delivery_transactions_list(single)
+                if single.by_user is not None:
+                    delivery_transactions_dict['created_by_user'] = single.by_user.first_name
+                if single.time_stamp is not None:
+                    delivery_transactions_dict['delivery_transaction_timestamp'] = single.time_stamp
+                if single.location is not None and single.location.latitude is not None:
+                    delivery_transactions_dict['delivery_transaction_location_latitude'] = single.location.latitude
+                if single.location is not None and single.location.longitude is not None:
+                    delivery_transactions_dict['delivery_transaction_location_longitude'] = single.location.longitude
+                all_transactions_details.append(delivery_transactions_dict)
+            result['delivery_transactions'] = all_transactions_details
         return response_with_payload(result, None)
 
     def list(self, request):
@@ -577,13 +615,14 @@ class OrderViewSet(viewsets.ViewSet):
                     or order_status == constants.ORDER_STATUS_QUEUED \
                     or order_status == constants.ORDER_STATUS_INTRANSIT \
                     or order_status == constants.ORDER_STATUS_PICKUP_ATTEMPTED \
+                    or order_status == constants.ORDER_STATUS_OUTFORDELIVERY \
                     or order_status == constants.ORDER_STATUS_DELIVERED \
                     or order_status == constants.ORDER_STATUS_DELIVERY_ATTEMPTED \
                     or order_status == constants.ORDER_STATUS_CANCELLED \
                     or order_status == constants.ORDER_STATUS_REJECTED:
                 pass
             else:
-                error_message = 'order_status can be only QUEUED, INTRANSIT, PICKUPATTEMPTED, DELIVERED, DELIVERYATTEMPTED, CANCELLED'
+                error_message = 'order_status can be only QUEUED, INTRANSIT, PICKUPATTEMPTED, OUTFORDELIVERY, DELIVERED, DELIVERYATTEMPTED, CANCELLED'
                 return response_error_with_message(error_message)
         # -------------------------------------------------------------------------
 
@@ -694,14 +733,7 @@ class OrderViewSet(viewsets.ViewSet):
                 delivery_status_dict = delivery_guy_app(single_delivery)
                 if delivery_status_dict is not None:
                     result.append(delivery_status_dict)
-
-            response_content = {
-                "data": result,
-                "total_pages": 1,
-                "total_orders": total_orders_count
-            }
-            return response_with_payload(response_content, None)
-
+            return response_with_payload(result, None)
         else:
             # PAGINATION  ----------------------------------------------------------------
             if page is not None:
@@ -973,26 +1005,15 @@ class OrderViewSet(viewsets.ViewSet):
                 return response_error_with_message(error_message)
             
             try:
-                if is_userexists(consumer_phone_number) is True:
-                    user = get_object_or_404(User, username = consumer_phone_number)
-                    if is_consumerexists(user) is True:
-                        consumer = get_object_or_404(Consumer, user = user)
-                    else:
-                        consumer = Consumer.objects.create(user = user)
-                        consumer.associated_vendor.add(vendor)
-                else:
-                    user = User.objects.create(username = consumer_phone_number, first_name = consumer_name, password = '')
-                    consumer = Consumer.objects.create(user = user)
-                    consumer.associated_vendor.add(vendor)
-                
+                consumer = fetch_or_create_consumer(consumer_phone_number, consumer_name, vendor)                
                 # ADDRESS CHECK ----------------------------------
                 try:
                     if is_reverse_pickup is True:
-                        pickup_address = fetch_consumer_address(consumer, delivery_full_address, delivery_pin_code, delivery_landmark)
+                        pickup_address = fetch_or_create_consumer_address(consumer, delivery_full_address, delivery_pin_code, delivery_landmark)
                         delivery_address = get_object_or_404(Address, pk = pickup_address_id)                
                     else:
                         pickup_address = get_object_or_404(Address, pk = pickup_address_id)
-                        delivery_address = fetch_consumer_address(consumer, delivery_full_address, delivery_pin_code, delivery_landmark)
+                        delivery_address = fetch_or_create_consumer_address(consumer, delivery_full_address, delivery_pin_code, delivery_landmark)
                 except:
                     error_message = 'error parsing addresses'
                     return response_error_with_message(error_message)
@@ -1090,7 +1111,7 @@ class OrderViewSet(viewsets.ViewSet):
                 order_detail = {
                     'delivery_id': delivery_status.id,
                     'vendor': delivery_status.order.vendor.store_name,
-                    'customer_name': delivery_status.order.consumer.user.first_name
+                    'customer_name': delivery_status.order.consumer.full_name
                 }
                 email_orders.append(order_detail)
             
@@ -1187,7 +1208,7 @@ class OrderViewSet(viewsets.ViewSet):
                 if role == constants.OPERATIONS:
                     order_status = constants.ORDER_STATUS_INTRANSIT
                 elif role == constants.DELIVERY_GUY:
-                    if delivery_status.delivery_guy.user == request.user:
+                    if delivery_status.delivery_guy is not None and delivery_status.delivery_guy.user == request.user:
                         order_status = constants.ORDER_STATUS_OUTFORDELIVERY
                     else:
                         order_status = constants.ORDER_STATUS_INTRANSIT
@@ -1252,9 +1273,9 @@ class OrderViewSet(viewsets.ViewSet):
             if is_deliveryguy_assigned(delivery_status) is False:
                 notif_unassigned(delivery_status)
             if delivery_status.order.is_reverse_pickup is True:
-                end_consumer_phone_number = delivery_status.order.consumer.user.username
+                end_consumer_phone_number = delivery_status.order.consumer.phone_number
                 message = 'Dear %s, we have picked your order behalf of %s - Team YourGuy' % (
-                    delivery_status.order.consumer.user.first_name, delivery_status.order.vendor.store_name)
+                    delivery_status.order.consumer.full_name, delivery_status.order.vendor.store_name)
                 send_sms(end_consumer_phone_number, message)
             
             success_message = 'Delivery updated'
@@ -1317,7 +1338,7 @@ class OrderViewSet(viewsets.ViewSet):
         # ----------------------------------------------------------------
         
         if can_update_order(delivery_status, constants.ORDER_STATUS_DELIVERY_ATTEMPTED):
-            update_delivery_status_delivery_attempted(delivery_status, delivery_remarks, delivered_datetime)
+            update_delivery_status_delivery_attempted(delivery_status, remarks, attempted_datetime)
             action = delivery_actions(constants.DELIVERY_ATTEMPTED_CODE)
             add_action_for_delivery(action, delivery_status, request.user, latitude, longitude, attempted_datetime, remarks)
             success_message = 'Delivery updated'
@@ -1355,7 +1376,6 @@ class OrderViewSet(viewsets.ViewSet):
         else:
             error_message = 'delivered_at can only be DOOR_STEP, SECURITY, RECEPTION, CUSTOMER'
             return response_error_with_message(error_message)
-        
         if can_update_order(delivery_status, constants.ORDER_STATUS_DELIVERED):
             pod_dict = request.data.get('pod')
             new_pod = None
@@ -1365,8 +1385,13 @@ class OrderViewSet(viewsets.ViewSet):
             action = delivery_actions(constants.DELIVERED_CODE)
             add_action_for_delivery(action, delivery_status, request.user, latitude, longitude, delivered_datetime, remarks)
             if cod_collected_amount is not None and float(cod_collected_amount) > 0.0:
-                end_consumer_phone_number = delivery_status.order.consumer.user.username
-                message = 'Dear %s, we have received the payment of %srs behalf of %s - Team YourGuy' % (delivery_status.order.consumer.user.first_name, cod_collected_amount, delivery_status.order.vendor.store_name)
+                cod_action = cod_actions(constants.COD_COLLECTED_CODE)
+                transaction_uuid = uuid.uuid4()
+                add_cod_action_for_delivery(cod_action, request.user, delivered_datetime, latitude, longitude, transaction_uuid, delivery_status.id, remarks)
+                delivery_status.cod_status = constants.COD_STATUS_COLLECTED
+                delivery_status.save()
+                end_consumer_phone_number = delivery_status.order.consumer.phone_number
+                message = 'Dear %s, we have received the payment of %srs behalf of %s - Team YourGuy' % (delivery_status.order.consumer.full_name, cod_collected_amount, delivery_status.order.vendor.store_name)
                 send_sms(end_consumer_phone_number, message)
 
             if float(delivery_status.order.cod_amount) > 0.0 and cod_collected_amount is not None and (float(cod_collected_amount) < float(delivery_status.order.cod_amount) or float(cod_collected_amount) > float(delivery_status.order.cod_amount)):
@@ -1462,18 +1487,23 @@ class OrderViewSet(viewsets.ViewSet):
                 todays_delivery_ids.append(delivery_status.id)
         
         # INFORM DG THROUGH SMS AND NOTIF IF ITS ONLY TODAYS DELIVERY -----
-        try:
-            if len(todays_delivery_ids) == 1:
-                delivery_status = get_object_or_404(OrderDeliveryStatus, id=todays_delivery_ids[0])
-                today = datetime.now()
-                send_sms_to_dg_about_order(today, dg, delivery_status)
-            else:
-                send_sms_to_dg_about_mass_orders(dg, todays_delivery_ids)
-        except Exception as e:
-            log_exception(e, 'SMS to DG about delivery assignment')
+        if is_orders_assigned is True:
+            try:
+                send_dg_notification(dg, delivery_ids)
+                if len(todays_delivery_ids) == 1:
+                    delivery_status = get_object_or_404(OrderDeliveryStatus, id=todays_delivery_ids[0])
+                    today = datetime.now()
+                    send_sms_to_dg_about_order(today, dg, delivery_status)
+                else:
+                    send_sms_to_dg_about_mass_orders(dg, todays_delivery_ids)
+            except Exception as e:
+                log_exception(e, 'SMS to DG about delivery assignment')
         
-        success_message = 'Orders assigned successfully'
-        return response_success_with_message(success_message)
+            success_message = 'Orders assigned successfully'
+            return response_success_with_message(success_message)
+        else:
+            error_message = 'Few orders arent updated'
+            return response_error_with_message(error_message)
 
     @list_route(methods=['put'])
     def add_deliveries(self, request, pk=None):
@@ -1532,8 +1562,8 @@ class OrderViewSet(viewsets.ViewSet):
                 return response_incomplete_parameters(parameters)
 
             # FETCH CUSTOMER or CREATE NEW CUSTOMER ----------------
-            consumer = fetch_consumer(consumer_phonenumber, consumer_name, vendor)
-            consumer_address = fetch_consumer_address(consumer, None, pincode, None)
+            consumer = fetch_or_create_consumer(consumer_phonenumber, consumer_name, vendor)
+            consumer_address = fetch_or_create_consumer_address(consumer, '', pincode, None)
             # ------------------------------------------------------
 
             extra_note = 'Additional delivery added by the boy: %s' % delivery_boy.user.first_name
@@ -1548,15 +1578,20 @@ class OrderViewSet(viewsets.ViewSet):
                                              notes=extra_note)
 
             delivery_status = OrderDeliveryStatus.objects.create(date=pickup_datetime, order=new_order)
-            created_orders.append(dg_created_orders(delivery_status))
-
+            
             # ASSIGN PICKUP AS SAME BOY -------------------------------------------
             delivery_status.pickup_guy = delivery_boy
             if vendor.is_hyper_local is True:
                 delivery_status.delivery_guy = delivery_boy
+            else:
+                delivery_pincode = new_order.delivery_address.pin_code
+                teamlead_dg = teamlead_for_pincode(pincode)
+                if teamlead_dg is not None:
+                    delivery_status.delivery_guy = teamlead_dg
             delivery_status.save()
             # ---------------------------------------------------------------------
-
+            created_orders.append(delivery_guy_app(delivery_status))
+            
         # SEND AN EMAIL ABOUT ADDITIONAL ORDERS TO VENDOR AND OPS/SALES -----------
         email_ids = constants.EMAIL_ADDITIONAL_ORDERS
         email_ids.append(vendor.email)
@@ -1604,5 +1639,68 @@ class OrderViewSet(viewsets.ViewSet):
             else:
                 error_message = 'The order has already been processed, now you can\'t update the status.'
                 return response_error_with_message(error_message)
+        else:
+            return response_access_denied()
+
+    # ALl the orders will be initially assigned to dg tl, then he will transfer to his associated dgs
+    # DG id will be the pg/dg or both to whom the order will be transferred
+    # TL will initiate this so we have handle over TL to pull his associated dgs
+    @list_route(methods=['put'])
+    def tl_transfer_orders(self, request, pk=None):
+        try:
+            dg_id = request.data['dg_id']
+            delivery_ids = request.data['delivery_ids']
+        except Exception as e:
+            parameters = ['dg_id', 'delivery_ids']
+            return response_incomplete_parameters(parameters)
+        
+        role = user_role(request.user)
+        if role == constants.DELIVERY_GUY:
+            dg_tl = get_object_or_404(DeliveryGuy, user=request.user)
+            dg = get_object_or_404(DeliveryGuy, id=dg_id)
+            if dg.is_active is True:
+                for delivery_id in delivery_ids:
+                    delivery_status = get_object_or_404(OrderDeliveryStatus, pk=delivery_id)
+                    if delivery_status.pickup_guy is not None and delivery_status.pickup_guy == dg_tl and delivery_status.order_status == constants.ORDER_STATUS_QUEUED:
+                        delivery_status.pickup_guy = dg
+                        delivery_status.save()
+
+                    if delivery_status.delivery_guy is not None and delivery_status.delivery_guy == dg_tl and (delivery_status.order_status == constants.ORDER_STATUS_QUEUED or delivery_status.order_status == constants.ORDER_STATUS_INTRANSIT or delivery_status.order_status == constants.ORDER_STATUS_OUTFORDELIVERY):
+                        delivery_status.delivery_guy = dg
+                        delivery_status.save()
+
+                success_message = 'Orders assigned successfully'
+                return response_success_with_message(success_message)
+            else:
+                error_message = 'This is not a active DG.'
+                return response_error_with_message(error_message)
+        else:
+            return response_access_denied()
+    
+    @detail_route(methods=['put'])
+    def update_cod(self, request, pk):
+        try:
+            new_cod = request.data['new_cod']
+            remarks = request.data['reason']
+        except Exception as e:
+            parameters = ['new_cod', 'reason']
+            return response_incomplete_parameters(parameters)
+
+        role = user_role(request.user)
+        if role == constants.OPERATIONS or role == constants.OPERATIONS_MANAGER:
+            delivery = get_object_or_404(OrderDeliveryStatus, pk=pk)
+            order = delivery.order
+            order.cod_amount = float(new_cod)
+            order.save()
+
+            current_datetime = datetime.now()
+            action = delivery_actions(constants.COD_UPDATE_CODE)
+            add_action_for_delivery(action, delivery, request.user, None, None, current_datetime, remarks)
+                
+            if delivery.delivery_guy is not None:    
+                send_dg_COD_update_notification(delivery.delivery_guy, pk, new_cod)
+
+            success_message = 'COD Updated successfully'
+            return response_success_with_message(success_message)
         else:
             return response_access_denied()

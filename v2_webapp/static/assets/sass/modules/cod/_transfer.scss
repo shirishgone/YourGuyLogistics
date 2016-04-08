@@ -1,0 +1,44 @@
+.transfer {
+	height: 100%;
+	overflow-y: hidden;
+	md-checkbox {
+		margin-bottom: 0px;
+	}
+	.list {
+		.table-list {
+			.table-header.selected {
+				background-color: orange-accent-color('300');
+				tr {
+					width: 100%;
+					th {
+						padding-top: 0;
+						padding-bottom: 0;
+						padding: 5px;
+						.md-button {
+							margin-top: 0;
+							margin-bottom: 0;
+							min-height: 18px;
+							font-size: 15px;
+						}
+					}
+				}
+			}
+			.transfer-button {
+				background-color: $success-color !important;
+			}
+			.table-body {
+				tr {
+					&.selected {
+						background-color: orange-accent-color('100');
+					}
+				}
+			}
+		}
+	} 
+	.footer {
+		max-height: 50px;
+		height: 50px; 
+		z-index: 10;
+		border: 1px solid grey-color('200');
+	}
+}

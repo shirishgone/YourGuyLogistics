@@ -1,0 +1,45 @@
+.search-toolbar {
+	md-input-container.md-ygBlueTheme-theme {
+		display: flex;
+		margin: 0;
+		.md-input {
+			color: $white-color !important;
+			border-color: rgba(255,255,255,1);
+			@include input-placeholder {
+				color: #eee !important;
+				font-size: 14px;
+
+			}
+		}
+	}
+}
+
+
+.dgList {
+	padding : 0px;
+	overflow-y: hidden;
+	height: 100%;
+	background-color: grey-color('100') !important;
+	.dg-list {
+		padding: 0px;
+		.list {
+			position: relative;
+			z-index: 9;
+			overflow: hidden;
+			padding: 10px;
+			md-content {
+				overflow: hidden;
+			}
+		}
+		.footer {
+			max-height: 50px;
+			height: 50px; 
+			z-index: 10;
+		}
+	}
+	.floating-button {
+		position: absolute;
+		bottom: 30px;
+		right: 50px;
+	}
+}

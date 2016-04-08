@@ -1,0 +1,92 @@
+<md-toolbar class="yg-toolbar md-primary md-whiteframe-z2">
+	<div class="md-toolbar-tools">
+		<md-button ng-click="dgCreate.goBack()" class="md-icon-button" aria-label="Menu Icon">
+			<md-icon>arrow_back</md-icon>
+		</md-button>
+		<p>Create DG</p>
+		<span flex></span>
+	</div>
+</md-toolbar>
+<md-content flex layout-fill class="dgCreate" layout="column" layout-padding>
+	<form name="dgCreateForm" class="dgCreateForm" flex="50" layout="column" ng-submit="dgCreate.create()">
+		<div class="form-section" layout="row" layout-xs="column" layout-margin>
+			<md-input-container class="md-block" flex="50" flex-xs="100">
+				<label>Delivery Guy Name</label>
+				<input required name="name" ng-model="dgCreate.dg.name">
+				<div ng-messages="dgCreateForm.name.$error">
+					<div ng-message="required">This is required.</div>
+				</div>
+			</md-input-container>
+			<md-input-container class="md-block"  flex="50" flex-xs="100">
+				<label>Phone Number</label>
+				<input name="phonenumber" ng-model="dgCreate.dg.phone_number" md-maxlength="11" minlength="10" ng-pattern="/^[0-9]{10,11}$/" required>
+				<div ng-messages="dgCreateForm.phonenumber.$error" ng-show="dgCreateForm.$dirty">
+					<div ng-message="required">This is required.</div>
+					<div ng-message="md-maxlength">Phone number should be maximum 11 digit!</div>
+					<div ng-message="minlength">Phone number should be minimum 10 digit!</div>
+					<div ng-message="pattern">Phone number should only contain numbers!</div>
+				</div>
+			</md-input-container>
+		</div>
+		<div class="form-section" layout="row" layout-xs="column" layout-margin>
+			<md-input-container class="md-block"  flex="50" flex-xs="100">
+				<label>Password</label>
+				<input required name="password" ng-model="dgCreate.dg.password">
+				<div ng-messages="dgCreateForm.password.$error">
+					<div ng-message="required">This is required.</div>
+				</div>
+			</md-input-container>
+			<md-input-container class="md-block" flex="50" flex-xs="100">
+				<label>Team Lead</label>
+				<md-select name="teamlead" ng-model="dgCreate.dg.team_lead_ids" ng-required="true">
+					<md-option ng-repeat="lead in dgCreate.TeamLeads" value="{{lead.dg_tl_id}}">
+						{{lead.dg_tl_name}}
+					</md-option>
+				</md-select>
+				<div ng-messages="dgCreateForm.dg.team_lead_ids.$error">
+					<div ng-message="required">This is required.</div>
+				</div>
+			</md-input-container>
+		</div>
+		<div class="form-section" layout="row" layout-xs="column" layout-margin>
+			<md-input-container class="md-block" flex="50" flex-xs="100">
+				<label>Operational Manager</label>
+				<md-select name="operationalmanager" ng-model="dgCreate.dg.ops_manager_ids" ng-required="true">
+					<md-option ng-repeat="ops in dgCreate.OpsManagers" value="{{ops.employee_id}}">
+						{{ops.name}}
+					</md-option>
+				</md-select>
+				<div class="error_msg" ng-messages="dgCreateForm.operationalmanager.$error">
+					<div ng-message="required">This is required.</div>
+				</div>
+			</md-input-container>
+			<md-input-container class="md-block" flex="50" flex-xs="100">
+				<label>Shift Timings</label>
+				<md-select layout="column"  name="shifttime" ng-model="dgCreate.dg.shift_timing" ng-required="true">
+					<md-option ng-repeat="time in dgCreate.shift_timings" value="{{time}}">
+						{{time.start_time | timeAsDate}} - {{time.end_time | timeAsDate}}
+					</md-option>
+				</md-select>
+				<div class="error_msg" ng-messages="dgCreateForm.shifttime.$error">
+					<div ng-message="required">This is required.</div>
+				</div>
+			</md-input-container>
+		</div>
+		<div class="form-section" layout="row" layout-xs="column" layout-margin>
+			<md-input-container class="md-block" flex="50" flex-xs="100">
+				<label>Transportaion</label>
+				<md-select layout="column" name="transportation" ng-model="dgCreate.dg.transportation_mode" ng-required="true">
+					<md-option ng-repeat="mode in dgCreate.transportation_mode" value="{{mode.value}}">
+						{{mode.key}}
+					</md-option>
+				</md-select>
+				<div class="error_msg" ng-messages="dgCreateForm.transportation.$error">
+					<div ng-message="required">This is required.</div>
+				</div>
+			</md-input-container>
+		</div>
+		<div class="form-section" layout="row" layout-xs="column" layout-margin flex-xs="50">
+			<md-button type="submit" class="md-raised md-cornered md-accent md-lg-btn" ng-disabled="dgCreateForm.$invalid">CREATE DG</md-button>
+		</div>
+	</form>
+</md-content>

@@ -1,0 +1,139 @@
+<md-content flex layout-fill layout="column" class="deposit" ng-if="deposit.total_deposits > 0">
+	<section flex="90" layout="column" class="list" layout-align="center stretch">
+		<table flex class="table-list" layout="column">
+			<thead class="table-header">
+				<tr layout="row" layout-align="start start">
+					<th flex flex-xs="20">Date</th>
+					<th flex flex-xs="30">DG name</th>
+					<th flex flex-xs="20">Amount</th>
+					<th flex flex-xs="30">Reciept No</th>
+					<th flex hide-xs>Reciept</th>
+					<th flex hide-xs>Verify</th>
+				</tr>
+			</thead>
+			<tbody class="table-body">
+				<tr ng-repeat="dp in deposit.deposits" layout="row" layout-align="start start">
+					<td flex flex-xs="20">{{dp.created_time_stamp}}</td>
+					<td flex flex-xs="30">
+						<span hide-xs>{{dp.created_by_user }}</span>
+						<span hide-gt-xs>{{dp.created_by_user | limitTo: 12}}{{dp.created_by_user.length > 12 ? '...' : ''}}</span>
+					</td>
+					<td flex flex-xs="20">{{dp.cod_amount}}rs</td>
+					<td flex layout="row" flex-xs="30"> 
+						<span hide-xs>{{dp.receipt_number}}</span>
+						<span hide-gt-xs>{{dp.receipt_number | limitTo: 5}}{{dp.receipt_number.length > 5 ? '...' : ''}}</span>
+						<span flex ></span>
+						<md-menu hide-gt-xs md-position-mode="target-right target">
+							<md-button class="md-icon-button" id="options" ng-click="$mdOpenMenu($event)" aria-label="Open selected menu">
+								<md-icon ng-style="{color: '#757575','font-size':'16px', height: '16px', width: '16px'}">more_vert</md-icon>
+							</md-button>
+							<md-menu-content width="3">
+								<md-menu-item>
+									<md-button ng-click="deposit.showImage(dp.receipt)">
+										<md-icon>image</md-icon>
+										View Reciept
+									</md-button>
+								</md-menu-item>
+								<md-menu-item>
+									<md-button ng-click="deposit.verifyDeposit(dp)">
+										<md-icon>thumb_up</md-icon>
+										Verify Deposit
+									</md-button>
+								</md-menu-item>
+								<md-menu-item>
+									<md-button ng-click="deposit.declineDeposit(dp)">
+										<md-icon>thumb_down</md-icon>
+										Decline Deposit
+									</md-button>
+								</md-menu-item>
+							</md-menu-content>
+						</md-menu>
+					</td>
+					<td flex hide-xs>
+						<button class="reciept-button" ng-click="deposit.showImage(dp.receipt)">
+							View reciept
+						</button>
+					</td>
+					<td flex hide-xs>
+						<button class="action-button success" ng-click="deposit.verifyDeposit(dp)">Approve</button>&nbsp;&nbsp;&nbsp;&nbsp;
+						<button class="action-button danger" ng-click="deposit.declineDeposit(dp)">Decline</button>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	</section>
+	<section flex="10" class="footer">
+		<div yd-pagination total="{{deposit.total_deposits}}" total-page="{{deposit.total_pages}}" params="deposit.params" list-length="{{deposit.deposits.length}}" paginate="deposit.paginate" get-data="deposit.getDgs()"></div>
+	</section>
+</md-content>
+<md-content flex layout-fill layout="row" class="no-content" layout-align="center center" ng-if="deposit.total_deposits == 0">
+	<div flex="50" flex-xs="90">
+		<img src="/static/assets/images/COD/deposit.png">
+	</div>
+</md-content>
+<md-sidenav class="filter-sidenav md-sidenav-right md-whiteframe-z3" layout="column" md-component-id="cod-filter">
+	<md-toolbar class="md-primary md-whiteframe-z1">
+		<div class="md-toolbar-tools">
+			Filters
+			<span flex></span>
+			<md-button class="md-icon-button" aria-label="Filter Button" ng-click="deposit.resetParams()">
+				<md-tooltip md-direction="bottom">
+          			Reset
+        		</md-tooltip>
+				<md-icon>refresh</md-icon>
+			</md-button>
+			<md-button class="md-icon-button" aria-label="Filter Button" ng-click="deposit.revertToPageOne()">
+				<md-tooltip md-direction="bottom">
+          			Apply
+        		</md-tooltip>
+				<md-icon>done</md-icon>
+			</md-button>
+		</div>
+ 	</md-toolbar>
+ 	<md-content flex layout="column">
+ 		<md-list>
+ 			<md-subheader>START DATE</md-subheader>
+ 			<md-list-item class="md-1-line">
+				<md-datepicker ng-model="deposit.params.start_date" md-placeholder="Enter date"></md-datepicker>
+			</md-list-item>
+			<md-subheader>END DATE</md-subheader>
+ 			<md-list-item class="md-1-line">
+				<md-datepicker ng-model="deposit.params.end_date" md-placeholder="Enter date"></md-datepicker>
+			</md-list-item>
+			<md-subheader>VENDOR</md-subheader>
+			<div class="vendor-list">
+				<md-autocomplete
+					md-no-cache="true"
+					md-selected-item="deposit.selectedVendor"
+					md-search-text="deposit.searchVendor"
+					md-selected-item-change="deposit.selectedVendorChange(vendor)"
+					md-items="vendor in deposit.vendorSearchTextChange(deposit.searchVendor)"
+					md-item-text="vendor.name"
+					md-min-length="1"
+					placeholder="Search Vendor">
+					<md-item-template>
+						<span md-highlight-text="deposit.searchVendor" md-highlight-flags="^i">{{vendor.name}}</span>
+					</md-item-template>
+					<md-not-found>
+						No states matching "{{deposit.searchVendor}}" were found.
+					</md-not-found>
+				</md-autocomplete>
+			</div>
+ 		</md-list>
+ 	</md-content>
+</md-sidenav>
+<div class="reciept-viewer" layout="column" ng-if="deposit.showImageSection">
+	<div class="reciept-header" layout="row" layout-align="center center">
+		<span flex></span>
+		<a class="md-icon-button" aria-label="Filter Button" href="{{deposit.depositImage}}" download>
+			<md-icon ng-style="{color: '#C2BDBD'}">file_download</md-icon>
+		</a>
+		<span flex></span>
+		<md-button class="md-icon-button" aria-label="Filter Button" ng-click="deposit.showImageSection = false;">
+			<md-icon ng-style="{color: '#C2BDBD'}">clear</md-icon>
+		</md-button>
+	</div>
+	<div class="reciept-image" layout="row" layout-align="center center">
+		<img ng-src="{{deposit.depositImage}}" alt="Unable to load image">
+	</div>
+</div>

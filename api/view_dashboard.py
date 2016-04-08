@@ -12,7 +12,7 @@ from rest_framework.decorators import api_view
 
 from yourguy.models import Order, OrderDeliveryStatus, Consumer, Vendor, DeliveryGuy, Area, VendorAgent, Address, Product, OrderItem, User
 from datetime import datetime, timedelta, time
-from api.views import user_role, is_userexists, is_vendorexists, is_consumerexists, is_dgexists, is_address_exists, days_in_int, send_sms, normalize_offset_awareness, ist_day_start, ist_day_end
+from api.views import user_role, is_userexists, is_vendorexists, is_dgexists, is_address_exists, days_in_int, send_sms, normalize_offset_awareness, ist_day_start, ist_day_end
 from api.views import ist_datetime
 
 import constants
@@ -124,7 +124,7 @@ def vendor_dashboard(request):
 	# ------------------------------------------------------------------------------
 
 	# CUSTOMERS FOR VENDOR ---------------------------------------------------------
-	queryset_consumers = Consumer.objects.filter(user__date_joined__gte = start_date, user__date_joined__lte = end_date)
+	queryset_consumers = Consumer.objects.filter(created_date__gte = start_date, created_date__lte = end_date)
 	if vendor is not None:
 		queryset_consumers = queryset_consumers.filter(associated_vendor = vendor)
 	

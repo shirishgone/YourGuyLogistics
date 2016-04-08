@@ -2446,7 +2446,7 @@ ygVendors.controller('customerDetailsCntrl',function ($scope,$stateParams,$timeo
         alert(status.error)
       }
       else{
-        $scope.user_detail = status.data.data
+        $scope.user_detail = status.data
         $scope.user_detail.address_id = $scope.user_detail.addresses[0].id
         StoreSession.updateCustomer($scope.user_detail)
       }
@@ -2962,10 +2962,10 @@ ygVendors.controller('createComplaintsCntrl',function ($scope,$timeout,$state,St
 
   $scope.getGroups()
 
-  $scope.doComplain = function(){
+  $scope.doComplain = function(data){
     cfpLoadingBar.start();
     $scope.complain_btn_disable = true;
-    Complaints.creatTickets($scope.tickets).finally(function(){
+    Complaints.creatTickets(data).finally(function(){
       var status =  Errorhandler.getStatus();
       if(status.has_error){
         cfpLoadingBar.complete()

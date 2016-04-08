@@ -15,6 +15,7 @@ OPERATIONS_MANAGER = 'operations_manager'
 ACCOUNTS = 'accounts'
 CALLER = 'caller'
 ADMIN = 'admin'
+HR = 'hr'
 
 # CONTACTS CONSTANTS
 OPS_PHONE_NUMBER = '+919820252216'
@@ -25,6 +26,7 @@ EMAIL_SIGNATURE = "- \n Team YourGuy \nhttp://www.yourguy.in"
 EMAIL_ERRORS = ['tech@yourguy.in', 'vinit@yourguy.in ', 'aquid@yourguy.in', 'prajakta@yourguy.in']
 
 if settings.ENVIRONMENT == 'PRODUCTION':
+    EMAIL_DG_SALARY_DEDUCTIONS = ['ops@yourguy.in','accounts@yourguy.in']
     EMAIL_UNASSIGNED_ORDERS = ['tech@yourguy.in', 'alay@yourguy.in', 'ops@yourguy.in']
     EMAIL_DAILY_REPORT = ['tech@yourguy.in', 'alay@yourguy.in', 'ops@yourguy.in', 'bd@yourguy.in']
     EMAIL_COD_REPORT = ['tech@yourguy.in', 'alay@yourguy.in', 'ops@yourguy.in', 'bd@yourguy.in']
@@ -43,6 +45,7 @@ if settings.ENVIRONMENT == 'PRODUCTION':
     RETAIL_EMAIL_ID = ['retail@yourguy.in']
     LATEST_DG_APP_VERSION = '1.0.22'
 else:
+    EMAIL_DG_SALARY_DEDUCTIONS = TEST_GROUP_EMAILS
     EMAIL_UNASSIGNED_ORDERS = TEST_GROUP_EMAILS
     EMAIL_DAILY_REPORT = TEST_GROUP_EMAILS
     EMAIL_COD_REPORT = TEST_GROUP_EMAILS
@@ -55,7 +58,7 @@ else:
     OPS_EMAIL_IDS = TEST_GROUP_EMAILS
     EMAIL_IDS_EVERYBODY = TEST_GROUP_EMAILS
     RETAIL_EMAIL_ID = TEST_GROUP_EMAILS
-    LATEST_DG_APP_VERSION = '1.0.22'
+    LATEST_DG_APP_VERSION = '23'
 
 # GCM CONSTANTS
 GCM_PUSH_API_KEY = 'AIzaSyCmXulcUBViokrkYZ9Z9bWJgEWgXyeNh1U'
@@ -104,6 +107,15 @@ ORDER_STATUS_CANCELLED = 'CANCELLED'
 ORDER_STATUS_REJECTED = 'REJECTED'
 ORDER_STATUS_OUTFORDELIVERY = 'OUTFORDELIVERY'
 
+# COD STATUS CONSTANTS
+COD_NOT_AVAILABLE = 'COD_NOT_AVAILABLE'
+COD_STATUS_COLLECTED = 'COD_COLLECTED'
+COD_STATUS_TRANSFERRED_TO_TL = 'COD_TRANSFERRED_TO_TL'
+COD_STATUS_BANK_DEPOSITED = 'COD_BANK_DEPOSITED'
+COD_STATUS_VERIFIED = 'COD_VERIFIED'
+COD_STATUS_TRANSFERRED_TO_CLIENT = 'COD_TRANSFERRED_TO_CLIENT'
+
+
 # DELIVERY ACTIONS CONSTANTS
 PICKEDUP_CODE = 'yg_da_01'
 DELIVERED_CODE = 'yg_da_02'
@@ -114,6 +126,23 @@ CANCELLED_CODE = 'yg_da_06'
 RESCHEDULED_CODE = 'yg_da_07'
 ASSIGNED_CODE = 'yg_da_08'
 OUTFORDELIVERY_CODE = 'yg_da_09'
+COD_UPDATE_CODE = 'yg_da_10'
+
+# COD ACTIONS CONSTANTS
+COD_COLLECTED_CODE = 'yg_cod_01'
+COD_TRANSFERRED_TO_TL_CODE = 'yg_cod_02'
+COD_BANK_DEPOSITED_CODE = 'yg_cod_03'
+COD_VERIFIED_CODE = 'yg_cod_04'
+COD_TRANSFERRED_TO_CLIENT_CODE = 'yg_cod_05'
+
+# TRANSACTION_TYPE
+TRANSFER = 'TRANSFER'
+BANKDEPOSIT = 'BANKDEPOSIT'
+
+# TRANSACTION_STATUS
+INITIATED = 'INITIATED'
+VERIFIED = 'VERIFIED'
+DECLINED = 'DECLINED'
 
 # DG WORKING STATUS CONSTANTS
 DG_STATUS_WORKING = 'WORKING'
@@ -156,3 +185,4 @@ NOTIFICATION_MESSAGE_PICKUP_DELAY = 'Dear %s, pickup boy %s has delayed in picki
 NOTIFICATION_MESSAGE_NO_OPS_EXEC_FOR_PINCODE = 'Dear %s, there is no operations executive assigned to the pincode: %s. Please assign one asap.'
 NOTIFICATION_MESSAGE_NO_OPS_EXEC_FOR_DELIVERY_GUY = 'Dear %s, there is no operations executive assigned for delivery guy: %s. Please assign one asap.'
 # ---------------------------------------
+

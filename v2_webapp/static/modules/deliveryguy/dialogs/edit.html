@@ -1,0 +1,108 @@
+<md-dialog aria-label="EDIT DG" ng-cloak class="dgEdit">
+    <form name="dgEditForm" class="dgEditForm">
+        <md-toolbar>
+            <div class="md-toolbar-tools">
+                <h2>EDIT DG</h2>
+                <span flex></span>
+                <md-button ng-click="dgEdit.cancel()" class="md-icon-button" aria-label="close dg edit">
+                  <md-icon>clear</md-icon>
+                </md-button>
+            </div>
+        </md-toolbar>
+        <md-dialog-content>
+            <div class="md-dialog-content">
+                <section layout="row" layout-fill layout-wrap class="edit-view">
+                  <!-- <div flex="20" flex-xs="100">
+                    PROFILE IMAGE
+                  </div> -->
+                  <div flex flex-xs="100" layout="row" layout-wrap >
+                    <div flex="50" flex-xs="50" class="profile-data">
+                        <md-input-container class="md-block">
+                            <label>Delivery Guy Name</label>
+                            <input required name="name" ng-model="dgEdit.DG.name">
+                            <div ng-messages="dgEditForm.name.$error">
+                              <div ng-message="required">This is required.</div>
+                            </div>
+                        </md-input-container>
+                    </div>
+                    <div flex="50" flex-xs="50" class="profile-data">
+                        <md-input-container class="md-block" >
+                            <label>Phone Number</label>
+                            <input name="phonenumber" ng-model="dgEdit.DG.phone_number" md-maxlength="11" minlength="10" ng-pattern="/^[0-9]{10,11}$/" ng-disabled="true">
+                        </md-input-container>
+                    </div>
+                    <div flex="50" flex-xs="50" class="profile-data">
+                        <md-input-container class="md-block">
+                            <label>Transportaion</label>
+                            <md-select layout="column" name="transportation" ng-model="dgEdit.DG.transportation_mode" ng-required="true">
+                                <md-option ng-repeat="mode in dgEdit.transportation_mode" value="{{mode.value}}">
+                                    {{mode.key}}
+                                </md-option>
+                            </md-select>
+                            <div class="error_msg" ng-messages="dgEditForm.transportation.$error" >
+                                <div ng-message="required">This is required.</div>
+                            </div>
+                        </md-input-container>
+                    </div>
+                    <div flex="50" flex-xs="50" class="profile-data" ng-if="!dgEdit.DG.is_teamlead">
+                        <md-input-container class="md-block">
+                            <label>Team Lead</label>
+                            <md-select name="teamlead" multiple ng-model="dgEdit.DG.team_lead_dg_ids" ng-required="true">
+                                <md-option ng-repeat="lead in dgEdit.TeamLeads" value="{{lead.dg_tl_id}}">
+                                    {{lead.dg_tl_name}}
+                                </md-option>
+                            </md-select>
+                            <div ng-messages="dgEditForm.teamlead.$error">
+                                <div ng-message="required">This is required.</div>
+                            </div>
+                        </md-input-container>
+                    </div>
+                    <div flex="50" flex-xs="50" class="profile-data">
+                        <md-input-container class="md-block">
+                            <label>Operational Manager</label>
+                            <md-select name="operationalmanager" multiple ng-model="dgEdit.DG.ops_manager_ids" ng-required="true">
+                                <md-option ng-repeat="ops in dgEdit.OpsManagers" value="{{ops.employee_id}}">
+                                    {{ops.name}}
+                                </md-option>
+                            </md-select>
+                            <div ng-messages="dgEditForm.operationalmanager.$error" ng-if="dgEditForm.$dirty">
+                                <div ng-message="required">This is required.</div>
+                            </div>
+                        </md-input-container>
+                    </div>
+                    <div flex="50" flex-xs="50" class="profile-data">
+                        <md-input-container class="md-block">
+                            <label>Shift Timings</label>
+                            <md-select name="shifttime" ng-model="dgEdit.DG.shift_time" ng-required="true" ng-model-options="{trackBy: '$value.start_time'}">
+                                <md-option ng-repeat="time in dgEdit.shift_timings" ng-value="time">
+                                    {{time.start_time | timeAsDate}} - {{time.end_time | timeAsDate}}
+                                </md-option>
+                            </md-select>
+                            <div class="error_msg" ng-messages="dgEditForm.shifttime.$error">
+                                <div ng-message="required">This is required.</div>
+                            </div>
+                        </md-input-container>
+                    </div>
+                    <!-- <div flex="30" flex-xs="50" class="profile-data">
+                      <label>Weekly Off</label>
+                      <h5>{{dgEdit.DG.pincode}}</h5>
+                    </div>
+                    <div flex="30" flex-xs="50" class="profile-data">
+                      <label>COD</label>
+                      <h5>{{dgEdit.DG.pincode}}</h5>
+                    </div> -->
+                  </div>
+                </section>
+            </div>
+        </md-dialog-content>
+        <md-dialog-actions layout="row">
+            <span flex></span>
+            <md-button ng-click="dgEdit.cancel()" class="md-warn">
+                Cancel
+            </md-button>
+            <md-button ng-click="dgEdit.answer(dgEdit.DG)" class="md-primary" style="margin-right:20px;">
+                Done
+            </md-button>
+        </md-dialog-actions>
+    </form>
+</md-dialog>

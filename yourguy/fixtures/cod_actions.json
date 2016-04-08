@@ -1,0 +1,42 @@
+[
+  {
+    "model": "yourguy.CODAction",
+    "pk": 1,
+    "fields": {
+      "code": "yg_cod_01",
+      "title": "CODCollected"
+    }
+  },
+  {
+    "model": "yourguy.CODAction",
+    "pk": 2,
+    "fields": {
+      "code": "yg_cod_02",
+      "title": "CODTransferredToTL"
+    }
+  },
+  {
+    "model": "yourguy.CODAction",
+    "pk": 3,
+    "fields": {
+      "code": "yg_cod_03",
+      "title": "CODBankDeposited"
+    }
+  },
+  {
+    "model": "yourguy.CODAction",
+    "pk": 4,
+    "fields": {
+      "code": "yg_cod_04",
+      "title": "CODVerified"
+    }
+  },
+  {
+    "model": "yourguy.CODAction",
+    "pk": 5,
+    "fields": {
+      "code": "yg_cod_05",
+      "title": "CODTransferredToClient"
+    }
+  }
+]

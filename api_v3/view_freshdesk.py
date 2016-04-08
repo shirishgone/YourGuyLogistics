@@ -36,8 +36,7 @@ def get_open_ticket_count(request):
         count_request = requests.get(count_url, headers=auth_headers())
         count_response = count_request.json()
         count = count_response['view_count']
-        response = {'count':count}
-        return response_with_payload(response, None)
+        return response_with_payload(count, None)
     except Exception as e:
         error_message = 'Something went wrong'
         return response_error_with_message(error_message)
@@ -136,13 +135,17 @@ def add_note(request):
 @api_view(['PUT'])
 def resolve(request):
     ticket_id = request.data['id']
-    note = request.data['note']
+    note = request.data.get('note')
     resolve = request.data['resolve']
 
-    note_url = '{}/helpdesk/tickets/{}/conversations/note.json'.format(constants.FRESHDESK_BASEURL, ticket_id)
+    if note is not None:
+        note_url = '{}/helpdesk/tickets/{}/conversations/note.json'.format(constants.FRESHDESK_BASEURL, ticket_id)
+    else:
+        pass
     resolve_url = '{}/helpdesk/tickets/{}.json'.format(constants.FRESHDESK_BASEURL, ticket_id)
     try:
-        note_request = requests.post(note_url, data=json.dumps(note), headers=auth_headers())
+        if note is not None and note_url is not None:
+            note_request = requests.post(note_url, data=json.dumps(note), headers=auth_headers())
         resolve_request = requests.put(resolve_url, data=json.dumps(resolve), headers=auth_headers())
 
         success_message = 'Successfully resolved the ticket'

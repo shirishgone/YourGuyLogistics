@@ -1,0 +1,42 @@
+<div flex class="login-page" layout="row" layout-align="center center" layout-wrap>
+	<div class="logo" flex="100">
+	</div>
+	<div flex-xs="90" flex-sm="60" flex-gt-sm="50" flex-gt-md="40" flex-gt-lg="30" class="md-whiteframe-5dp">
+		<md-content class="loginform" layout-padding>
+			<form name="loginform"  ng-submit="login.userLogin()" layout="row" layout-wrap>
+				<div class="form-header" flex="100">
+					<h3 class="md-display-1">
+						Welcome to YourGuy!
+					</h3>
+				</div>
+				<md-input-container class="md-block" flex="100">
+					<label>Phone Number</label>
+					<input name="username" md-maxlength="11" minlength="10" ng-model="login.username" required>
+					<div ng-messages="loginform.username.$error" >
+						<div ng-message="required">This is required!</div>
+						<div ng-message="md-maxlength">Username should be maximum 11 digit!</div>
+						<div ng-message="minlength">Username should be minimum 10 digit!</div>
+					</div>
+				</md-input-container>
+				<md-input-container class="md-block" flex="100">
+					<label>Password</label>
+					<input type="password" name="password" ng-model="login.password" required>
+					<div ng-messages="loginform.password.$error">
+						<div ng-message="required">This is required!</div>
+					</div>
+				</md-input-container>
+				<div layout="row" layout-align="space-around" ng-show="login.loader" flex="100">
+					<md-progress-circular md-mode="indeterminate"></md-progress-circular>
+				</div>
+				<div layout="row" layout-align="space-around" class="login-error-message" flex="100">
+					{{login.error_message}}
+				</div>
+				<div layout="row" layout-align="end center" flex="100">
+					<md-button type="submit" class=" md-accent md-cornered" ng-class="{'md-raised':(loginform.$valid && loginform.$dirty)}">
+						Login
+					</md-button>
+				</div>
+			</form>
+		</md-content>
+	</div>
+</div>

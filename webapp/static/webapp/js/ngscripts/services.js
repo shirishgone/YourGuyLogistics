@@ -454,7 +454,6 @@ ygVendors.factory('Complaints', function ($http,$q,baseURl,Errorhandler){
         }, function (error){
             deferred.reject("Could not retrieve data! Please reload the page");
         });
-
         return deferred.promise;
     };
 

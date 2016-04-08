@@ -1,0 +1,24 @@
+{% load staticfiles %}
+<!DOCTYPE html>
+<html ng-app="ygVendorApp">
+	<head>
+		<meta charset="utf-8">
+	    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+	    <meta name="description" content="Webapplication for Yourguy business partners. You have things to deliver across Mumbai? We will deliver it for you. Just login and start placing your pickup requests.">
+	    <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no" />
+	    <meta name="viewport" content="width=device-width">
+		<title>Web App</title>
+		<base href="/v2/">
+		<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+		<link rel="stylesheet" type="text/css" href="{% static 'assets/css/angular-material.min.css' %}">
+		<link rel="stylesheet" type="text/css" href="{% static 'assets/css/app.css' %}">
+	</head>
+	<body id="body" layout="row" layout-align="space-around">
+		<div class="request-loader request-loader-hidden">
+			<md-progress-linear class="md-warn" md-mode="indeterminate"></md-progress-linear>
+		</div>
+		<div ui-view flex layout="row"></div>
+		<script type="text/javascript" src="{% static 'assets/js/vendors.min.js' %}"></script>
+		<script type="text/javascript" src="{% static 'assets/js/main.min.js' %}"></script>
+	</body>
+</html>

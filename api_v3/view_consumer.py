@@ -8,33 +8,51 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import list_route
 
 from api_v3 import constants
-from api_v3.utils import user_role, paginate, is_userexists, is_consumerexists
-from yourguy.models import Consumer, VendorAgent
+from api_v3.utils import user_role, paginate, is_userexists
+from yourguy.models import Consumer, VendorAgent, Address
 from api_v3.utils import response_access_denied, response_with_payload, response_error_with_message, response_success_with_message, response_invalid_pagenumber, response_incomplete_parameters
 
-def create_consumer(username, phone_number, address):
-    # FETCH USER WITH PHONE NUMBER -------------------------------
-    if is_userexists(phone_number) is False:
-        user = User.objects.create(username=phone_number, first_name=username, password='')
-    else:
-        user = get_object_or_404(User, username=phone_number)
-    # -------------------------------------------------------------
+def is_consumer_has_same_address_already(consumer, full_address, pin_code, landmark):
+    addresses = consumer.addresses.all()
+    for address in addresses:
+        if address.full_address == full_address and address.pin_code == pin_code:
+            return address
+    return None
 
-    if is_consumerexists(user) is False:
-        consumer = Consumer.objects.create(user=user)
-        consumer.addresses.add(address)
-        consumer.save()
-    else:
-        consumer = get_object_or_404(Consumer, user=user)
+def fetch_or_create_consumer_address(consumer, full_address, pin_code, landmark):
+    consumer_address = is_consumer_has_same_address_already(consumer, full_address, pin_code, landmark)
+    if consumer_address is None:
+        consumer_address = Address.objects.create(full_address = full_address)        
+        if pin_code is not None:
+            consumer_address.pin_code = pin_code
+        if landmark is not None:
+            consumer_address.landmark = landmark
+        consumer.addresses.add(consumer_address)
+        consumer_address.save()
+    return consumer_address    
 
+def fetch_or_create_consumer(name, phone_number, vendor):
+    try:
+        consumer = Consumer.objects.get(phone_number = phone_number, vendor = vendor)
+    except Exception as e:
+        try:
+            user = User.objects.get(username = phone_number)
+        except Exception, e:
+            user = User.objects.create(username = phone_number, first_name = name)        
+        try:
+            consumer = Consumer.objects.create(user = user, phone_number=phone_number, full_name = name, vendor = vendor)
+        except Exception, e:
+            consumer = Consumer.objects.get(user = user)
+    
+    consumer.associated_vendor.add(vendor)
+    consumer.save()
     return consumer
-
 
 def consumer_list_dict(consumer):
     consumer_dict = {
         'id': consumer.id,
-        'name': consumer.user.first_name,
-        'phone_number': consumer.user.username
+        'name': consumer.full_name,
+        'phone_number': consumer.phone_number
     }
     return consumer_dict
 
@@ -42,8 +60,8 @@ def consumer_list_dict(consumer):
 def consumer_detail_dict(consumer):
     consumer_dict = {
         'id': consumer.id,
-        'name': consumer.user.first_name,
-        'phone_number': consumer.user.username,
+        'name': consumer.full_name,
+        'phone_number': consumer.phone_number,
         "addresses": []
     }
 
@@ -62,8 +80,8 @@ def consumer_detail_dict(consumer):
 
 def excel_download_consumer_detail(consumer):
     consumer_dict = {
-        'name': consumer.user.first_name,
-        'phone_number': consumer.user.username,
+        'name': consumer.full_name,
+        'phone_number': consumer.phone_number,
         "addresses": []
     }
 
@@ -100,16 +118,9 @@ class ConsumerViewSet(viewsets.ModelViewSet):
         role = user_role(request.user)
         if role == constants.VENDOR:
             vendor_agent = get_object_or_404(VendorAgent, user=request.user)
-            all_associated_vendors = consumer.associated_vendor.all()
-            is_consumer_associated_to_vendor = False
-            for vendor in all_associated_vendors:
-                if vendor.id == vendor_agent.vendor.id:
-                    is_consumer_associated_to_vendor = True
-                    break
-            if is_consumer_associated_to_vendor:
+            if consumer.vendor.id == vendor_agent.vendor.id:
                 detail_dict = consumer_detail_dict(consumer)
-                content = {'data': detail_dict}
-                return response_with_payload(content, None)
+                return response_with_payload(detail_dict, None)
             else:
                 return response_access_denied()
         else:
@@ -123,7 +134,7 @@ class ConsumerViewSet(viewsets.ModelViewSet):
         role = user_role(request.user)
         if role == constants.VENDOR:
             vendor_agent = get_object_or_404(VendorAgent, user=request.user)
-            total_consumers_of_vendor = Consumer.objects.filter(associated_vendor=vendor_agent.vendor).order_by(
+            total_consumers_of_vendor = Consumer.objects.filter(vendor = vendor_agent.vendor).order_by(
                 Lower('user__first_name'))
 
             # SEARCH KEYWORD FILTERING -------------------------------------------------
@@ -155,7 +166,32 @@ class ConsumerViewSet(viewsets.ModelViewSet):
                     consumer_dict = consumer_list_dict(consumer)
                 result.append(consumer_dict)
 
-            content = {"data": result, "total_pages": total_pages}
+            content = {"consumers": result, "total_pages": total_pages}
+            return response_with_payload(content, None)
+        else:
+            return response_access_denied()
+
+    def create(self, request):        
+        role = user_role(request.user)
+        if (role == constants.VENDOR):
+            vendor_agent = VendorAgent.objects.get(user = request.user)
+            try:
+                phone_number = request.data['phone_number']
+                name = request.data['name']
+                full_address = request.data['full_address']
+                pin_code = request.data['pin_code']
+                landmark = request.data.get('landmark')
+            except Exception as e:
+                params = ['phone_number', 'name', 'full_address', 'pin_code', 'landmark']
+                return response_incomplete_parameters(params)
+            
+            consumer = fetch_or_create_consumer(name, phone_number, vendor_agent.vendor)
+            address = fetch_or_create_consumer_address(consumer, full_address, pin_code, landmark)            
+            
+            content = {
+            'consumer_id': consumer.id,
+            'new_address_id':address.id
+            }
             return response_with_payload(content, None)
         else:
             return response_access_denied()
@@ -165,14 +201,12 @@ class ConsumerViewSet(viewsets.ModelViewSet):
         role = user_role(request.user)
         if role == constants.VENDOR:
             vendor_agent = get_object_or_404(VendorAgent, user = request.user)
-            all_consumers_of_vendor = Consumer.objects.filter(associated_vendor = vendor_agent.vendor).order_by(Lower('user__first_name'))
+            all_consumers_of_vendor = Consumer.objects.filter(vendor = vendor_agent.vendor).order_by(Lower('full_name'))
 
             result = []
             for consumer in all_consumers_of_vendor:
                 consumer_dict = excel_download_consumer_detail(consumer)
                 result.append(consumer_dict)
-
-            response_content = {'data': result}
-            return response_with_payload(response_content, None)
+            return response_with_payload(result, None)
         else:
             return response_access_denied()

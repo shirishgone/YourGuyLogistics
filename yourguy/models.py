@@ -102,6 +102,50 @@ class YGUser(models.Model):
     class Meta:
         abstract = True
 
+class VendorAccount(models.Model):
+    # Mandatory Fields
+    pricing = models.FloatField(default = 0.0)
+    
+    pan = models.CharField(max_length = 50, blank = True)
+    billing_address = models.ForeignKey(Address, related_name='billing_address', null = True, on_delete=models.PROTECT)
+    last_update_date = models.DateTimeField(auto_now_add = True)
+    
+    # Optional Fields
+
+    def __unicode__(self):
+        return u"%s" % self.id
+
+class Industry(models.Model):
+    name = models.CharField(max_length = 100)
+
+    def __unicode__(self):
+        return u"%s" % self.name
+
+
+class Vendor(models.Model):
+    # Mandatory Fields
+    store_name = models.CharField(max_length = 100)
+    email = models.EmailField(max_length = 50)
+    phone_number = models.CharField(max_length = 15, blank = True, null = True)
+    alternate_phone_number = models.CharField(max_length = 15, blank = True, null = True)
+    industries = models.ManyToManyField(Industry, blank = True)
+
+    addresses = models.ManyToManyField(Address, blank = True)
+    is_retail = models.BooleanField(default = False)
+    account = models.ForeignKey(VendorAccount, related_name='account', blank = True, null = True, on_delete=models.PROTECT)
+
+    # Optional
+    website_url = models.CharField(max_length = 100, blank = True)
+    verified = models.BooleanField(blank = True, default = False)
+    notes = models.CharField(max_length = 500, blank = True)
+    is_hyper_local = models.BooleanField(default = False)
+    approved_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.PROTECT)
+    approved_date = models.DateTimeField(auto_now_add=True, blank=True, null=True)
+
+    def __unicode__(self):
+        return unicode(self.store_name)
+
+
 class DeliveryGuy(YGUser):
     # Mandatory Fields
     employee_code = models.CharField(max_length = 200, blank = True , null = True)
@@ -114,7 +158,7 @@ class DeliveryGuy(YGUser):
         (BUSY, 'BUSY'),
     )
     status = models.CharField(max_length = 50, choices = STATUS_CHOICES, default = UN_AVAILABLE)
-    
+
     shift_start_datetime = models.TimeField(blank=True, null = True)
     shift_end_datetime = models.TimeField(blank=True, null = True)
 
@@ -151,58 +195,20 @@ class DeliveryGuy(YGUser):
     is_teamlead = models.BooleanField(default = False)
     is_active = models.BooleanField(default = False)
     deactivated_date = models.DateTimeField(blank=True, null=True)
-    
+    pending_salary_deduction = models.FloatField(default=0.0)
+    associated_vendors = models.ManyToManyField(Vendor, blank=True, related_name='associated_vendors')
+
     def __unicode__(self):
-        return u"%s - %s" % (self.user.first_name, self.user.username)                
+        return u"%s - %s" % (self.user.first_name, self.user.username)
+
 
 class DeliveryTeamLead(models.Model):
+    created_date_time = models.DateTimeField(auto_now_add = True, blank = True, null = True)
     delivery_guy = models.ForeignKey(DeliveryGuy, related_name='current_delivery_guy', on_delete=models.PROTECT)
     associate_delivery_guys = models.ManyToManyField(DeliveryGuy, blank = True, related_name ='associate_delivery_guys')
     serving_pincodes = models.ManyToManyField(ServiceablePincode, blank = True)
     def __unicode__(self):
         return u"%s - %s" % (self.delivery_guy.user.username, self.delivery_guy.user.first_name)
-        
-class VendorAccount(models.Model):
-    # Mandatory Fields
-    pricing = models.FloatField(default = 0.0)
-    
-    pan = models.CharField(max_length = 50, blank = True)
-    billing_address = models.ForeignKey(Address, related_name='billing_address', null = True, on_delete=models.PROTECT)
-    last_update_date = models.DateTimeField(auto_now_add = True)
-    
-    # Optional Fields
-
-    def __unicode__(self):
-        return u"%s" % self.id
-
-class Industry(models.Model):
-    name = models.CharField(max_length = 100)
-
-    def __unicode__(self):
-        return u"%s" % self.name
-
-class Vendor(models.Model):
-    # Mandatory Fields
-    store_name = models.CharField(max_length = 100)
-    email = models.EmailField(max_length = 50)
-    phone_number = models.CharField(max_length = 15, blank = True, null = True)
-    alternate_phone_number = models.CharField(max_length = 15, blank = True, null = True)
-    industries = models.ManyToManyField(Industry, blank = True)
-
-    addresses = models.ManyToManyField(Address, blank = True)
-    is_retail = models.BooleanField(default = False)
-    account = models.ForeignKey(VendorAccount, related_name='account', blank = True, null = True, on_delete=models.PROTECT)
-
-    # Optional
-    website_url = models.CharField(max_length = 100, blank = True)
-    verified = models.BooleanField(blank = True, default = False)
-    notes = models.CharField(max_length = 500, blank = True)
-    is_hyper_local = models.BooleanField(default = False)
-    approved_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.PROTECT)
-    approved_date = models.DateTimeField(auto_now_add=True, blank=True, null=True)
-
-    def __unicode__(self):
-        return unicode(self.store_name)
 
 class VendorAgent(YGUser):
     vendor = models.ForeignKey(Vendor, related_name='vendor', on_delete=models.PROTECT)
@@ -231,6 +237,7 @@ class Employee(YGUser):
     ACCOUNTS = 'accounts'
     CALLER = 'caller'
     ADMIN = 'admin'
+    HR = 'hr'
     DEPARTMENT_CHOICES = (
             (SALES, 'sales'),
             (SALES_MANAGER, 'sales_manager'),
@@ -238,6 +245,7 @@ class Employee(YGUser):
             (OPERATIONS_MANAGER, 'operations_manager'),
             (ACCOUNTS, 'accounts'),
             (CALLER, 'caller'),
+            (HR, 'hr'),
             (ADMIN, 'admin')
             )
     department = models.CharField(max_length = 50, choices = DEPARTMENT_CHOICES, default = CALLER)
@@ -249,15 +257,16 @@ class Employee(YGUser):
         return u"%s - %s" % (self.user.username, self.user.first_name)
 
 class Consumer(YGUser):
-    # Optional Fields
+    created_date = models.DateTimeField(auto_now_add = True, blank = True, null = True)
     phone_number = models.CharField(max_length = 100, blank = True, null = True)
     full_name = models.CharField(max_length = 100, blank = True, null = True)
-    associated_vendor = models.ManyToManyField(Vendor, blank = True)
+    associated_vendor = models.ManyToManyField(Vendor, blank = True, related_name = 'multiple_vendor')
+    vendor = models.ForeignKey(Vendor, blank = True, null = True, related_name = 'single_vendor')
     phone_verified = models.BooleanField(blank = True, default = False)
     addresses  = models.ManyToManyField(Address, blank = True)
 
     def __unicode__(self):
-        return unicode(self.user.first_name)
+        return unicode(self.full_name)
 
 class DGAttendance(models.Model):
 
@@ -361,11 +370,13 @@ class Order(models.Model):
     def __unicode__(self):
         return u"%s - %s - %s" % (self.id, self.vendor.store_name, self.consumer.user.first_name)
 
+
 class DeliveryAction(models.Model):
     code = models.CharField(max_length=10, blank=True)
     title = models.CharField(max_length = 100)
     def __unicode__(self):
         return u"%s" % (self.title)
+
 
 class DeliveryTransaction(models.Model):
     action = models.ForeignKey(DeliveryAction, on_delete=models.PROTECT)
@@ -375,6 +386,75 @@ class DeliveryTransaction(models.Model):
     remarks = models.CharField(max_length = 500, blank = True)
     def __unicode__(self):
         return u"%s" % (self.action)
+
+
+class ProofOfBankDeposit(models.Model):
+    created_by_user = models.ForeignKey(User, related_name='pobd_created_by_user', on_delete=models.PROTECT)
+    created_time_stamp = models.DateTimeField(auto_now_add=True)
+    updated_by_user = models.ForeignKey(User, blank=True, null=True, related_name='updated_by_user', on_delete=models.PROTECT)
+    updated_time_stamp = models.DateTimeField(blank=True, null=True)
+    receipt_number = models.CharField(max_length=100)
+    receipt = models.ForeignKey(Picture, blank=True, null=True)
+    total_cod = models.FloatField(default=0.0)
+
+    NONE = 'NONE'
+    VERIFIED = 'VERIFIED'
+    DECLINED = 'DECLINED'
+
+    PROOF_STATUS_CHOICES = (
+            (NONE, 'NONE'),
+            (VERIFIED, 'VERIFIED'),
+            (DECLINED, 'DECLINED')
+            )
+
+    proof_status = models.CharField(max_length=30, choices=PROOF_STATUS_CHOICES, default=NONE)
+
+    def __unicode__(self):
+        return u"%s" % self.id
+
+
+class CODAction(models.Model):
+    code = models.CharField(max_length=10)
+    title = models.CharField(max_length=100)
+
+    def __unicode__(self):
+        return u"%s" % self.title
+
+
+class CODTransaction(models.Model):
+    transaction = models.ForeignKey(CODAction, on_delete=models.PROTECT)
+    created_by_user = models.ForeignKey(User, related_name='created_by_user')
+    created_time_stamp = models.DateTimeField(auto_now_add=True)
+    verified_by_user = models.ForeignKey(User, blank=True, null=True, related_name='verified_by_user')
+    verified_time_stamp = models.DateTimeField(blank=True, null=True)
+    location = models.ForeignKey(Location, blank=True, null=True)
+    remarks = models.CharField(max_length=500, blank=True)
+
+    INITIATED = 'INITIATED'
+    VERIFIED = 'VERIFIED'
+    DECLINED = 'DECLINED'
+
+    TRANSACTION_STATUS_CHOICES = (
+            (INITIATED, 'INITIATED'),
+            (VERIFIED, 'VERIFIED'),
+            (DECLINED, 'DECLINED')
+            )
+
+    transaction_status = models.CharField(max_length=30, choices=TRANSACTION_STATUS_CHOICES, default=INITIATED)
+
+    transaction_uuid = models.CharField(max_length=500)
+    dg_id = models.IntegerField(blank=True, null=True, auto_created=False)
+    dg_tl_id = models.IntegerField(blank=True, null=True, auto_created=False)
+    cod_amount = models.FloatField(default=0.0)
+    deliveries = models.CommaSeparatedIntegerField(max_length=500)
+    bank_deposit_proof = models.ForeignKey(ProofOfBankDeposit, blank=True, null=True, on_delete=models.PROTECT)
+    vendor = models.ForeignKey(Vendor, blank=True, null=True, on_delete=models.PROTECT)
+    utr_number = models.CharField(max_length=300, blank=True, null=True)
+    salary_deduction = models.FloatField(default=0.0)
+
+    def __unicode__(self):
+        return u"%s - %s" % (self.id, self.transaction)
+
 
 class OrderDeliveryStatus(models.Model):
     date = models.DateTimeField()
@@ -436,6 +516,26 @@ class OrderDeliveryStatus(models.Model):
     cod_collected_amount = models.FloatField(default = 0.0)
     cod_remarks = models.CharField(max_length = 500, blank = True)
     delivery_transactions = models.ManyToManyField(DeliveryTransaction, blank = True)
+
+    COD_NOT_AVAILABLE = 'COD_NOT_AVAILABLE'
+    COD_COLLECTED = 'COD_COLLECTED'
+    COD_TRANSFERRED_TO_TL = 'COD_TRANSFERRED_TO_TL'
+    COD_BANK_DEPOSITED = 'COD_BANK_DEPOSITED'
+    COD_VERIFIED = 'COD_VERIFIED'
+    COD_TRANSFERRED_TO_CLIENT = 'COD_TRANSFERRED_TO_CLIENT'
+
+    COD_CHOICES = (
+        (COD_NOT_AVAILABLE,'COD_NOT_AVAILABLE'),
+        (COD_COLLECTED, 'COD_COLLECTED'),
+        (COD_TRANSFERRED_TO_TL, 'COD_TRANSFERRED_TO_TL'),
+        (COD_BANK_DEPOSITED, 'COD_BANK_DEPOSITED'),
+        (COD_VERIFIED, 'COD_VERIFIED'),
+        (COD_TRANSFERRED_TO_CLIENT, 'COD_TRANSFERRED_TO_CLIENT')
+    )
+    cod_status = models.CharField(max_length=100, choices=COD_CHOICES, default=COD_NOT_AVAILABLE)
+    cod_transactions = models.ManyToManyField(CODTransaction, blank=True)
+    bank_deposit_proof = models.ForeignKey(ProofOfBankDeposit, blank=True, null=True, on_delete=models.PROTECT)
+
 
     def __unicode__(self):
         return u"%s - %s" % (self.id, self.order)

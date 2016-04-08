@@ -1,0 +1,29 @@
+<md-dialog aria-label="EDIT COD FOR ORDER" ng-cloak class="dgDeactivate">
+	<md-toolbar>
+        <div class="md-toolbar-tools">
+            <h2>Deactivate</h2>
+            <span flex></span>
+            <md-button ng-click="dgDeactivate.cancel()" class="md-icon-button" aria-label="close dg edit">
+            	<md-icon>clear</md-icon>
+            </md-button>
+        </div>
+    </md-toolbar>
+    <form name="codEditForm" layout-padding>
+		<md-dialog-content layout="column" style="margin-top:20px;">
+			<p>Are you sure you want to deactivate {{dgDeactivate.DG.name}}</p>
+			<md-input-container >
+				<label>Reason</label>
+	        	<input ng-model="dgDeactivate.dg_object.deactivate_reason" required>
+			</md-input-container>
+		</md-dialog-content>
+		<md-dialog-actions layout="row">
+	     	<span flex></span>
+			<md-button ng-click="dgDeactivate.cancel()" class="md-warn">
+				cancel
+			</md-button>
+			<md-button ng-click="dgDeactivate.answer(dgDeactivate.dg_object)" ng-disabled="codEditForm.$invalid" class="md-primary" style="margin-right:20px;">
+				Update
+			</md-button>
+	    </md-dialog-actions>
+    </form>
+</md-dialog>

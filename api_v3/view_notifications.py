@@ -117,8 +117,7 @@ class NotificationViewSet(viewsets.ViewSet):
         if role == constants.OPERATIONS:
            employee = get_object_or_404(Employee, user = request.user) 
            notifications_count = employee.notifications.filter(read = False).count()
-           response_content = {"count": notifications_count}
-           return response_with_payload(response_content, None)
+           return response_with_payload(notifications_count, None)
         else:  
             success_message = 'You dont have any pending notifications for now.'
             return response_success_with_message(success_message)

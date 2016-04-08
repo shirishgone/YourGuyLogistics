@@ -1,0 +1,24 @@
+<md-dialog aria-label="TRANSFER DEPOSIT LEAD" ng-cloak class="transferDeposit">
+	<md-dialog-content>
+		<div class="md-dialog-content" layout="row" layout-wrap>
+			<h2 flex="100">Verify Amount {{transferDeposit.total_cod_amount}}</h2>
+			<md-input-container flex="60">
+				<label>Amount</label>
+	        	<input ng-model="transferDeposit.tranfer_data.total_cod_transferred">
+			</md-input-container >
+			<md-input-container flex="60">
+				<label>UTR</label>
+	        	<input ng-model="transferDeposit.tranfer_data.utr_number">
+			</md-input-container>
+		</div>
+	</md-dialog-content>
+	<md-dialog-actions layout="row">
+     	<span flex></span>
+		<md-button ng-click="transferDeposit.cancel()" class="md-warn">
+			cancel
+		</md-button>
+		<md-button ng-click="transferDeposit.answer(transferDeposit.tranfer_data)" ng-disabled="transferDeposit.total_cod_amount != transferDeposit.tranfer_data.total_cod_transferred " class="md-primary" style="margin-right:20px;">
+			Verify
+		</md-button>
+    </md-dialog-actions>
+</md-dialog>

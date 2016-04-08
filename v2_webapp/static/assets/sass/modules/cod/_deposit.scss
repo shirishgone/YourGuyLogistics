@@ -1,0 +1,117 @@
+.cod {
+	height: 100%;
+	md-tabs {
+		margin: 0 0 5px 0;
+		md-tabs-wrapper {
+			background-color: primary-color('700') !important;
+		}
+		.md-tab {
+			font-weight: 600;
+			color: $white-color !important;
+		}
+		md-ink-bar {
+			height: 4px;
+			color: grey-color('700');
+			background-color: orange-accent-color('600');
+		}
+	}
+	.tabs-view {
+		padding: 0px;
+		overflow-y: hidden;
+	}
+	.deposit {
+		height: 100%;
+		overflow-y: hidden;
+		.list {
+			height: 100%;
+			z-index: 9;
+			overflow-y: hidden;
+			.table-body {
+				tr {
+					cursor: auto;
+					&:hover {
+						background-color: $white-color;
+					}
+				}
+				.reciept-button {
+					border-style : none;
+					background-color: primary-color('800');
+					padding: 5px 8px;
+					color: $white-color;
+					font-size: 12px;
+				}
+				.action-button {
+					border-style : none;
+					padding: 5px 12px;
+					color: $white-color;
+					font-size: 12px;
+					@include border-radius(18px);
+				}
+				.action-button.success {
+					background-color: $success-color;
+				}
+				.action-button.danger {
+					background-color: $red-color;
+				}
+				.md-menu{
+					padding: 0;
+					.md-button.md-icon-button {
+						height: 20px;
+						width: 20px;
+						min-height: 20px;
+						padding: 0;
+						margin: 0;
+						@include border-radius(5px);
+					}
+					.md-button.md-icon-button .md-ripple-container {
+						@include border-radius(5px);
+					}
+				}
+			}
+		}
+		.footer {
+			max-height: 50px;
+			height: 50px; 
+			z-index: 10;
+			border: 1px solid grey-color('200');
+		}
+	}
+	.reciept-viewer {
+		top: 0px;
+		left: 0px;
+		position: fixed;
+		width: 100%;
+		height: 100%;
+		background: rgba(0,0,0,0.7);
+		z-index: 999;
+		.reciept-header {
+			width: 100%;
+			background: rgba(0,0,0,0.9);
+			color: $white-color; 
+			height: 10%;
+			max-height: 60px;
+			min-height: 60px;
+			color: $white-color;
+		}
+		.reciept-image {
+			width: 100%;
+			height: 90%;
+			img {
+				height: 70%;
+				width: auto;
+				max-width: 100%;
+			}
+		}
+	}
+}
+
+// Verify deposit dialog box css
+.verifyDeposit {
+	min-width : 300px;
+}
+
+.declineDeposit {
+	p {
+		font-size: 16px;
+	}
+}
