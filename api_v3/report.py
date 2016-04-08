@@ -244,8 +244,6 @@ def cod_report(request):
             Q(order_status=constants.ORDER_STATUS_QUEUED) |
             Q(order_status=constants.ORDER_STATUS_INTRANSIT) |
             Q(order_status=constants.ORDER_STATUS_DELIVERED) |
-            Q(order_status=constants.ORDER_STATUS_CANCELLED) |
-            Q(order_status=constants.ORDER_STATUS_PICKUP_ATTEMPTED) |
             Q(order_status=constants.ORDER_STATUS_OUTFORDELIVERY) |
             Q(order_status=constants.ORDER_STATUS_DELIVERY_ATTEMPTED)
         )
