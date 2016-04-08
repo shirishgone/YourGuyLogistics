@@ -151,7 +151,7 @@ def dashboard_stats(request):
     
     # TOTAL COD COLLECTED ------------------------------------
     executed_deliveries = delivery_status_queryset.filter(Q(order_status=constants.ORDER_STATUS_DELIVERED))
-    total_cod_dict = executed_deliveries.aggregate(total_cod=Sum('order__cod_amount'))
+    total_cod_dict = executed_deliveries.aggregate(total_cod=Sum('cod_collected_amount'))
     cod_collected = total_cod_dict['total_cod']
 
     # FOR ORDER COUNT FOR INDIVIDUAL DATES -----------------------------------------
