@@ -43,7 +43,7 @@ if settings.ENVIRONMENT == 'PRODUCTION':
                            'saurabh@yourguy.in', 'smit@yourguy.in', 'kenneth@yourguy.in', 'bhawna.yourguy@gmail.com',
                            'sonali.a@yourguy.in', 'bernard.d@yourguy.in', 'sandesh.b@yourguy.in']
     RETAIL_EMAIL_ID = ['retail@yourguy.in']
-    LATEST_DG_APP_VERSION = '1.0.22'
+    LATEST_DG_APP_VERSION = '1.0.23'
 else:
     EMAIL_DG_SALARY_DEDUCTIONS = TEST_GROUP_EMAILS
     EMAIL_UNASSIGNED_ORDERS = TEST_GROUP_EMAILS
