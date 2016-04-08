@@ -260,7 +260,7 @@ class DGViewSet(viewsets.ModelViewSet):
         if role == constants.VENDOR:
             return response_access_denied()
         else:
-            all_dgs = DeliveryGuy.objects.order_by('user__first_name')
+            all_dgs = DeliveryGuy.objects.filter(is_active = True).order_by('user__first_name')
 
             # SEARCH KEYWORD FILTERING ---------------------------------------------------
             if search_query is not None:
