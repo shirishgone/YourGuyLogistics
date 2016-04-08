@@ -49,20 +49,27 @@
 			</div>
 			<div flex="30" flex-xs="50" class="profile-data" ng-if="dgDetail.DG.pincode.length > 0">
 				<label>Pin Codes</label>
-				<div ng-repeat=" pin in dgDetail.DG.pincode">
-					<h5>{{pin}}</h5>
+				<div class="list-overflow">
+					<div ng-repeat=" pin in dgDetail.DG.pincode">
+						<h5>{{pin}}</h5>
+					</div>
 				</div>
+				
 			</div>
 			<div flex="30" flex-xs="50" class="profile-data" ng-if="!dgDetail.DG.is_teamlead">
 				<label>Team Lead</label>
-				<div ng-repeat=" lead in dgDetail.DG.team_leads">
-					<h5>{{lead.name}}</h5>
+				<div class="list-overflow">
+					<div ng-repeat=" lead in dgDetail.DG.team_leads">
+						<h5>{{lead.name}}</h5>
+					</div>
 				</div>
 			</div>
 			<div flex="30" flex-xs="50" class="profile-data">
 				<label>operational Managers</label>
-				<div ng-repeat="op in dgDetail.DG.ops_managers">
-					<h5>{{op.name}}</h5>
+				<div class="list-overflow">
+					<div ng-repeat="op in dgDetail.DG.ops_managers">
+						<h5>{{op.name}}</h5>
+					</div>
 				</div>
 			</div>
 			

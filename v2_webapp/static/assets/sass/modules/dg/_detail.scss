@@ -23,6 +23,11 @@
 				font-weight: 500;
 				text-transform: capitalize;
 			}
+			.list-overflow {
+				max-height: 100px;
+				max-width: 150px;
+				overflow: auto;
+			}
 		}
 		@include mobile {
 			max-width: 100%;
