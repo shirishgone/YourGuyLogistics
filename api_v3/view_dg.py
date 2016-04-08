@@ -18,6 +18,7 @@ from yourguy.models import DeliveryGuy, DGAttendance, Location, OrderDeliverySta
     ServiceablePincode, Picture
 
 from api_v3.utils import response_access_denied, response_with_payload, response_error_with_message, response_success_with_message, response_invalid_pagenumber, response_incomplete_parameters
+from api_v3.view_cod import cod_balance_calculation
 
 def teamlead_for_pincode(pincode):
     try:
@@ -31,6 +32,7 @@ def teamlead_for_pincode(pincode):
         return None
 
 def dg_list_dict(delivery_guy, attendance, no_of_assigned_orders, no_of_executed_orders, worked_hours):
+    cod_balance = cod_balance_calculation(delivery_guy)
     dg_list_dict = {
         'id': delivery_guy.id,
         'name': delivery_guy.user.first_name + delivery_guy.user.last_name,
@@ -40,7 +42,9 @@ def dg_list_dict(delivery_guy, attendance, no_of_assigned_orders, no_of_executed
         'employee_code': delivery_guy.employee_code,
         'no_of_assigned_orders': no_of_assigned_orders,
         'no_of_executed_orders': no_of_executed_orders,
-        'worked_hours': worked_hours
+        'worked_hours': worked_hours,
+        'cod_balance':cod_balance,
+        'salary_deduction':delivery_guy.pending_salary_deduction
     }
     if attendance is not None:
         dg_list_dict['check_in'] = attendance.login_time
@@ -84,6 +88,8 @@ def dg_details_dict(delivery_guy):
         'assignment_type': delivery_guy.assignment_type,
         'transportation_mode': delivery_guy.transportation_mode,
         'is_teamlead': delivery_guy.is_teamlead,
+        'cod_balance':cod_balance,
+        'salary_deduction':delivery_guy.pending_salary_deduction,
         'profile_picture': '',
         'pincode': [],
         'ops_managers': [],

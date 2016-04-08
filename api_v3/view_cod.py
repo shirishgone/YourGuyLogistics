@@ -595,7 +595,7 @@ class CODViewSet(viewsets.ViewSet):
     @list_route(methods=['GET'])
     def bank_deposits_list(self, request):
         page = request.QUERY_PARAMS.get('page', '1')
-        filter_dg_name = request.QUERY_PARAMS.get('dg_name', None)
+        filter_dg_id = request.QUERY_PARAMS.get('dg_id', None)
         filter_start_date = request.QUERY_PARAMS.get('start_date', None)
         filter_end_date = request.QUERY_PARAMS.get('end_date', None)
         role = user_role(request.user)
@@ -606,8 +606,8 @@ class CODViewSet(viewsets.ViewSet):
             all_bank_deposit_cod_transactions = CODTransaction.objects.filter(transaction__title=cod_action, transaction_status=constants.INITIATED)
             if len(all_bank_deposit_cod_transactions) > 0:
                 # DG FILTERING (optional)
-                if filter_dg_name is not None:
-                    dg = get_object_or_404(DeliveryGuy, user__first_name=filter_dg_name)
+                if filter_dg_id is not None:
+                    dg = get_object_or_404(DeliveryGuy, pk = filter_dg_id)
                     if dg is not None:
                         all_bank_deposit_cod_transactions = all_bank_deposit_cod_transactions.filter(created_by_user=dg.user).distinct()
 

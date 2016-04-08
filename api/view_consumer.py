@@ -43,18 +43,6 @@ class ConsumerViewSet(viewsets.ModelViewSet):
             content = {'error':'You dont have permissions to view all Consumers'}
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
-    @detail_route(methods=['post'])
-    def add_vendor(self, request, pk):
-        vendor_id = request.POST['vendor_id']
-        vendor = get_object_or_404(Vendor, id = vendor_id)
-        
-        current_consumer = get_object_or_404(Consumer, pk = pk)
-        current_consumer.associated_vendor.add(vendor)
-        current_consumer.save()
-        
-        content = {'description': 'Vendor added to consumer'}
-        return Response(content, status = status.HTTP_201_CREATED)
-
     def create(self, request):
         role = user_role(request.user)
         if (role == constants.VENDOR):
@@ -98,19 +86,8 @@ class ConsumerViewSet(viewsets.ModelViewSet):
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
     
     def destroy(self, request, pk):                
-        role = user_role(request.user)
-        if (role == constants.VENDOR):
-            vendor_agent = get_object_or_404(VendorAgent, user = request.user)
-            vendor = vendor_agent.vendor
-            consumer = get_object_or_404(Consumer, pk = pk)
-            consumer.associated_vendor.remove(vendor)
-            
-            content = {'description': 'Customer removed.'}
-            return Response(content, status = status.HTTP_200_OK)
-
-        else:    
-            content = {'description': 'You dont have permissions to remove the customer.'}
-            return Response(content, status = status.HTTP_400_BAD_REQUEST)
+        content = {'description': 'You dont have permissions to remove the customer.'}
+        return Response(content, status = status.HTTP_400_BAD_REQUEST)
 
     @detail_route(methods=['post'])
     def add_address(self, request, pk):
