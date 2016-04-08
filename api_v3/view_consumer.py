@@ -31,7 +31,7 @@ def fetch_or_create_consumer_address(consumer, full_address, pin_code, landmark)
         consumer_address.save()
     return consumer_address    
 
-def fetch_or_create_consumer(name, phone_number, vendor):
+def fetch_or_create_consumer(phone_number, name, vendor):
     try:
         consumer = Consumer.objects.get(phone_number = phone_number, vendor = vendor)
     except Exception as e:
@@ -167,7 +167,7 @@ class ConsumerViewSet(viewsets.ModelViewSet):
                 params = ['phone_number', 'name', 'full_address', 'pin_code', 'landmark']
                 return response_incomplete_parameters(params)
             
-            consumer = fetch_or_create_consumer(name, phone_number, vendor_agent.vendor)
+            consumer = fetch_or_create_consumer(phone_number, name, vendor_agent.vendor)
             address = fetch_or_create_consumer_address(consumer, full_address, pin_code, landmark)            
             
             content = {

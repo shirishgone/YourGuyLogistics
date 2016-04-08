@@ -164,7 +164,7 @@ class ConsumerViewSet(viewsets.ModelViewSet):
                 return Response(content, status = status.HTTP_400_BAD_REQUEST)
             # -------------------------------------------------------------
             
-            new_consumer = fetch_or_create_consumer(name, phone_number, vendor_agent.vendor)
+            new_consumer = fetch_or_create_consumer(phone_number, name, vendor_agent.vendor)
             new_address = fetch_or_create_consumer_address(new_consumer, full_address, pin_code, landmark)
             
             content = {
