@@ -615,13 +615,14 @@ class OrderViewSet(viewsets.ViewSet):
                     or order_status == constants.ORDER_STATUS_QUEUED \
                     or order_status == constants.ORDER_STATUS_INTRANSIT \
                     or order_status == constants.ORDER_STATUS_PICKUP_ATTEMPTED \
+                    or order_status == constants.ORDER_STATUS_OUTFORDELIVERY \
                     or order_status == constants.ORDER_STATUS_DELIVERED \
                     or order_status == constants.ORDER_STATUS_DELIVERY_ATTEMPTED \
                     or order_status == constants.ORDER_STATUS_CANCELLED \
                     or order_status == constants.ORDER_STATUS_REJECTED:
                 pass
             else:
-                error_message = 'order_status can be only QUEUED, INTRANSIT, PICKUPATTEMPTED, DELIVERED, DELIVERYATTEMPTED, CANCELLED'
+                error_message = 'order_status can be only QUEUED, INTRANSIT, PICKUPATTEMPTED, OUTFORDELIVERY, DELIVERED, DELIVERYATTEMPTED, CANCELLED'
                 return response_error_with_message(error_message)
         # -------------------------------------------------------------------------
 
