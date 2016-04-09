@@ -442,7 +442,7 @@
 			dgCreate        : false,
 			dgPromteTeamLead: false,
 			vendor          : false,
-			reports         : false,
+			reports         : true,
 			COD             : true,
 			customer        : false,
 			products        : false,
@@ -557,9 +557,9 @@
 	    DEPOSIT_BUCKET: 'bank-deposit-test'
 	};
 	var prodConstants = {
-		v1baseUrl : 'http://yourguy.herokuapp.com/api/v1/',
-		v2baseUrl : 'http://yourguy.herokuapp.com/api/v2/',
-		v3baseUrl : 'http://yourguy.herokuapp.com/api/v3/',
+		v1baseUrl : '/api/v1/',
+		v2baseUrl : '/api/v2/',
+		v3baseUrl : '/api/v3/',
 		userRole  : { 
 			OPS           : 'operations', 
 			VENDOR        : 'vendor',
@@ -3255,7 +3255,7 @@
     		controller   : "reportsCntrl",
     		resolve: {
     			access: ["Access","constants", function (Access,constants) { 
-    						var allowed_user = [constants.userRole.OPS,constants.userRole.OPS_MANAGER,constants.userRole.SALES,constants.userRole.SALES_MANAGER,constants.userRole.VENDOR];
+    						var allowed_user = [constants.userRole.OPS,constants.userRole.OPS_MANAGER,constants.userRole.SALES,constants.userRole.SALES_MANAGER,constants.userRole.VENDOR,constants.userRole.ACCOUNTS];
     						return Access.hasAnyRole(allowed_user); 
     					}],
     			report: ['Reports','$stateParams', function (Reports,$stateParams){
