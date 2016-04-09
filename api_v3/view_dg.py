@@ -13,7 +13,7 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 from api_v3 import constants
 from api_v3.utils import paginate, user_role, ist_day_start, ist_day_end, is_userexists, create_token, assign_usergroup, \
-    check_month, ist_datetime
+    check_month, ist_datetime, time_delta
 from yourguy.models import DeliveryGuy, DGAttendance, Location, OrderDeliveryStatus, User, Employee, DeliveryTeamLead, \
     ServiceablePincode, Picture, Vendor
 
@@ -55,6 +55,22 @@ def dg_list_dict(delivery_guy, attendance, no_of_assigned_orders, no_of_executed
 
     return dg_list_dict
 
+def cumulative_dg_list_dict(delivery_guy):
+    cod_balance = cod_balance_calculation(delivery_guy)
+    cumulative_dg_list = {
+        'id': delivery_guy.id,
+        'name': delivery_guy.user.first_name,
+        'phone_number': delivery_guy.user.username,
+        'app_version': delivery_guy.app_version,
+        'status': delivery_guy.status,
+        'employee_code': delivery_guy.employee_code,
+        'no_of_assigned_orders': 0,
+        'no_of_executed_orders': 0,
+        'worked_hours': 0,
+        'cod_balance':cod_balance,
+        'salary_deduction':delivery_guy.pending_salary_deduction
+    }
+    return cumulative_dg_list
 
 def associated_guys_details(delivery_guy):
     associated_guys_detail_dict = {
@@ -131,6 +147,7 @@ def attendance_list_datewise(date, worked_hrs):
 def download_attendance_excel_dict(dg):
     download_attendance_dict = {
         'name': dg.user.first_name,
+        'employee_code': dg.employee_code,
         'attendance': []
     }
     return download_attendance_dict
@@ -143,15 +160,22 @@ def attendance_datewise_dict():
         }
     return datewise_dict
 
+def pagination_list():
+    pagination_dict = {
+        'total_pages': None,
+        'total_count': None,
+        'result': []
+    }
+    return pagination_dict
 
 # Util for calculating worked hours
 def working_hours_calculation(dg_attendance):
-    worked_hours = "0 hrs"
+    worked_hours = 0
     if dg_attendance.login_time is not None and dg_attendance.logout_time is not None:
         worked_hours = (dg_attendance.logout_time - dg_attendance.login_time)
         total_seconds_worked = int(worked_hours.total_seconds())
         hours, remainder = divmod(total_seconds_worked, 60 * 60)
-        worked_hours = "%d hrs" % hours
+        worked_hours = hours
     elif dg_attendance.login_time is not None and dg_attendance.logout_time is None:
         shift_end_time = dg_attendance.dg.shift_end_datetime
         if shift_end_time is not None:
@@ -160,9 +184,9 @@ def working_hours_calculation(dg_attendance):
             worked_hours = (shift_end_datetime - dg_attendance.login_time)
             total_seconds_worked = int(worked_hours.total_seconds())
             hours, remainder = divmod(total_seconds_worked, 60 * 60)
-            worked_hours = "%d hrs" % hours
+            worked_hours = hours
         else:
-            worked_hours = "9 hrs"
+            worked_hours = 9
     else:
         pass
     return worked_hours
@@ -229,7 +253,25 @@ class DGViewSet(viewsets.ModelViewSet):
         role = user_role(request.user)
         search_query = request.QUERY_PARAMS.get('search', None)
         date_string = self.request.QUERY_PARAMS.get('date', None)
+        filter_start_date = request.QUERY_PARAMS.get('start_date', None)
+        filter_end_date = request.QUERY_PARAMS.get('end_date', None)
         attendance_status = self.request.QUERY_PARAMS.get('attendance_status', None)
+
+        # DATE FILTERING -------------------------------------------------------------
+        if filter_start_date is not None and filter_end_date is not None:
+            filter_start_date = parse_datetime(filter_start_date)
+            filter_start_date = filter_start_date + time_delta()
+            filter_start_date = filter_start_date.replace(day=filter_start_date.day,
+                                                          month=filter_start_date.month,
+                                                          year=filter_start_date.year,
+                                                          hour=00, minute=00, second=00)
+
+            filter_end_date = parse_datetime(filter_end_date)
+            filter_end_date = filter_end_date + time_delta()
+            filter_end_date = filter_end_date.replace(day=filter_end_date.day,
+                                                      month=filter_end_date.month,
+                                                      year=filter_end_date.year,
+                                                      hour=23, minute=59, second=00)
 
         # SEARCH KEYWORD FILTERING ---------------------------------------------------
         if date_string is not None:
@@ -292,7 +334,6 @@ class DGViewSet(viewsets.ModelViewSet):
                     final_dgs = all_dgs
             else:
                 final_dgs = all_dgs
-            # ---------------------------------------------------------------------------
 
             # PAGINATE ---------------------------------------------------------------------------
             total_dg_count = len(final_dgs)
@@ -304,7 +345,11 @@ class DGViewSet(viewsets.ModelViewSet):
                 result_dgs = paginate(final_dgs, page)
 
             # -------------------------------------------------------------------------------------
-            delivery_statuses_today = OrderDeliveryStatus.objects.filter(date__gte=day_start, date__lte=day_end)
+
+            if filter_start_date is not None and filter_end_date is not None:
+                delivery_statuses_today = OrderDeliveryStatus.objects.filter(date__gte=filter_start_date, date__lte=filter_end_date)
+            else:
+                delivery_statuses_today = OrderDeliveryStatus.objects.filter(date__gte=day_start, date__lte=day_end)
             # PG assigned orders
             pg_assigned_orders = delivery_statuses_today.filter(
                 Q(order_status=constants.ORDER_STATUS_QUEUED) |
@@ -340,39 +385,62 @@ class DGViewSet(viewsets.ModelViewSet):
             dg_executed_orders = dg_executed_orders.exclude(delivery_guy=None)
 
             # ---------------------------------------------------------------
-
-            # Attendance for the DG of the day -----------------------------------------------------
             result = []
+            pagination_dict = pagination_list()
             for delivery_guy in result_dgs:
-                try:
-                    attendance = DGAttendance.objects.filter(dg=delivery_guy, date__year=date.year,
-                                                             date__month=date.month, date__day=date.day).latest('date')
-                except Exception as e:
-                    attendance = None
+                # DATE FILTERING -------------------------------------------------------------
+                if filter_start_date is not None and filter_end_date is not None:
+                    cumulative_dg_list = cumulative_dg_list_dict(delivery_guy)
+                    try:
+                        attendances = DGAttendance.objects.filter(dg=delivery_guy, login_time__gte=filter_start_date, login_time__lte=filter_end_date)
+                    except Exception as e:
+                        attendance = None
+                    # append cod, executed, assigned for that dg
+                    pg_no_of_assigned_orders = pg_assigned_orders.filter(pickup_guy=delivery_guy).count()
+                    dg_no_of_assigned_orders = dg_assigned_orders.filter(delivery_guy=delivery_guy).count()
+                    no_of_assigned_orders = pg_no_of_assigned_orders + dg_no_of_assigned_orders
 
-                # append cod, executed, assigned for that dg
-                pg_no_of_assigned_orders = pg_assigned_orders.filter(pickup_guy=delivery_guy).count()
-                dg_no_of_assigned_orders = dg_assigned_orders.filter(delivery_guy=delivery_guy).count()
-                no_of_assigned_orders = pg_no_of_assigned_orders + dg_no_of_assigned_orders
+                    pg_no_of_executed_orders = pg_executed_orders.filter(pickup_guy=delivery_guy).count()
+                    dg_no_of_executed_orders = dg_executed_orders.filter(delivery_guy=delivery_guy).count()
+                    no_of_executed_orders = pg_no_of_executed_orders + dg_no_of_executed_orders
 
-                pg_no_of_executed_orders = pg_executed_orders.filter(pickup_guy=delivery_guy).count()
-                dg_no_of_executed_orders = dg_executed_orders.filter(delivery_guy=delivery_guy).count()
-                no_of_executed_orders = pg_no_of_executed_orders + dg_no_of_executed_orders
+                    cumulative_dg_list['no_of_assigned_orders'] = no_of_assigned_orders
+                    cumulative_dg_list['no_of_executed_orders'] = no_of_executed_orders
 
-                worked_hours = 0
+                    worked_hours = 0
+                    if attendances is not None:
+                        for single_day in attendances:
+                            worked_hours = working_hours_calculation(single_day)
+                            worked_hours = worked_hours + worked_hours
 
-                if attendance is not None:
-                    worked_hours = working_hours_calculation(attendance)
+                            cumulative_dg_list['worked_hours'] = worked_hours
+                    result.append(cumulative_dg_list)
+                else:
+                    try:
+                        attendance = DGAttendance.objects.filter(dg=delivery_guy, date__year=date.year,
+                                                                 date__month=date.month, date__day=date.day).latest('date')
+                    except Exception as e:
+                        attendance = None
 
-                result.append(
-                    dg_list_dict(delivery_guy, attendance, no_of_assigned_orders, no_of_executed_orders, worked_hours))
+                    # append cod, executed, assigned for that dg
+                    pg_no_of_assigned_orders = pg_assigned_orders.filter(pickup_guy=delivery_guy).count()
+                    dg_no_of_assigned_orders = dg_assigned_orders.filter(delivery_guy=delivery_guy).count()
+                    no_of_assigned_orders = pg_no_of_assigned_orders + dg_no_of_assigned_orders
 
-            content = {
-                "data": result,
-                "total_pages": total_pages,
-                "total_dg_count": total_dg_count
-            }
-            return response_with_payload(content, None)
+                    pg_no_of_executed_orders = pg_executed_orders.filter(pickup_guy=delivery_guy).count()
+                    dg_no_of_executed_orders = dg_executed_orders.filter(delivery_guy=delivery_guy).count()
+                    no_of_executed_orders = pg_no_of_executed_orders + dg_no_of_executed_orders
+
+                    worked_hours = 0
+
+                    if attendance is not None:
+                        worked_hours = working_hours_calculation(attendance)
+
+                    result.append(dg_list_dict(delivery_guy, attendance, no_of_assigned_orders, no_of_executed_orders, worked_hours))
+                pagination_dict['total_pages'] = total_pages
+                pagination_dict['total_count'] = total_dg_count
+                pagination_dict['result'] = result
+            return response_with_payload(pagination_dict, None)
 
     def create(self, request):
         role = user_role(request.user)
@@ -684,7 +752,7 @@ class DGViewSet(viewsets.ModelViewSet):
                                 datewise_dict['shift_end_datetime'] = single.dg.shift_end_datetime
                                 dg_attendance_dict['attendance'].append(datewise_dict)
                         else:
-                            worked_hours = "0 hrs"
+                            worked_hours = 0
                             date = date
                             datewise_dict = attendance_list_datewise(date, worked_hours)
                             datewise_dict['login_time'] = None
@@ -708,7 +776,7 @@ class DGViewSet(viewsets.ModelViewSet):
                         datewise_dict['shift_end_datetime'] = single.dg.shift_end_datetime
                         dg_attendance_dict['attendance'].append(datewise_dict)
                 else:
-                    worked_hours = "0 hrs"
+                    worked_hours = 0
                     datewise_dict = attendance_list_datewise(date, worked_hours)
                     datewise_dict['login_time'] = None
                     datewise_dict['logout_time'] = None
