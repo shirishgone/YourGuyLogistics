@@ -21,12 +21,17 @@
 						Deactivate
 					</md-button>
 				</md-menu-item>
+				<md-menu-item>
+					<md-button ng-click="dgDetail.associateVendors(DG)">
+						Associate Vendors
+					</md-button>
+				</md-menu-item>
 			</md-menu-content>
 		</md-menu>
 	</div>
 </md-toolbar>
 <md-content flex layout-fill class="dgDetail" layout="column">
-	<section flex="none" layout="row" layout-fill layout-wrap class="profile-view">
+	<section flex="noshrink" layout="row" layout-fill layout-wrap class="profile-view">
 		<!-- <div flex="20" flex-xs="100">
 			PROFILE IMAGE
 		</div> -->
@@ -47,6 +52,14 @@
 				<label>Transportation Mode</label>
 				<h5>{{dgDetail.DG.transportation_mode}}</h5>
 			</div>
+			<div flex="30" flex-xs="50" class="profile-data">
+				<label>COD Balance</label>
+				<h5>{{dgDetail.DG.cod_balance}}</h5>
+			</div>
+			<div flex="30" flex-xs="50" class="profile-data">
+				<label>Salary Deduction</label>
+				<h5>{{dgDetail.DG.salary_deduction}}</h5>
+			</div>
 			<div flex="30" flex-xs="50" class="profile-data" ng-if="dgDetail.DG.pincode.length > 0">
 				<label>Pin Codes</label>
 				<div class="list-overflow">
@@ -54,7 +67,6 @@
 						<h5>{{pin}}</h5>
 					</div>
 				</div>
-				
 			</div>
 			<div flex="30" flex-xs="50" class="profile-data" ng-if="!dgDetail.DG.is_teamlead">
 				<label>Team Lead</label>
@@ -72,17 +84,16 @@
 					</div>
 				</div>
 			</div>
-			
-			<!-- <div flex="30" flex-xs="50" class="profile-data">
-				<label>Weekly Off</label>
-				<h5>{{dgDetail.DG.pincode}}</h5>
-			</div> -->
-			<!-- <div flex="30" flex-xs="50" class="profile-data">
-				<label>COD</label>
-				<h5>{{dgDetail.DG.cod}}</h5>
-			</div> -->
+			<div flex="30" flex-xs="50" class="profile-data">
+				<label>Associated Vendors</label>
+				<div class="list-overflow">
+					<div ng-repeat="vn in dgDetail.DG.associated_vendors">
+						<h5>{{vn.name}}</h5>
+					</div>
+				</div>
+			</div>
 			<div flex="30" flex-xs="50" class="profile-data" ng-if="home.tabs.dgPromteTeamLead">
-				<md-checkbox ng-checked="dgDetail.DG.is_teamlead" ng-click="dgDetail.toTeamlead()" aria-label="TEAM LEAD">
+				<md-checkbox ng-checked="dgDetail.DG.is_teamlead" ng-click="dgDetail.toTeamlead()" aria-label="TEAM LEAD" style="margin-top: 5px;">
             		Team Lead
           		</md-checkbox>
 			</div>

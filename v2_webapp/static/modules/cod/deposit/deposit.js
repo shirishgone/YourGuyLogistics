@@ -40,7 +40,7 @@
 		};
 	}
 
-	var codDepositCntrl = function($state,$stateParams,$mdDialog,deposits,COD,Notification,DeliveryGuy){
+	var codDepositCntrl = function($state,$stateParams,$mdDialog,deposits,COD,Notification,DeliveryGuy,constants){
 		// variable definations
 		var self = this;
 		self.params = $stateParams;
@@ -61,7 +61,7 @@
 		*/
 		self.showImage = function(url){
 			url = url.replace(/:/g,'%3A');
-			var image_url = 'https://s3-ap-southeast-1.amazonaws.com/bank-deposit-test/'+url;
+			var image_url = 'https://s3-ap-southeast-1.amazonaws.com/'+constants.DEPOSIT_BUCKET+'/'+url;
 			self.showImageSection = true;
 			self.depositImage = image_url;
 		};
@@ -203,6 +203,7 @@
 		'COD',
 		'Notification',
 		'DeliveryGuy',
+		'constants',
 		codDepositCntrl
 	]);
 })();

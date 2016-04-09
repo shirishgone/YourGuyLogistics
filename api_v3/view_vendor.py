@@ -91,7 +91,7 @@ class VendorViewSet(viewsets.ModelViewSet):
         search = request.QUERY_PARAMS.get('search', None)
         page = request.QUERY_PARAMS.get('page', '1')
 
-        if (role == constants.SALES) or (role == constants.OPERATIONS) or (role == constants.ACCOUNTS):
+        if (role == constants.HR) or (role == constants.SALES) or (role == constants.OPERATIONS) or (role == constants.ACCOUNTS):
             all_vendors = Vendor.objects.all().order_by(Lower('store_name'))
             if search is not None:
                 all_vendors = all_vendors.filter(Q(store_name__icontains=search))
