@@ -367,7 +367,7 @@ class Order(models.Model):
     modified_date_time = models.DateTimeField(blank = True, null = True)
     
     def __unicode__(self):
-        return u"%s - %s - %s" % (self.id, self.vendor.store_name, self.consumer.user.first_name)
+        return u"%s - %s - %s" % (self.id, self.vendor.store_name, self.consumer.full_name)
 
 
 class DeliveryAction(models.Model):
