@@ -83,7 +83,7 @@
 			dgCreate        : false,
 			dgPromteTeamLead: false,
 			vendor          : false,
-			reports         : false,
+			reports         : true,
 			COD             : true,
 			customer        : false,
 			products        : false,
@@ -243,5 +243,5 @@
 	};
 
 	angular.module('ygVendorApp')
-	.constant('constants', prodConstants);
+	.constant('constants', constants);
 })();

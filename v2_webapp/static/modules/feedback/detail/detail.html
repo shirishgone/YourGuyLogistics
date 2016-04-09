@@ -3,7 +3,7 @@
 		<md-button ng-click="feedbackDetail.goBack()" class="md-icon-button" aria-label="Menu Icon">
 			<md-icon>arrow_back</md-icon>
 		</md-button>
-		<p>Feedback {{feedbackDetail.ticket.subject | limitTo :20}}{{feedbackDetail.ticket.subject.length > 20 ? '...' : ''}}</p>
+		<p>Query {{feedbackDetail.ticket.subject | limitTo :20}}{{feedbackDetail.ticket.subject.length > 20 ? '...' : ''}}</p>
 		<span flex></span>
 		<md-button ng-click="feedbackDetail.showConfirm($event)" ng-if="feedbackDetail.ticket.status == 2">
 			<md-tooltip md-direction="bottom">
