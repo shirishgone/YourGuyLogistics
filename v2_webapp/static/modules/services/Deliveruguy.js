@@ -26,6 +26,10 @@
 				deactivate : {
 					url : constants.v3baseUrl+'deliveryguy/:id'+'/deactivate/',
 					method : 'PUT'
+				},
+				associateVendors : {
+					url : constants.v3baseUrl+'deliveryguy/:id'+'/add_vendor/',
+					method : 'PUT'
 				}
 			}),
 			dgPageQuery : $resource(constants.v3baseUrl+'deliveryguy/:id/',{id:"@id"},{
