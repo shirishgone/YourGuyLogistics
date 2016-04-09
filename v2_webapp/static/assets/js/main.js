@@ -553,7 +553,7 @@
 		permissible_tabs: permissible_tabs,
 		ACCESS_KEY : 'AKIAJTRSKA2PKKWFL5PA',
 	    SECRET_KEY : 'grJpBB1CcH8ShN6g88acAkDjvklYdgX7OENAx4g/',
-	    S3_BUCKET : 'yourguy-pod',
+	    S3_BUCKET : 'yourguy-pod-test',
 	    DEPOSIT_BUCKET: 'bank-deposit-test'
 	};
 	var prodConstants = {
@@ -602,7 +602,7 @@
 	};
 
 	angular.module('ygVendorApp')
-	.constant('constants', prodConstants);
+	.constant('constants', constants);
 })();
 (function(){
 	'use strict';
