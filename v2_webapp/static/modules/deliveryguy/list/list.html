@@ -55,6 +55,8 @@
 							<th flex-xs="20" flex="20">Mobile No</th>
 							<th flex-xs="20" flex="20">Total working hrs</th>
 							<th flex-xs="20" flex="20">Executed / Assigned</th>
+							<th flex-xs="20" flex="20" hide-xs>COD</th>
+							<th flex-xs="20" flex="20" hide-xs>Salary Deduction</th>
 						</tr>
 					</thead>
 					<tbody  class="table-body">
@@ -64,6 +66,8 @@
 							<td flex-xs="20" flex="20">{{dg.phone_number}}</td>
 							<td flex-xs="20" flex="20">{{dg.worked_hours}}</td>
 							<td flex-xs="20" flex="20">{{dg.no_of_executed_orders}}/{{dg.no_of_assigned_orders}}</td>
+							<td flex-xs="20" flex="20" hide-xs>{{dg.cod_balance}}</td>
+							<td flex-xs="20" flex="20" hide-xs>{{dg.salary_deduction}}</td>
 						</tr>
 					</tbody>
 				</table>

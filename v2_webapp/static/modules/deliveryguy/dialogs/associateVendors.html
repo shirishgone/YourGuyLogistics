@@ -1,0 +1,46 @@
+<md-dialog aria-label="EDIT COD FOR ORDER" ng-cloak class="dgVendors" flex="50">
+	<md-toolbar>
+        <div class="md-toolbar-tools">
+            <h2>Deactivate</h2>
+            <span flex></span>
+            <md-button ng-click="dgVendors.cancel()" class="md-icon-button" aria-label="close dg edit">
+            	<md-icon>clear</md-icon>
+            </md-button>
+        </div>
+    </md-toolbar>
+	<md-dialog-content layout="column" class="content" style="margin-top:20px;" >
+		<p>Associate vendors for {{dgVendors.DG.name}}</p>
+		<md-chips 
+			ng-model="dgVendors.selectedVendors" 
+			md-autocomplete-snap 
+			md-transform-chip="dgVendors.transformVendorChip($chip)" 
+			md-require-match="true">
+			<md-autocomplete 
+				md-no-cache="true"
+				md-selected-item="dgVendors.selectedItem" 
+				md-search-text="dgVendors.searchedVendor" 
+				md-items="vendor in dgVendors.vendorSearch(dgVendors.searchedVendor)" 
+				md-item-text="vendor.name" 
+				placeholder="Search for a Vendor">
+				<span md-highlight-text="dgVendors.searchedVendor">{{vendor.name}}</span>
+				<md-not-found>
+					No states matching "{{opsOrder.searchedVendor}}" were found.
+				</md-not-found>
+			</md-autocomplete>
+			<md-chip-template>
+				<span>
+					<strong>{{$chip.name}}</strong>
+				</span>
+			</md-chip-template>
+		</md-chips>
+	</md-dialog-content>
+	<md-dialog-actions layout="row">
+     	<span flex></span>
+		<md-button ng-click="dgVendors.cancel()" class="md-warn">
+			cancel
+		</md-button>
+		<md-button ng-click="dgVendors.answer(dgVendors.selectedVendors)" class="md-primary" style="margin-right:20px;">
+			Update
+		</md-button>
+    </md-dialog-actions>
+</md-dialog>
