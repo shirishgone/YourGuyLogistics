@@ -94,7 +94,8 @@ def dg_details_dict(delivery_guy):
         'profile_picture': '',
         'pincode': [],
         'ops_managers': [],
-        'team_leads': []
+        'team_leads': [],
+        'associated_vendors':[]
     }
     shift_time = {
     'start_time':delivery_guy.shift_start_datetime,
@@ -187,6 +188,16 @@ class DGViewSet(viewsets.ModelViewSet):
             delivery_guy = get_object_or_404(DeliveryGuy, id=pk)
             detail_dict = dg_details_dict(delivery_guy)
 
+            # add associate vendors of the DG for whom the DG can add orders
+            if delivery_guy.associated_vendors is not None:
+                associated_vendors = delivery_guy.associated_vendors.all()
+                for vendor in associated_vendors:
+                    vendor_dict = {
+                        'id': vendor.id,
+                        'name': vendor.store_name
+                    }
+                    detail_dict['associated_vendors'].append(vendor_dict)
+            
             # only return pincodes for dg team lead
             if delivery_guy.is_teamlead is True:
                 try:
