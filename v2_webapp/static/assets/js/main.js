@@ -602,7 +602,7 @@
 	};
 
 	angular.module('ygVendorApp')
-	.constant('constants', constants);
+	.constant('constants', prodConstants);
 })();
 (function(){
 	'use strict';
@@ -3255,7 +3255,7 @@
     		controller   : "reportsCntrl",
     		resolve: {
     			access: ["Access","constants", function (Access,constants) { 
-    						var allowed_user = [constants.userRole.OPS,constants.userRole.OPS_MANAGER,constants.userRole.SALES,constants.userRole.SALES_MANAGER,constants.userRole.VENDOR];
+    						var allowed_user = [constants.userRole.OPS,constants.userRole.OPS_MANAGER,constants.userRole.SALES,constants.userRole.SALES_MANAGER,constants.userRole.VENDOR,constants.userRole.ACCOUNTS];
     						return Access.hasAnyRole(allowed_user); 
     					}],
     			report: ['Reports','$stateParams', function (Reports,$stateParams){
