@@ -553,7 +553,8 @@
 		permissible_tabs: permissible_tabs,
 		ACCESS_KEY : 'AKIAJTRSKA2PKKWFL5PA',
 	    SECRET_KEY : 'grJpBB1CcH8ShN6g88acAkDjvklYdgX7OENAx4g/',
-	    S3_BUCKET : 'yourguy-pod'
+	    S3_BUCKET : 'yourguy-pod',
+	    DEPOSIT_BUCKET: 'bank-deposit-test'
 	};
 	var prodConstants = {
 		v1baseUrl : 'http://yourguy.herokuapp.com/api/v1/',
@@ -574,7 +575,8 @@
 		permissible_tabs : permissible_tabs,
 		ACCESS_KEY : 'AKIAJTRSKA2PKKWFL5PA',
 	    SECRET_KEY : 'grJpBB1CcH8ShN6g88acAkDjvklYdgX7OENAx4g/',
-	    S3_BUCKET : 'yourguy-pod'
+	    S3_BUCKET : 'yourguy-pod',
+	    DEPOSIT_BUCKET: 'bank-deposit'
 	};
 	var testConstants = {
 		v1baseUrl : 'https://yourguytestserver.herokuapp.com/api/v1/',
@@ -595,7 +597,8 @@
 		permissible_tabs: permissible_tabs,
 		ACCESS_KEY : 'AKIAJTRSKA2PKKWFL5PA',
 	    SECRET_KEY : 'grJpBB1CcH8ShN6g88acAkDjvklYdgX7OENAx4g/',
-	    S3_BUCKET  : 'yourguy-pod-test'
+	    S3_BUCKET  : 'yourguy-pod-test',
+	    DEPOSIT_BUCKET: 'bank-deposit-test'
 	};
 
 	angular.module('ygVendorApp')
@@ -726,6 +729,10 @@
 				},
 				deactivate : {
 					url : constants.v3baseUrl+'deliveryguy/:id'+'/deactivate/',
+					method : 'PUT'
+				},
+				associateVendors : {
+					url : constants.v3baseUrl+'deliveryguy/:id'+'/add_vendor/',
 					method : 'PUT'
 				}
 			}),
@@ -2693,7 +2700,7 @@
 (function(){
 	'use strict';
 
-	var dgDetailCntrl = function($state,$stateParams,$mdDialog,$mdMedia,DeliveryGuy,dgConstants,leadUserList,DG,PreviousState,Notification){
+	var dgDetailCntrl = function($state,$stateParams,$mdDialog,$mdMedia,DeliveryGuy,Vendor,dgConstants,leadUserList,DG,PreviousState,Notification){
 		var self = this;
 		self.params = $stateParams;
 		self.DG = DG.payload.data;
@@ -2805,6 +2812,27 @@
 			});
 		};
 
+		self.associateVendors = function(){
+			$mdDialog.show({
+				controller         : ('AssociateVendorCntrl',['$mdDialog','DG','Vendor',AssociateVendorCntrl]),
+				controllerAs       : 'dgVendors',
+				templateUrl        : '/static/modules/deliveryguy/dialogs/associateVendors.html?nd=' + Date.now(),
+				parent             : angular.element(document.body),
+				clickOutsideToClose: false,
+				fullscreen         : true,
+				locals             : {
+					DG : self.DG,
+				},
+			})
+			.then(function(data) {
+				Notification.loaderStart();
+				DeliveryGuy.dg.associateVendors(data,function(response){
+					Notification.loaderComplete();
+					self.getDgDetails();
+				});
+			});
+		};
+
 		self.getAttendance = function(){
 			var attendance_params = {
 				id    : self.DG.id,
@@ -2845,7 +2873,6 @@
 			});
 		};
 		dgEdit.DG.shift_time = dgEdit.shift_timings[dgEdit.findShiftTime(dgEdit.DG.shift_time)];
-		console.log(dgEdit.DG.shift_time);
 
 		dgEdit.cancel = function() {
 			$mdDialog.cancel();
@@ -2931,6 +2958,43 @@
 		};
 	}
 
+	function AssociateVendorCntrl($mdDialog,DG,Vendor){
+		var dgVendors = this;
+		dgVendors.DG = angular.copy(DG);
+		dgVendors.selectedVendors = dgVendors.DG.associated_vendors;
+
+		dgVendors.vendorSearch = function(text){
+			var search = {
+				search : text
+			};
+			return Vendor.query(search).$promise.then(function (response){
+				return response.payload.data.data;
+			});
+		};
+
+		dgVendors.transformVendorChip = function(chip) {
+			// If it is an object, it's already a known chip
+			if (angular.isObject(chip)) {
+				return chip;
+			}
+		};
+
+		dgVendors.cancel = function(){
+			$mdDialog.cancel();
+		};
+
+		dgVendors.answer = function(answer){
+			var vendorData  = {
+				vendor_ids : []
+			};
+			answer.forEach(function(vend){
+				vendorData.vendor_ids.push(vend.id);
+			});
+			vendorData.id = dgVendors.DG.id;
+			$mdDialog.hide(vendorData);
+		};
+	}
+
 	angular.module('deliveryguy')
 	.controller('dgDetailCntrl', [
 		'$state',
@@ -2938,6 +3002,7 @@
 		'$mdDialog',
 		'$mdMedia',
 		'DeliveryGuy',
+		'Vendor',
 		'dgConstants',
 		'leadUserList',
 		'DG',
@@ -3323,7 +3388,7 @@
 		};
 	}
 
-	var codDepositCntrl = function($state,$stateParams,$mdDialog,deposits,COD,Notification,DeliveryGuy){
+	var codDepositCntrl = function($state,$stateParams,$mdDialog,deposits,COD,Notification,DeliveryGuy,constants){
 		// variable definations
 		var self = this;
 		self.params = $stateParams;
@@ -3344,7 +3409,7 @@
 		*/
 		self.showImage = function(url){
 			url = url.replace(/:/g,'%3A');
-			var image_url = 'https://s3-ap-southeast-1.amazonaws.com/bank-deposit-test/'+url;
+			var image_url = 'https://s3-ap-southeast-1.amazonaws.com/'+constants.DEPOSIT_BUCKET+'/'+url;
 			self.showImageSection = true;
 			self.depositImage = image_url;
 		};
@@ -3486,6 +3551,7 @@
 		'COD',
 		'Notification',
 		'DeliveryGuy',
+		'constants',
 		codDepositCntrl
 	]);
 })();
