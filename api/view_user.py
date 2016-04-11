@@ -76,6 +76,8 @@ def register(request):
         elif role == constants.DELIVERY_GUY:
             token = create_token(user, constants.DELIVERY_GUY)
             delivery_guy = DeliveryGuy.objects.create(user = user)
+            delivery_guy.is_active = True
+            delivery_guy.save()
         elif role == constants.OPERATIONS:
             token = create_token(user, constants.OPERATIONS)
             employee = Employee.objects.create(user = user)
