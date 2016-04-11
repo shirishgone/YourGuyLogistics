@@ -1039,7 +1039,7 @@ class OrderViewSet(viewsets.ViewSet):
             delivery_address = request.data['delivery_address']
             is_reverse_pickup = request.data['is_reverse_pickup']            
             
-            order_items = request.data['order_items']
+            order_items = request.data.get('order_items')
 
             total_cost = request.data.get('total_cost')
             vendor_order_id = request.data.get('vendor_order_id')
@@ -1050,7 +1050,7 @@ class OrderViewSet(viewsets.ViewSet):
         except Exception, e:
             content = {
             'error':'Incomplete parameters', 
-            'description':'pickup_datetime, customer_name, customer_phone_number, pickup_address{full_address, pincode, landmark(optional)}, delivery_address{full_address, pincode, landmark(optional)}, is_reverse_pickup, order_items { product_id, quantity }, total_cost, vendor_order_id, cod_amount, notes'
+            'description':'pickup_datetime, customer_name, customer_phone_number, pickup_address{full_address, pincode, landmark(optional)}, delivery_address{full_address, pincode, landmark(optional)}, is_reverse_pickup, order_items { product_id, quantity } (Optional), total_cost, vendor_order_id, cod_amount, notes'
             }
             return Response(content, status = status.HTTP_400_BAD_REQUEST)
         # ---------------------------------------------------
@@ -1187,16 +1187,17 @@ class OrderViewSet(viewsets.ViewSet):
                 new_order.is_recurring = True
 
             # ORDER ITEMS ----------------------------------------
-            try:
-                for item in order_items:
-                    product_id = item['product_id']
-                    quantity = item ['quantity']
-                    product = get_object_or_404(Product, pk = product_id)
-                    order_item = OrderItem.objects.create(product = product, quantity = quantity)
-                    new_order.order_items.add(order_item)
-            except Exception, e:
-                print 'product_id is incorrect'
-                pass
+            if order_items is not None:
+                try:
+                    for item in order_items:
+                        product_id = item['product_id']
+                        quantity = item ['quantity']
+                        product = get_object_or_404(Product, pk = product_id)
+                        order_item = OrderItem.objects.create(product = product, quantity = quantity)
+                        new_order.order_items.add(order_item)
+                except Exception, e:
+                    print 'product_id is incorrect'
+                    pass
             
             new_order.save()
             # ---------------------------------------------------
