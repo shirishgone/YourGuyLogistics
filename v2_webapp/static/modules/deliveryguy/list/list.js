@@ -3,7 +3,6 @@
 	/*
 		dgListCntrl is the controller for the delivery guy list page. 
 		Its resolved after loading all the dgs from the server.
-			
 	*/
 	var dgListCntrl = function($state,$mdSidenav,$stateParams,dgs,constants,DeliveryGuy,Notification){
 		var self = this;
@@ -17,7 +16,7 @@
 		*/
 		this.dgs = dgs.payload.data.data;
 		this.total_pages = dgs.payload.data.total_pages;
-		this.total_dgs = dgs.payload.data.total_dg_count;
+		this.total_dgs = dgs.payload.data.total_count;
 
 		/*
 			 @ toggleFilter : main sidenav toggle function, this function toggle the sidebar of the filets of the dg page page.
@@ -63,15 +62,20 @@
 		};
 		this.downloadAttendance = function(){
 			Notification.loaderStart();
+			var str = '';
+			var noOfdays = Math.ceil(moment.duration(moment(self.params.end_date).diff(moment(self.params.start_date))).asDays());
 			var attendance_params = {
 				start_date : moment(self.params.start_date).startOf('day').toISOString(),
 				end_date   : moment(self.params.end_date).endOf('day').toISOString()
 			};
-			// console.log(attendance_params);
+			for(var i = 0 ; i < noOfdays ; i++ ){
+				str += ',IsoToDate(attendance ->'+ i +'-> date) AS Date_'+(i+1)+',attendance ->'+ i +'-> worked_hrs AS Hours_'+(i+1);
+			}
 			DeliveryGuy.dgsAttendance.query(attendance_params,function(response){
-				alasql('SEARCH / AS @a UNION ALL(attendance / AS @b RETURN(@a.name AS Name , IsoToDate(@b.date) AS DATE, @b.worked_hrs AS Hours)) INTO XLSX("attendance.xlsx",{headers:true}) FROM ?',[response.payload.data]);
-				// var str = 'SELECT name AS Name,IsoToDate(attendance -> 0 -> date) AS Date,attendance -> 0 -> worked_hrs AS Hours';
-				// alasql( str+' INTO XLSX("attendance.xlsx",{headers:true}) FROM ?',[response.payload.data]);
+				// alasql('SEARCH / AS @a UNION ALL(attendance / AS @b RETURN(@a.name AS Name , IsoToDate(@b.date) AS DATE, @b.worked_hrs AS Hours)) INTO XLSX("attendance.xlsx",{headers:true}) FROM ?',[response.payload.data]);
+				var select_str = 'SELECT name AS Name'+str;
+				console.log(select_str);
+				alasql( select_str+' INTO XLSX("attendance.xlsx",{headers:true}) FROM ?',[response.payload.data]);
 				Notification.loaderComplete();
 			});
 		};
