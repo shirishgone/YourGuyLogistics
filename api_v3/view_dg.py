@@ -407,10 +407,11 @@ class DGViewSet(viewsets.ModelViewSet):
                     cumulative_dg_list['no_of_assigned_orders'] = no_of_assigned_orders
                     cumulative_dg_list['no_of_executed_orders'] = no_of_executed_orders
 
-                    worked_hours = 0
                     if attendances is not None:
                         for single_day in attendances:
                             worked_hours = working_hours_calculation(single_day)
+                            if worked_hours < 0:
+                                worked_hours = 0
                             worked_hours = worked_hours + worked_hours
 
                             cumulative_dg_list['worked_hours'] = worked_hours
@@ -435,6 +436,8 @@ class DGViewSet(viewsets.ModelViewSet):
 
                     if attendance is not None:
                         worked_hours = working_hours_calculation(attendance)
+                        if worked_hours < 0:
+                            worked_hours = 0
 
                     result.append(dg_list_dict(delivery_guy, attendance, no_of_assigned_orders, no_of_executed_orders, worked_hours))
                 pagination_dict['total_pages'] = total_pages
@@ -745,6 +748,8 @@ class DGViewSet(viewsets.ModelViewSet):
                         if len(dg_attendance) > 0:
                             for single in dg_attendance:
                                 worked_hours = working_hours_calculation(single)
+                                if worked_hours < 0:
+                                    worked_hours = 0
                                 datewise_dict = attendance_list_datewise(date, worked_hours)
                                 datewise_dict['login_time'] = single.login_time
                                 datewise_dict['logout_time'] = single.logout_time
@@ -769,6 +774,8 @@ class DGViewSet(viewsets.ModelViewSet):
                 if len(dg_attendance) > 0:
                     for single in dg_attendance:
                         worked_hours = working_hours_calculation(single)
+                        if worked_hours < 0:
+                            worked_hours = 0
                         datewise_dict = attendance_list_datewise(date, worked_hours)
                         datewise_dict['login_time'] = single.login_time
                         datewise_dict['logout_time'] = single.logout_time
@@ -882,6 +889,8 @@ class DGViewSet(viewsets.ModelViewSet):
                             if dg_attendance:
                                 for single in dg_attendance:
                                     worked_hours = working_hours_calculation(single)
+                                    if worked_hours < 0:
+                                        worked_hours = 0
                                     datewise_dict['date'] = date
                                     datewise_dict['worked_hrs'] = worked_hours
                             else:
@@ -899,6 +908,8 @@ class DGViewSet(viewsets.ModelViewSet):
                             if dg_attendance:
                                 for single in dg_attendance:
                                     worked_hours = working_hours_calculation(single)
+                                    if worked_hours < 0:
+                                        worked_hours = 0
                                     datewise_dict['date'] = date
                                     datewise_dict['worked_hrs'] = worked_hours
                             else:
@@ -917,6 +928,8 @@ class DGViewSet(viewsets.ModelViewSet):
                     if dg_attendance:
                         for single in dg_attendance:
                             worked_hours = working_hours_calculation(single)
+                            if worked_hours < 0:
+                                worked_hours = 0
                             datewise_dict['date'] = date
                             datewise_dict['worked_hrs'] = worked_hours
                     else:
