@@ -759,7 +759,7 @@ class OrderViewSet(viewsets.ViewSet):
 
         total_orders_count = len(delivery_status_queryset)
         unassigned_orders_count = delivery_status_queryset.filter(Q(pickup_guy = None) & Q(delivery_guy = None)).count()
-        pending_orders_count = delivery_status_queryset.filter(Q(order_status = constants.ORDER_STATUS_INTRANSIT) | Q(order_status = constants.ORDER_STATUS_QUEUED)).count()
+        pending_orders_count = delivery_status_queryset.filter(Q(order_status = constants.ORDER_STATUS_OUTFORDELIVERY) | Q(order_status = constants.ORDER_STATUS_INTRANSIT) | Q(order_status = constants.ORDER_STATUS_QUEUED)).count()
 
         if role == constants.DELIVERY_GUY:
             delivery_statuses = delivery_status_queryset
