@@ -390,23 +390,33 @@
 						</md-not-found>
 					</md-autocomplete>
 				</div>
+				<!-- <md-subheader>ASSIGNMENT</md-subheader>
+     			<md-list-item class="md-1-line " flex>
+     				<form name="statusselectform" flex>
+     					<div class="status-list" layout="column">
+     						<md-checkbox flex ng-repeat="item in opsOrder.status_list" ng-checked="opsOrder.statusSelection.exists(item, opsOrder.params.order_status)" ng-click="opsOrder.statusSelection.toggle(item, opsOrder.params.order_status)" class="md-primary">
+     							{{ item.status }}
+     						</md-checkbox>
+     					</div>
+     				</form>
+				</md-list-item> -->
 				<md-subheader>CASH ON DELIVERY</md-subheader>
 				<div class="cod">
-					<md-switch ng-model="opsOrder.params.is_cod" aria-label="COD" ng-true-value="true" ng-false-value="false" class="md-accent">
+					<md-switch ng-model="opsOrder.params.is_cod" aria-label="COD" ng-true-value="true" ng-false-value="false" class="md-primary">
    						Cash On Delivery
   					</md-switch>
 				</div>
 				<md-subheader>RETAIL</md-subheader>
 				<div class="retail">
-					<md-switch ng-model="opsOrder.params.is_retail" aria-label="RETAIL" ng-true-value="true" ng-false-value="false" class="md-accent">
+					<md-switch ng-model="opsOrder.params.is_retail" aria-label="RETAIL" ng-true-value="true" ng-false-value="false" class="md-primary">
    						Is Retail
   					</md-switch>
 				</div>
 				<md-subheader>STATUS</md-subheader>
-     			<md-list-item class="md-1-line" flex>
+     			<md-list-item class="md-1-line " flex>
      				<form name="statusselectform" flex>
      					<div class="status-list" layout="column">
-     						<md-checkbox flex ng-repeat="item in opsOrder.status_list" ng-checked="opsOrder.statusSelection.exists(item, opsOrder.params.order_status)" ng-click="opsOrder.statusSelection.toggle(item, opsOrder.params.order_status)">
+     						<md-checkbox flex ng-repeat="item in opsOrder.status_list" ng-checked="opsOrder.statusSelection.exists(item, opsOrder.params.order_status)" ng-click="opsOrder.statusSelection.toggle(item, opsOrder.params.order_status)" class="md-primary">
      							{{ item.status }}
      						</md-checkbox>
      					</div>
@@ -417,7 +427,7 @@
      				<form name="timeSelectForm" flex>
      					<div class="time-list">
      						<md-radio-group ng-model="opsOrder.params.time">
-     							<md-radio-button ng-repeat="time in opsOrder.time_list" ng-value="time.time" aria-label="{{time.value}}">
+     							<md-radio-button ng-repeat="time in opsOrder.time_list" ng-value="time.time"  class="md-primary" aria-label="{{time.value}}">
      								{{time.value}}
      							</md-radio-button>
      						</md-radio-group>
@@ -431,7 +441,7 @@
      			<md-list-item class="md-1-line" flex>
      				<form name="picodeselectform" flex>
      					<div class="pincode-list" layout="column">
-     						<md-checkbox flex ng-repeat="item in opsOrder.pincodes | filter: opsOrder.searchedPincode" ng-checked="opsOrder.pincodesSelection.exists(item, opsOrder.params.pincodes)" ng-click="opsOrder.pincodesSelection.toggle(item, opsOrder.params.pincodes)">
+     						<md-checkbox flex  class="md-primary" ng-repeat="item in opsOrder.pincodes | filter: opsOrder.searchedPincode" ng-checked="opsOrder.pincodesSelection.exists(item, opsOrder.params.pincodes)" ng-click="opsOrder.pincodesSelection.toggle(item, opsOrder.params.pincodes)">
      							{{ item.pincode }}
      						</md-checkbox>
      					</div>
