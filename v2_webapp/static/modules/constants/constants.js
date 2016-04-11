@@ -129,14 +129,15 @@
 		},
 	};
 	var STATUS_OBJECT = [
+		{status:'Queued',value:'QUEUED',selected:false},
     	{status:'Intransit',value:'INTRANSIT'},
-    	{status:'Queued',value:'QUEUED',selected:false},
+    	{status:'Out For Delivery',value:'OUTFORDELIVERY'},
     	{status:'Delivered',value:'DELIVERED',selected:false},
-    	{status:'Order Placed',value:'ORDER_PLACED',selected:false},
     	{status:'Pickup Attempted',value:'PICKUPATTEMPTED',selected:false},
     	{status:'Deliver Attempted',value:'DELIVERYATTEMPTED',selected:false},
     	{status:'Cancelled',value:'CANCELLED',selected:false},
-    	{status:'Rejected',value:'REJECTED',selected:false},
+    	{status:'Order Placed',value:'ORDER_PLACED',selected:false},
+    	// {status:'Rejected',value:'REJECTED',selected:false},
   	];
   	var dg_checkin_status = [
   		{status:'All',value:'ALL'},
@@ -194,7 +195,7 @@
 		permissible_tabs: permissible_tabs,
 		ACCESS_KEY : 'AKIAJTRSKA2PKKWFL5PA',
 	    SECRET_KEY : 'grJpBB1CcH8ShN6g88acAkDjvklYdgX7OENAx4g/',
-	    S3_BUCKET : 'yourguy-pod',
+	    S3_BUCKET : 'yourguy-pod-test',
 	    DEPOSIT_BUCKET: 'bank-deposit-test'
 	};
 	var prodConstants = {
