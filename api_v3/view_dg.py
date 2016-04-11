@@ -165,7 +165,7 @@ def pagination_list():
     pagination_dict = {
         'total_pages': None,
         'total_count': None,
-        'result': []
+        'data': []
     }
     return pagination_dict
 
