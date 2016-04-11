@@ -571,6 +571,23 @@ class OrderViewSet(viewsets.ViewSet):
             if delivery_status.order.vendor.id != vendor.id:
                 return response_access_denied()
         result = webapp_details(delivery_status)
+        # send pickup proof and delivery proof along with respective boolean values as well
+        pop = delivery_status.pickup_proof
+        if pop is not None:
+            pop_file_name = pop.pictures.name
+            result['is_pop_available'] = True
+            result['pop_file_name'] = pop_file_name
+        else:
+            result['is_pop_available'] = False
+
+        pod = delivery_status.delivery_proof
+        if pod is not None:
+            pod_file_name = pod.pictures.name
+            result['is_pod_available'] = True
+            result['pod_file_name'] = pod_file_name
+        else:
+            result['is_pod_available'] = False
+
         delivery_tx = (delivery_status.delivery_transactions.all())
         if len(delivery_tx) > 0:
             for single in delivery_tx:
@@ -600,6 +617,8 @@ class OrderViewSet(viewsets.ViewSet):
         filter_order_status = request.QUERY_PARAMS.get('order_status', None)
         filter_time_start = request.QUERY_PARAMS.get('time_start', None)
         filter_time_end = request.QUERY_PARAMS.get('time_end', None)
+        is_pop_available = request.QUERY_PARAMS.get('is_pop', None)
+        is_pod_available = request.QUERY_PARAMS.get('is_pod', None)
         is_cod = request.QUERY_PARAMS.get('is_cod', None)
         delivery_ids = request.QUERY_PARAMS.get('delivery_ids', None)
         pincodes = request.QUERY_PARAMS.get('pincodes', None)
@@ -698,6 +717,22 @@ class OrderViewSet(viewsets.ViewSet):
                 delivery_status_queryset = delivery_status_queryset.filter(order__cod_amount=0)
         # ----------------------------------------------------------------------------
 
+        # POP POD FILTERING --------------------------------------------------------------
+        if is_pop_available is not None:
+            is_pop_bool = json.loads(is_pop_available.lower())
+            if is_pop_bool is True:
+                delivery_status_queryset = delivery_status_queryset.filter(pickup_proof__isnull=False)
+            else:
+                delivery_status_queryset = delivery_status_queryset.filter(pickup_proof__isnull=True)
+
+        if is_pod_available is not None:
+            is_pod_bool = json.loads(is_pod_available.lower())
+            if is_pod_bool is True:
+                delivery_status_queryset = delivery_status_queryset.filter(delivery_proof__isnull=False)
+            else:
+                delivery_status_queryset = delivery_status_queryset.filter(delivery_proof__isnull=True)
+        # ----------------------------------------------------------------------------
+
         # TIME SLOT FILTERING --------------------------------------------------------
         if filter_time_end is not None and filter_time_start is not None:
             filter_time_start = parse_datetime(filter_time_start)
@@ -752,6 +787,17 @@ class OrderViewSet(viewsets.ViewSet):
             result = []
             for single_delivery_status in delivery_statuses:
                 delivery_status = webapp_list(single_delivery_status)
+                pop = single_delivery_status.pickup_proof
+                if pop is not None:
+                    delivery_status['is_pop_available'] = True
+                else:
+                    delivery_status['is_pop_available'] = False
+
+                pod = single_delivery_status.delivery_proof
+                if pod is not None:
+                    delivery_status['is_pod_available'] = True
+                else:
+                    delivery_status['is_pod_available'] = False
                 if delivery_status is not None:
                     result.append(delivery_status)
 
