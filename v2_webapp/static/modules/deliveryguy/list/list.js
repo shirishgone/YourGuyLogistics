@@ -74,7 +74,6 @@
 			DeliveryGuy.dgsAttendance.query(attendance_params,function(response){
 				// alasql('SEARCH / AS @a UNION ALL(attendance / AS @b RETURN(@a.name AS Name , IsoToDate(@b.date) AS DATE, @b.worked_hrs AS Hours)) INTO XLSX("attendance.xlsx",{headers:true}) FROM ?',[response.payload.data]);
 				var select_str = 'SELECT name AS Name'+str;
-				console.log(select_str);
 				alasql( select_str+' INTO XLSX("attendance.xlsx",{headers:true}) FROM ?',[response.payload.data]);
 				Notification.loaderComplete();
 			});

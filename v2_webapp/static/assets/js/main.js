@@ -488,14 +488,15 @@
 		},
 	};
 	var STATUS_OBJECT = [
+		{status:'Queued',value:'QUEUED',selected:false},
     	{status:'Intransit',value:'INTRANSIT'},
-    	{status:'Queued',value:'QUEUED',selected:false},
+    	{status:'Out For Delivery',value:'OUTFORDELIVERY'},
     	{status:'Delivered',value:'DELIVERED',selected:false},
-    	{status:'Order Placed',value:'ORDER_PLACED',selected:false},
     	{status:'Pickup Attempted',value:'PICKUPATTEMPTED',selected:false},
     	{status:'Deliver Attempted',value:'DELIVERYATTEMPTED',selected:false},
     	{status:'Cancelled',value:'CANCELLED',selected:false},
-    	{status:'Rejected',value:'REJECTED',selected:false},
+    	{status:'Order Placed',value:'ORDER_PLACED',selected:false},
+    	// {status:'Rejected',value:'REJECTED',selected:false},
   	];
   	var dg_checkin_status = [
   		{status:'All',value:'ALL'},
@@ -602,7 +603,7 @@
 	};
 
 	angular.module('ygVendorApp')
-	.constant('constants', constants);
+	.constant('constants', prodConstants);
 })();
 (function(){
 	'use strict';
@@ -2616,7 +2617,6 @@
 			DeliveryGuy.dgsAttendance.query(attendance_params,function(response){
 				// alasql('SEARCH / AS @a UNION ALL(attendance / AS @b RETURN(@a.name AS Name , IsoToDate(@b.date) AS DATE, @b.worked_hrs AS Hours)) INTO XLSX("attendance.xlsx",{headers:true}) FROM ?',[response.payload.data]);
 				var select_str = 'SELECT name AS Name'+str;
-				console.log(select_str);
 				alasql( select_str+' INTO XLSX("attendance.xlsx",{headers:true}) FROM ?',[response.payload.data]);
 				Notification.loaderComplete();
 			});
