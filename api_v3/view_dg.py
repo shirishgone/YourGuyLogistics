@@ -164,7 +164,7 @@ def pagination_list():
     pagination_dict = {
         'total_pages': None,
         'total_count': None,
-        'result': []
+        'data': []
     }
     return pagination_dict
 
@@ -442,7 +442,7 @@ class DGViewSet(viewsets.ModelViewSet):
                     result.append(dg_list_dict(delivery_guy, attendance, no_of_assigned_orders, no_of_executed_orders, worked_hours))
                 pagination_dict['total_pages'] = total_pages
                 pagination_dict['total_count'] = total_dg_count
-                pagination_dict['result'] = result
+                pagination_dict['data'] = result
             return response_with_payload(pagination_dict, None)
 
     def create(self, request):
