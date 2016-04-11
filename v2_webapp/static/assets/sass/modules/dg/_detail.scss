@@ -108,4 +108,13 @@
 			}
 		}
 	}	
+	.is-team-lead {
+		position: absolute;
+		top: 25px;
+		right: 25px;
+		@include mobile {
+			top: 5px;
+			right: 5px;
+		}
+	}
 }

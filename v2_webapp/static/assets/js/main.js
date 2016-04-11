@@ -603,7 +603,7 @@
 	};
 
 	angular.module('ygVendorApp')
-	.constant('constants', prodConstants);
+	.constant('constants', constants);
 })();
 (function(){
 	'use strict';
