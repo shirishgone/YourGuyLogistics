@@ -1100,16 +1100,16 @@ class DGViewSet(viewsets.ModelViewSet):
             return response_access_denied()
 
     @detail_route(methods=['GET'])
-    def accounts(self, request, pk=None):
+    def accounts(self, request, pk):
         role = user_role(request.user)
         if role == constants.DELIVERY_GUY:
-            dg = get_object_or_404(DeliveryGuy, user=request.user)
+            dg = get_object_or_404(DeliveryGuy, pk = pk)
             if dg.is_active is True:
                 account_dict = account_list()
                 balance_amount = cod_balance_calculation(dg)
                 if balance_amount is None:
                     balance_amount = 0
-                    account_dict['balance_amount'] = balance_amount
+                    account_dict['cod_balance'] = balance_amount
                 else:
                     pass
                 account_dict['salary_deduction'] = dg.pending_salary_deduction
