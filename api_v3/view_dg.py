@@ -1099,7 +1099,7 @@ class DGViewSet(viewsets.ModelViewSet):
         else:
             return response_access_denied()
 
-    @list_route(methods=['GET'])
+    @detail_route(methods=['GET'])
     def accounts(self, request):
         role = user_role(request.user)
         if role == constants.DELIVERY_GUY:
