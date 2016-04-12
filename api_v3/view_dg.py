@@ -1100,7 +1100,7 @@ class DGViewSet(viewsets.ModelViewSet):
             return response_access_denied()
 
     @detail_route(methods=['GET'])
-    def accounts(self, request):
+    def accounts(self, request, pk=None):
         role = user_role(request.user)
         if role == constants.DELIVERY_GUY:
             dg = get_object_or_404(DeliveryGuy, user=request.user)
