@@ -390,16 +390,18 @@
 						</md-not-found>
 					</md-autocomplete>
 				</div>
-				<!-- <md-subheader>ASSIGNMENT</md-subheader>
-     			<md-list-item class="md-1-line " flex>
-     				<form name="statusselectform" flex>
-     					<div class="status-list" layout="column">
-     						<md-checkbox flex ng-repeat="item in opsOrder.status_list" ng-checked="opsOrder.statusSelection.exists(item, opsOrder.params.order_status)" ng-click="opsOrder.statusSelection.toggle(item, opsOrder.params.order_status)" class="md-primary">
-     							{{ item.status }}
-     						</md-checkbox>
+				<md-subheader>ASSIGNMENT</md-subheader>
+     			<md-list-item class="md-1-line" flex>
+     				<form name="timeSelectForm" flex>
+     					<div class="time-list">
+     						<md-radio-group ng-model="opsOrder.params.dg_username">
+     							<md-radio-button ng-repeat="assign in opsOrder.dg_assignment" ng-value="assign.value"  class="md-primary" aria-label="{{assign.value}}">
+     								{{assign.assignment}}
+     							</md-radio-button>
+     						</md-radio-group>
      					</div>
      				</form>
-				</md-list-item> -->
+				</md-list-item>
 				<md-subheader>CASH ON DELIVERY</md-subheader>
 				<div class="cod">
 					<md-switch ng-model="opsOrder.params.is_cod" aria-label="COD" ng-true-value="true" ng-false-value="false" class="md-primary">

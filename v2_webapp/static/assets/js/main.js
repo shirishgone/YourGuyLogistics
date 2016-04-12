@@ -535,6 +535,12 @@
 	  	}
   	];
 
+  	var dg_assignment = [
+  		{assignment:'Pickup Unassigned',value:'UNASSIGNED_PICKUP'},
+  		{assignment:'Delivery Unassigned',value:'UNASSIGNED_DELIVERY'},
+  		{assignment:'Both Unassigned',value:'UNASSIGNED'}
+  	];
+
 	var constants = {
 		v1baseUrl : '/api/v1/',
 		v2baseUrl : '/api/v2/',
@@ -549,6 +555,7 @@
 			SALES_MANAGER : 'sales_manager'
 		},
 		status    : STATUS_OBJECT,
+		dg_assignment : dg_assignment,
 		time      :time_data,
 		dg_status : dg_checkin_status,
 		permissible_tabs: permissible_tabs,
@@ -571,6 +578,7 @@
 			SALES_MANAGER : 'sales_manager'
 		},
 		status    : STATUS_OBJECT,
+		dg_assignment : dg_assignment,
 		time      : time_data,
 		dg_status : dg_checkin_status,
 		permissible_tabs : permissible_tabs,
@@ -593,6 +601,7 @@
 			SALES_MANAGER : 'sales_manager'
 		},
 		status    : STATUS_OBJECT,
+		dg_assignment : dg_assignment,
 		time      : time_data,
 		dg_status : dg_checkin_status,
 		permissible_tabs: permissible_tabs,
@@ -603,7 +612,7 @@
 	};
 
 	angular.module('ygVendorApp')
-	.constant('constants', prodConstants);
+	.constant('constants', constants);
 })();
 (function(){
 	'use strict';
@@ -1781,6 +1790,7 @@
 		*/
 		this.status_list = constants.status;
 		this.time_list = constants.time;
+		this.dg_assignment = constants.dg_assignment;
 		/*
 			@revertToPageOne is a function to revert back to first page if any kind of filter is applied
 		*/ 
@@ -1881,10 +1891,10 @@
 			}
 		};
 		/*
-			@dgSearchTextChange is a function for Delivery guy search for filter. When ever the filtered dg change, 
+			@vendorSearchTextChange is a function for Delivery guy search for filter. When ever the filtered dg change, 
 			this function is called.
 
-			@selectedDgChange is a callback function after delivery guy selection in the filter.
+			@selectedVendorChange is a callback function after delivery guy selection in the filter.
 		*/
 		this.vendorSearchTextChange = function(text){
 			var search = {
@@ -2059,7 +2069,7 @@
 			if (!self.params.vendor_id) {
 				self.params.vendor_name = undefined;
 			}
-			if (!self.params.dg_username) {
+			if (!self.params.dg_username || self.params.dg_username == 'UNASSIGNED_PICKUP' || self.params.dg_username == 'UNASSIGNED_DELIVERY' || self.params.dg_username == 'UNASSIGNED') {
 				self.params.dg_name = undefined;
 			}
 			$state.transitionTo($state.current, self.params, { reload: true, inherit: false, notify: true });
