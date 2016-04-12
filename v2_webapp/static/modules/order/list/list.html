@@ -180,9 +180,19 @@
         				<div flex class="status" layout="row" layout-align="start center">
         					<span class="badge" ng-class="order.status">{{order.status}}</span>
         				</div>
-						<md-button class="md-icon-button" aria-label="Favorite" ng-if="order.is_reported">
+        				<md-button class="md-icon-button" aria-label="Favorite" ng-if="order.is_reported">
 							<md-icon ng-style="{color: '#F44336','font-size':'18px', height: '18px', width: '18px'}">error</md-icon>
 						</md-button>
+        				<div class="proof-image" ng-if="order.is_pop_available && !order.is_pod_available">
+        					<img src="/static/assets/images/Orders/POP.png" alt="POP">
+        				</div>
+        				<div class="proof-image" ng-if="!order.is_pop_available && order.is_pod_available">
+        					<img src="/static/assets/images/Orders/POD.png" alt="POP">
+        				</div>
+        				<div class="proof-image" ng-if="order.is_pop_available && order.is_pod_available">
+        					<img src="/static/assets/images/Orders/POP-and-POD.png" alt="POP">
+        				</div>
+						
 						<md-menu md-position-mode="target-right target" ng-click="$event.stopPropagation()" ng-if="home.tabs.updateOrder">
 							<md-button class="md-icon-button" id="options" ng-click="$mdOpenMenu($event)" aria-label="Open selected menu">
 								<md-icon ng-style="{color: '#757575','font-size':'18px', height: '18px', width: '18px'}">more_vert</md-icon>
@@ -251,6 +261,15 @@
 			        				<p>{{order.pickup_datetime | date:'dd MMM yyyy - h:mm a'}}</p>
 			        			</div>
 			        		</div>
+			        		<div class="proof-image" ng-if="order.is_pop_available && !order.is_pod_available">
+			        			<img src="/static/assets/images/Orders/POP.png" alt="POP">
+			        		</div>
+			        		<div class="proof-image" ng-if="!order.is_pop_available && order.is_pod_available">
+			        			<img src="/static/assets/images/Orders/POD.png" alt="POP">
+			        		</div>
+			        		<div class="proof-image" ng-if="order.is_pop_available && order.is_pod_available">
+			        			<img src="/static/assets/images/Orders/POP-and-POD.png" alt="POP">
+			        		</div>
 		        		</div>
 		        		<div flex='100' class="content-divider" >
 		        			<div class="orderid">{{order.id}}</div>
@@ -287,7 +306,7 @@
 			        			</div>
 			        		</div>
 			        		<div layout="row" layout-align="start start">
-			        			<span class="badge">{{order.status}}</span>
+			        			<span class="badge">{{order.status | limitTo:10}}</span>
 			        		</div>
 		        		</div>
 						<md-menu md-position-mode="target-right target" ng-click="$event.stopPropagation()">
@@ -412,6 +431,15 @@
 				<div class="retail">
 					<md-switch ng-model="opsOrder.params.is_retail" aria-label="RETAIL" ng-true-value="true" ng-false-value="false" class="md-primary">
    						Is Retail
+  					</md-switch>
+				</div>
+				<md-subheader>PROOF</md-subheader>
+				<div class="cod">
+					<md-switch ng-model="opsOrder.params.is_pop" aria-label="COD" ng-true-value="true" ng-false-value="false" class="md-primary">
+   						Is POP Available
+  					</md-switch>
+  					<md-switch ng-model="opsOrder.params.is_pod" aria-label="RETAIL" ng-true-value="true" ng-false-value="false" class="md-primary">
+   						Is POD Available
   					</md-switch>
 				</div>
 				<md-subheader>STATUS</md-subheader>

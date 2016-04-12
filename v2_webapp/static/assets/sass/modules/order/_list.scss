@@ -146,6 +146,13 @@
 					.address-divider {
 						padding: 0 2%;
 					}
+					.proof-image {
+						padding-top:3px;
+						img {
+							width: 18px;
+							height: 18px;
+						}
+					}
 				}
 			}
 			.card-action {
@@ -183,6 +190,15 @@
 					height: 20px;
 					width: 20px;
 					outline: none;
+				}
+				.proof-image {
+					padding-top:3px;
+					margin-left: 12px;
+					margin-right: 12px;
+					img {
+						width: 18px;
+						height: 18px;
+					}
 				}
 				@include mobile { 
 					margin: 5px;
