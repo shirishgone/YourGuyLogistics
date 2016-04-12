@@ -23,7 +23,7 @@
         	</md-tooltip>
 			<md-icon>assignment_ind</md-icon>
 		</md-button>
-		<md-menu md-position-mode="target-right target">
+		<md-menu md-position-mode="target-right target" ng-show="orderDetail.order.is_pop_available || orderDetail.order.is_pod_available">
 			<md-button class="md-icon-button" id="options" ng-click="$mdOpenMenu($event)" aria-label="Open selected menu">
 				<md-tooltip md-direction="left">
           			Download Proofs
@@ -31,12 +31,12 @@
 				<md-icon>file_download</md-icon>
 			</md-button>
 			<md-menu-content width="3">
-				<md-menu-item>
+				<md-menu-item ng-if="orderDetail.order.is_pop_available">
 					<md-button ng-click="orderDetail.downloadPop()">
 						Pickup Proof
 					</md-button>
 				</md-menu-item>
-				<md-menu-item>
+				<md-menu-item ng-if="orderDetail.order.is_pod_available" >
 					<md-button ng-click="orderDetail.downloadPod()">
 						Delivery Proof
 					</md-button>

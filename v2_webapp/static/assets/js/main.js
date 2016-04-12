@@ -612,7 +612,7 @@
 	};
 
 	angular.module('ygVendorApp')
-	.constant('constants', prodConstants);
+	.constant('constants', constants);
 })();
 (function(){
 	'use strict';
@@ -1410,7 +1410,7 @@
 	.config(['$stateProvider',function ($stateProvider) {
 		$stateProvider
 		.state('home.opsorder', {
-			url: "^/all-orders?date&vendor_id&dg_username&order_status&page&start_time&end_time&is_cod&search&delivery_ids&pincodes&is_retail&vendor_name&dg_name",
+			url: "^/all-orders?date&vendor_id&dg_username&order_status&page&start_time&end_time&is_cod&search&delivery_ids&pincodes&is_retail&vendor_name&dg_name&is_pop&is_pod",
 			templateUrl: "/static/modules/order/list/list.html",
 			controllerAs : 'opsOrder',
     		controller: "opsOrderCntrl",
@@ -1425,6 +1425,8 @@
     						$stateParams.page = (!isNaN($stateParams.page))? parseInt($stateParams.page): 1;
 						    $stateParams.is_cod = ($stateParams.is_cod == 'true')? Boolean($stateParams.is_cod): undefined;
 						    $stateParams.is_retail = ($stateParams.is_retail == 'true')? Boolean($stateParams.is_retail): undefined;
+                            $stateParams.is_pop = ($stateParams.is_pop == 'true')? Boolean($stateParams.is_pop): undefined;
+                            $stateParams.is_pod = ($stateParams.is_pod == 'true')? Boolean($stateParams.is_pod): undefined;
 
 						    if(Array.isArray($stateParams.order_status)){
     							$stateParams.order_status = ($stateParams.order_status.length > 0) ? $stateParams.order_status.toString(): undefined;
