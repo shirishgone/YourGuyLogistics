@@ -176,6 +176,12 @@
 	  	}
   	];
 
+  	var dg_assignment = [
+  		{assignment:'Pickup Unassigned',value:'UNASSIGNED_PICKUP'},
+  		{assignment:'Delivery Unassigned',value:'UNASSIGNED_DELIVERY'},
+  		{assignment:'Both Unassigned',value:'UNASSIGNED'}
+  	];
+
 	var constants = {
 		v1baseUrl : '/api/v1/',
 		v2baseUrl : '/api/v2/',
@@ -190,6 +196,7 @@
 			SALES_MANAGER : 'sales_manager'
 		},
 		status    : STATUS_OBJECT,
+		dg_assignment : dg_assignment,
 		time      :time_data,
 		dg_status : dg_checkin_status,
 		permissible_tabs: permissible_tabs,
@@ -212,6 +219,7 @@
 			SALES_MANAGER : 'sales_manager'
 		},
 		status    : STATUS_OBJECT,
+		dg_assignment : dg_assignment,
 		time      : time_data,
 		dg_status : dg_checkin_status,
 		permissible_tabs : permissible_tabs,
@@ -234,6 +242,7 @@
 			SALES_MANAGER : 'sales_manager'
 		},
 		status    : STATUS_OBJECT,
+		dg_assignment : dg_assignment,
 		time      : time_data,
 		dg_status : dg_checkin_status,
 		permissible_tabs: permissible_tabs,
