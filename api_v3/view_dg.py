@@ -1111,7 +1111,8 @@ class DGViewSet(viewsets.ModelViewSet):
                     balance_amount = 0
                     account_dict['cod_balance'] = balance_amount
                 else:
-                    pass
+                    account_dict['cod_balance'] = balance_amount
+                    
                 account_dict['salary_deduction'] = dg.pending_salary_deduction
                 return response_with_payload(account_dict, None)
             else:
