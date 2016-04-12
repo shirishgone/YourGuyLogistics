@@ -141,6 +141,7 @@ class Vendor(models.Model):
     is_hyper_local = models.BooleanField(default = False)
     approved_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.PROTECT)
     approved_date = models.DateTimeField(auto_now_add=True, blank=True, null=True)
+    pickup_boy = models.ForeignKey('DeliveryGuy', null=True, blank=True, on_delete=models.PROTECT) 
 
     def __unicode__(self):
         return unicode(self.store_name)
