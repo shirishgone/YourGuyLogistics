@@ -169,6 +169,13 @@ def pagination_list():
     }
     return pagination_dict
 
+def account_list():
+    account_dict = {
+        'cod_balance': 0,
+        'salary_deduction': 0.0
+    }
+    return account_dict
+
 # Util for calculating worked hours
 def working_hours_calculation(dg_attendance):
     worked_hours = 0
@@ -1089,6 +1096,28 @@ class DGViewSet(viewsets.ModelViewSet):
                 }
                 ops_exec_dict.append(ops_dict)
             return response_with_payload(ops_exec_dict, None)
+        else:
+            return response_access_denied()
+
+    @detail_route(methods=['GET'])
+    def accounts(self, request, pk):
+        role = user_role(request.user)
+        if role == constants.DELIVERY_GUY:
+            dg = get_object_or_404(DeliveryGuy, pk = pk)
+            if dg.is_active is True:
+                account_dict = account_list()
+                balance_amount = cod_balance_calculation(dg)
+                if balance_amount is None:
+                    balance_amount = 0
+                    account_dict['cod_balance'] = balance_amount
+                else:
+                    account_dict['cod_balance'] = balance_amount
+                    
+                account_dict['salary_deduction'] = dg.pending_salary_deduction
+                return response_with_payload(account_dict, None)
+            else:
+                error_message = 'This is a deactivated dg'
+                return response_error_with_message(error_message)
         else:
             return response_access_denied()
 

@@ -56,6 +56,7 @@
 		*/
 		this.status_list = constants.status;
 		this.time_list = constants.time;
+		this.dg_assignment = constants.dg_assignment;
 		/*
 			@revertToPageOne is a function to revert back to first page if any kind of filter is applied
 		*/ 
@@ -156,10 +157,10 @@
 			}
 		};
 		/*
-			@dgSearchTextChange is a function for Delivery guy search for filter. When ever the filtered dg change, 
+			@vendorSearchTextChange is a function for Delivery guy search for filter. When ever the filtered dg change, 
 			this function is called.
 
-			@selectedDgChange is a callback function after delivery guy selection in the filter.
+			@selectedVendorChange is a callback function after delivery guy selection in the filter.
 		*/
 		this.vendorSearchTextChange = function(text){
 			var search = {
@@ -334,7 +335,7 @@
 			if (!self.params.vendor_id) {
 				self.params.vendor_name = undefined;
 			}
-			if (!self.params.dg_username) {
+			if (!self.params.dg_username || self.params.dg_username == 'UNASSIGNED_PICKUP' || self.params.dg_username == 'UNASSIGNED_DELIVERY' || self.params.dg_username == 'UNASSIGNED') {
 				self.params.dg_name = undefined;
 			}
 			$state.transitionTo($state.current, self.params, { reload: true, inherit: false, notify: true });
