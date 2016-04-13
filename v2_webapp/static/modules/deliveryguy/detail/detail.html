@@ -66,6 +66,7 @@
 					<div ng-repeat=" pin in dgDetail.DG.pincode">
 						<h5>{{pin}}</h5>
 					</div>
+					<h5 ng-show="! dgDetail.DG.pincode.length">----</h5>
 				</div>
 			</div>
 			<div flex="30" flex-xs="50" class="profile-data" ng-if="!dgDetail.DG.is_teamlead">
@@ -74,6 +75,7 @@
 					<div ng-repeat=" lead in dgDetail.DG.team_leads">
 						<h5>{{lead.name}}</h5>
 					</div>
+					<h5 ng-show="! dgDetail.DG.team_leads.length">----</h5>
 				</div>
 			</div>
 			<div flex="30" flex-xs="50" class="profile-data">
@@ -82,6 +84,7 @@
 					<div ng-repeat="op in dgDetail.DG.ops_managers">
 						<h5>{{op.name}}</h5>
 					</div>
+					<h5 ng-show="! dgDetail.DG.ops_managers.length">----</h5>
 				</div>
 			</div>
 			<div flex="30" flex-xs="50" class="profile-data">
@@ -90,6 +93,7 @@
 					<div ng-repeat="vn in dgDetail.DG.associated_vendors">
 						<h5>{{vn.name}}</h5>
 					</div>
+					<h5 ng-show="! dgDetail.DG.associated_vendors.length">----</h5>
 				</div>
 			</div>
 			<div flex="30" flex-xs="50" class="profile-data" ng-if="home.tabs.dgPromteTeamLead">
@@ -153,10 +157,10 @@
 												{{attendance.date | date :'MMM d'}}
 											</td>
 											<td>
-												{{attendance.login_time || 'Not Checked In' | date :'h mm a' }}
+												{{attendance.login_time || 'Not Checked In' | date :'h:mm a' }}
 											</td>
 											<td>
-												{{attendance.logout_time || 'Not Checked Out' | date :'h mm a' }}
+												{{attendance.logout_time || 'Not Checked Out' | date :'h:mm a' }}
 											</td>
 											<td>
 												{{attendance.worked_hrs}}
@@ -171,7 +175,7 @@
 						</div>
 					</md-content>
 				</md-tab>
-				<md-tab md-on-select="dgDetail.getTeamMembers()" ng-if="dgDetail.DG.is_teamlead">
+				<md-tab ng-if="dgDetail.DG.is_teamlead">
 					<md-tab-label>
 						TEAM LEAD
 					</md-tab-label>

@@ -16,9 +16,7 @@
 					ng-model="dgTeamLead.selectedTeamMembers" 
 					md-autocomplete-snap 
 					md-transform-chip="dgTeamLead.transformChip($chip)" 
-					md-require-match="true"
-					md-on-add="dgTeamLead.addTeamDgs($chip)"
-					md-on-remove="dgTeamLead.removeTeamDgs($chip)">
+					md-require-match="true">
 					<md-autocomplete 
 						md-no-cache="true"
 						md-selected-item="dgTeamLead.selectedItem" 
@@ -34,12 +32,11 @@
 					<md-chip-template>
 						<span>
 							<strong>{{$chip.name}}</strong>
-							<em>({{$chip.phone_number}})</em>
 						</span>
 					</md-chip-template>
 				</md-chips>
 			</div>
-			<div class="pincode">
+			<!-- <div class="pincode">
 				<h3>Select Pin Codes</h3>
 				<md-chips 
 					ng-model="dgTeamLead.selectedPincodes" 
@@ -66,7 +63,7 @@
 						</span>
 					</md-chip-template>
 				</md-chips>
-			</div>
+			</div> -->
 		</div>
 	</md-dialog-content>
 	<md-dialog-actions layout="row">
@@ -74,7 +71,7 @@
         <md-button ng-click="dgTeamLead.cancel()" class="md-warn">
             Cancel
         </md-button>
-        <md-button ng-click="dgTeamLead.submitTlData()" class="md-primary" ng-disabled="dgTeamLead.selectedTeamMembers.length == 0 || dgTeamLead.selectedPincodes.length == 0" ng-if="!dgTeamLead.DG.is_teamlead" style="margin-right:20px;">
+        <md-button ng-click="dgTeamLead.submitTlData()" class="md-primary" ng-disabled="dgTeamLead.selectedTeamMembers.length == 0" ng-if="!dgTeamLead.DG.is_teamlead" style="margin-right:20px;">
             Done
         </md-button>
         <md-button ng-click="dgTeamLead.submitTlData()" class="md-primary" ng-disabled="dgTeamLead.selectedTeamMembers.length == 0" ng-if="dgTeamLead.DG.is_teamlead" style="margin-right:20px;">

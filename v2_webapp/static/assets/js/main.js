@@ -612,7 +612,7 @@
 	};
 
 	angular.module('ygVendorApp')
-	.constant('constants', prodConstants);
+	.constant('constants', constants);
 })();
 (function(){
 	'use strict';
@@ -2388,12 +2388,11 @@
 	.config(['$stateProvider',function ($stateProvider) {
 		$stateProvider
 		.state('home.dgList', {
-			url: "^/deliveryguy/list?start_date&end_date&attendance&search&page",
+			url: "^/deliveryguy/list?start_date&end_date&attendance&is_teamlead&search&page",
 			templateUrl: "/static/modules/deliveryguy/list/list.html",
 			controllerAs : 'dgList',
     		controller: "dgListCntrl",
     		resolve : {
-    			DeliveryGuy : 'DeliveryGuy',
     			access: ["Access","constants", function (Access,constants) { 
     						var allowed_user = [constants.userRole.OPS,constants.userRole.OPS_MANAGER,constants.userRole.SALES,constants.userRole.SALES_MANAGER,constants.userRole.HR];
     						return Access.hasAnyRole(allowed_user); 
@@ -2416,6 +2415,7 @@
 	    						$stateParams.end_date = moment(new Date($stateParams.end_date));
 	    						$stateParams.end_date.endOf('day');
 	    					}
+	    					$stateParams.is_teamlead = ($stateParams.is_teamlead == 'true')? Boolean($stateParams.is_teamlead): undefined;
     						$stateParams.start_date = ($stateParams.start_date !== undefined) ? $stateParams.start_date.toISOString() : x.toISOString();
     						$stateParams.end_date = ($stateParams.end_date !== undefined) ?  $stateParams.end_date.toISOString() : y.toISOString();
     						$stateParams.attendance = ($stateParams.attendance!== undefined) ? $stateParams.attendance : 'ALL';
@@ -2437,7 +2437,8 @@
     			leadUserList : ['DeliveryGuy','$q', function (DeliveryGuy,$q){
 		    				return $q.all ({
 		    					TeamLead : DeliveryGuy.dgTeamLeadQuery.query().$promise,
-		    					OpsManager : DeliveryGuy.dgOpsManagerQuery.query().$promise
+		    					OpsManager : DeliveryGuy.dgOpsManagerQuery.query().$promise,
+		    					Pincodes : DeliveryGuy.dgServicablePincodes.query().$promise
 		    				});
     					}],
     		}
@@ -2562,6 +2563,7 @@
 	var dgListCntrl = function($state,$mdSidenav,$stateParams,dgs,constants,DeliveryGuy,Notification){
 		var self = this;
 		this.params = $stateParams;
+		console.log(this.params);
 		this.params.start_date = new Date(this.params.start_date);
 		this.params.end_date = new Date(this.params.end_date);
 		this.dg_status = constants.dg_status;
@@ -2615,28 +2617,29 @@
 			self.getDgs();
 			
 		};
-		this.downloadAttendance = function(){
-			Notification.loaderStart();
-			var str = '';
-			var noOfdays = Math.ceil(moment.duration(moment(self.params.end_date).diff(moment(self.params.start_date))).asDays());
-			var attendance_params = {
-				start_date : moment(self.params.start_date).startOf('day').toISOString(),
-				end_date   : moment(self.params.end_date).endOf('day').toISOString()
-			};
-			for(var i = 0 ; i < noOfdays ; i++ ){
-				str += ',IsoToDate(attendance ->'+ i +'-> date) AS Date_'+(i+1)+',attendance ->'+ i +'-> worked_hrs AS Hours_'+(i+1);
-			}
-			DeliveryGuy.dgsAttendance.query(attendance_params,function(response){
-				// alasql('SEARCH / AS @a UNION ALL(attendance / AS @b RETURN(@a.name AS Name , IsoToDate(@b.date) AS DATE, @b.worked_hrs AS Hours)) INTO XLSX("attendance.xlsx",{headers:true}) FROM ?',[response.payload.data]);
-				var select_str = 'SELECT name AS Name'+str;
-				alasql( select_str+' INTO XLSX("attendance.xlsx",{headers:true}) FROM ?',[response.payload.data]);
-				Notification.loaderComplete();
-			});
-		};
+		// this.downloadAttendance = function(){
+		// 	Notification.loaderStart();
+		// 	var str = '';
+		// 	var noOfdays = Math.ceil(moment.duration(moment(self.params.end_date).diff(moment(self.params.start_date))).asDays());
+		// 	var attendance_params = {
+		// 		start_date : moment(self.params.start_date).startOf('day').toISOString(),
+		// 		end_date   : moment(self.params.end_date).endOf('day').toISOString()
+		// 	};
+		// 	for(var i = 0 ; i < noOfdays ; i++ ){
+		// 		str += ',IsoToDate(attendance ->'+ i +'-> date) AS Date_'+(i+1)+',attendance ->'+ i +'-> worked_hrs AS Hours_'+(i+1);
+		// 	}
+		// 	DeliveryGuy.dgsAttendance.query(attendance_params,function(response){
+		// 		// alasql('SEARCH / AS @a UNION ALL(attendance / AS @b RETURN(@a.name AS Name , IsoToDate(@b.date) AS DATE, @b.worked_hrs AS Hours)) INTO XLSX("attendance.xlsx",{headers:true}) FROM ?',[response.payload.data]);
+		// 		var select_str = 'SELECT name AS Name'+str;
+		// 		alasql( select_str+' INTO XLSX("attendance.xlsx",{headers:true}) FROM ?',[response.payload.data]);
+		// 		Notification.loaderComplete();
+		// 	});
+		// };
 		/*
 			@getOrders rleoads the order controller according too the filter to get the new filtered data.
 		*/
 		this.getDgs = function(){
+			console.log('call');
 			$state.transitionTo($state.current, self.params, { reload: true, inherit: false, notify: true });
 		};
 	};
@@ -2660,7 +2663,7 @@
 		Its resolved only after loading all the operation manager and team leads.
 			
 	*/
-	var dgCreateCntrl = function ($state,$mdSidenav,dgConstants,DeliveryGuy,leadUserList,PreviousState){
+	var dgCreateCntrl = function ($state,$mdSidenav,dgConstants,DeliveryGuy,leadUserList,PreviousState,Notification){
 		var self = this;
 		/*
 			@shift_timings,@transportation_mode : 
@@ -2675,6 +2678,7 @@
 		*/
 		self.OpsManagers = leadUserList.OpsManager.payload.data;
 		self.TeamLeads   = leadUserList.TeamLead.payload.data;
+		self.Pincodes    = leadUserList.Pincodes.payload.data;
 		/*
 			@dg: is a instance of delliveryguy.dg resource for saving the dg data a with ease
 		*/
@@ -2695,8 +2699,10 @@
 			It redirects to list view on succesfull creation of dg or handle's error on creation.
 		*/
 		self.create = function(){
+			Notification.loaderStart();
 			self.dg.shift_timing = angular.fromJson(self.dg.shift_timing);
-			self.dg.$save(function(){
+			console.log(self.dg);
+			self.dg.$save(function(response){
 				self.goBack();
 			});
 		};
@@ -2710,6 +2716,7 @@
 		'DeliveryGuy',
 		'leadUserList',
 		'PreviousState',
+		'Notification',
 		dgCreateCntrl
 	]);
 })();
@@ -2728,7 +2735,7 @@
 		self.showEditDialog = function(){
 			var useFullScreen = ($mdMedia('sm') || $mdMedia('xs'));
 			$mdDialog.show({
-				controller         : ('EditDgCntrl',['$mdDialog','dgConstants','DG','OpsManagers','TeamLeads',EditDgCntrl]),
+				controller         : ('EditDgCntrl',['$mdDialog','dgConstants','DG','OpsManagers','TeamLeads','DeliveryGuy',EditDgCntrl]),
 				controllerAs       : 'dgEdit',
 				templateUrl        : '/static/modules/deliveryguy/dialogs/edit.html?nd=' + Date.now(),
 				parent             : angular.element(document.body),
@@ -2797,9 +2804,12 @@
 				self.associated_dg_list = response.payload.data;
 			});
 		};
+		if(self.DG.is_teamlead){
+			self.getTeamMembers();
+		}
 		self.toTeamlead = function(){
 			$mdDialog.show({
-				controller         : ('AddTeamLeadCntrl',['$mdDialog','DG','DeliveryGuy',AddTeamLeadCntrl]),
+				controller         : ('AddTeamLeadCntrl',['$mdDialog','DG','DeliveryGuy','teamMembers',AddTeamLeadCntrl]),
 				controllerAs       : 'dgTeamLead',
 				templateUrl        : '/static/modules/deliveryguy/dialogs/teamlead.html?nd=' + Date.now(),
 				parent             : angular.element(document.body),
@@ -2807,6 +2817,7 @@
 				fullscreen         : true,
 				locals             : {
 					DG : self.DG,
+					teamMembers : self.associated_dg_list
 				},
 			})
 			.then(function(data) {
@@ -2865,9 +2876,10 @@
 		};
 	};
 
-	function EditDgCntrl($mdDialog,dgConstants,DG,OpsManagers,TeamLeads){
+	function EditDgCntrl($mdDialog,dgConstants,DG,OpsManagers,TeamLeads,DeliveryGuy){
 		var dgEdit = this;
 		dgEdit.DG = angular.copy(DG);
+		console.log(dgEdit.DG);
 		dgEdit.DG.team_lead_dg_ids   = [];
 		dgEdit.DG.ops_manager_ids = [];
 		dgEdit.DG.team_leads.forEach(function(lead){
@@ -2882,6 +2894,10 @@
 		dgEdit.TeamLeads = TeamLeads;
 		dgEdit.shift_timings = dgConstants.shift_timings;
 		dgEdit.transportation_mode = dgConstants.transportation_mode;
+
+		DeliveryGuy.dgServicablePincodes.query().$promise.then(function (response){
+				dgEdit.Pincodes =  response.payload.data;
+		});
 
 		dgEdit.findShiftTime = function(shift_time){
 			return dgEdit.shift_timings.findIndex(function(shift){
@@ -2898,17 +2914,23 @@
 		};
 	}
 
-	function AddTeamLeadCntrl($mdDialog,DG,DeliveryGuy){
+	function AddTeamLeadCntrl($mdDialog,DG,DeliveryGuy,teamMembers){
 		var dgTeamLead = this;
-		dgTeamLead.DG = DG;
+		dgTeamLead.DG = angular.copy(DG);
 		dgTeamLead.selectedTeamMembers = [];
-		dgTeamLead.selectedPincodes = [];
+
 		dgTeamLead.teamLeadData = {
 			id: DG.id,
 			pincodes : [],
 			associate_dgs : []
 		};
 
+		if(teamMembers) {
+			teamMembers.forEach(function(member){
+				dgTeamLead.selectedTeamMembers.push({name: member.dg_name, phone_number: member.dg_phonenumber,id: member.dg_id});
+			});
+		}
+		
 		dgTeamLead.cancel = function() {
 			$mdDialog.cancel();
 		};
@@ -2917,20 +2939,20 @@
 				dgTeamLead.pincodes =  response.payload.data;
 		});
 
-		dgTeamLead.addTeamDgs = function(chip){
-			dgTeamLead.teamLeadData.associate_dgs.push(chip.id);
-		};
-		dgTeamLead.removeTeamDgs = function(chip){
-			var index = dgTeamLead.teamLeadData.associate_dgs.indexOf(chip.id);
-			dgTeamLead.teamLeadData.associate_dgs.splice(index,1);
-		};
-		dgTeamLead.addTlPincode = function(chip){
-			dgTeamLead.teamLeadData.pincodes.push(chip.pincode);
-		};
-		dgTeamLead.removeTlPincode = function(chip){
-			var index = dgTeamLead.teamLeadData.pincodes.indexOf(chip.pincode);
-			dgTeamLead.teamLeadData.pincodes.splice(index,1);
-		};
+		// dgTeamLead.addTeamDgs = function(chip){
+		// 	dgTeamLead.teamLeadData.associate_dgs.push(chip.id);
+		// };
+		// dgTeamLead.removeTeamDgs = function(chip){
+		// 	var index = dgTeamLead.teamLeadData.associate_dgs.indexOf(chip.id);
+		// 	dgTeamLead.teamLeadData.associate_dgs.splice(index,1);
+		// };
+		// dgTeamLead.addTlPincode = function(chip){
+		// 	dgTeamLead.teamLeadData.pincodes.push(chip.pincode);
+		// };
+		// dgTeamLead.removeTlPincode = function(chip){
+		// 	var index = dgTeamLead.teamLeadData.pincodes.indexOf(chip.pincode);
+		// 	dgTeamLead.teamLeadData.pincodes.splice(index,1);
+		// };
 
 		dgTeamLead.dgSearch = function(text){
 			var search = {
@@ -2948,14 +2970,17 @@
 			}
 		};
 
-		dgTeamLead.transformPinChip = function(chip) {
-			// If it is an object, it's already a known chip
-			if (angular.isObject(chip)) {
-				return chip;
-			}
-		};
+		// dgTeamLead.transformPinChip = function(chip) {
+		// 	// If it is an object, it's already a known chip
+		// 	if (angular.isObject(chip)) {
+		// 		return chip;
+		// 	}
+		// };
 
 		dgTeamLead.submitTlData = function(){
+			dgTeamLead.selectedTeamMembers.forEach(function(team){
+				dgTeamLead.teamLeadData.associate_dgs.push(team.id);
+			});
 			$mdDialog.hide(dgTeamLead.teamLeadData);
 		};
 	}
