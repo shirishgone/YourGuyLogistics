@@ -109,7 +109,7 @@ def dg_details_dict(delivery_guy):
         'is_teamlead': delivery_guy.is_teamlead,
         'cod_balance':cod_balance,
         'salary_deduction':delivery_guy.pending_salary_deduction,
-        'pincode': [],
+        'pincodes': [],
         'ops_managers': [],
         'team_leads': [],
         'associated_vendors':[]
@@ -241,7 +241,7 @@ class DGViewSet(viewsets.ModelViewSet):
                 if delivery_guy_tl.serving_pincodes is not None:
                     pincodes = delivery_guy_tl.serving_pincodes.all()
                     for single_pincode in pincodes:
-                        detail_dict['pincode'].append(single_pincode.pincode)
+                        detail_dict['pincodes'].append(single_pincode.pincode)
 
             if delivery_guy.profile_picture is not None:
                 detail_dict['profile_picture'] = delivery_guy.profile_picture.name
