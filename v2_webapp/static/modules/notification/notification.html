@@ -7,7 +7,7 @@
 		<span flex></span>
 	</div>
 </md-toolbar>
-<md-content flex layout-fill layout="column" class="notification">
+<md-content flex layout-fill layout="column" class="notification"  ng-if="notification.total_notifications > 0">
 	<section flex="90" class="list" layout-wrap layout="row" layout-align="center start">
 		<div layout="row" class="notice" flex="100" ng-repeat="notice in notification.notices"  ng-class="{'unread' : !notice.read}" ng-click="notification.makeAsRead(notice)">
 			<div class="image">
@@ -28,3 +28,8 @@
 		<div yd-pagination total="{{notification.total_notifications}}" total-page="{{notification.total_pages}}" params="notification.params" list-length="{{notification.notices.length}}" paginate="notification.paginate" get-data="notification.getNotifications()"></div>
 	</section>
 </md-content>
+<md-content flex layout-align="center center" class="no-content" layout="row" class="notification"  ng-if="notification.total_notifications == 0">
+	<div flex="50" flex-xs="90">
+		<img src="/static/assets/images/notification/no-notification.png">
+	</div>
+</md-content> 
