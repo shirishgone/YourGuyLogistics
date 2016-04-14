@@ -21,7 +21,7 @@ admin.site.register(DGAttendance)
 admin.site.register(Industry)
 
 class VendorAdmin(admin.ModelAdmin):
-    raw_id_fields = ('addresses',)
+    raw_id_fields = ['addresses','approved_by','pickup_boy']
 admin.site.register(Vendor, VendorAdmin)
 
 
