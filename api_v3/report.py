@@ -8,8 +8,8 @@ from api_v3.utils import send_email, ist_day_start, ist_day_end
 from yourguy.models import DeliveryGuy, OrderDeliveryStatus, DGAttendance, Vendor, Employee
 from rest_framework.decorators import api_view
 
-@api_view(['GET'])
-def daily_report(request):
+#@api_view(['GET'])
+def daily_report():
     date = datetime.today()
     day_start = ist_day_start(date)
     day_end = ist_day_end(date)
@@ -176,11 +176,11 @@ def daily_report(request):
         email_body = email_body + "\n\n- YourGuy BOT"
 
         send_email(constants.EMAIL_DAILY_REPORT, email_subject, email_body)
-        return Response(status=status.HTTP_200_OK)
+        #return Response(status=status.HTTP_200_OK)
         # ------------------------------------------------------------------------------------------------
 
-@api_view(['GET'])
-def cod_report(request):
+#@api_view(['GET'])
+def cod_report():
     date = datetime.today()
     day_start = ist_day_start(date)
     day_end = ist_day_end(date)
@@ -369,9 +369,10 @@ def cod_report(request):
         email_body = email_body + "\n\n- YourGuy BOT"
 
         send_email(constants.EMAIL_COD_REPORT, email_subject, email_body)
-    return Response(status=status.HTTP_200_OK)
+    #return Response(status=status.HTTP_200_OK)
         # ------------------------------------------------------------------------------------------------
 
+#@api_view(['GET'])
 def dg_report():
     date = datetime.today()
     day_start = ist_day_start(date)
@@ -583,9 +584,10 @@ def dg_report():
         email_body = email_body + "\n"
         email_body = email_body + "\n\n- YourGuy BOT"
         send_email(constants.EMAIL_DG_REPORT, email_subject, email_body)
+    #return Response(status=status.HTTP_200_OK)
 
-@api_view(['GET'])
-def vendor_report(request):
+#@api_view(['GET'])
+def vendor_report():
     date = datetime.today()
     day_start = ist_day_start(date)
     day_end = ist_day_end(date)
@@ -689,7 +691,4 @@ def vendor_report(request):
             email_body = email_body + "\n\n- YourGuy BOT"
 
             send_email(vendor_mail_id, email_subject, email_body)
-
-
-    return Response(status=status.HTTP_200_OK)
-
+    #return Response(status=status.HTTP_200_OK)
