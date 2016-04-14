@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 from dateutil.rrule import rrule, DAILY
 import pytz
@@ -39,6 +40,7 @@ def dg_list_dict(delivery_guy, attendance, no_of_assigned_orders, no_of_executed
         'phone_number': delivery_guy.user.username,
         'app_version': delivery_guy.app_version,
         'status': delivery_guy.status,
+        'is_teamlead': delivery_guy.is_teamlead,
         'employee_code': delivery_guy.employee_code,
         'no_of_assigned_orders': no_of_assigned_orders,
         'no_of_executed_orders': no_of_executed_orders,
@@ -272,6 +274,7 @@ class DGViewSet(viewsets.ModelViewSet):
         date_string = self.request.QUERY_PARAMS.get('date', None)
         filter_start_date = request.QUERY_PARAMS.get('start_date', None)
         filter_end_date = request.QUERY_PARAMS.get('end_date', None)
+        is_teamlead = request.QUERY_PARAMS.get('is_teamlead', None)
         attendance_status = self.request.QUERY_PARAMS.get('attendance_status', None)
 
         # DATE FILTERING -------------------------------------------------------------
@@ -321,6 +324,14 @@ class DGViewSet(viewsets.ModelViewSet):
         else:
             all_dgs = DeliveryGuy.objects.filter(is_active = True).order_by('user__first_name')
 
+            # TEAMLEAD FILTERING  ---------------------------------------------
+            if is_teamlead is not None:
+                is_teamlead_bool = json.loads(is_teamlead.lower())
+                if is_teamlead_bool is True:
+                    all_dgs = all_dgs.filter(is_teamlead = True)
+                else:
+                    all_dgs = all_dgs.filter(is_teamlead = False)
+
             # SEARCH KEYWORD FILTERING ---------------------------------------------------
             if search_query is not None:
                 if search_query.isdigit():
@@ -351,6 +362,7 @@ class DGViewSet(viewsets.ModelViewSet):
                     final_dgs = all_dgs
             else:
                 final_dgs = all_dgs
+
 
             # PAGINATE ---------------------------------------------------------------------------
             total_dg_count = len(final_dgs)
@@ -456,7 +468,6 @@ class DGViewSet(viewsets.ModelViewSet):
                         worked_hours = working_hours_calculation(attendance)
                         if worked_hours < 0:
                             worked_hours = 0
-
                     result.append(dg_list_dict(delivery_guy, attendance, no_of_assigned_orders, no_of_executed_orders, worked_hours))
                 pagination_dict['total_pages'] = total_pages
                 pagination_dict['total_count'] = total_dg_count
@@ -535,7 +546,7 @@ class DGViewSet(viewsets.ModelViewSet):
             try:
                 role = user_role(request.user)
                 name = request.data.get('name')
-                serviceable_pincodes = request.data.get('pincodes')
+                serviceable_pincodes = request.data.get('pincode')
                 shift_time = request.data.get('shift_time')
                 transportation_mode = request.data.get('transportation_mode')
                 ops_manager_ids = request.data.get('ops_manager_ids')
@@ -543,7 +554,7 @@ class DGViewSet(viewsets.ModelViewSet):
                 associated_dgs = request.data.get('associate_dgs')
 
             except Exception as e:
-                params = ['name(optional)', 'pincodes(optional)', 'shift_time(optional)',
+                params = ['name(optional)', 'pincode(optional)', 'shift_time(optional)',
                           'transportation_mode(optional)', 'ops_manager_ids(optional)',
                           'team_lead_dg_ids(optional)', 'associated_dgs(optional)']
                 return response_incomplete_parameters(params)
@@ -560,6 +571,8 @@ class DGViewSet(viewsets.ModelViewSet):
             if delivery_guy.is_teamlead is True:
                 dg_team_lead = DeliveryTeamLead.objects.get(delivery_guy=delivery_guy)
                 if serviceable_pincodes is not None:
+                    dg_team_lead.serving_pincodes.clear()
+                    dg_team_lead.save()
                     for single_serviceable_pincodes in serviceable_pincodes:
                         single_pincode = single_serviceable_pincodes
                         pincode = ServiceablePincode.objects.get(pincode=single_pincode)
@@ -567,6 +580,9 @@ class DGViewSet(viewsets.ModelViewSet):
                         dg_team_lead.save()
 
                 if associated_dgs is not None:
+                    # for the current tl remove all his associated dgs
+                    dg_team_lead.associate_delivery_guys.clear()
+                    dg_team_lead.save()
                     for assiocate_dg_id in associated_dgs:
                         associate_delivery_guy = DeliveryGuy.objects.get(id = assiocate_dg_id)
                         dg_team_lead.associate_delivery_guys.add(associate_delivery_guy)
@@ -1004,6 +1020,7 @@ class DGViewSet(viewsets.ModelViewSet):
         role = user_role(request.user)
         if role == constants.HR or role == constants.OPERATIONS or role == constants.OPERATIONS_MANAGER:
             delivery_guy = get_object_or_404(DeliveryGuy, pk=pk)
+            delivery_guy.associated_vendors.clear()
             vendor_ids = request.data['vendor_ids']
             for vendor_id in vendor_ids:
                 vendor = get_object_or_404(Vendor, pk = vendor_id)
