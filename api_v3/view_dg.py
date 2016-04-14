@@ -425,11 +425,12 @@ class DGViewSet(viewsets.ModelViewSet):
                     cumulative_dg_list['no_of_executed_orders'] = no_of_executed_orders
 
                     if attendances is not None:
+                        worked_hours = 0
                         for single_day in attendances:
-                            worked_hours = working_hours_calculation(single_day)
-                            if worked_hours < 0:
-                                worked_hours = 0
-                            worked_hours = worked_hours + worked_hours
+                            single_day_work_hours = working_hours_calculation(single_day)
+                            if single_day_work_hours < 0:
+                                single_day_work_hours = 0
+                            worked_hours = worked_hours + single_day_work_hours
 
                             cumulative_dg_list['worked_hours'] = worked_hours
                     result.append(cumulative_dg_list)

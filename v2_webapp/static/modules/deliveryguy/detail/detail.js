@@ -13,7 +13,7 @@
 		self.showEditDialog = function(){
 			var useFullScreen = ($mdMedia('sm') || $mdMedia('xs'));
 			$mdDialog.show({
-				controller         : ('EditDgCntrl',['$mdDialog','dgConstants','DG','OpsManagers','TeamLeads',EditDgCntrl]),
+				controller         : ('EditDgCntrl',['$mdDialog','dgConstants','DG','OpsManagers','TeamLeads','DeliveryGuy',EditDgCntrl]),
 				controllerAs       : 'dgEdit',
 				templateUrl        : '/static/modules/deliveryguy/dialogs/edit.html?nd=' + Date.now(),
 				parent             : angular.element(document.body),
@@ -82,9 +82,12 @@
 				self.associated_dg_list = response.payload.data;
 			});
 		};
+		if(self.DG.is_teamlead){
+			self.getTeamMembers();
+		}
 		self.toTeamlead = function(){
 			$mdDialog.show({
-				controller         : ('AddTeamLeadCntrl',['$mdDialog','DG','DeliveryGuy',AddTeamLeadCntrl]),
+				controller         : ('AddTeamLeadCntrl',['$mdDialog','DG','DeliveryGuy','teamMembers',AddTeamLeadCntrl]),
 				controllerAs       : 'dgTeamLead',
 				templateUrl        : '/static/modules/deliveryguy/dialogs/teamlead.html?nd=' + Date.now(),
 				parent             : angular.element(document.body),
@@ -92,6 +95,7 @@
 				fullscreen         : true,
 				locals             : {
 					DG : self.DG,
+					teamMembers : self.associated_dg_list
 				},
 			})
 			.then(function(data) {
@@ -150,9 +154,10 @@
 		};
 	};
 
-	function EditDgCntrl($mdDialog,dgConstants,DG,OpsManagers,TeamLeads){
+	function EditDgCntrl($mdDialog,dgConstants,DG,OpsManagers,TeamLeads,DeliveryGuy){
 		var dgEdit = this;
 		dgEdit.DG = angular.copy(DG);
+		console.log(dgEdit.DG);
 		dgEdit.DG.team_lead_dg_ids   = [];
 		dgEdit.DG.ops_manager_ids = [];
 		dgEdit.DG.team_leads.forEach(function(lead){
@@ -167,6 +172,10 @@
 		dgEdit.TeamLeads = TeamLeads;
 		dgEdit.shift_timings = dgConstants.shift_timings;
 		dgEdit.transportation_mode = dgConstants.transportation_mode;
+
+		DeliveryGuy.dgServicablePincodes.query().$promise.then(function (response){
+				dgEdit.Pincodes =  response.payload.data;
+		});
 
 		dgEdit.findShiftTime = function(shift_time){
 			return dgEdit.shift_timings.findIndex(function(shift){
@@ -183,17 +192,23 @@
 		};
 	}
 
-	function AddTeamLeadCntrl($mdDialog,DG,DeliveryGuy){
+	function AddTeamLeadCntrl($mdDialog,DG,DeliveryGuy,teamMembers){
 		var dgTeamLead = this;
-		dgTeamLead.DG = DG;
+		dgTeamLead.DG = angular.copy(DG);
 		dgTeamLead.selectedTeamMembers = [];
-		dgTeamLead.selectedPincodes = [];
+
 		dgTeamLead.teamLeadData = {
 			id: DG.id,
 			pincodes : [],
 			associate_dgs : []
 		};
 
+		if(teamMembers) {
+			teamMembers.forEach(function(member){
+				dgTeamLead.selectedTeamMembers.push({name: member.dg_name, phone_number: member.dg_phonenumber,id: member.dg_id});
+			});
+		}
+		
 		dgTeamLead.cancel = function() {
 			$mdDialog.cancel();
 		};
@@ -202,20 +217,20 @@
 				dgTeamLead.pincodes =  response.payload.data;
 		});
 
-		dgTeamLead.addTeamDgs = function(chip){
-			dgTeamLead.teamLeadData.associate_dgs.push(chip.id);
-		};
-		dgTeamLead.removeTeamDgs = function(chip){
-			var index = dgTeamLead.teamLeadData.associate_dgs.indexOf(chip.id);
-			dgTeamLead.teamLeadData.associate_dgs.splice(index,1);
-		};
-		dgTeamLead.addTlPincode = function(chip){
-			dgTeamLead.teamLeadData.pincodes.push(chip.pincode);
-		};
-		dgTeamLead.removeTlPincode = function(chip){
-			var index = dgTeamLead.teamLeadData.pincodes.indexOf(chip.pincode);
-			dgTeamLead.teamLeadData.pincodes.splice(index,1);
-		};
+		// dgTeamLead.addTeamDgs = function(chip){
+		// 	dgTeamLead.teamLeadData.associate_dgs.push(chip.id);
+		// };
+		// dgTeamLead.removeTeamDgs = function(chip){
+		// 	var index = dgTeamLead.teamLeadData.associate_dgs.indexOf(chip.id);
+		// 	dgTeamLead.teamLeadData.associate_dgs.splice(index,1);
+		// };
+		// dgTeamLead.addTlPincode = function(chip){
+		// 	dgTeamLead.teamLeadData.pincodes.push(chip.pincode);
+		// };
+		// dgTeamLead.removeTlPincode = function(chip){
+		// 	var index = dgTeamLead.teamLeadData.pincodes.indexOf(chip.pincode);
+		// 	dgTeamLead.teamLeadData.pincodes.splice(index,1);
+		// };
 
 		dgTeamLead.dgSearch = function(text){
 			var search = {
@@ -233,14 +248,17 @@
 			}
 		};
 
-		dgTeamLead.transformPinChip = function(chip) {
-			// If it is an object, it's already a known chip
-			if (angular.isObject(chip)) {
-				return chip;
-			}
-		};
+		// dgTeamLead.transformPinChip = function(chip) {
+		// 	// If it is an object, it's already a known chip
+		// 	if (angular.isObject(chip)) {
+		// 		return chip;
+		// 	}
+		// };
 
 		dgTeamLead.submitTlData = function(){
+			dgTeamLead.selectedTeamMembers.forEach(function(team){
+				dgTeamLead.teamLeadData.associate_dgs.push(team.id);
+			});
 			$mdDialog.hide(dgTeamLead.teamLeadData);
 		};
 	}
