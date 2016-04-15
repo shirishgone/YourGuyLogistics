@@ -801,14 +801,20 @@ class CODViewSet(viewsets.ViewSet):
                     vendor = get_object_or_404(Vendor, pk=filter_vendor_id)
                     if vendor is not None:
                         all_transactions = filter(lambda record: record['vendor_name'] == vendor.store_name, all_transactions)
+                        total_verified_bank_deposits_count = len(all_transactions)
                 pagination_count_dict = pagination_count_bank_deposit()
                 pagination_count_dict['total_pages'] = total_pages
                 pagination_count_dict['total_count'] = total_verified_bank_deposits_count
                 pagination_count_dict['all_transactions'] = all_transactions
                 return response_with_payload(pagination_count_dict, None)
             else:
-                error_message = 'No Verified Bank Deposits found.'
-                return response_error_with_message(error_message)
+                total_verified_bank_deposits_count = len(verified_bank_deposits)
+                total_pages = int(total_verified_bank_deposits_count / constants.PAGINATION_PAGE_SIZE) + 1
+                pagination_count_dict = pagination_count_bank_deposit()
+                pagination_count_dict['total_pages'] = total_pages
+                pagination_count_dict['total_count'] = total_verified_bank_deposits_count
+                pagination_count_dict['all_transactions'] = all_transactions
+                return response_with_payload(pagination_count_dict, None)
         else:
             return response_access_denied()
 
