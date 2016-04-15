@@ -43,7 +43,6 @@
 		self.create = function(){
 			Notification.loaderStart();
 			self.dg.shift_timing = angular.fromJson(self.dg.shift_timing);
-			console.log(self.dg);
 			self.dg.$save(function(response){
 				self.goBack();
 			});

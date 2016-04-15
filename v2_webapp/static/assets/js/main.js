@@ -1692,12 +1692,32 @@
 })();
 (function(){
 	'use strict';
-	var orderDgAssign = function($mdMedia,$mdDialog){
+	var orderDgAssign = function($mdMedia,$mdDialog,Notification,$q){
 		return {
-			openStatusDialog : function(){
+			openStatusDialog : function(order){
+				var deferred = $q.defer();
+				var status = {
+					pickup: true,
+					delivery: true
+				};
+				if(order){
+					if(!order.pickupguy_id){
+						Notification.showError('Please assign Pickup guy for the order');
+						deferred.reject('no pickup guy');
+						return deferred.promise;
+					}
+					else if(order.pickupguy_id && !order.deliveryguy_id){
+						status.delivery = false;
+					}
+					else if(!order.pickupguy_id && !order.deliveryguy_id){
+						Notification.showError('Please assign DG for the order');
+						deferred.reject('no dg guy');
+						return deferred.promise;
+					}
+				}
 				var useFullScreen = ($mdMedia('sm') || $mdMedia('xs'));
 				return $mdDialog.show({
-					controller         : ('OrderStatusUpdateCntrl',['$mdDialog',OrderStatusUpdateCntrl]),
+					controller         : ('OrderStatusUpdateCntrl',['$mdDialog','status',OrderStatusUpdateCntrl]),
 					controllerAs       : 'statusUpdate',
 					templateUrl        : '/static/modules/order/dialogs/status-update.html?nd=' + Date.now(),
 					parent             : angular.element(document.body),
@@ -1705,6 +1725,9 @@
 					fullscreen         : useFullScreen,
 					openFrom           : '#options',
 					closeTo            : '#options',
+					locals             : {
+								status : status
+					},
 				});
 			}
 
@@ -1713,8 +1736,9 @@
 	/*
 		@OrderStatusUpdateCntrl controller function for the update status for orders dialog
 	*/
-	function OrderStatusUpdateCntrl($mdDialog){
+	function OrderStatusUpdateCntrl($mdDialog,status){
 		var self = this;
+		self.status = status;
 		this.status_object = {
 			data : {}
 		};
@@ -1731,12 +1755,14 @@
 	.factory('OrderStatusUpdate', [
 		'$mdMedia',
 		'$mdDialog',
+		'Notification',
+		'$q',
 		orderDgAssign
 	]);
 })();
 (function(){
 	'use strict';
-	var opsOrderCntrl = function ($state,$mdSidenav,$mdDialog,$mdMedia,$stateParams,DeliveryGuy,Order,Vendor,orders,constants,orderSelection,Pincodes,$q,orderDgAssign,OrderStatusUpdate){
+	var opsOrderCntrl = function ($state,$mdSidenav,$mdDialog,$mdMedia,$stateParams,DeliveryGuy,Order,Vendor,orders,constants,orderSelection,Pincodes,$q,orderDgAssign,OrderStatusUpdate,Notification){
 		/*
 			 Check if any filter is applied or not to show no-content images
 		*/
@@ -1976,7 +2002,7 @@
 		};
 
 		this.statusUpdateForSingleDialog = function(order){
-			OrderStatusUpdate.openStatusDialog()
+			OrderStatusUpdate.openStatusDialog(order)
 			.then(function(status_data) {
 				status_data.delivery_ids = [order.id];
 				if(status_data.status == 'pickup'){
@@ -1995,6 +2021,11 @@
 		};
 
 		this.statusUpdateDialog = function(){
+			for(var i = 0; i< orderSelection.selectedItemArray.length; i++){
+				if(!orderSelection.selectedItemArray[i].deliveryguy_id || !orderSelection.selectedItemArray[i].pickupguy_id){
+					 return Notification.showError('Please assign DG for each order');
+				}
+			}
 			OrderStatusUpdate.openStatusDialog()
 			.then(function(status_data) {
 				status_data.delivery_ids = orderSelection.getAllItemsIds();
@@ -2095,6 +2126,7 @@
 		'$q',
 		'orderDgAssign',
 		'OrderStatusUpdate',
+		'Notification',
 		opsOrderCntrl
 	]);
 })();
@@ -2324,7 +2356,7 @@
 			});
 		};
 		self.statusUpdateDialog = function(order){
-			OrderStatusUpdate.openStatusDialog()
+			OrderStatusUpdate.openStatusDialog(order)
 			.then(function(status_data) {
 				status_data.delivery_ids = [order.id];
 				if(status_data.status == 'pickup'){
@@ -2701,7 +2733,6 @@
 		self.create = function(){
 			Notification.loaderStart();
 			self.dg.shift_timing = angular.fromJson(self.dg.shift_timing);
-			console.log(self.dg);
 			self.dg.$save(function(response){
 				self.goBack();
 			});
@@ -3308,7 +3339,7 @@
     						var x,y;
 	    					if(!$stateParams.start_date){
 	    						x =  moment();
-								x.startOf('day');
+								x.startOf('month');
 	    					}
 	    					else{
 	    						$stateParams.start_date = moment(new Date($stateParams.start_date));
@@ -3437,7 +3468,7 @@
 		self.total_pages = deposits.payload.data.total_pages;
 		self.total_deposits = deposits.payload.data.total_count;
 		
-		this.searchVendor = this.params.dg_name;
+		this.selectedDg = this.params.dg_name;
 		if(this.params.start_date){
 			this.params.start_date = new Date(this.params.start_date);
 		}

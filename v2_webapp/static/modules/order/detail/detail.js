@@ -224,7 +224,7 @@
 			});
 		};
 		self.statusUpdateDialog = function(order){
-			OrderStatusUpdate.openStatusDialog()
+			OrderStatusUpdate.openStatusDialog(order)
 			.then(function(status_data) {
 				status_data.delivery_ids = [order.id];
 				if(status_data.status == 'pickup'){
