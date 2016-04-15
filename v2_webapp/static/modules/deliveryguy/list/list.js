@@ -7,7 +7,6 @@
 	var dgListCntrl = function($state,$mdSidenav,$stateParams,dgs,constants,DeliveryGuy,Notification){
 		var self = this;
 		this.params = $stateParams;
-		console.log(this.params);
 		this.params.start_date = new Date(this.params.start_date);
 		this.params.end_date = new Date(this.params.end_date);
 		this.dg_status = constants.dg_status;

@@ -44,6 +44,14 @@
 				<label>Phone Number</label>
 				<h5>{{dgDetail.DG.phone_number}}</h5>
 			</div>
+			<div flex="30" flex-xs="50"class="profile-data">
+				<label>Emplyee Code</label>
+				<h5>{{dgDetail.DG.employee_code}}</h5>
+			</div>
+			<div flex="30" flex-xs="50"class="profile-data">
+				<label>App Version</label>
+				<h5>{{dgDetail.DG.app_version}}</h5>
+			</div>
 			<div flex="30" flex-xs="50" class="profile-data">
 				<label>Shift Time</label>
 				<h5>{{dgDetail.DG.shift_time.start_time | timeAsDate}} - {{dgDetail.DG.shift_time.end_time | timeAsDate}}</h5>
@@ -60,13 +68,13 @@
 				<label>Salary Deduction</label>
 				<h5>{{dgDetail.DG.salary_deduction}}</h5>
 			</div>
-			<div flex="30" flex-xs="50" class="profile-data" ng-if="dgDetail.DG.pincode.length > 0">
+			<div flex="30" flex-xs="50" class="profile-data" ng-if="dgDetail.DG.pincodes.length > 0">
 				<label>Pin Codes</label>
 				<div class="list-overflow">
-					<div ng-repeat=" pin in dgDetail.DG.pincode">
+					<div ng-repeat=" pin in dgDetail.DG.pincodes">
 						<h5>{{pin}}</h5>
 					</div>
-					<h5 ng-show="! dgDetail.DG.pincode.length">----</h5>
+					<h5 ng-show="! dgDetail.DG.pincodes.length">----</h5>
 				</div>
 			</div>
 			<div flex="30" flex-xs="50" class="profile-data" ng-if="!dgDetail.DG.is_teamlead">
@@ -84,7 +92,7 @@
 					<div ng-repeat="op in dgDetail.DG.ops_managers">
 						<h5>{{op.name}}</h5>
 					</div>
-					<h5 ng-show="! dgDetail.DG.ops_managers.length">----</h5>
+					<h5 ng-show="!dgDetail.DG.ops_managers.length">----</h5>
 				</div>
 			</div>
 			<div flex="30" flex-xs="50" class="profile-data">
@@ -97,7 +105,7 @@
 				</div>
 			</div>
 			<div flex="30" flex-xs="50" class="profile-data" ng-if="home.tabs.dgPromteTeamLead">
-				<md-checkbox ng-checked="dgDetail.DG.is_teamlead" ng-click="dgDetail.toTeamlead()" aria-label="TEAM LEAD" style="margin-top: 5px;">
+				<md-checkbox ng-checked="dgDetail.DG.is_teamlead" ng-click="dgDetail.toggleTeamLead(dgDetail.DG)" aria-label="TEAM LEAD" style="margin-top: 5px;">
             		Team Lead
           		</md-checkbox>
 			</div>
@@ -199,7 +207,7 @@
 									<tfoot ng-click="dgDetail.toTeamlead()">
 										<tr ng-if="home.tabs.dgPromteTeamLead">
 											<td>
-												Add team Members
+												Add/Edit Team Members and Pincodes
 											</td>
 											<td>
 												

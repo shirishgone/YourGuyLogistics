@@ -744,6 +744,10 @@
 				associateVendors : {
 					url : constants.v3baseUrl+'deliveryguy/:id'+'/add_vendor/',
 					method : 'PUT'
+				},
+				demoteTL : {
+					url : constants.v3baseUrl+'deliveryguy/:id'+'/demote_teamlead/',
+					method : 'PUT'
 				}
 			}),
 			dgPageQuery : $resource(constants.v3baseUrl+'deliveryguy/:id/',{id:"@id"},{
@@ -2595,7 +2599,6 @@
 	var dgListCntrl = function($state,$mdSidenav,$stateParams,dgs,constants,DeliveryGuy,Notification){
 		var self = this;
 		this.params = $stateParams;
-		console.log(this.params);
 		this.params.start_date = new Date(this.params.start_date);
 		this.params.end_date = new Date(this.params.end_date);
 		this.dg_status = constants.dg_status;
@@ -2870,6 +2873,30 @@
 			});
 		};
 
+		self.demoteTeamlead = function(dg){
+			console.log('demote');
+			var useFullScreen = ($mdMedia('sm') || $mdMedia('xs'));
+			$mdDialog.show({
+				controller         : ('DemoteDgCntrl',['$mdDialog','DG',DemoteDgCntrl]),
+				controllerAs       : 'dgDemote',
+				templateUrl        : '/static/modules/deliveryguy/dialogs/demoteTeamlead.html?nd=' + Date.now(),
+				parent             : angular.element(document.body),
+				clickOutsideToClose: false,
+				fullscreen         : useFullScreen,
+				locals             : {
+					            DG : dg
+				},
+			})
+			.then(function(dg) {
+				Notification.loaderStart();
+				DeliveryGuy.dg.demoteTL(dg,function(response){
+					Notification.loaderComplete();
+					Notification.showSuccess('Team Lead was demoted successfully');
+					self.getDgDetails();
+				});
+			});
+		};
+
 		self.associateVendors = function(){
 			$mdDialog.show({
 				controller         : ('AssociateVendorCntrl',['$mdDialog','DG','Vendor',AssociateVendorCntrl]),
@@ -2902,6 +2929,15 @@
 			});
 		};
 
+		self.toggleTeamLead = function(dg){
+			if(dg.is_teamlead){
+				self.demoteTeamlead(dg);
+			}
+			else {
+				self.toTeamlead();
+			}
+		};
+
 		self.getDgDetails = function(){
 			$state.transitionTo($state.current, self.params, { reload: true, inherit: false, notify: true });
 		};
@@ -2910,7 +2946,6 @@
 	function EditDgCntrl($mdDialog,dgConstants,DG,OpsManagers,TeamLeads,DeliveryGuy){
 		var dgEdit = this;
 		dgEdit.DG = angular.copy(DG);
-		console.log(dgEdit.DG);
 		dgEdit.DG.team_lead_dg_ids   = [];
 		dgEdit.DG.ops_manager_ids = [];
 		dgEdit.DG.team_leads.forEach(function(lead){
@@ -2952,7 +2987,7 @@
 
 		dgTeamLead.teamLeadData = {
 			id: DG.id,
-			pincodes : [],
+			pincodes : dgTeamLead.DG.pincodes,
 			associate_dgs : []
 		};
 
@@ -3001,12 +3036,11 @@
 			}
 		};
 
-		// dgTeamLead.transformPinChip = function(chip) {
-		// 	// If it is an object, it's already a known chip
-		// 	if (angular.isObject(chip)) {
-		// 		return chip;
-		// 	}
-		// };
+		dgTeamLead.transformPinChip = function(chip) {
+			if (angular.isObject(chip)) {
+				return chip.pincode;
+			}
+		};
 
 		dgTeamLead.submitTlData = function(){
 			dgTeamLead.selectedTeamMembers.forEach(function(team){
@@ -3064,6 +3098,20 @@
 			});
 			vendorData.id = dgVendors.DG.id;
 			$mdDialog.hide(vendorData);
+		};
+	}
+
+	function DemoteDgCntrl($mdDialog,DG){
+		var dgDemote = this;
+		dgDemote.DG = DG;
+
+		dgDemote.cancel = function() {
+			$mdDialog.cancel();
+		};
+
+		dgDemote.answer = function(answer){
+			answer.id = dgDemote.DG.id;
+			$mdDialog.hide(answer);
 		};
 	}
 

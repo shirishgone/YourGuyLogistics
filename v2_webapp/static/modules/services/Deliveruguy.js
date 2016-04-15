@@ -30,6 +30,10 @@
 				associateVendors : {
 					url : constants.v3baseUrl+'deliveryguy/:id'+'/add_vendor/',
 					method : 'PUT'
+				},
+				demoteTL : {
+					url : constants.v3baseUrl+'deliveryguy/:id'+'/demote_teamlead/',
+					method : 'PUT'
 				}
 			}),
 			dgPageQuery : $resource(constants.v3baseUrl+'deliveryguy/:id/',{id:"@id"},{
