@@ -166,13 +166,12 @@ def reconfigure_shifttiming_from_IST_to_UTC(request):
         
         delivery_guys = DeliveryGuy.objects.all()
         for delivery_guy in delivery_guys:
-
-            shift_start = datetime.combine(current_datetime, delivery_guy.shift_start_datetime) - ist_time_delta
-            shift_end = datetime.combine(current_datetime, delivery_guy.shift_end_datetime) - ist_time_delta
-            
-            delivery_guy.shift_start_datetime = shift_start.time()
-            delivery_guy.shift_end_datetime = shift_end.time()
-            delivery_guy.save()
+            if delivery_guy.shift_start_datetime is not None and delivery_guy.shift_end_datetime is not None:
+                shift_start = datetime.combine(current_datetime, delivery_guy.shift_start_datetime) - ist_time_delta
+                shift_end = datetime.combine(current_datetime, delivery_guy.shift_end_datetime) - ist_time_delta
+                delivery_guy.shift_start_datetime = shift_start.time()
+                delivery_guy.shift_end_datetime = shift_end.time()
+                delivery_guy.save()
 
         return Response(status=status.HTTP_200_OK)
 
