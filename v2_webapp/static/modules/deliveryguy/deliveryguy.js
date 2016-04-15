@@ -4,12 +4,11 @@
 	.config(['$stateProvider',function ($stateProvider) {
 		$stateProvider
 		.state('home.dgList', {
-			url: "^/deliveryguy/list?start_date&end_date&attendance&search&page",
+			url: "^/deliveryguy/list?start_date&end_date&attendance&is_teamlead&search&page",
 			templateUrl: "/static/modules/deliveryguy/list/list.html",
 			controllerAs : 'dgList',
     		controller: "dgListCntrl",
     		resolve : {
-    			DeliveryGuy : 'DeliveryGuy',
     			access: ["Access","constants", function (Access,constants) { 
     						var allowed_user = [constants.userRole.OPS,constants.userRole.OPS_MANAGER,constants.userRole.SALES,constants.userRole.SALES_MANAGER,constants.userRole.HR];
     						return Access.hasAnyRole(allowed_user); 
@@ -32,6 +31,7 @@
 	    						$stateParams.end_date = moment(new Date($stateParams.end_date));
 	    						$stateParams.end_date.endOf('day');
 	    					}
+	    					$stateParams.is_teamlead = ($stateParams.is_teamlead == 'true')? Boolean($stateParams.is_teamlead): undefined;
     						$stateParams.start_date = ($stateParams.start_date !== undefined) ? $stateParams.start_date.toISOString() : x.toISOString();
     						$stateParams.end_date = ($stateParams.end_date !== undefined) ?  $stateParams.end_date.toISOString() : y.toISOString();
     						$stateParams.attendance = ($stateParams.attendance!== undefined) ? $stateParams.attendance : 'ALL';
@@ -53,7 +53,8 @@
     			leadUserList : ['DeliveryGuy','$q', function (DeliveryGuy,$q){
 		    				return $q.all ({
 		    					TeamLead : DeliveryGuy.dgTeamLeadQuery.query().$promise,
-		    					OpsManager : DeliveryGuy.dgOpsManagerQuery.query().$promise
+		    					OpsManager : DeliveryGuy.dgOpsManagerQuery.query().$promise,
+		    					Pincodes : DeliveryGuy.dgServicablePincodes.query().$promise
 		    				});
     					}],
     		}

@@ -106,10 +106,10 @@
 				<span ng-switch on="orderDetail.order.status">
 					<p>{{orderDetail.order.pickup_datetime | date:'h:mm a'}}</p>
 					<p ng-switch-when="QUEUED">intransit</p>
-					<p ng-switch-when="INTRANSIT">intransit</p>
-					<p ng-switch-when="DELIVERED">intransit</p>
-					<p ng-switch-when="OUTFORDELIVERY">intransit</p>
-					<p ng-switch-when="DELIVERYATTEMPTED">intransit</p>
+					<p ng-switch-when="INTRANSIT">Picked Up</p>
+					<p ng-switch-when="DELIVERED">Picked Up</p>
+					<p ng-switch-when="OUTFORDELIVERY">Picked Up</p>
+					<p ng-switch-when="DELIVERYATTEMPTED">Picked Up</p>
 					<p ng-switch-when="PICKUPATTEMPTED">Attempted</p>
 				</span>
 			</div>

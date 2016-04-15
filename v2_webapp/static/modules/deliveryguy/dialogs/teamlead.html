@@ -16,9 +16,7 @@
 					ng-model="dgTeamLead.selectedTeamMembers" 
 					md-autocomplete-snap 
 					md-transform-chip="dgTeamLead.transformChip($chip)" 
-					md-require-match="true"
-					md-on-add="dgTeamLead.addTeamDgs($chip)"
-					md-on-remove="dgTeamLead.removeTeamDgs($chip)">
+					md-require-match="true">
 					<md-autocomplete 
 						md-no-cache="true"
 						md-selected-item="dgTeamLead.selectedItem" 
@@ -34,7 +32,6 @@
 					<md-chip-template>
 						<span>
 							<strong>{{$chip.name}}</strong>
-							<em>({{$chip.phone_number}})</em>
 						</span>
 					</md-chip-template>
 				</md-chips>
@@ -42,12 +39,10 @@
 			<div class="pincode">
 				<h3>Select Pin Codes</h3>
 				<md-chips 
-					ng-model="dgTeamLead.selectedPincodes" 
+					ng-model="dgTeamLead.teamLeadData.pincodes" 
 					md-autocomplete-snap 
-					md-transform-chip="dgTeamLead.chip($chip)" 
-					md-require-match="true"
-					md-on-add="dgTeamLead.addTlPincode($chip)"
-					md-on-remove="dgTeamLead.removeTlPincode($chip)">
+					md-transform-chip="dgTeamLead.transformPinChip($chip)" 
+					md-require-match="true">
 					<md-autocomplete 
 						md-no-cache="true"
 						md-selected-item="dgTeamLead.selectedPin" 
@@ -62,7 +57,7 @@
 					</md-autocomplete>
 					<md-chip-template>
 						<span>
-							<strong>{{$chip.pincode}}</strong>
+							<strong>{{$chip}}</strong>
 						</span>
 					</md-chip-template>
 				</md-chips>
@@ -74,7 +69,7 @@
         <md-button ng-click="dgTeamLead.cancel()" class="md-warn">
             Cancel
         </md-button>
-        <md-button ng-click="dgTeamLead.submitTlData()" class="md-primary" ng-disabled="dgTeamLead.selectedTeamMembers.length == 0 || dgTeamLead.selectedPincodes.length == 0" ng-if="!dgTeamLead.DG.is_teamlead" style="margin-right:20px;">
+        <md-button ng-click="dgTeamLead.submitTlData()" class="md-primary" ng-disabled="dgTeamLead.selectedTeamMembers.length == 0" ng-if="!dgTeamLead.DG.is_teamlead" style="margin-right:20px;">
             Done
         </md-button>
         <md-button ng-click="dgTeamLead.submitTlData()" class="md-primary" ng-disabled="dgTeamLead.selectedTeamMembers.length == 0" ng-if="dgTeamLead.DG.is_teamlead" style="margin-right:20px;">

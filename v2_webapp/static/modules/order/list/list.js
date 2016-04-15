@@ -1,6 +1,6 @@
 (function(){
 	'use strict';
-	var opsOrderCntrl = function ($state,$mdSidenav,$mdDialog,$mdMedia,$stateParams,DeliveryGuy,Order,Vendor,orders,constants,orderSelection,Pincodes,$q,orderDgAssign,OrderStatusUpdate){
+	var opsOrderCntrl = function ($state,$mdSidenav,$mdDialog,$mdMedia,$stateParams,DeliveryGuy,Order,Vendor,orders,constants,orderSelection,Pincodes,$q,orderDgAssign,OrderStatusUpdate,Notification){
 		/*
 			 Check if any filter is applied or not to show no-content images
 		*/
@@ -240,7 +240,7 @@
 		};
 
 		this.statusUpdateForSingleDialog = function(order){
-			OrderStatusUpdate.openStatusDialog()
+			OrderStatusUpdate.openStatusDialog(order)
 			.then(function(status_data) {
 				status_data.delivery_ids = [order.id];
 				if(status_data.status == 'pickup'){
@@ -259,6 +259,11 @@
 		};
 
 		this.statusUpdateDialog = function(){
+			for(var i = 0; i< orderSelection.selectedItemArray.length; i++){
+				if(!orderSelection.selectedItemArray[i].deliveryguy_id || !orderSelection.selectedItemArray[i].pickupguy_id){
+					 return Notification.showError('Please assign DG for each order');
+				}
+			}
 			OrderStatusUpdate.openStatusDialog()
 			.then(function(status_data) {
 				status_data.delivery_ids = orderSelection.getAllItemsIds();
@@ -359,6 +364,7 @@
 		'$q',
 		'orderDgAssign',
 		'OrderStatusUpdate',
+		'Notification',
 		opsOrderCntrl
 	]);
 })();

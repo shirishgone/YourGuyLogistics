@@ -178,7 +178,7 @@
     						var x,y;
 	    					if(!$stateParams.start_date){
 	    						x =  moment();
-								x.startOf('day');
+								x.startOf('month');
 	    					}
 	    					else{
 	    						$stateParams.start_date = moment(new Date($stateParams.start_date));

@@ -63,11 +63,11 @@
 			<span>orders executed</span>
 		</div>
 		<div flex="20" flex-xs="40" class="stat-box warn">
-			<p>{{reports.report_stats.total_cod | number:2}}</p>
+			<p>{{reports.report_stats.total_cod || '0' | number:2}}</p>
 			<span>total cod amount</span>
 		</div>
 		<div flex="20" flex-xs="40" class="stat-box success">
-			<p>{{reports.report_stats.cod_collected | number:2}}</p>
+			<p>{{reports.report_stats.cod_collected || '0' | number:2}}</p>
 			<span>total cod collected</span>
 		</div>
 	</div>

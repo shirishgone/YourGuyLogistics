@@ -744,6 +744,10 @@
 				associateVendors : {
 					url : constants.v3baseUrl+'deliveryguy/:id'+'/add_vendor/',
 					method : 'PUT'
+				},
+				demoteTL : {
+					url : constants.v3baseUrl+'deliveryguy/:id'+'/demote_teamlead/',
+					method : 'PUT'
 				}
 			}),
 			dgPageQuery : $resource(constants.v3baseUrl+'deliveryguy/:id/',{id:"@id"},{
@@ -1692,12 +1696,32 @@
 })();
 (function(){
 	'use strict';
-	var orderDgAssign = function($mdMedia,$mdDialog){
+	var orderDgAssign = function($mdMedia,$mdDialog,Notification,$q){
 		return {
-			openStatusDialog : function(){
+			openStatusDialog : function(order){
+				var deferred = $q.defer();
+				var status = {
+					pickup: true,
+					delivery: true
+				};
+				if(order){
+					if(!order.pickupguy_id){
+						Notification.showError('Please assign Pickup guy for the order');
+						deferred.reject('no pickup guy');
+						return deferred.promise;
+					}
+					else if(order.pickupguy_id && !order.deliveryguy_id){
+						status.delivery = false;
+					}
+					else if(!order.pickupguy_id && !order.deliveryguy_id){
+						Notification.showError('Please assign DG for the order');
+						deferred.reject('no dg guy');
+						return deferred.promise;
+					}
+				}
 				var useFullScreen = ($mdMedia('sm') || $mdMedia('xs'));
 				return $mdDialog.show({
-					controller         : ('OrderStatusUpdateCntrl',['$mdDialog',OrderStatusUpdateCntrl]),
+					controller         : ('OrderStatusUpdateCntrl',['$mdDialog','status',OrderStatusUpdateCntrl]),
 					controllerAs       : 'statusUpdate',
 					templateUrl        : '/static/modules/order/dialogs/status-update.html?nd=' + Date.now(),
 					parent             : angular.element(document.body),
@@ -1705,6 +1729,9 @@
 					fullscreen         : useFullScreen,
 					openFrom           : '#options',
 					closeTo            : '#options',
+					locals             : {
+								status : status
+					},
 				});
 			}
 
@@ -1713,8 +1740,9 @@
 	/*
 		@OrderStatusUpdateCntrl controller function for the update status for orders dialog
 	*/
-	function OrderStatusUpdateCntrl($mdDialog){
+	function OrderStatusUpdateCntrl($mdDialog,status){
 		var self = this;
+		self.status = status;
 		this.status_object = {
 			data : {}
 		};
@@ -1731,12 +1759,14 @@
 	.factory('OrderStatusUpdate', [
 		'$mdMedia',
 		'$mdDialog',
+		'Notification',
+		'$q',
 		orderDgAssign
 	]);
 })();
 (function(){
 	'use strict';
-	var opsOrderCntrl = function ($state,$mdSidenav,$mdDialog,$mdMedia,$stateParams,DeliveryGuy,Order,Vendor,orders,constants,orderSelection,Pincodes,$q,orderDgAssign,OrderStatusUpdate){
+	var opsOrderCntrl = function ($state,$mdSidenav,$mdDialog,$mdMedia,$stateParams,DeliveryGuy,Order,Vendor,orders,constants,orderSelection,Pincodes,$q,orderDgAssign,OrderStatusUpdate,Notification){
 		/*
 			 Check if any filter is applied or not to show no-content images
 		*/
@@ -1976,7 +2006,7 @@
 		};
 
 		this.statusUpdateForSingleDialog = function(order){
-			OrderStatusUpdate.openStatusDialog()
+			OrderStatusUpdate.openStatusDialog(order)
 			.then(function(status_data) {
 				status_data.delivery_ids = [order.id];
 				if(status_data.status == 'pickup'){
@@ -1995,6 +2025,11 @@
 		};
 
 		this.statusUpdateDialog = function(){
+			for(var i = 0; i< orderSelection.selectedItemArray.length; i++){
+				if(!orderSelection.selectedItemArray[i].deliveryguy_id || !orderSelection.selectedItemArray[i].pickupguy_id){
+					 return Notification.showError('Please assign DG for each order');
+				}
+			}
 			OrderStatusUpdate.openStatusDialog()
 			.then(function(status_data) {
 				status_data.delivery_ids = orderSelection.getAllItemsIds();
@@ -2095,6 +2130,7 @@
 		'$q',
 		'orderDgAssign',
 		'OrderStatusUpdate',
+		'Notification',
 		opsOrderCntrl
 	]);
 })();
@@ -2324,7 +2360,7 @@
 			});
 		};
 		self.statusUpdateDialog = function(order){
-			OrderStatusUpdate.openStatusDialog()
+			OrderStatusUpdate.openStatusDialog(order)
 			.then(function(status_data) {
 				status_data.delivery_ids = [order.id];
 				if(status_data.status == 'pickup'){
@@ -2388,12 +2424,11 @@
 	.config(['$stateProvider',function ($stateProvider) {
 		$stateProvider
 		.state('home.dgList', {
-			url: "^/deliveryguy/list?start_date&end_date&attendance&search&page",
+			url: "^/deliveryguy/list?start_date&end_date&attendance&is_teamlead&search&page",
 			templateUrl: "/static/modules/deliveryguy/list/list.html",
 			controllerAs : 'dgList',
     		controller: "dgListCntrl",
     		resolve : {
-    			DeliveryGuy : 'DeliveryGuy',
     			access: ["Access","constants", function (Access,constants) { 
     						var allowed_user = [constants.userRole.OPS,constants.userRole.OPS_MANAGER,constants.userRole.SALES,constants.userRole.SALES_MANAGER,constants.userRole.HR];
     						return Access.hasAnyRole(allowed_user); 
@@ -2416,6 +2451,7 @@
 	    						$stateParams.end_date = moment(new Date($stateParams.end_date));
 	    						$stateParams.end_date.endOf('day');
 	    					}
+	    					$stateParams.is_teamlead = ($stateParams.is_teamlead == 'true')? Boolean($stateParams.is_teamlead): undefined;
     						$stateParams.start_date = ($stateParams.start_date !== undefined) ? $stateParams.start_date.toISOString() : x.toISOString();
     						$stateParams.end_date = ($stateParams.end_date !== undefined) ?  $stateParams.end_date.toISOString() : y.toISOString();
     						$stateParams.attendance = ($stateParams.attendance!== undefined) ? $stateParams.attendance : 'ALL';
@@ -2437,7 +2473,8 @@
     			leadUserList : ['DeliveryGuy','$q', function (DeliveryGuy,$q){
 		    				return $q.all ({
 		    					TeamLead : DeliveryGuy.dgTeamLeadQuery.query().$promise,
-		    					OpsManager : DeliveryGuy.dgOpsManagerQuery.query().$promise
+		    					OpsManager : DeliveryGuy.dgOpsManagerQuery.query().$promise,
+		    					Pincodes : DeliveryGuy.dgServicablePincodes.query().$promise
 		    				});
     					}],
     		}
@@ -2615,28 +2652,29 @@
 			self.getDgs();
 			
 		};
-		this.downloadAttendance = function(){
-			Notification.loaderStart();
-			var str = '';
-			var noOfdays = Math.ceil(moment.duration(moment(self.params.end_date).diff(moment(self.params.start_date))).asDays());
-			var attendance_params = {
-				start_date : moment(self.params.start_date).startOf('day').toISOString(),
-				end_date   : moment(self.params.end_date).endOf('day').toISOString()
-			};
-			for(var i = 0 ; i < noOfdays ; i++ ){
-				str += ',IsoToDate(attendance ->'+ i +'-> date) AS Date_'+(i+1)+',attendance ->'+ i +'-> worked_hrs AS Hours_'+(i+1);
-			}
-			DeliveryGuy.dgsAttendance.query(attendance_params,function(response){
-				// alasql('SEARCH / AS @a UNION ALL(attendance / AS @b RETURN(@a.name AS Name , IsoToDate(@b.date) AS DATE, @b.worked_hrs AS Hours)) INTO XLSX("attendance.xlsx",{headers:true}) FROM ?',[response.payload.data]);
-				var select_str = 'SELECT name AS Name'+str;
-				alasql( select_str+' INTO XLSX("attendance.xlsx",{headers:true}) FROM ?',[response.payload.data]);
-				Notification.loaderComplete();
-			});
-		};
+		// this.downloadAttendance = function(){
+		// 	Notification.loaderStart();
+		// 	var str = '';
+		// 	var noOfdays = Math.ceil(moment.duration(moment(self.params.end_date).diff(moment(self.params.start_date))).asDays());
+		// 	var attendance_params = {
+		// 		start_date : moment(self.params.start_date).startOf('day').toISOString(),
+		// 		end_date   : moment(self.params.end_date).endOf('day').toISOString()
+		// 	};
+		// 	for(var i = 0 ; i < noOfdays ; i++ ){
+		// 		str += ',IsoToDate(attendance ->'+ i +'-> date) AS Date_'+(i+1)+',attendance ->'+ i +'-> worked_hrs AS Hours_'+(i+1);
+		// 	}
+		// 	DeliveryGuy.dgsAttendance.query(attendance_params,function(response){
+		// 		// alasql('SEARCH / AS @a UNION ALL(attendance / AS @b RETURN(@a.name AS Name , IsoToDate(@b.date) AS DATE, @b.worked_hrs AS Hours)) INTO XLSX("attendance.xlsx",{headers:true}) FROM ?',[response.payload.data]);
+		// 		var select_str = 'SELECT name AS Name'+str;
+		// 		alasql( select_str+' INTO XLSX("attendance.xlsx",{headers:true}) FROM ?',[response.payload.data]);
+		// 		Notification.loaderComplete();
+		// 	});
+		// };
 		/*
 			@getOrders rleoads the order controller according too the filter to get the new filtered data.
 		*/
 		this.getDgs = function(){
+			console.log('call');
 			$state.transitionTo($state.current, self.params, { reload: true, inherit: false, notify: true });
 		};
 	};
@@ -2660,7 +2698,7 @@
 		Its resolved only after loading all the operation manager and team leads.
 			
 	*/
-	var dgCreateCntrl = function ($state,$mdSidenav,dgConstants,DeliveryGuy,leadUserList,PreviousState){
+	var dgCreateCntrl = function ($state,$mdSidenav,dgConstants,DeliveryGuy,leadUserList,PreviousState,Notification){
 		var self = this;
 		/*
 			@shift_timings,@transportation_mode : 
@@ -2675,6 +2713,7 @@
 		*/
 		self.OpsManagers = leadUserList.OpsManager.payload.data;
 		self.TeamLeads   = leadUserList.TeamLead.payload.data;
+		self.Pincodes    = leadUserList.Pincodes.payload.data;
 		/*
 			@dg: is a instance of delliveryguy.dg resource for saving the dg data a with ease
 		*/
@@ -2695,8 +2734,9 @@
 			It redirects to list view on succesfull creation of dg or handle's error on creation.
 		*/
 		self.create = function(){
+			Notification.loaderStart();
 			self.dg.shift_timing = angular.fromJson(self.dg.shift_timing);
-			self.dg.$save(function(){
+			self.dg.$save(function(response){
 				self.goBack();
 			});
 		};
@@ -2710,6 +2750,7 @@
 		'DeliveryGuy',
 		'leadUserList',
 		'PreviousState',
+		'Notification',
 		dgCreateCntrl
 	]);
 })();
@@ -2728,7 +2769,7 @@
 		self.showEditDialog = function(){
 			var useFullScreen = ($mdMedia('sm') || $mdMedia('xs'));
 			$mdDialog.show({
-				controller         : ('EditDgCntrl',['$mdDialog','dgConstants','DG','OpsManagers','TeamLeads',EditDgCntrl]),
+				controller         : ('EditDgCntrl',['$mdDialog','dgConstants','DG','OpsManagers','TeamLeads','DeliveryGuy',EditDgCntrl]),
 				controllerAs       : 'dgEdit',
 				templateUrl        : '/static/modules/deliveryguy/dialogs/edit.html?nd=' + Date.now(),
 				parent             : angular.element(document.body),
@@ -2797,9 +2838,12 @@
 				self.associated_dg_list = response.payload.data;
 			});
 		};
+		if(self.DG.is_teamlead){
+			self.getTeamMembers();
+		}
 		self.toTeamlead = function(){
 			$mdDialog.show({
-				controller         : ('AddTeamLeadCntrl',['$mdDialog','DG','DeliveryGuy',AddTeamLeadCntrl]),
+				controller         : ('AddTeamLeadCntrl',['$mdDialog','DG','DeliveryGuy','teamMembers',AddTeamLeadCntrl]),
 				controllerAs       : 'dgTeamLead',
 				templateUrl        : '/static/modules/deliveryguy/dialogs/teamlead.html?nd=' + Date.now(),
 				parent             : angular.element(document.body),
@@ -2807,6 +2851,7 @@
 				fullscreen         : true,
 				locals             : {
 					DG : self.DG,
+					teamMembers : self.associated_dg_list
 				},
 			})
 			.then(function(data) {
@@ -2825,6 +2870,30 @@
 				}
 			}, function() {
 				self.status = 'You cancelled the dialog.';
+			});
+		};
+
+		self.demoteTeamlead = function(dg){
+			console.log('demote');
+			var useFullScreen = ($mdMedia('sm') || $mdMedia('xs'));
+			$mdDialog.show({
+				controller         : ('DemoteDgCntrl',['$mdDialog','DG',DemoteDgCntrl]),
+				controllerAs       : 'dgDemote',
+				templateUrl        : '/static/modules/deliveryguy/dialogs/demoteTeamlead.html?nd=' + Date.now(),
+				parent             : angular.element(document.body),
+				clickOutsideToClose: false,
+				fullscreen         : useFullScreen,
+				locals             : {
+					            DG : dg
+				},
+			})
+			.then(function(dg) {
+				Notification.loaderStart();
+				DeliveryGuy.dg.demoteTL(dg,function(response){
+					Notification.loaderComplete();
+					Notification.showSuccess('Team Lead was demoted successfully');
+					self.getDgDetails();
+				});
 			});
 		};
 
@@ -2860,12 +2929,21 @@
 			});
 		};
 
+		self.toggleTeamLead = function(dg){
+			if(dg.is_teamlead){
+				self.demoteTeamlead(dg);
+			}
+			else {
+				self.toTeamlead();
+			}
+		};
+
 		self.getDgDetails = function(){
 			$state.transitionTo($state.current, self.params, { reload: true, inherit: false, notify: true });
 		};
 	};
 
-	function EditDgCntrl($mdDialog,dgConstants,DG,OpsManagers,TeamLeads){
+	function EditDgCntrl($mdDialog,dgConstants,DG,OpsManagers,TeamLeads,DeliveryGuy){
 		var dgEdit = this;
 		dgEdit.DG = angular.copy(DG);
 		dgEdit.DG.team_lead_dg_ids   = [];
@@ -2883,6 +2961,10 @@
 		dgEdit.shift_timings = dgConstants.shift_timings;
 		dgEdit.transportation_mode = dgConstants.transportation_mode;
 
+		DeliveryGuy.dgServicablePincodes.query().$promise.then(function (response){
+				dgEdit.Pincodes =  response.payload.data;
+		});
+
 		dgEdit.findShiftTime = function(shift_time){
 			return dgEdit.shift_timings.findIndex(function(shift){
 				return shift.start_time == shift_time.start_time;
@@ -2898,17 +2980,23 @@
 		};
 	}
 
-	function AddTeamLeadCntrl($mdDialog,DG,DeliveryGuy){
+	function AddTeamLeadCntrl($mdDialog,DG,DeliveryGuy,teamMembers){
 		var dgTeamLead = this;
-		dgTeamLead.DG = DG;
+		dgTeamLead.DG = angular.copy(DG);
 		dgTeamLead.selectedTeamMembers = [];
-		dgTeamLead.selectedPincodes = [];
+
 		dgTeamLead.teamLeadData = {
 			id: DG.id,
-			pincodes : [],
+			pincodes : dgTeamLead.DG.pincodes,
 			associate_dgs : []
 		};
 
+		if(teamMembers) {
+			teamMembers.forEach(function(member){
+				dgTeamLead.selectedTeamMembers.push({name: member.dg_name, phone_number: member.dg_phonenumber,id: member.dg_id});
+			});
+		}
+		
 		dgTeamLead.cancel = function() {
 			$mdDialog.cancel();
 		};
@@ -2917,20 +3005,20 @@
 				dgTeamLead.pincodes =  response.payload.data;
 		});
 
-		dgTeamLead.addTeamDgs = function(chip){
-			dgTeamLead.teamLeadData.associate_dgs.push(chip.id);
-		};
-		dgTeamLead.removeTeamDgs = function(chip){
-			var index = dgTeamLead.teamLeadData.associate_dgs.indexOf(chip.id);
-			dgTeamLead.teamLeadData.associate_dgs.splice(index,1);
-		};
-		dgTeamLead.addTlPincode = function(chip){
-			dgTeamLead.teamLeadData.pincodes.push(chip.pincode);
-		};
-		dgTeamLead.removeTlPincode = function(chip){
-			var index = dgTeamLead.teamLeadData.pincodes.indexOf(chip.pincode);
-			dgTeamLead.teamLeadData.pincodes.splice(index,1);
-		};
+		// dgTeamLead.addTeamDgs = function(chip){
+		// 	dgTeamLead.teamLeadData.associate_dgs.push(chip.id);
+		// };
+		// dgTeamLead.removeTeamDgs = function(chip){
+		// 	var index = dgTeamLead.teamLeadData.associate_dgs.indexOf(chip.id);
+		// 	dgTeamLead.teamLeadData.associate_dgs.splice(index,1);
+		// };
+		// dgTeamLead.addTlPincode = function(chip){
+		// 	dgTeamLead.teamLeadData.pincodes.push(chip.pincode);
+		// };
+		// dgTeamLead.removeTlPincode = function(chip){
+		// 	var index = dgTeamLead.teamLeadData.pincodes.indexOf(chip.pincode);
+		// 	dgTeamLead.teamLeadData.pincodes.splice(index,1);
+		// };
 
 		dgTeamLead.dgSearch = function(text){
 			var search = {
@@ -2949,13 +3037,15 @@
 		};
 
 		dgTeamLead.transformPinChip = function(chip) {
-			// If it is an object, it's already a known chip
 			if (angular.isObject(chip)) {
-				return chip;
+				return chip.pincode;
 			}
 		};
 
 		dgTeamLead.submitTlData = function(){
+			dgTeamLead.selectedTeamMembers.forEach(function(team){
+				dgTeamLead.teamLeadData.associate_dgs.push(team.id);
+			});
 			$mdDialog.hide(dgTeamLead.teamLeadData);
 		};
 	}
@@ -3008,6 +3098,20 @@
 			});
 			vendorData.id = dgVendors.DG.id;
 			$mdDialog.hide(vendorData);
+		};
+	}
+
+	function DemoteDgCntrl($mdDialog,DG){
+		var dgDemote = this;
+		dgDemote.DG = DG;
+
+		dgDemote.cancel = function() {
+			$mdDialog.cancel();
+		};
+
+		dgDemote.answer = function(answer){
+			answer.id = dgDemote.DG.id;
+			$mdDialog.hide(answer);
 		};
 	}
 
@@ -3283,7 +3387,7 @@
     						var x,y;
 	    					if(!$stateParams.start_date){
 	    						x =  moment();
-								x.startOf('day');
+								x.startOf('month');
 	    					}
 	    					else{
 	    						$stateParams.start_date = moment(new Date($stateParams.start_date));
@@ -3412,7 +3516,7 @@
 		self.total_pages = deposits.payload.data.total_pages;
 		self.total_deposits = deposits.payload.data.total_count;
 		
-		this.searchVendor = this.params.dg_name;
+		this.selectedDg = this.params.dg_name;
 		if(this.params.start_date){
 			this.params.start_date = new Date(this.params.start_date);
 		}

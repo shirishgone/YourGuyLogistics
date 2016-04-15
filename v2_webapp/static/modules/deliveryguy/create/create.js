@@ -5,7 +5,7 @@
 		Its resolved only after loading all the operation manager and team leads.
 			
 	*/
-	var dgCreateCntrl = function ($state,$mdSidenav,dgConstants,DeliveryGuy,leadUserList,PreviousState){
+	var dgCreateCntrl = function ($state,$mdSidenav,dgConstants,DeliveryGuy,leadUserList,PreviousState,Notification){
 		var self = this;
 		/*
 			@shift_timings,@transportation_mode : 
@@ -20,6 +20,7 @@
 		*/
 		self.OpsManagers = leadUserList.OpsManager.payload.data;
 		self.TeamLeads   = leadUserList.TeamLead.payload.data;
+		self.Pincodes    = leadUserList.Pincodes.payload.data;
 		/*
 			@dg: is a instance of delliveryguy.dg resource for saving the dg data a with ease
 		*/
@@ -40,8 +41,9 @@
 			It redirects to list view on succesfull creation of dg or handle's error on creation.
 		*/
 		self.create = function(){
+			Notification.loaderStart();
 			self.dg.shift_timing = angular.fromJson(self.dg.shift_timing);
-			self.dg.$save(function(){
+			self.dg.$save(function(response){
 				self.goBack();
 			});
 		};
@@ -55,6 +57,7 @@
 		'DeliveryGuy',
 		'leadUserList',
 		'PreviousState',
+		'Notification',
 		dgCreateCntrl
 	]);
 })();

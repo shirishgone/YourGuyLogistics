@@ -48,7 +48,7 @@
 		self.total_pages = deposits.payload.data.total_pages;
 		self.total_deposits = deposits.payload.data.total_count;
 		
-		this.searchVendor = this.params.dg_name;
+		this.selectedDg = this.params.dg_name;
 		if(this.params.start_date){
 			this.params.start_date = new Date(this.params.start_date);
 		}

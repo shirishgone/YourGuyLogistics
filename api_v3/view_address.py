@@ -65,7 +65,12 @@ def remove_address(request):
 @permission_classes((IsAuthenticated,))
 def servicible_pincodes(request):
     role = user_role(request.user)
-    if role == constants.VENDOR or role == constants.OPERATIONS or role == constants.OPERATIONS_MANAGER or role == constants.HR: 
+    if role == constants.VENDOR or \
+                    role == constants.OPERATIONS or \
+                    role == constants.OPERATIONS_MANAGER or \
+                    role == constants.HR or \
+                    role == constants.SALES or \
+                    role == constants.SALES_MANAGER:
         all_pincodes = ServiceablePincode.objects.all()
         result = []
         for pincode in all_pincodes:

@@ -1,0 +1,29 @@
+<md-dialog aria-label="DEMOTE TEAMLEAD" ng-cloak class="dgDemote">
+	<md-toolbar>
+        <div class="md-toolbar-tools">
+            <h2>Demote Teamlead</h2>
+            <span flex></span>
+            <md-button ng-click="dgDemote.cancel()" class="md-icon-button" aria-label="close dg edit">
+            	<md-icon>clear</md-icon>
+            </md-button>
+        </div>
+    </md-toolbar>
+    <form name="codEditForm" layout-padding>
+		<md-dialog-content layout="column" style="margin-top:20px;">
+			<p>Are you sure you want to demote {{dgDemote.DG.name}}</p>
+			<md-input-container >
+				<label>Reason</label>
+	        	<input ng-model="dgDemote.dg_object.demote_reason" required>
+			</md-input-container>
+		</md-dialog-content>
+		<md-dialog-actions layout="row">
+	     	<span flex></span>
+			<md-button ng-click="dgDemote.cancel()" class="md-warn">
+				cancel
+			</md-button>
+			<md-button ng-click="dgDemote.answer(dgDemote.dg_object)" ng-disabled="codEditForm.$invalid" class="md-primary" style="margin-right:20px;">
+				Update
+			</md-button>
+	    </md-dialog-actions>
+    </form>
+</md-dialog>

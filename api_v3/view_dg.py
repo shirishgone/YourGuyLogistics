@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 from dateutil.rrule import rrule, DAILY
 import pytz
@@ -39,6 +40,7 @@ def dg_list_dict(delivery_guy, attendance, no_of_assigned_orders, no_of_executed
         'phone_number': delivery_guy.user.username,
         'app_version': delivery_guy.app_version,
         'status': delivery_guy.status,
+        'is_teamlead': delivery_guy.is_teamlead,
         'employee_code': delivery_guy.employee_code,
         'no_of_assigned_orders': no_of_assigned_orders,
         'no_of_executed_orders': no_of_executed_orders,
@@ -107,8 +109,7 @@ def dg_details_dict(delivery_guy):
         'is_teamlead': delivery_guy.is_teamlead,
         'cod_balance':cod_balance,
         'salary_deduction':delivery_guy.pending_salary_deduction,
-        'profile_picture': '',
-        'pincode': [],
+        'pincodes': [],
         'ops_managers': [],
         'team_leads': [],
         'associated_vendors':[]
@@ -240,7 +241,7 @@ class DGViewSet(viewsets.ModelViewSet):
                 if delivery_guy_tl.serving_pincodes is not None:
                     pincodes = delivery_guy_tl.serving_pincodes.all()
                     for single_pincode in pincodes:
-                        detail_dict['pincode'].append(single_pincode.pincode)
+                        detail_dict['pincodes'].append(single_pincode.pincode)
 
             if delivery_guy.profile_picture is not None:
                 detail_dict['profile_picture'] = delivery_guy.profile_picture.name
@@ -273,6 +274,7 @@ class DGViewSet(viewsets.ModelViewSet):
         date_string = self.request.QUERY_PARAMS.get('date', None)
         filter_start_date = request.QUERY_PARAMS.get('start_date', None)
         filter_end_date = request.QUERY_PARAMS.get('end_date', None)
+        is_teamlead = request.QUERY_PARAMS.get('is_teamlead', None)
         attendance_status = self.request.QUERY_PARAMS.get('attendance_status', None)
 
         # DATE FILTERING -------------------------------------------------------------
@@ -322,6 +324,14 @@ class DGViewSet(viewsets.ModelViewSet):
         else:
             all_dgs = DeliveryGuy.objects.filter(is_active = True).order_by('user__first_name')
 
+            # TEAMLEAD FILTERING  ---------------------------------------------
+            if is_teamlead is not None:
+                is_teamlead_bool = json.loads(is_teamlead.lower())
+                if is_teamlead_bool is True:
+                    all_dgs = all_dgs.filter(is_teamlead = True)
+                else:
+                    all_dgs = all_dgs.filter(is_teamlead = False)
+
             # SEARCH KEYWORD FILTERING ---------------------------------------------------
             if search_query is not None:
                 if search_query.isdigit():
@@ -352,6 +362,7 @@ class DGViewSet(viewsets.ModelViewSet):
                     final_dgs = all_dgs
             else:
                 final_dgs = all_dgs
+
 
             # PAGINATE ---------------------------------------------------------------------------
             total_dg_count = len(final_dgs)
@@ -457,7 +468,6 @@ class DGViewSet(viewsets.ModelViewSet):
                         worked_hours = working_hours_calculation(attendance)
                         if worked_hours < 0:
                             worked_hours = 0
-
                     result.append(dg_list_dict(delivery_guy, attendance, no_of_assigned_orders, no_of_executed_orders, worked_hours))
                 pagination_dict['total_pages'] = total_pages
                 pagination_dict['total_count'] = total_dg_count
@@ -468,15 +478,17 @@ class DGViewSet(viewsets.ModelViewSet):
         role = user_role(request.user)
         if role == constants.HR:
             try:
+                employee_code = request.data['employee_code']
                 name = request.data['name']
                 phone_number = request.data['phone_number']
                 password = request.data['password']
-                shift_time = request.data.get('shift_time')
+                shift_timing = request.data.get('shift_timing')
                 transportation_mode = request.data.get('transportation_mode')
-                ops_manager_id = request.data.get('ops_manager_id')
+                ops_manager_ids = request.data.get('ops_manager_ids')
                 team_lead_dg_ids = request.data.get('team_lead_dg_ids')
             except Exception as e:
-                params = ['phone_number', 'password', 'name', 'shift_time(optional)', 'transportation_mode(optional)', 'ops_manager_ids(optional)', 'team_lead_ids(optional)']
+                params = ['employee_code', 'phone_number', 'password', 'name', 'shift_timing(optional)',
+                          'transportation_mode(optional)', 'ops_manager_ids(optional)', 'team_lead_dg_ids(optional)']
                 return response_incomplete_parameters(params)
         else:
             return response_access_denied()
@@ -494,12 +506,13 @@ class DGViewSet(viewsets.ModelViewSet):
         assign_usergroup(user)
 
         delivery_guy.is_active = True
+        delivery_guy.employee_code = employee_code
         delivery_guy.save()
 
-        if shift_time is not None:
+        if shift_timing is not None:
             try:
-                delivery_guy.shift_start_datetime = shift_time['start_time']
-                delivery_guy.shift_end_datetime = shift_time['end_time']
+                delivery_guy.shift_start_datetime = shift_timing['start_time']
+                delivery_guy.shift_end_datetime = shift_timing['end_time']
                 delivery_guy.save()
             except Exception as e:
                 error_message = 'shift time has two parameters named start_time, end_time e.g. HH:MM:SS'
@@ -512,14 +525,15 @@ class DGViewSet(viewsets.ModelViewSet):
                 parameters = ['BIKER', 'WALKER', 'CAR_DRIVER']
                 return response_incomplete_parameters(parameters)
 
-        if ops_manager_id is not None:
-            ops_manager = get_object_or_404(Employee, id=ops_manager_id)
-            ops_manager.associate_delivery_guys.add(delivery_guy)
-            ops_manager.save()
+        if ops_manager_ids is not None:
+            for single_ops_manager_id in ops_manager_ids:
+                ops_manager = get_object_or_404(Employee, id=single_ops_manager_id)
+                ops_manager.associate_delivery_guys.add(delivery_guy)
+                ops_manager.save()
 
         if team_lead_dg_ids is not None:
-            for single_team_lead_dg_id in team_lead_dg_ids:
-                team_lead_delivery_guy = get_object_or_404(DeliveryGuy, id = single_team_lead_dg_id)
+            for team_lead_dg_id in team_lead_dg_ids:
+                team_lead_delivery_guy = get_object_or_404(DeliveryGuy, id = team_lead_dg_id)
                 team_lead = get_object_or_404(DeliveryTeamLead, delivery_guy=team_lead_delivery_guy)
                 team_lead.associate_delivery_guys.add(delivery_guy)
                 team_lead.save()
@@ -542,11 +556,12 @@ class DGViewSet(viewsets.ModelViewSet):
                 transportation_mode = request.data.get('transportation_mode')
                 ops_manager_ids = request.data.get('ops_manager_ids')
                 team_lead_dg_ids = request.data.get('team_lead_dg_ids')
-                profile_picture = request.data.get('profile_pic_name')
                 associated_dgs = request.data.get('associate_dgs')
 
             except Exception as e:
-                params = ['name(optional)', 'pincodes(optional)', 'shift_time(optional)', 'transportation_mode(optional)', 'ops_manager_ids(optional)', 'team_lead_ids(optional)', 'profile_picture(optional)', 'is_teamlead(optional)', 'associated_dgs']
+                params = ['name(optional)', 'pincodes(optional)', 'shift_time(optional)',
+                          'transportation_mode(optional)', 'ops_manager_ids(optional)',
+                          'team_lead_dg_ids(optional)', 'associated_dgs(optional)']
                 return response_incomplete_parameters(params)
         else:
             return response_access_denied()
@@ -561,6 +576,8 @@ class DGViewSet(viewsets.ModelViewSet):
             if delivery_guy.is_teamlead is True:
                 dg_team_lead = DeliveryTeamLead.objects.get(delivery_guy=delivery_guy)
                 if serviceable_pincodes is not None:
+                    dg_team_lead.serving_pincodes.clear()
+                    dg_team_lead.save()
                     for single_serviceable_pincodes in serviceable_pincodes:
                         single_pincode = single_serviceable_pincodes
                         pincode = ServiceablePincode.objects.get(pincode=single_pincode)
@@ -568,12 +585,22 @@ class DGViewSet(viewsets.ModelViewSet):
                         dg_team_lead.save()
 
                 if associated_dgs is not None:
+                    # for the current tl remove all his associated dgs
+                    dg_team_lead.associate_delivery_guys.clear()
+                    dg_team_lead.save()
                     for assiocate_dg_id in associated_dgs:
                         associate_delivery_guy = DeliveryGuy.objects.get(id = assiocate_dg_id)
                         dg_team_lead.associate_delivery_guys.add(associate_delivery_guy)
                         dg_team_lead.save()                        
             else:
                 if team_lead_dg_ids is not None:
+                    # current tls who have this dg as associated dg
+                    # from these current tls remove this associated dgs
+                    all_tls = DeliveryTeamLead.objects.all()
+                    dgs_tl = all_tls.filter(associate_delivery_guys=delivery_guy)
+                    for single_tl in dgs_tl:
+                        single_tl.associate_delivery_guys.remove(delivery_guy)
+                        single_tl.save()
                     for team_lead_dg_id in team_lead_dg_ids:
                         team_lead_delivery_guy = get_object_or_404(DeliveryGuy, id = team_lead_dg_id)
                         team_lead = get_object_or_404(DeliveryTeamLead, delivery_guy=team_lead_delivery_guy)
@@ -593,6 +620,13 @@ class DGViewSet(viewsets.ModelViewSet):
                 delivery_guy.transportation_mode = transportation_mode
 
             if ops_manager_ids is not None:
+                # current ops managers who have this dg as associated dg
+                # from these current ops managers remove this associated dgs
+                ops_executives = Employee.objects.filter(Q(department = constants.OPERATIONS) | Q(department = constants.OPERATIONS_MANAGER))
+                ops_executives = ops_executives.filter(associate_delivery_guys=delivery_guy)
+                for single_ops in ops_executives:
+                    single_ops.associate_delivery_guys.remove(delivery_guy)
+                    single_ops.save()
                 for single_ops_manager_id in ops_manager_ids:
                     ops_manager_id = single_ops_manager_id
                     ops_manager = get_object_or_404(Employee, id=ops_manager_id)
@@ -991,6 +1025,7 @@ class DGViewSet(viewsets.ModelViewSet):
         role = user_role(request.user)
         if role == constants.HR or role == constants.OPERATIONS or role == constants.OPERATIONS_MANAGER:
             delivery_guy = get_object_or_404(DeliveryGuy, pk=pk)
+            delivery_guy.associated_vendors.clear()
             vendor_ids = request.data['vendor_ids']
             for vendor_id in vendor_ids:
                 vendor = get_object_or_404(Vendor, pk = vendor_id)
@@ -1080,6 +1115,37 @@ class DGViewSet(viewsets.ModelViewSet):
                 return response_success_with_message(success_message)
             else:
                 error_message = 'The DeliveryBoy is already a team lead'    
+                return response_error_with_message(error_message)
+        else:
+            return response_access_denied()
+
+    @detail_route(methods=['put'])
+    def demote_teamlead(self, request, pk=None):
+        role = user_role(request.user)
+        if role == constants.HR:
+            delivery_guy = DeliveryGuy.objects.get(id=pk)
+            try:
+                demote_reason = request.data['demote_reason']
+            except Exception as e:
+                params = ['demote_reason']
+                return response_incomplete_parameters(params)
+
+            if delivery_guy.is_active is True:
+                if delivery_guy.is_teamlead is True:
+                    dg_team_lead = get_object_or_404(DeliveryTeamLead, delivery_guy=delivery_guy)
+                    dg_team_lead.demote_date = datetime.now()
+                    dg_team_lead.demote_reason = demote_reason
+                    dg_team_lead.is_active = False
+                    dg_team_lead.save()
+                    delivery_guy.is_teamlead = False
+                    delivery_guy.save()
+                    success_message = 'DG TL successfully demoted'
+                    return response_success_with_message(success_message)
+                else:
+                    error_message = 'This is not a DG TL to demote'
+                    return response_error_with_message(error_message)
+            else:
+                error_message = 'This is not an active DG TL'
                 return response_error_with_message(error_message)
         else:
             return response_access_denied()
