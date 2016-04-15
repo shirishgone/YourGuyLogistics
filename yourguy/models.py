@@ -208,6 +208,10 @@ class DeliveryTeamLead(models.Model):
     delivery_guy = models.ForeignKey(DeliveryGuy, related_name='current_delivery_guy', on_delete=models.PROTECT)
     associate_delivery_guys = models.ManyToManyField(DeliveryGuy, blank = True, related_name ='associate_delivery_guys')
     serving_pincodes = models.ManyToManyField(ServiceablePincode, blank = True)
+    demote_date = models.DateTimeField(blank=True, null=True)
+    demote_reason = models.CharField(max_length=500, blank=True)
+    is_active = models.BooleanField(default=True)
+
     def __unicode__(self):
         return u"%s - %s" % (self.delivery_guy.user.username, self.delivery_guy.user.first_name)
 

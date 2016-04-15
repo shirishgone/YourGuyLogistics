@@ -478,6 +478,7 @@ class DGViewSet(viewsets.ModelViewSet):
         role = user_role(request.user)
         if role == constants.HR:
             try:
+                employee_code = request.data['employee_code']
                 name = request.data['name']
                 phone_number = request.data['phone_number']
                 password = request.data['password']
@@ -486,7 +487,7 @@ class DGViewSet(viewsets.ModelViewSet):
                 ops_manager_ids = request.data.get('ops_manager_ids')
                 team_lead_dg_ids = request.data.get('team_lead_dg_ids')
             except Exception as e:
-                params = ['phone_number', 'password', 'name', 'shift_timing(optional)',
+                params = ['employee_code', 'phone_number', 'password', 'name', 'shift_timing(optional)',
                           'transportation_mode(optional)', 'ops_manager_ids(optional)', 'team_lead_dg_ids(optional)']
                 return response_incomplete_parameters(params)
         else:
@@ -505,6 +506,7 @@ class DGViewSet(viewsets.ModelViewSet):
         assign_usergroup(user)
 
         delivery_guy.is_active = True
+        delivery_guy.employee_code = employee_code
         delivery_guy.save()
 
         if shift_timing is not None:
@@ -524,15 +526,17 @@ class DGViewSet(viewsets.ModelViewSet):
                 return response_incomplete_parameters(parameters)
 
         if ops_manager_ids is not None:
-            ops_manager = get_object_or_404(Employee, id=ops_manager_ids)
-            ops_manager.associate_delivery_guys.add(delivery_guy)
-            ops_manager.save()
+            for single_ops_manager_id in ops_manager_ids:
+                ops_manager = get_object_or_404(Employee, id=single_ops_manager_id)
+                ops_manager.associate_delivery_guys.add(delivery_guy)
+                ops_manager.save()
 
         if team_lead_dg_ids is not None:
-            team_lead_delivery_guy = get_object_or_404(DeliveryGuy, id = team_lead_dg_ids)
-            team_lead = get_object_or_404(DeliveryTeamLead, delivery_guy=team_lead_delivery_guy)
-            team_lead.associate_delivery_guys.add(delivery_guy)
-            team_lead.save()
+            for team_lead_dg_id in team_lead_dg_ids:
+                team_lead_delivery_guy = get_object_or_404(DeliveryGuy, id = team_lead_dg_id)
+                team_lead = get_object_or_404(DeliveryTeamLead, delivery_guy=team_lead_delivery_guy)
+                team_lead.associate_delivery_guys.add(delivery_guy)
+                team_lead.save()
         delivery_guy.save()
         return response_with_payload(token.key, None)
 
@@ -1111,6 +1115,37 @@ class DGViewSet(viewsets.ModelViewSet):
                 return response_success_with_message(success_message)
             else:
                 error_message = 'The DeliveryBoy is already a team lead'    
+                return response_error_with_message(error_message)
+        else:
+            return response_access_denied()
+
+    @detail_route(methods=['put'])
+    def demote_teamlead(self, request, pk=None):
+        role = user_role(request.user)
+        if role == constants.HR:
+            delivery_guy = DeliveryGuy.objects.get(id=pk)
+            try:
+                demote_reason = request.data['demote_reason']
+            except Exception as e:
+                params = ['demote_reason']
+                return response_incomplete_parameters(params)
+
+            if delivery_guy.is_active is True:
+                if delivery_guy.is_teamlead is True:
+                    dg_team_lead = get_object_or_404(DeliveryTeamLead, delivery_guy=delivery_guy)
+                    dg_team_lead.demote_date = datetime.now()
+                    dg_team_lead.demote_reason = demote_reason
+                    dg_team_lead.is_active = False
+                    dg_team_lead.save()
+                    delivery_guy.is_teamlead = False
+                    delivery_guy.save()
+                    success_message = 'DG TL successfully demoted'
+                    return response_success_with_message(success_message)
+                else:
+                    error_message = 'This is not a DG TL to demote'
+                    return response_error_with_message(error_message)
+            else:
+                error_message = 'This is not an active DG TL'
                 return response_error_with_message(error_message)
         else:
             return response_access_denied()
