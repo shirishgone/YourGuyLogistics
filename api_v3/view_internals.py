@@ -2,8 +2,9 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import get_object_or_404
-from yourguy.models import Address, Notification, Consumer
+from yourguy.models import Address, Notification, Consumer, DeliveryGuy
 from django.db.models import Q, Count
+from datetime import time, datetime, timedelta
 
 @api_view(['GET'])
 def fill_full_address(request):
@@ -150,3 +151,28 @@ def refill_consumers_with_one_vendor(request):
                 consumer.vendor = single_vendor
                 consumer.save()
         return Response(status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+def reconfigure_shifttiming_from_IST_to_UTC(request):
+    if request.user.is_staff is False:
+        content = {
+            'error': 'insufficient permissions',
+            'description': 'Only admin can access this method'
+        }
+        return Response(content, status=status.HTTP_400_BAD_REQUEST)
+    else:        
+        ist_time_delta = timedelta(hours = 5, minutes = 30)
+        current_datetime = datetime.now()
+        
+        delivery_guys = DeliveryGuy.objects.all()
+        for delivery_guy in delivery_guys:
+
+            shift_start = datetime.combine(current_datetime, delivery_guy.shift_start_datetime) - ist_time_delta
+            shift_end = datetime.combine(current_datetime, delivery_guy.shift_end_datetime) - ist_time_delta
+            
+            delivery_guy.shift_start_datetime = shift_start.time()
+            delivery_guy.shift_end_datetime = shift_end.time()
+            delivery_guy.save()
+
+        return Response(status=status.HTTP_200_OK)
+
