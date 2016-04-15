@@ -36,15 +36,13 @@
 					</md-chip-template>
 				</md-chips>
 			</div>
-			<!-- <div class="pincode">
+			<div class="pincode">
 				<h3>Select Pin Codes</h3>
 				<md-chips 
-					ng-model="dgTeamLead.selectedPincodes" 
+					ng-model="dgTeamLead.teamLeadData.pincodes" 
 					md-autocomplete-snap 
-					md-transform-chip="dgTeamLead.chip($chip)" 
-					md-require-match="true"
-					md-on-add="dgTeamLead.addTlPincode($chip)"
-					md-on-remove="dgTeamLead.removeTlPincode($chip)">
+					md-transform-chip="dgTeamLead.transformPinChip($chip)" 
+					md-require-match="true">
 					<md-autocomplete 
 						md-no-cache="true"
 						md-selected-item="dgTeamLead.selectedPin" 
@@ -59,11 +57,11 @@
 					</md-autocomplete>
 					<md-chip-template>
 						<span>
-							<strong>{{$chip.pincode}}</strong>
+							<strong>{{$chip}}</strong>
 						</span>
 					</md-chip-template>
 				</md-chips>
-			</div> -->
+			</div>
 		</div>
 	</md-dialog-content>
 	<md-dialog-actions layout="row">

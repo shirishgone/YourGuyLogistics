@@ -85,12 +85,8 @@
                     </div>
                     <div flex="50" flex-xs="50" class="profile-data">
                         <md-input-container class="md-block">
-                            <label>Pincodes</label>
-                            <md-select name="pincodes" multiple ng-model="dgEdit.DG.pincode">
-                                <md-option ng-repeat="pn in dgEdit.Pincodes" ng-value="pn.pincode">
-                                    {{pn.pincode}}
-                                </md-option>
-                            </md-select>
+                            <label>Employee Code</label>
+                            <input name="employeecode" ng-model="dgEdit.DG.employee_code" ng-disabled="true">
                         </md-input-container>
                     </div>
                     <!-- <div flex="30" flex-xs="50" class="profile-data">
