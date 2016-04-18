@@ -553,7 +553,7 @@ def send_order_delivered_sms(consumer, delivered_at, vendor):
     try:
         message = 'Dear %s, your parcel has been delivered at %s on behalf of %s - Team YourGuy' % (
             consumer.full_name, delivered_at ,vendor.store_name)
-        send_sms(end_consumer_phone_number, message)
+        send_sms(consumer.phone_number, message)
     except Exception, e:
         pass
 
