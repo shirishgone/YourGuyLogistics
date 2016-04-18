@@ -1467,7 +1467,7 @@ class OrderViewSet(viewsets.ViewSet):
             # Send an sms to the final customer that your order has been delivered at so and so, 
             # by yourguy on behalf of the client name, if the sms settings is enabled.
             if delivery_status.order.vendor.sms_when_order_delivered is True:
-                send_order_delivered_sms(delivery_status.order.consumer.phone_number, delivered_at, delivery_status.order.vendor)
+                send_order_delivered_sms(delivery_status.order.consumer, delivered_at, delivery_status.order.vendor)
 
             success_message = 'Delivery updated'            
             return response_success_with_message(success_message)
