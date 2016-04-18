@@ -549,6 +549,13 @@ def search_order(user, search_query):
         pass
     return delivery_status_queryset
 
+def send_order_delivered_sms(consumer, delivered_at, vendor):
+    try:
+        message = 'Dear %s, your parcel has been delivered at %s on behalf of %s - Team YourGuy' % (
+            consumer.full_name, delivered_at ,vendor.store_name)
+        send_sms(end_consumer_phone_number, message)
+    except Exception, e:
+        pass
 
 class OrderViewSet(viewsets.ViewSet):
     """
@@ -1456,6 +1463,12 @@ class OrderViewSet(viewsets.ViewSet):
 
                 except Exception as e:
                     send_cod_discrepency_email(delivery_status, request.user)
+            
+            # Send an sms to the final customer that your order has been delivered at so and so, 
+            # by yourguy on behalf of the client name, if the sms settings is enabled.
+            if delivery_status.order.vendor.sms_when_order_delivered is True:
+                send_order_delivered_sms(delivery_status.order.consumer.phone_number, delivered_at, delivery_status.order.vendor)
+
             success_message = 'Delivery updated'            
             return response_success_with_message(success_message)
         else:
