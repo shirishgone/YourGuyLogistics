@@ -119,7 +119,7 @@ angular.module('production',[]).constant('baseURl',{
 });
 
 var ygVendors = angular.module('ygwebapp',['ui.router','ngCookies','ngStorage','ngAnimate','cfp.loadingBar',
-  'base64','smart-table','ui.bootstrap','gm.datepickerMultiSelect','ng-fusioncharts','ngMaterial','production'
+  'base64','smart-table','ui.bootstrap','gm.datepickerMultiSelect','ng-fusioncharts','ngMaterial','stage'
 ]);
 
 ygVendors.run(function ($rootScope, $location, $state, $localStorage,$templateCache) {
