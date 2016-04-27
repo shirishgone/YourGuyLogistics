@@ -55,7 +55,8 @@ urlpatterns = patterns(
     url(r'^consumers_with_more_than_one_vendor/', view_internals.consumers_with_more_than_one_vendor, name='consumers_with_more_than_one_vendor'),    
     url(r'^refill_consumers_with_one_vendor/', view_internals.refill_consumers_with_one_vendor, name='refill_consumers_with_one_vendor'),    
     url(r'^consumers_with_zero_single_vendor_association/', view_internals.consumers_with_zero_single_vendor_association, name='consumers_with_zero_single_vendor_association'),    
-    url(r'^reconfigure_shifttiming_from_IST_to_UTC/', view_internals.reconfigure_shifttiming_from_IST_to_UTC, name='reconfigure_shifttiming_from_IST_to_UTC')    
+    url(r'^reconfigure_shifttiming_from_IST_to_UTC/', view_internals.reconfigure_shifttiming_from_IST_to_UTC, name='reconfigure_shifttiming_from_IST_to_UTC'),
+    url(r'^fetch_vendor_emails/', view_internals.fetch_vendor_emails, name='fetch_vendor_emails')        
     # --------------------------------------------------------
 )
 

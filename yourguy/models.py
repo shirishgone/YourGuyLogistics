@@ -142,11 +142,17 @@ class Vendor(models.Model):
     approved_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.PROTECT)
     approved_date = models.DateTimeField(auto_now_add=True, blank=True, null=True)
     pickup_boy = models.ForeignKey('DeliveryGuy', null=True, blank=True, on_delete=models.PROTECT) 
+    
+    # VENDOR SETTINGS
+    sms_when_cod_collected = models.BooleanField(default = False)
+    sms_when_order_delivered = models.BooleanField(default = False)
+    is_pod_required = models.BooleanField(default = False)
+    is_pop_required = models.BooleanField(default = False)
+    is_email_updates_required = models.BooleanField(default = False)
 
     def __unicode__(self):
         return unicode(self.store_name)
-
-
+    
 class DeliveryGuy(YGUser):
     # Mandatory Fields
     employee_code = models.CharField(max_length = 200, blank = True , null = True)
