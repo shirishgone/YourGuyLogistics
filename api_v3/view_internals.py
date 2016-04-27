@@ -2,7 +2,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import get_object_or_404
-from yourguy.models import Address, Notification, Consumer, DeliveryGuy
+from yourguy.models import Address, Notification, Consumer, DeliveryGuy, Vendor
 from django.db.models import Q, Count
 from datetime import time, datetime, timedelta
 
@@ -175,3 +175,17 @@ def reconfigure_shifttiming_from_IST_to_UTC(request):
 
         return Response(status=status.HTTP_200_OK)
 
+@api_view(['GET'])
+def fetch_vendor_emails(request):
+    if request.user.is_staff is False:
+        content = {
+            'error': 'insufficient permissions',
+            'description': 'Only admin can access this method'
+        }
+        return Response(content, status=status.HTTP_400_BAD_REQUEST)
+    else:                
+        all_vendors = Vendor.objects.all()
+        all_vendor_emails = []
+        for vendor in all_vendors:
+            all_vendor_emails.append(vendor.email)
+        return Response(all_vendor_emails, status=status.HTTP_200_OK)
