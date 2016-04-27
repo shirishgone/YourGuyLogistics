@@ -329,8 +329,7 @@ def send_sms(phonenumber, message):
         if settings.ENVIRONMENT == 'PRODUCTION':
             r = requests.get(url)
         else:
-            r = requests.get(url)            
-            #print('test doesnt send sms')
+            print('test doesnt send sms')
     except Exception as e:
         pass
 
